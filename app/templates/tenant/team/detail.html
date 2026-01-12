@@ -1,0 +1,212 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Profil clana - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="teamDetailPage({{ user_id }})" x-init="loadUser()">
+    <!-- Loading -->
+    <div x-show="loading" class="flex justify-center items-center h-64">
+        <svg class="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+    </div>
+
+    <div x-show="!loading && user">
+        <!-- Header -->
+        <div class="md:flex md:items-center md:justify-between mb-8">
+            <div class="min-w-0 flex-1">
+                <div class="flex items-center">
+                    <a href="/team" class="mr-4 text-gray-400 hover:text-gray-600">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                    </a>
+                    <div class="flex items-center">
+                        <div class="h-12 w-12 rounded-full bg-primary-600 flex items-center justify-center text-white text-lg font-medium mr-4"
+                             x-text="user.ime?.charAt(0) || 'U'"></div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900" x-text="user.ime + ' ' + user.prezime"></h2>
+                            <p class="text-sm text-gray-500" x-text="'@' + user.username"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Form -->
+        <form @submit.prevent="saveUser" class="space-y-6">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Osnovni podaci</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ime *</label>
+                        <input type="text" x-model="form.ime" required
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Prezime *</label>
+                        <input type="text" x-model="form.prezime" required
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                        <input type="email" x-model="form.email" required
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                        <input type="tel" x-model="form.phone"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Pristup</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Uloga *</label>
+                        <select x-model="form.role" required :disabled="user.role === 'OWNER'"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm disabled:bg-gray-100">
+                            <option value="OWNER" x-show="user.role === 'OWNER'">Vlasnik</option>
+                            <option value="ADMIN">Administrator</option>
+                            <option value="MANAGER">Menadzer</option>
+                            <option value="TECHNICIAN">Tehnicar</option>
+                            <option value="RECEPTIONIST">Prijem</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <div class="flex items-center">
+                            <input type="checkbox" x-model="form.is_active" id="is_active"
+                                   class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                            <label for="is_active" class="ml-2 block text-sm text-gray-900">Aktivan nalog</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Promena lozinke</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nova lozinka</label>
+                        <input type="password" x-model="newPassword" minlength="6"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <p class="text-xs text-gray-500 mt-1">Ostavite prazno ako ne zelite da menjate</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-between">
+                <button type="button" @click="deleteUser()" :disabled="deleting || user.role === 'OWNER'"
+                        x-show="user.role !== 'OWNER'"
+                        class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 disabled:opacity-50">
+                    Obrisi korisnika
+                </button>
+                <div class="flex gap-4">
+                    <a href="/team"
+                       class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                        Otkazi
+                    </a>
+                    <button type="submit" :disabled="saving"
+                            class="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-500 disabled:opacity-50">
+                        <span x-show="!saving">Sacuvaj izmene</span>
+                        <span x-show="saving">Cuvanje...</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function teamDetailPage(userId) {
+    return {
+        userId: userId,
+        user: null,
+        loading: true,
+        saving: false,
+        deleting: false,
+        newPassword: '',
+        form: {
+            ime: '',
+            prezime: '',
+            email: '',
+            phone: '',
+            role: '',
+            is_active: true
+        },
+
+        async loadUser() {
+            try {
+                const response = await api('/api/v1/users/' + this.userId);
+                if (response.ok) {
+                    this.user = await response.json();
+                    Object.keys(this.form).forEach(key => {
+                        if (this.user[key] !== undefined) {
+                            this.form[key] = this.user[key];
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load user:', e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async saveUser() {
+            this.saving = true;
+            try {
+                const payload = { ...this.form };
+                if (this.newPassword) {
+                    payload.password = this.newPassword;
+                }
+
+                const response = await api('/api/v1/users/' + this.userId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    showToast('Korisnik sacuvan', 'success');
+                    window.location.href = '/team';
+                } else {
+                    const error = await response.json();
+                    showToast(error.message || 'Greska pri cuvanju', 'error');
+                }
+            } catch (e) {
+                showToast('Greska pri cuvanju', 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        async deleteUser() {
+            if (!confirm('Da li ste sigurni da zelite da obrisete ovog korisnika?')) return;
+
+            this.deleting = true;
+            try {
+                const response = await api('/api/v1/users/' + this.userId, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showToast('Korisnik obrisan', 'success');
+                    window.location.href = '/team';
+                } else {
+                    showToast('Greska pri brisanju', 'error');
+                }
+            } catch (e) {
+                showToast('Greska pri brisanju', 'error');
+            } finally {
+                this.deleting = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

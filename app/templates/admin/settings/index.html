@@ -1,0 +1,99 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Podesavanja - ServisHub Admin{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100" x-data="settingsPage()" x-init="loadSettings()">
+    <div class="fixed inset-y-0 left-0 w-64 bg-gray-900">
+        <div class="flex items-center h-16 px-6 bg-gray-800"><span class="text-lg font-bold text-white">ServisHub Admin</span></div>
+        <nav class="mt-6 px-3">
+            <a href="/admin/dashboard" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Dashboard</a>
+            <a href="/admin/tenants" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Servisi</a>
+            <a href="/admin/kyc" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">KYC</a>
+            <a href="/admin/suppliers" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Dobavljaci</a>
+            <a href="/admin/payments" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Uplate</a>
+            <a href="/admin/settings" class="flex items-center px-4 py-3 text-white bg-gray-800 rounded-lg">Podesavanja</a>
+        </nav>
+    </div>
+
+    <div class="ml-64">
+        <div class="bg-white shadow-sm h-16 flex items-center px-8">
+            <h1 class="text-xl font-semibold text-gray-900">Podesavanja platforme</h1>
+        </div>
+
+        <div class="p-8">
+            <form @submit.prevent="saveSettings" class="space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Cenovnik</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Bazni paket (RSD/mesec)</label>
+                            <input type="number" x-model="form.base_price" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Dodatna lokacija (RSD/mesec)</label>
+                            <input type="number" x-model="form.location_price" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Trial i pretplate</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Trial period (dani)</label>
+                            <input type="number" x-model="form.trial_days" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Grace period (dani)</label>
+                            <input type="number" x-model="form.grace_period_days" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Dobavljaci</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Default provizija (%)</label>
+                            <input type="number" x-model="form.default_commission" step="0.1" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" :disabled="saving" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-500 disabled:opacity-50">
+                        <span x-show="!saving">Sacuvaj</span>
+                        <span x-show="saving">Cuvanje...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function settingsPage() {
+    return {
+        loading: true, saving: false,
+        form: { base_price: 3600, location_price: 1800, trial_days: 90, grace_period_days: 7, default_commission: 5 },
+        async loadSettings() {
+            const token = localStorage.getItem('admin_access_token');
+            if (!token) { window.location.href = '/admin/login'; return; }
+            try {
+                const r = await fetch('/api/admin/settings', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (r.ok) { const data = await r.json(); Object.assign(this.form, data); }
+            } catch (e) { console.error(e); } finally { this.loading = false; }
+        },
+        async saveSettings() {
+            this.saving = true;
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                await fetch('/api/admin/settings', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(this.form) });
+                alert('Sacuvano!');
+            } catch (e) { console.error(e); } finally { this.saving = false; }
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Lokacije - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="locationsPage()" x-init="loadLocations()">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-8">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">Lokacije servisa</h2>
+            <p class="mt-1 text-sm text-gray-500">Upravljajte lokacijama vase servisne radnje</p>
+        </div>
+        <div class="mt-4 md:mt-0">
+            <a href="/locations/new"
+               class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-500">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Nova lokacija
+            </a>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div x-show="loading" class="flex justify-center items-center h-64">
+        <svg class="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+    </div>
+
+    <!-- Locations Grid -->
+    <div x-show="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <template x-for="location in locations" :key="location.id">
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900" x-text="location.name"></h3>
+                        <span x-show="location.is_primary"
+                              class="px-2 py-1 text-xs font-medium bg-primary-100 text-primary-800 rounded-full">
+                            Glavna
+                        </span>
+                    </div>
+                    <dl class="space-y-2 text-sm">
+                        <div x-show="location.address">
+                            <dt class="text-gray-500">Adresa</dt>
+                            <dd class="text-gray-900" x-text="location.address + (location.city ? ', ' + location.city : '')"></dd>
+                        </div>
+                        <div x-show="location.phone">
+                            <dt class="text-gray-500">Telefon</dt>
+                            <dd class="text-gray-900" x-text="location.phone"></dd>
+                        </div>
+                        <div x-show="location.email">
+                            <dt class="text-gray-500">Email</dt>
+                            <dd class="text-gray-900" x-text="location.email"></dd>
+                        </div>
+                    </dl>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 border-t flex justify-between items-center">
+                    <span :class="location.is_active ? 'text-green-600' : 'text-red-600'" class="text-sm font-medium">
+                        <span x-text="location.is_active ? 'Aktivna' : 'Neaktivna'"></span>
+                    </span>
+                    <a :href="'/locations/' + location.id" class="text-sm text-primary-600 hover:text-primary-900">
+                        Detalji →
+                    </a>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- Empty State -->
+    <div x-show="!loading && locations.length === 0" class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">Nema lokacija</h3>
+        <p class="mt-1 text-sm text-gray-500">Dodajte prvu lokaciju servisa.</p>
+        <div class="mt-6">
+            <a href="/locations/new"
+               class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-500">
+                Dodaj lokaciju
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function locationsPage() {
+    return {
+        locations: [],
+        loading: true,
+
+        async loadLocations() {
+            try {
+                const response = await api('/api/v1/locations');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.locations = data.locations || data;
+                }
+            } catch (e) {
+                console.error('Failed to load locations:', e);
+            } finally {
+                this.loading = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

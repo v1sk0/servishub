@@ -1,0 +1,190 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Dodaj deo - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="partNewPage()">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-8">
+        <div class="min-w-0 flex-1">
+            <div class="flex items-center">
+                <a href="/inventory/parts" class="mr-4 text-gray-400 hover:text-gray-600">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </a>
+                <h2 class="text-2xl font-bold text-gray-900">Dodaj rezervni deo</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <form @submit.prevent="savePart" class="space-y-6">
+        <!-- Part Info -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Podaci o delu</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Naziv dela *</label>
+                    <input type="text" x-model="form.name" required placeholder="Display, Baterija..."
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kategorija</label>
+                    <select x-model="form.category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <option value="DISPLAY">Display</option>
+                        <option value="BATTERY">Baterija</option>
+                        <option value="CAMERA">Kamera</option>
+                        <option value="CHARGING_PORT">Port za punjenje</option>
+                        <option value="SPEAKER">Zvucnik</option>
+                        <option value="MICROPHONE">Mikrofon</option>
+                        <option value="BUTTON">Dugme</option>
+                        <option value="HOUSING">Kuciste</option>
+                        <option value="OTHER">Ostalo</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Sifra dela</label>
+                    <input type="text" x-model="form.part_number"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Marka (kompatibilnost)</label>
+                    <input type="text" x-model="form.brand" placeholder="Apple, Samsung..."
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Model (kompatibilnost)</label>
+                    <input type="text" x-model="form.model" placeholder="iPhone 14, Galaxy S24..."
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kvalitet</label>
+                    <select x-model="form.quality" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <option value="ORIGINAL">Original</option>
+                        <option value="OEM">OEM</option>
+                        <option value="AAA">AAA kvalitet</option>
+                        <option value="COPY">Kopija</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock & Pricing -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Kolicina i cene</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kolicina *</label>
+                    <input type="number" x-model="form.quantity" required min="0"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Min. zaliha (alert)</label>
+                    <input type="number" x-model="form.min_stock_level" min="0"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nabavna cena</label>
+                    <input type="number" x-model="form.purchase_price" step="0.01" min="0"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Prodajna cena</label>
+                    <input type="number" x-model="form.selling_price" step="0.01" min="0"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+            </div>
+        </div>
+
+        <!-- Visibility -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Vidljivost na marketplace-u</h3>
+            <div class="space-y-4">
+                <div class="flex items-center">
+                    <input type="radio" x-model="form.visibility" value="PRIVATE" id="vis_private"
+                           class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300">
+                    <label for="vis_private" class="ml-3">
+                        <span class="block text-sm font-medium text-gray-700">Privatno</span>
+                        <span class="block text-sm text-gray-500">Samo vas servis vidi ovaj deo</span>
+                    </label>
+                </div>
+                <div class="flex items-center">
+                    <input type="radio" x-model="form.visibility" value="PARTNER" id="vis_partner"
+                           class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300">
+                    <label for="vis_partner" class="ml-3">
+                        <span class="block text-sm font-medium text-gray-700">Partneri</span>
+                        <span class="block text-sm text-gray-500">Vase partnerske radnje mogu videti i naruciti</span>
+                    </label>
+                </div>
+                <div class="flex items-center">
+                    <input type="radio" x-model="form.visibility" value="PUBLIC" id="vis_public"
+                           class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300">
+                    <label for="vis_public" class="ml-3">
+                        <span class="block text-sm font-medium text-gray-700">Javno</span>
+                        <span class="block text-sm text-gray-500">Svi servisi u sistemu mogu videti</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-4">
+            <a href="/inventory/parts"
+               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                Otkazi
+            </a>
+            <button type="submit" :disabled="saving"
+                    class="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-500 disabled:opacity-50">
+                <span x-show="!saving">Dodaj deo</span>
+                <span x-show="saving">Dodavanje...</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function partNewPage() {
+    return {
+        saving: false,
+        form: {
+            name: '',
+            category: 'OTHER',
+            part_number: '',
+            brand: '',
+            model: '',
+            quality: 'OEM',
+            quantity: 1,
+            min_stock_level: 0,
+            purchase_price: null,
+            selling_price: null,
+            visibility: 'PRIVATE'
+        },
+
+        async savePart() {
+            this.saving = true;
+            try {
+                const response = await api('/api/v1/inventory/parts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.form)
+                });
+
+                if (response.ok) {
+                    showToast('Deo dodat', 'success');
+                    window.location.href = '/inventory/parts';
+                } else {
+                    const error = await response.json();
+                    showToast(error.message || 'Greska pri dodavanju', 'error');
+                }
+            } catch (e) {
+                console.error('Failed to save part:', e);
+                showToast('Greska pri dodavanju', 'error');
+            } finally {
+                this.saving = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

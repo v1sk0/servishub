@@ -1,0 +1,142 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Profil servisa - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="profilePage()" x-init="loadTenant()">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900">Profil servisa</h2>
+        <p class="mt-1 text-sm text-gray-500">Upravljajte podacima vase servisne radnje</p>
+    </div>
+
+    <!-- Loading -->
+    <div x-show="loading" class="flex justify-center items-center h-64">
+        <svg class="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+    </div>
+
+    <div x-show="!loading">
+        <form @submit.prevent="saveTenant" class="space-y-6">
+            <!-- Company Info -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Podaci o preduzecu</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Naziv preduzeca *</label>
+                        <input type="text" x-model="form.name" required
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">PIB</label>
+                        <input type="text" x-model="form.pib"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Maticni broj</label>
+                        <input type="text" x-model="form.maticni_broj"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                        <input type="tel" x-model="form.telefon"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" x-model="form.email"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Adresa sedista</label>
+                        <input type="text" x-model="form.adresa_sedista"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warranty Settings -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Podesavanja garancije</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Default garancija (dani)</label>
+                        <input type="number" x-model="form.default_warranty_days" min="0"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <p class="text-xs text-gray-500 mt-1">Automatski se primenjuje na nove naloge</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-end">
+                <button type="submit" :disabled="saving"
+                        class="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-500 disabled:opacity-50">
+                    <span x-show="!saving">Sacuvaj izmene</span>
+                    <span x-show="saving">Cuvanje...</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function profilePage() {
+    return {
+        loading: true,
+        saving: false,
+        form: {
+            name: '',
+            pib: '',
+            maticni_broj: '',
+            telefon: '',
+            email: '',
+            adresa_sedista: '',
+            default_warranty_days: 30
+        },
+
+        async loadTenant() {
+            try {
+                const response = await api('/api/v1/tenant');
+                if (response.ok) {
+                    const data = await response.json();
+                    Object.keys(this.form).forEach(key => {
+                        if (data[key] !== undefined) {
+                            this.form[key] = data[key];
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load tenant:', e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async saveTenant() {
+            this.saving = true;
+            try {
+                const response = await api('/api/v1/tenant', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.form)
+                });
+
+                if (response.ok) {
+                    showToast('Podaci sacuvani', 'success');
+                } else {
+                    const error = await response.json();
+                    showToast(error.message || 'Greska pri cuvanju', 'error');
+                }
+            } catch (e) {
+                showToast('Greska pri cuvanju', 'error');
+            } finally {
+                this.saving = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

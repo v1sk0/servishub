@@ -1,0 +1,193 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Lokacija - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="locationDetailPage({{ location_id }})" x-init="loadLocation()">
+    <!-- Loading -->
+    <div x-show="loading" class="flex justify-center items-center h-64">
+        <svg class="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+    </div>
+
+    <div x-show="!loading && location">
+        <!-- Header -->
+        <div class="md:flex md:items-center md:justify-between mb-8">
+            <div class="min-w-0 flex-1">
+                <div class="flex items-center">
+                    <a href="/locations" class="mr-4 text-gray-400 hover:text-gray-600">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                    </a>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900" x-text="location.name"></h2>
+                        <p class="mt-1 text-sm text-gray-500" x-text="location.address"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 flex gap-3 md:mt-0">
+                <span x-show="location.is_primary"
+                      class="px-3 py-1 text-sm font-medium bg-primary-100 text-primary-800 rounded-full">
+                    Glavna lokacija
+                </span>
+            </div>
+        </div>
+
+        <!-- Edit Form -->
+        <form @submit.prevent="saveLocation" class="space-y-6">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Osnovni podaci</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Naziv lokacije *</label>
+                        <input type="text" x-model="form.name" required
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                        <input type="tel" x-model="form.phone"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" x-model="form.email"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Grad</label>
+                        <input type="text" x-model="form.city"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Adresa</label>
+                        <input type="text" x-model="form.address"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Status</h3>
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" x-model="form.is_active" id="is_active"
+                               class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                        <label for="is_active" class="ml-2 block text-sm text-gray-900">Aktivna</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" x-model="form.is_primary" id="is_primary"
+                               class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                        <label for="is_primary" class="ml-2 block text-sm text-gray-900">Glavna lokacija</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-between">
+                <button type="button" @click="deleteLocation()" :disabled="deleting"
+                        class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 disabled:opacity-50">
+                    Obrisi lokaciju
+                </button>
+                <div class="flex gap-4">
+                    <a href="/locations"
+                       class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                        Otkazi
+                    </a>
+                    <button type="submit" :disabled="saving"
+                            class="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-500 disabled:opacity-50">
+                        <span x-show="!saving">Sacuvaj izmene</span>
+                        <span x-show="saving">Cuvanje...</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function locationDetailPage(locationId) {
+    return {
+        locationId: locationId,
+        location: null,
+        loading: true,
+        saving: false,
+        deleting: false,
+        form: {
+            name: '',
+            phone: '',
+            email: '',
+            city: '',
+            address: '',
+            is_active: true,
+            is_primary: false
+        },
+
+        async loadLocation() {
+            try {
+                const response = await api('/api/v1/locations/' + this.locationId);
+                if (response.ok) {
+                    this.location = await response.json();
+                    Object.keys(this.form).forEach(key => {
+                        if (this.location[key] !== undefined) {
+                            this.form[key] = this.location[key];
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load location:', e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async saveLocation() {
+            this.saving = true;
+            try {
+                const response = await api('/api/v1/locations/' + this.locationId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.form)
+                });
+
+                if (response.ok) {
+                    showToast('Lokacija sacuvana', 'success');
+                    window.location.href = '/locations';
+                } else {
+                    const error = await response.json();
+                    showToast(error.message || 'Greska pri cuvanju', 'error');
+                }
+            } catch (e) {
+                showToast('Greska pri cuvanju', 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        async deleteLocation() {
+            if (!confirm('Da li ste sigurni da zelite da obrisete ovu lokaciju?')) return;
+
+            this.deleting = true;
+            try {
+                const response = await api('/api/v1/locations/' + this.locationId, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showToast('Lokacija obrisana', 'success');
+                    window.location.href = '/locations';
+                } else {
+                    showToast('Greska pri brisanju', 'error');
+                }
+            } catch (e) {
+                showToast('Greska pri brisanju', 'error');
+            } finally {
+                this.deleting = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

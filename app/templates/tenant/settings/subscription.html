@@ -1,0 +1,183 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Pretplata - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="subscriptionPage()" x-init="loadSubscription()">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900">Status pretplate</h2>
+        <p class="mt-1 text-sm text-gray-500">Pregledajte i upravljajte vasom pretplatom</p>
+    </div>
+
+    <!-- Loading -->
+    <div x-show="loading" class="flex justify-center items-center h-64">
+        <svg class="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+    </div>
+
+    <div x-show="!loading" class="space-y-6">
+        <!-- Current Plan -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Trenutni plan</h3>
+            </div>
+            <div class="p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-2xl font-bold text-gray-900">ServisHub Pro</p>
+                        <p class="text-sm text-gray-500">3.600 RSD / mesecno</p>
+                    </div>
+                    <span class="px-4 py-2 rounded-full text-sm font-medium"
+                          :class="getStatusClass(subscription.status)"
+                          x-text="statusLabels[subscription.status]"></span>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500">Poceo</p>
+                        <p class="text-lg font-medium text-gray-900" x-text="formatDate(subscription.started_at)"></p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500">Istice</p>
+                        <p class="text-lg font-medium text-gray-900" x-text="formatDate(subscription.expires_at)"></p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500">Preostalo</p>
+                        <p class="text-lg font-medium" :class="subscription.days_remaining > 7 ? 'text-green-600' : 'text-red-600'"
+                           x-text="subscription.days_remaining + ' dana'"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Locations -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Lokacije</h3>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Bazni paket</p>
+                            <p class="text-sm text-gray-500">1 lokacija ukljucena</p>
+                        </div>
+                        <p class="text-sm font-medium text-gray-900">3.600 RSD</p>
+                    </div>
+                    <template x-for="(loc, i) in subscription.additional_locations" :key="i">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900" x-text="loc.name"></p>
+                                <p class="text-sm text-gray-500">Dodatna lokacija</p>
+                            </div>
+                            <p class="text-sm font-medium text-gray-900">1.800 RSD</p>
+                        </div>
+                    </template>
+                    <div class="pt-4 border-t flex items-center justify-between">
+                        <p class="text-base font-medium text-gray-900">Ukupno mesecno</p>
+                        <p class="text-lg font-bold text-gray-900" x-text="formatPrice(subscription.monthly_total) + ' RSD'"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment History -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Istorija uplata</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datum</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Iznos</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="payment in payments" :key="payment.id">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="formatDate(payment.created_at)"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(payment.period_start) + ' - ' + formatDate(payment.period_end)"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="formatPrice(payment.total_amount) + ' RSD'"></td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full"
+                                          :class="payment.status === 'PAID' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                                          x-text="payment.status === 'PAID' ? 'Placeno' : 'Na cekanju'"></span>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+            <div x-show="payments.length === 0" class="text-center py-8 text-gray-500">
+                Nema istorije uplata
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function subscriptionPage() {
+    return {
+        loading: true,
+        subscription: {
+            status: 'TRIAL',
+            started_at: null,
+            expires_at: null,
+            days_remaining: 0,
+            additional_locations: [],
+            monthly_total: 3600
+        },
+        payments: [],
+
+        statusLabels: {
+            'TRIAL': 'Promo period',
+            'ACTIVE': 'Aktivna',
+            'EXPIRED': 'Istekla',
+            'SUSPENDED': 'Suspendovana'
+        },
+
+        async loadSubscription() {
+            try {
+                const response = await api('/api/v1/tenant/subscription');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.subscription = data.subscription || this.subscription;
+                    this.payments = data.payments || [];
+                }
+            } catch (e) {
+                console.error('Failed to load subscription:', e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        getStatusClass(status) {
+            const classes = {
+                'TRIAL': 'bg-blue-100 text-blue-800',
+                'ACTIVE': 'bg-green-100 text-green-800',
+                'EXPIRED': 'bg-red-100 text-red-800',
+                'SUSPENDED': 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        },
+
+        formatPrice(price) {
+            if (!price) return '0';
+            return new Intl.NumberFormat('sr-RS').format(price);
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleDateString('sr-Latn-RS');
+        }
+    }
+}
+</script>
+{% endblock %}

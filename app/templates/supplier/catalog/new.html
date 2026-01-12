@@ -1,0 +1,144 @@
+{% extends "layouts/supplier.html" %}
+
+{% block title %}Novi artikal - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="catalogNewPage()">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-8">
+        <div class="min-w-0 flex-1">
+            <div class="flex items-center">
+                <a href="/supplier/catalog" class="mr-4 text-gray-400 hover:text-gray-600">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </a>
+                <h2 class="text-2xl font-bold text-gray-900">Dodaj novi artikal</h2>
+            </div>
+        </div>
+    </div>
+
+    <form @submit.prevent="saveListing" class="space-y-6">
+        <!-- Basic Info -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Osnovni podaci</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Naziv artikla *</label>
+                    <input type="text" x-model="form.name" required placeholder="Display OLED Original"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kategorija</label>
+                    <select x-model="form.part_category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                        <option value="DISPLAY">Display</option>
+                        <option value="BATTERY">Baterija</option>
+                        <option value="CAMERA">Kamera</option>
+                        <option value="CHARGING_PORT">Port za punjenje</option>
+                        <option value="SPEAKER">Zvucnik</option>
+                        <option value="HOUSING">Kuciste</option>
+                        <option value="OTHER">Ostalo</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kvalitet</label>
+                    <select x-model="form.quality_grade" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                        <option value="ORIGINAL">Original</option>
+                        <option value="OEM">OEM</option>
+                        <option value="AAA">AAA</option>
+                        <option value="COPY">Kopija</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compatibility -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Kompatibilnost</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Marka</label>
+                    <input type="text" x-model="form.brand" placeholder="Samsung, Apple, Xiaomi..."
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Modeli (odvojeni zarezom)</label>
+                    <input type="text" x-model="form.model_compatibility" placeholder="Galaxy S21, S21+, S21 Ultra"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Cena i dostupnost</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Cena (RSD) *</label>
+                    <input type="number" x-model="form.price" required step="0.01" min="0"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Min. narudzbina</label>
+                    <input type="number" x-model="form.min_order_qty" min="1"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Rok isporuke (dana)</label>
+                    <input type="number" x-model="form.delivery_days" min="0"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                </div>
+            </div>
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status zaliha</label>
+                <select x-model="form.stock_status" class="block w-full md:w-1/3 rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                    <option value="IN_STOCK">Na stanju</option>
+                    <option value="LOW_STOCK">Male zalihe</option>
+                    <option value="OUT_OF_STOCK">Nema na stanju</option>
+                    <option value="PRE_ORDER">Po narudzbini</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-4">
+            <a href="/supplier/catalog" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Otkazi</a>
+            <button type="submit" :disabled="saving" class="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-500 disabled:opacity-50">
+                <span x-show="!saving">Dodaj artikal</span>
+                <span x-show="saving">Dodavanje...</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function catalogNewPage() {
+    return {
+        saving: false,
+        form: {
+            name: '', part_category: 'OTHER', quality_grade: 'OEM',
+            brand: '', model_compatibility: '',
+            price: null, min_order_qty: 1, delivery_days: 2,
+            stock_status: 'IN_STOCK', is_original: false
+        },
+        async saveListing() {
+            this.saving = true;
+            try {
+                const response = await supplierApi('/api/supplier/listings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.form)
+                });
+                if (response.ok) {
+                    showToast('Artikal dodat', 'success');
+                    window.location.href = '/supplier/catalog';
+                } else {
+                    const error = await response.json();
+                    showToast(error.message || 'Greska', 'error');
+                }
+            } catch (e) { showToast('Greska', 'error'); } finally { this.saving = false; }
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Dobavljac - ServisHub Admin{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100" x-data="supplierDetailPage({{ supplier_id }})" x-init="loadSupplier()">
+    <div class="fixed inset-y-0 left-0 w-64 bg-gray-900">
+        <div class="flex items-center h-16 px-6 bg-gray-800"><span class="text-lg font-bold text-white">ServisHub Admin</span></div>
+        <nav class="mt-6 px-3">
+            <a href="/admin/dashboard" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Dashboard</a>
+            <a href="/admin/tenants" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Servisi</a>
+            <a href="/admin/kyc" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">KYC</a>
+            <a href="/admin/suppliers" class="flex items-center px-4 py-3 text-white bg-gray-800 rounded-lg mb-1">Dobavljaci</a>
+        </nav>
+    </div>
+
+    <div class="ml-64">
+        <div class="bg-white shadow-sm h-16 flex items-center px-8">
+            <a href="/admin/suppliers" class="mr-4 text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg></a>
+            <h1 class="text-xl font-semibold text-gray-900" x-text="supplier?.name || 'Ucitavanje...'"></h1>
+        </div>
+
+        <div class="p-8">
+            <div x-show="loading" class="flex justify-center py-12"><svg class="animate-spin h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg></div>
+
+            <div x-show="!loading && supplier" class="space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <span class="px-3 py-1 text-sm font-medium rounded-full" :class="{'bg-yellow-100 text-yellow-800': supplier.status === 'PENDING', 'bg-green-100 text-green-800': supplier.status === 'ACTIVE', 'bg-red-100 text-red-800': supplier.status === 'SUSPENDED'}" x-text="supplier.status"></span>
+                        <div class="flex gap-2">
+                            <button x-show="supplier.status === 'PENDING'" @click="changeStatus('ACTIVE')" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-500">Aktiviraj</button>
+                            <button x-show="supplier.status !== 'SUSPENDED'" @click="changeStatus('SUSPENDED')" class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">Suspenduj</button>
+                            <button x-show="supplier.status === 'SUSPENDED'" @click="changeStatus('ACTIVE')" class="px-4 py-2 text-sm font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100">Reaktiviraj</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Podaci</h3>
+                        <dl class="space-y-3">
+                            <div class="flex justify-between"><dt class="text-sm text-gray-500">Naziv</dt><dd class="text-sm font-medium text-gray-900" x-text="supplier.name"></dd></div>
+                            <div class="flex justify-between"><dt class="text-sm text-gray-500">Email</dt><dd class="text-sm text-gray-900" x-text="supplier.email"></dd></div>
+                            <div class="flex justify-between"><dt class="text-sm text-gray-500">PIB</dt><dd class="text-sm text-gray-900" x-text="supplier.pib || '-'"></dd></div>
+                            <div class="flex justify-between"><dt class="text-sm text-gray-500">Telefon</dt><dd class="text-sm text-gray-900" x-text="supplier.phone || '-'"></dd></div>
+                            <div class="flex justify-between"><dt class="text-sm text-gray-500">Provizija</dt><dd class="text-sm text-gray-900" x-text="(supplier.commission_rate || 5) + '%'"></dd></div>
+                        </dl>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Statistika</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="text-center p-4 bg-gray-50 rounded-lg"><p class="text-2xl font-bold" x-text="supplier.listings_count || 0"></p><p class="text-sm text-gray-500">Artikala</p></div>
+                            <div class="text-center p-4 bg-gray-50 rounded-lg"><p class="text-2xl font-bold" x-text="supplier.orders_count || 0"></p><p class="text-sm text-gray-500">Narudzbina</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function supplierDetailPage(id) {
+    return {
+        supplierId: id, supplier: null, loading: true,
+        async loadSupplier() {
+            const token = localStorage.getItem('admin_access_token');
+            if (!token) { window.location.href = '/admin/login'; return; }
+            try {
+                const r = await fetch('/api/admin/suppliers/' + this.supplierId, { headers: { 'Authorization': 'Bearer ' + token } });
+                if (r.ok) this.supplier = await r.json();
+            } catch (e) { console.error(e); } finally { this.loading = false; }
+        },
+        async changeStatus(status) {
+            const token = localStorage.getItem('admin_access_token');
+            await fetch('/api/admin/suppliers/' + this.supplierId + '/status', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+            await this.loadSupplier();
+        }
+    }
+}
+</script>
+{% endblock %}

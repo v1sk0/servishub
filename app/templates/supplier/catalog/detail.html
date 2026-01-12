@@ -1,0 +1,141 @@
+{% extends "layouts/supplier.html" %}
+
+{% block title %}Artikal - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="catalogDetailPage({{ listing_id }})" x-init="loadListing()">
+    <div x-show="loading" class="flex justify-center items-center h-64">
+        <svg class="animate-spin h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+    </div>
+
+    <div x-show="!loading && listing">
+        <!-- Header -->
+        <div class="md:flex md:items-center md:justify-between mb-8">
+            <div class="min-w-0 flex-1">
+                <div class="flex items-center">
+                    <a href="/supplier/catalog" class="mr-4 text-gray-400 hover:text-gray-600">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                    </a>
+                    <h2 class="text-2xl font-bold text-gray-900" x-text="listing.name"></h2>
+                </div>
+            </div>
+        </div>
+
+        <form @submit.prevent="saveListing" class="space-y-6">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Osnovni podaci</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Naziv artikla *</label>
+                        <input type="text" x-model="form.name" required class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kategorija</label>
+                        <select x-model="form.part_category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                            <option value="DISPLAY">Display</option>
+                            <option value="BATTERY">Baterija</option>
+                            <option value="CAMERA">Kamera</option>
+                            <option value="OTHER">Ostalo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kvalitet</label>
+                        <select x-model="form.quality_grade" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                            <option value="ORIGINAL">Original</option>
+                            <option value="OEM">OEM</option>
+                            <option value="AAA">AAA</option>
+                            <option value="COPY">Kopija</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Kompatibilnost</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Marka</label>
+                        <input type="text" x-model="form.brand" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Modeli</label>
+                        <input type="text" x-model="form.model_compatibility" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Cena i dostupnost</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cena (RSD)</label>
+                        <input type="number" x-model="form.price" step="0.01" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Min. narudzbina</label>
+                        <input type="number" x-model="form.min_order_qty" min="1" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Rok isporuke</label>
+                        <input type="number" x-model="form.delivery_days" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                    </div>
+                </div>
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select x-model="form.stock_status" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                            <option value="IN_STOCK">Na stanju</option>
+                            <option value="LOW_STOCK">Male zalihe</option>
+                            <option value="OUT_OF_STOCK">Nema</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <label class="flex items-center">
+                            <input type="checkbox" x-model="form.is_active" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                            <span class="ml-2 text-sm text-gray-700">Aktivan artikal</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between">
+                <button type="button" @click="deleteListing()" class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100">Obrisi</button>
+                <div class="flex gap-4">
+                    <a href="/supplier/catalog" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Otkazi</a>
+                    <button type="submit" :disabled="saving" class="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-500 disabled:opacity-50">Sacuvaj</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function catalogDetailPage(id) {
+    return {
+        listingId: id, listing: null, loading: true, saving: false,
+        form: { name: '', part_category: 'OTHER', quality_grade: 'OEM', brand: '', model_compatibility: '', price: null, min_order_qty: 1, delivery_days: 2, stock_status: 'IN_STOCK', is_active: true },
+        async loadListing() {
+            try {
+                const r = await supplierApi('/api/supplier/listings/' + this.listingId);
+                if (r.ok) { this.listing = await r.json(); Object.assign(this.form, this.listing); }
+            } catch (e) { console.error(e); } finally { this.loading = false; }
+        },
+        async saveListing() {
+            this.saving = true;
+            try {
+                const r = await supplierApi('/api/supplier/listings/' + this.listingId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.form) });
+                if (r.ok) { showToast('Sacuvano', 'success'); window.location.href = '/supplier/catalog'; }
+            } catch (e) { showToast('Greska', 'error'); } finally { this.saving = false; }
+        },
+        async deleteListing() {
+            if (!confirm('Obrisati artikal?')) return;
+            await supplierApi('/api/supplier/listings/' + this.listingId, { method: 'DELETE' });
+            window.location.href = '/supplier/catalog';
+        }
+    }
+}
+</script>
+{% endblock %}

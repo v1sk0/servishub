@@ -1,0 +1,173 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Dodaj telefon - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="phoneNewPage()">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-8">
+        <div class="min-w-0 flex-1">
+            <div class="flex items-center">
+                <a href="/inventory/phones" class="mr-4 text-gray-400 hover:text-gray-600">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </a>
+                <h2 class="text-2xl font-bold text-gray-900">Dodaj telefon na lager</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <form @submit.prevent="savePhone" class="space-y-6">
+        <!-- Device Info -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Podaci o telefonu</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Marka *</label>
+                    <input type="text" x-model="form.brand" required placeholder="Apple, Samsung, Xiaomi..."
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Model *</label>
+                    <input type="text" x-model="form.model" required placeholder="iPhone 14 Pro, Galaxy S24..."
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">IMEI</label>
+                    <input type="text" x-model="form.imei" placeholder="15 cifara"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Boja</label>
+                    <input type="text" x-model="form.color" placeholder="Crna, Bela, Plava..."
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kapacitet</label>
+                    <input type="text" x-model="form.capacity" placeholder="128GB, 256GB..."
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Stanje</label>
+                    <select x-model="form.condition" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <option value="NEW">Nov</option>
+                        <option value="LIKE_NEW">Kao nov</option>
+                        <option value="GOOD">Dobro</option>
+                        <option value="FAIR">Korisceno</option>
+                        <option value="POOR">Osteceno</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Nabavka i prodajna cena</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nabavna cena *</label>
+                    <input type="number" x-model="form.purchase_price" required step="0.01" min="0"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Valuta nabavke</label>
+                    <select x-model="form.purchase_currency" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <option value="RSD">RSD</option>
+                        <option value="EUR">EUR</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Prodajna cena</label>
+                    <input type="number" x-model="form.sales_price" step="0.01" min="0"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Valuta prodaje</label>
+                    <select x-model="form.sales_currency" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <option value="RSD">RSD</option>
+                        <option value="EUR">EUR</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Supplier -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Dobavljac (opciono)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ime dobavljaca</label>
+                    <input type="text" x-model="form.supplier_name"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kontakt dobavljaca</label>
+                    <input type="text" x-model="form.supplier_contact"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-4">
+            <a href="/inventory/phones"
+               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                Otkazi
+            </a>
+            <button type="submit" :disabled="saving"
+                    class="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-500 disabled:opacity-50">
+                <span x-show="!saving">Dodaj telefon</span>
+                <span x-show="saving">Dodavanje...</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function phoneNewPage() {
+    return {
+        saving: false,
+        form: {
+            brand: '',
+            model: '',
+            imei: '',
+            color: '',
+            capacity: '',
+            condition: 'GOOD',
+            purchase_price: null,
+            purchase_currency: 'RSD',
+            sales_price: null,
+            sales_currency: 'RSD',
+            supplier_name: '',
+            supplier_contact: ''
+        },
+
+        async savePhone() {
+            this.saving = true;
+            try {
+                const response = await api('/api/v1/inventory/phones', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.form)
+                });
+
+                if (response.ok) {
+                    showToast('Telefon dodat', 'success');
+                    window.location.href = '/inventory/phones';
+                } else {
+                    const error = await response.json();
+                    showToast(error.message || 'Greska pri dodavanju', 'error');
+                }
+            } catch (e) {
+                console.error('Failed to save phone:', e);
+                showToast('Greska pri dodavanju', 'error');
+            } finally {
+                this.saving = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

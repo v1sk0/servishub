@@ -1,0 +1,100 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Uplate - ServisHub Admin{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100" x-data="paymentsPage()" x-init="loadPayments()">
+    <div class="fixed inset-y-0 left-0 w-64 bg-gray-900">
+        <div class="flex items-center h-16 px-6 bg-gray-800"><span class="text-lg font-bold text-white">ServisHub Admin</span></div>
+        <nav class="mt-6 px-3">
+            <a href="/admin/dashboard" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Dashboard</a>
+            <a href="/admin/tenants" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Servisi</a>
+            <a href="/admin/kyc" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">KYC</a>
+            <a href="/admin/suppliers" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Dobavljaci</a>
+            <a href="/admin/payments" class="flex items-center px-4 py-3 text-white bg-gray-800 rounded-lg mb-1">Uplate</a>
+        </nav>
+    </div>
+
+    <div class="ml-64">
+        <div class="bg-white shadow-sm h-16 flex items-center px-8">
+            <h1 class="text-xl font-semibold text-gray-900">Uplate</h1>
+        </div>
+
+        <div class="p-8">
+            <!-- Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <p class="text-sm text-gray-500">Na cekanju</p>
+                    <p class="text-2xl font-bold text-yellow-600" x-text="stats.pending || 0"></p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <p class="text-sm text-gray-500">Ovog meseca</p>
+                    <p class="text-2xl font-bold text-green-600" x-text="formatPrice(stats.this_month || 0) + ' RSD'"></p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <p class="text-sm text-gray-500">Ukupno</p>
+                    <p class="text-2xl font-bold text-gray-900" x-text="formatPrice(stats.total || 0) + ' RSD'"></p>
+                </div>
+            </div>
+
+            <div x-show="loading" class="flex justify-center py-12"><svg class="animate-spin h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg></div>
+
+            <div x-show="!loading" class="bg-white shadow rounded-lg overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Servis</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Iznos</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datum</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Akcije</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="p in payments" :key="p.id">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="p.tenant_name"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(p.period_start) + ' - ' + formatDate(p.period_end)"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="formatPrice(p.total_amount) + ' RSD'"></td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full" :class="{'bg-yellow-100 text-yellow-800': p.status === 'PENDING', 'bg-green-100 text-green-800': p.status === 'PAID', 'bg-red-100 text-red-800': p.status === 'FAILED'}" x-text="statusLabels[p.status]"></span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(p.created_at)"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right">
+                                    <button x-show="p.status === 'PENDING'" @click="verify(p.id)" class="text-green-600 hover:text-green-900 text-sm font-medium mr-2">Verifikuj</button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+                <div x-show="payments.length === 0" class="text-center py-12 text-gray-500">Nema uplata</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function paymentsPage() {
+    return {
+        loading: true, payments: [], stats: {},
+        statusLabels: { 'PENDING': 'Na cekanju', 'PAID': 'Placeno', 'FAILED': 'Neuspesno' },
+        async loadPayments() {
+            const token = localStorage.getItem('admin_access_token');
+            if (!token) { window.location.href = '/admin/login'; return; }
+            try {
+                const r = await fetch('/api/admin/payments', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (r.ok) { const data = await r.json(); this.payments = data.payments || []; this.stats = data.stats || {}; }
+            } catch (e) { console.error(e); } finally { this.loading = false; }
+        },
+        async verify(id) {
+            const token = localStorage.getItem('admin_access_token');
+            await fetch('/api/admin/payments/' + id + '/verify', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token } });
+            await this.loadPayments();
+        },
+        formatPrice(p) { return new Intl.NumberFormat('sr-RS').format(p); },
+        formatDate(d) { return d ? new Date(d).toLocaleDateString('sr-Latn-RS') : '-'; }
+    }
+}
+</script>
+{% endblock %}

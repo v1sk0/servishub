@@ -1,0 +1,107 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}KYC Verifikacija - ServisHub Admin{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100" x-data="kycListPage()" x-init="loadKyc()">
+    <!-- Sidebar -->
+    <div class="fixed inset-y-0 left-0 w-64 bg-gray-900">
+        <div class="flex items-center h-16 px-6 bg-gray-800">
+            <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <span class="ml-3 text-lg font-bold text-white">ServisHub Admin</span>
+        </div>
+        <nav class="mt-6 px-3">
+            <a href="/admin/dashboard" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Dashboard</a>
+            <a href="/admin/tenants" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Servisi</a>
+            <a href="/admin/kyc" class="flex items-center px-4 py-3 text-white bg-gray-800 rounded-lg mb-1">KYC</a>
+            <a href="/admin/suppliers" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Dobavljaci</a>
+            <a href="/admin/payments" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Uplate</a>
+        </nav>
+    </div>
+
+    <!-- Main content -->
+    <div class="ml-64">
+        <div class="bg-white shadow-sm h-16 flex items-center px-8">
+            <h1 class="text-xl font-semibold text-gray-900">KYC Verifikacija</h1>
+        </div>
+
+        <div class="p-8">
+            <!-- Tabs -->
+            <div class="border-b border-gray-200 mb-6">
+                <nav class="-mb-px flex space-x-8">
+                    <button @click="filter = 'PENDING'" :class="filter === 'PENDING' ? 'border-red-500 text-red-600' : 'border-transparent text-gray-500'"
+                            class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">Na cekanju</button>
+                    <button @click="filter = 'VERIFIED'" :class="filter === 'VERIFIED' ? 'border-red-500 text-red-600' : 'border-transparent text-gray-500'"
+                            class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">Verifikovani</button>
+                    <button @click="filter = 'REJECTED'" :class="filter === 'REJECTED' ? 'border-red-500 text-red-600' : 'border-transparent text-gray-500'"
+                            class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">Odbijeni</button>
+                </nav>
+            </div>
+
+            <div x-show="loading" class="flex justify-center py-12">
+                <svg class="animate-spin h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+            </div>
+
+            <div x-show="!loading" class="bg-white shadow rounded-lg overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Predstavnik</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Servis</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Broj LK</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Akcije</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="kyc in filteredKyc" :key="kyc.id">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <p class="text-sm font-medium text-gray-900" x-text="kyc.ime + ' ' + kyc.prezime"></p>
+                                    <p class="text-sm text-gray-500" x-text="kyc.email"></p>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="kyc.tenant_name"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="kyc.broj_licne_karte || '-'"></td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full"
+                                          :class="{'bg-yellow-100 text-yellow-800': kyc.status === 'PENDING', 'bg-green-100 text-green-800': kyc.status === 'VERIFIED', 'bg-red-100 text-red-800': kyc.status === 'REJECTED'}"
+                                          x-text="statusLabels[kyc.status]"></span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right">
+                                    <a :href="'/admin/kyc/' + kyc.id" class="text-red-600 hover:text-red-900 text-sm font-medium">Pregledaj</a>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+                <div x-show="filteredKyc.length === 0" class="text-center py-12 text-gray-500">Nema KYC zahteva</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function kycListPage() {
+    return {
+        loading: true, kycList: [], filter: 'PENDING',
+        statusLabels: { 'PENDING': 'Na cekanju', 'VERIFIED': 'Verifikovan', 'REJECTED': 'Odbijen' },
+        get filteredKyc() { return this.kycList.filter(k => k.status === this.filter); },
+        async loadKyc() {
+            const token = localStorage.getItem('admin_access_token');
+            if (!token) { window.location.href = '/admin/login'; return; }
+            try {
+                const response = await fetch('/api/admin/kyc', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (response.ok) { const data = await response.json(); this.kycList = data.representatives || data; }
+            } catch (e) { console.error(e); } finally { this.loading = false; }
+        }
+    }
+}
+</script>
+{% endblock %}
