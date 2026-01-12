@@ -1,8 +1,8 @@
 # ServisHub - Status Implementacije
 
-**Poslednje azuriranje:** 2026-01-12  
-**Lokacija projekta:** C:\servishub  
-**Plan:** C:\Users\darko\.claude\plans\dynamic-stirring-ullman.md  
+**Poslednje azuriranje:** 2026-01-12
+**Lokacija projekta:** C:\servishub
+**Plan:** C:\Users\darko\.claude\plans\dynamic-stirring-ullman.md
 
 ---
 
@@ -18,7 +18,35 @@
 | Faza 6: Inventory Modul | GOTOVO | Telefoni, delovi |
 | Faza 7: Marketplace i Orders | GOTOVO | Supplier, PartOrder modeli |
 | Faza 15: Platform Admin API | GOTOVO | Tenants, KYC, Dashboard |
-| Railway Deployment | CEKA | Kod spreman, treba push |
+| Railway Deployment | GOTOVO | GitHub + PostgreSQL + 18 tabela |
+
+---
+
+## BAZA PODATAKA (Railway PostgreSQL)
+
+**18 tabela kreirano:**
+- `alembic_version` - verzioniranje migracija
+- `tenant` - servisi/preduzeca
+- `service_location` - lokacije servisa
+- `tenant_user` - korisnici servisa
+- `user_location` - veza korisnik-lokacija
+- `platform_admin` - platform admini
+- `service_ticket` - servisni nalozi
+- `phone_listing` - telefoni na lageru
+- `spare_part` - rezervni delovi
+- `supplier` - dobavljaci
+- `supplier_listing` - katalog dobavljaca
+- `supplier_user` - korisnici dobavljaca
+- `part_order` - narudzbine
+- `part_order_item` - stavke narudzbine
+- `part_order_message` - poruke na narudzbini
+- `service_representative` - KYC predstavnici
+- `subscription_payment` - uplate pretplate
+- `audit_log` - audit trail
+
+**Platform Admin kreiran:**
+- Email: admin@servishub.rs
+- Password: Admin123! (PROMENITI!)
 
 ---
 
@@ -53,11 +81,12 @@
 
 ## STA PREOSTAJE
 
-1. Push na GitHub i deploy na Railway
-2. Nedostajuci API-ji (tenant, locations, users, marketplace, orders)
-3. Supplier API
-4. Public API (B2C)
-5. Frontend (Tailwind + Alpine.js)
+1. ~~Push na GitHub i deploy na Railway~~ DONE
+2. ~~Migracije i Platform Admin~~ DONE
+3. Nedostajuci API-ji (tenant, locations, users, marketplace, orders)
+4. Supplier API
+5. Public API (B2C)
+6. Frontend (Tailwind + Alpine.js)
 
 ---
 
@@ -65,10 +94,8 @@
 
 1. Procitaj STATUS.md, CLAUDE.md, README.md
 2. Procitaj plan: C:\Users\darko\.claude\plans\dynamic-stirring-ullman.md
-3. git push origin master
-4. Na Railway: connect repo, add PostgreSQL, set env vars
-5. flask db migrate && flask db upgrade && flask create-admin
+3. Nastavi sa API-jima koji fale
 
 ---
 
-Status kreiran: 2026-01-12
+Status azuriran: 2026-01-12
