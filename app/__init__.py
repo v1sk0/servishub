@@ -82,9 +82,10 @@ def _register_blueprints(app):
     register_supplier_routes()
     app.register_blueprint(api_supplier_bp, url_prefix='/api/supplier')
 
-    # TODO: Public API - B2C za krajnje kupce
-    # from .api.public import bp as api_public_bp
-    # app.register_blueprint(api_public_bp, url_prefix='/api/public')
+    # Public API - B2C za krajnje kupce (bez autentifikacije)
+    from .api.public import bp as api_public_bp, register_routes as register_public_routes
+    register_public_routes()
+    app.register_blueprint(api_public_bp, url_prefix='/api/public')
 
     # Zdravstvena provera - uvek dostupna
     @app.route('/health')

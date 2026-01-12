@@ -1,57 +1,170 @@
-# CLAUDE.md - ServisHub SaaS Platform
+# CLAUDE.md - ServisHub
 
-## Pregled Projekta
-
-ServisHub je SaaS platforma za servise mobilnih telefona i racunara.
-Izdvojen iz Dolce Vita ERP sistema kao standalone proizvod.
-
-### Kljucne Funkcionalnosti
-- **B2B:** Servisni nalozi, garancije, inventar, marketplace za delove
-- **B2C:** Javni portal za krajnje kupce, licitacije, zahtevi za servisom
-- **Dobavljaci:** Katalog delova sa 5% provizijom
-- **Platform Admin:** Upravljanje celim ekosistemom
-
-### Tech Stack
-- Backend: Python 3.11 + Flask 3.x + SQLAlchemy 2.0
-- Database: PostgreSQL 15 (Railway managed)
-- Cache/Queue: Redis + Celery
-- Frontend: Tailwind CSS + Alpine.js + Jinja2
-- Auth: JWT (PyJWT) + Refresh tokens
-- Hosting: Railway
+Instrukcije za Claude Code agente. **ČITAJ OVO PRE BILO KAKVIH IZMENA.**
 
 ---
 
-## Arhitektura
+## Opis Projekta
 
-### Multi-Tenancy
-- Row-level security sa `tenant_id` na svim tabelama
-- Automatski filter u middleware-u (`g.current_tenant`)
-- Tenant = jedan servis (firma)
+**ServisHub** je SaaS platforma za servise mobilnih telefona i računara.
 
-### Modeli
-- `Tenant` - servisna radnja (preduzece)
-- `ServiceLocation` - lokacija servisa (preduzece moze imati vise)
-- `TenantUser` - korisnik (pripada tenantu)
-- `ServiceTicket` - servisni nalog sa garancijom
-- `PhoneListing` - telefon na lageru
-- `SparePart` - rezervni deo (visibility: PRIVATE/PARTNER/PUBLIC)
-- `Supplier` - dobavljac delova
-- `SupplierListing` - artikl dobavljaca
-- `ServiceRepresentative` - KYC predstavnik servisa
-- `AuditLog` - sve promene
-- `PartOrder` - narudzbina od dobavljaca/partnera
-- `PartOrderMessage` - komunikacija oko narudzbine
+### Ključne funkcionalnosti
+| Modul | Opis |
+|-------|------|
+| **Servisni nalozi** | Praćenje popravki sa QR kodovima, garancije, naplate |
+| **Inventar** | Telefoni na lageru, rezervni delovi |
+| **Marketplace** | Razmena delova između servisa i dobavljača |
+| **Multi-tenant** | Svaki servis ima izolovan prostor (tenant_id na svemu) |
+| **KYC** | Verifikacija identiteta vlasnika servisa |
+| **Pretplata** | 3 meseca trial, zatim 3.600 + 1.800/lokacija RSD/mesec |
 
-### API Struktura
-- `/api/v1/*` - B2B API (JWT required, tenant-scoped)
-- `/api/public/*` - B2C API (bez auth, za kupce)
-- `/api/admin/*` - Platform Admin API (admin JWT, full access)
+### Tipovi korisnika
+1. **Servisi (Tenanti)** → `/api/v1/*` - JWT auth
+2. **Dobavljači** → `/api/supplier/*` - JWT auth
+3. **Platform Admini** → `/api/admin/*` - Admin JWT
+4. **Krajnji kupci** → `/api/public/*` - Bez auth (QR tracking)
 
-### Domeni
-- `servishub.rs` - Landing page
-- `app.servishub.rs` - Tenant panel (servisi)
-- `admin.servishub.rs` - Platform Admin panel (mi)
-- `supplier.servishub.rs` - Supplier panel (dobavljaci)
+---
+
+## Tech Stack
+
+| Komponenta | Tehnologija | Verzija |
+|------------|-------------|---------|
+| Backend | Python + Flask | 3.11 + 3.x |
+| ORM | SQLAlchemy | 2.0 |
+| Baza | PostgreSQL (Railway) | 15 |
+| Auth | JWT (PyJWT) | - |
+| Validacija | Pydantic | v2 |
+| Migracije | Flask-Migrate (Alembic) | - |
+| Deploy | Railway + GitHub | - |
+
+---
+
+## Struktura Projekta
+
+```
+servishub/
+├── app/
+│   ├── __init__.py           # App factory, registracija blueprinta
+│   ├── config.py             # Dev/Prod/Test config
+│   ├── extensions.py         # db, migrate, cors
+│   │
+│   ├── models/               # SQLAlchemy modeli (18 tabela)
+│   │   ├── tenant.py         # Tenant, ServiceLocation, TenantStatus
+│   │   ├── user.py           # TenantUser, UserRole, UserLocation
+│   │   ├── admin.py          # PlatformAdmin, AdminRole
+│   │   ├── ticket.py         # ServiceTicket, TicketStatus
+│   │   ├── inventory.py      # PhoneListing, SparePart, PartVisibility
+│   │   ├── supplier.py       # Supplier, SupplierListing, SupplierUser
+│   │   ├── order.py          # PartOrder, PartOrderItem, PartOrderMessage
+│   │   ├── kyc.py            # ServiceRepresentative, SubscriptionPayment
+│   │   └── audit.py          # AuditLog
+│   │
+│   └── api/                  # API Blueprints (115 ruta ukupno)
+│       ├── v1/               # B2B za servise (65 ruta)
+│       │   ├── auth.py       # Login, register, refresh, me
+│       │   ├── tenant.py     # Profil, settings, subscription, KYC
+│       │   ├── locations.py  # CRUD lokacija, assign users
+│       │   ├── users.py      # CRUD korisnika, roles, passwords
+│       │   ├── tickets.py    # CRUD naloga, status, pay
+│       │   ├── inventory.py  # Telefoni, delovi
+│       │   ├── marketplace.py # Pretraga delova
+│       │   └── orders.py     # Narudžbine od dobavljača
+│       │
+│       ├── admin/            # Platform Admin (21 ruta)
+│       │   ├── auth.py       # Admin login
+│       │   ├── tenants.py    # Lista/activate/suspend servisa
+│       │   ├── kyc.py        # Approve/reject KYC
+│       │   └── dashboard.py  # Statistike, grafici
+│       │
+│       ├── supplier/         # Za dobavljače (22 rute)
+│       │   ├── auth.py       # Register, login
+│       │   ├── listings.py   # CRUD proizvoda, bulk stock
+│       │   └── orders.py     # Primljene narudžbine
+│       │
+│       ├── public/           # Javni B2C (7 ruta)
+│       │   ├── tickets.py    # /track/:token (QR praćenje)
+│       │   └── marketplace.py # Javni pregled delova
+│       │
+│       └── middleware/
+│           └── auth.py       # @jwt_required, @admin_required
+│
+├── migrations/versions/      # Alembic migracije
+├── run.py                    # Dev server
+├── wsgi.py                   # Production (Gunicorn)
+├── Procfile                  # Railway config
+└── requirements.txt
+```
+
+---
+
+## API Pregled
+
+### V1 API - B2B za Servise (`/api/v1/*`)
+
+| Grupa | Endpointi |
+|-------|-----------|
+| **Auth** | register, login, refresh, logout, me, change-password |
+| **Tenant** | profile, settings, subscription, kyc |
+| **Locations** | list, create, get, update, delete, set-primary, assign/remove users |
+| **Users** | list, create, get, update, delete, me, password, reset-password, roles |
+| **Tickets** | list, create, get, update, status, pay, public/:token |
+| **Inventory** | phones (list, create, get, update, sell, collect), parts (list, create, get, update, adjust) |
+| **Marketplace** | parts search, parts/:source/:id, suppliers, suppliers/:id, categories, brands |
+| **Orders** | list, create, get, send, cancel, confirm-delivery, complete, messages |
+
+### Supplier API (`/api/supplier/*`)
+
+| Grupa | Endpointi |
+|-------|-----------|
+| **Auth** | register, login, refresh, logout, me |
+| **Listings** | list, create, get, update, delete, bulk-stock, stats, import |
+| **Orders** | list, pending, get, confirm, reject, ship, messages, stats |
+
+### Admin API (`/api/admin/*`)
+
+| Grupa | Endpointi |
+|-------|-----------|
+| **Auth** | login, refresh, logout, me |
+| **Tenants** | list, get, activate, suspend, extend-trial |
+| **KYC** | pending, approve, reject, request-resubmit, stats |
+| **Dashboard** | stats, revenue-chart, tenant-chart, recent-activity |
+
+### Public API (`/api/public/*`)
+
+| Endpoint | Opis |
+|----------|------|
+| GET /track/:token | Praćenje naloga (QR) |
+| GET /track/:token/qr | Podaci za QR generisanje |
+| GET /track/:token/receipt | Podaci za printanje potvrde |
+| GET /marketplace/parts | Javna pretraga delova |
+| GET /marketplace/suppliers | Lista verifikovanih dobavljača |
+| GET /marketplace/categories | Kategorije delova |
+| GET /marketplace/cities | Gradovi sa aktivnim servisima |
+
+---
+
+## Baza Podataka
+
+### Railway PostgreSQL
+```
+Host: mainline.proxy.rlwy.net:35540
+Database: railway
+User: postgres
+```
+
+### Tabele (18)
+```
+tenant, service_location, tenant_user, user_location
+platform_admin
+service_ticket
+phone_listing, spare_part
+supplier, supplier_listing, supplier_user
+part_order, part_order_item, part_order_message
+service_representative, subscription_payment
+audit_log
+alembic_version
+```
 
 ---
 
@@ -60,176 +173,128 @@ Izdvojen iz Dolce Vita ERP sistema kao standalone proizvod.
 ### Lokalni razvoj
 ```bash
 cd C:\servishub
-python -m venv venv
 venv\Scripts\activate
-pip install -r requirements-dev.txt
-flask db upgrade
-flask run --debug
+pip install -r requirements.txt
+python run.py
+# → http://localhost:5000
 ```
 
 ### Migracije
 ```bash
-flask db migrate -m "Opis izmene"
+flask db migrate -m "Opis"
 flask db upgrade
 ```
 
-### Testovi
+### CLI
 ```bash
-pytest tests/ -v
-pytest tests/unit/ -v --cov=app
+flask create-admin   # Interaktivno kreira Platform Admina
 ```
 
-### Celery worker (lokalno)
+### Health Check
 ```bash
-celery -A app.tasks.celery_app worker --loglevel=info
+curl http://localhost:5000/health
+# → {"status": "healthy", "service": "servishub"}
 ```
 
 ---
 
-## Environment Variables (.env)
+## JWT Autentifikacija
 
+### V1 (Tenant)
 ```
-FLASK_ENV=development
-SECRET_KEY=your-secret-key
-JWT_SECRET_KEY=your-jwt-secret
-JWT_ACCESS_TOKEN_EXPIRES=900
-JWT_REFRESH_TOKEN_EXPIRES=2592000
+Header: Authorization: Bearer <access_token>
+Payload: { type: "access", tenant_id, user_id, exp, iat }
+```
 
-DATABASE_URL=postgresql://user:pass@localhost:5432/servishub
-REDIS_URL=redis://localhost:6379/0
+### Admin
+```
+Header: Authorization: Bearer <admin_token>
+Payload: { type: "admin_access", admin_id, role, exp, iat }
+```
 
-CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
-
-# Railway production
-RAILWAY_ENVIRONMENT=production
+### Supplier
+```
+Header: Authorization: Bearer <supplier_token>
+Payload: { type: "supplier_access", supplier_id, user_id, exp, iat }
 ```
 
 ---
 
-## Coding Standards
+## Kritična Pravila
 
-### Komentarisanje Koda
-
-**Pravilo:** Svaki fajl, klasa, funkcija i kompleksna logika MORA imati kratak, koncizan komentar na SRPSKOM jeziku (latinica).
-
-#### Primer - Model
+### 1. Multi-Tenant Izolacija
 ```python
-"""
-Servisni nalog - glavni entitet za pracenje popravki.
-Sadrzi podatke o kupcu, uredjaju, statusu i garanciji.
-"""
-class ServiceTicket(db.Model):
-    __tablename__ = 'service_ticket'
+# UVEK filtriraj po tenant_id iz JWT-a
+tickets = ServiceTicket.query.filter_by(tenant_id=g.tenant_id)
 
-    # Primarni kljuc - globalno jedinstven
-    id = db.Column(db.BigInteger, primary_key=True)
-
-    # Veza sa preduzecem - obavezno za multi-tenant izolaciju
-    tenant_id = db.Column(db.Integer, db.ForeignKey('tenant.id'), nullable=False)
+# NIKADA ovako:
+tickets = ServiceTicket.query.all()  # ❌ OPASNO
 ```
 
-#### Primer - API Endpoint
-```python
-@bp.route('/tickets', methods=['GET'])
-@jwt_required
-@tenant_required
-def list_tickets():
-    """
-    Lista servisnih naloga za trenutno preduzece.
-    Filtrira po lokacijama koje korisnik ima pravo da vidi.
-    """
-    # Dohvati lokacije koje korisnik sme da vidi
-    allowed_locations = get_user_locations(g.current_user)
-    ...
-```
+### 2. Visibility (Delovi)
+- `PRIVATE` → samo vlasnik vidi
+- `PARTNER` → vide drugi servisi (B2B cena)
+- `PUBLIC` → vide svi (javna cena)
 
-### Opsta Pravila
+### 3. Komisija
+- 5% na marketplace transakcije
+- Obračunava se pri kreiranju narudžbine
 
-1. **Jezik komentara:** SRPSKI (latinica)
-2. **Docstring:** Svaka funkcija ima docstring sa opisom, parametrima i return
-3. **Inline komentari:** Za kompleksnu logiku, kratko objasnjenje STA i ZASTO
-4. **Imenovanje:** Opisna imena varijabli i funkcija na engleskom
-5. **TODO:** Oznaci sa `# TODO:` stvari koje treba doraditi
+### 4. Garancije
+- Default: 30 dana (iz tenant settings)
+- Počinje od `closed_at` (zatvaranje naloga)
+- `warranty_remaining_days` = expires - now
+
+### 5. Ticket Access Token
+- 64-karakterni hex string
+- Generiše se pri kreiranju naloga
+- Koristi se za QR praćenje (javno)
 
 ---
 
-## Vazne Napomene
+## Status Implementacije
 
-### Garancije
-- Default warranty_days iz `tenant.settings_json`
-- Moze se menjati po nalogu
-- warranty_expires_at = closed_at + warranty_days
-- Property `warranty_remaining_days` za prikaz
+| Komponenta | Status |
+|------------|--------|
+| Modeli (18 tabela) | ✅ DONE |
+| V1 API (65 ruta) | ✅ DONE |
+| Admin API (21 ruta) | ✅ DONE |
+| Supplier API (22 rute) | ✅ DONE |
+| Public API (7 ruta) | ✅ DONE |
+| Railway PostgreSQL | ✅ DONE |
+| GitHub repo | ✅ DONE |
 
-### Audit Log
-- SVE promene se loguju automatski
-- SQLAlchemy event listeners
-- Particioniranje po mesecu za performanse
-
-### B2C Portal
-- Servisi se prikazuju kao FIZICKA LICA (predstavnici)
-- Min 1 verified predstavnik za B2C funkcije
-- Zahtevi isticu posle 7 dana bez ponuda
-
-### Tenant Isolation
-- NIKAD direktan query bez tenant filtera
-- Koristi `g.current_tenant.id` uvek
-- Repositories automatski filtriraju
-
-### Smart Part Matching
-- Agregacija iz 3 izvora: moj lager, partneri, dobavljaci
-- Matching po brand + model + part_type
-- Redis cache za ceste pretrage
-
-### Order System
-- Status workflow: DRAFT -> SENT -> CONFIRMED -> SHIPPED -> DELIVERED -> COMPLETED
-- Provizija 5% za dobavljace, 0% za partnere
-- Sve transakcije se loguju u transaction_audit
-
----
-
-## Subscription Model
-
-| Stavka | Cena | Opis |
-|--------|------|------|
-| **Bazni paket** | **3.600 RSD/mesec** | 1 preduzece + 1 lokacija |
-| **Dodatna lokacija** | **1.800 RSD/mesec** | Po lokaciji |
-
-**Trial:** 3 meseca besplatno (bazni paket, 1 lokacija)
+### Preostaje
+- [ ] Email notifikacije
+- [ ] SMS integracija
+- [ ] Frontend (Tailwind + Alpine.js)
+- [ ] Cloudinary upload
+- [ ] Stripe plaćanja
 
 ---
 
 ## Povezani Resursi
 
-- Plan: `C:\Users\darko\.claude\plans\dynamic-stirring-ullman.md`
-- Dolce Vita (referenca): `C:\dolcevita\`
-- Railway Dashboard: https://railway.app/project/servishub
-- GitHub: https://github.com/v1sk0/servishub
+| Resurs | Lokacija |
+|--------|----------|
+| GitHub | https://github.com/v1sk0/servishub |
+| Railway | meticulous-appreciation |
+| Plan | C:\Users\darko\.claude\plans\dynamic-stirring-ullman.md |
+| Dolce Vita | C:\dolcevita\ |
 
 ---
 
-## Folder Struktura
+## Kredencijali (DEV)
 
 ```
-servishub/
-├── app/
-│   ├── __init__.py              # App factory
-│   ├── config.py                # Environment config
-│   ├── extensions.py            # Flask extensions (db, migrate, jwt)
-│   ├── models/                  # SQLAlchemy models
-│   ├── api/                     # API layer (v1, public, admin)
-│   ├── services/                # Business logic
-│   ├── repositories/            # Data access
-│   ├── tasks/                   # Celery background jobs
-│   └── templates/               # Email templates
-├── frontend/                    # Tailwind + Alpine.js + Jinja2
-├── migrations/                  # Alembic
-├── tests/                       # Pytest
-├── scripts/                     # Utility scripts
-├── docs/                        # Dokumentacija
-├── requirements.txt
-├── requirements-dev.txt
-├── Procfile
-├── railway.json
-└── .env.example
+Platform Admin:
+  Email: admin@servishub.rs
+  Pass:  Admin123!  ← PROMENITI U PRODUKCIJI!
+
+Railway PostgreSQL:
+  URL: postgresql://postgres:...@mainline.proxy.rlwy.net:35540/railway
 ```
+
+---
+
+*Ažurirano: 2026-01-12 | 115 API ruta | 18 tabela*
