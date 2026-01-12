@@ -1,0 +1,325 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Registracija - ServisHub{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8" x-data="registerPage()">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <div class="flex justify-center">
+                <div class="w-16 h-16 bg-primary-600 rounded-xl flex items-center justify-center">
+                    <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </div>
+            </div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Registrujte vaš servis
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Već imate nalog?
+                <a href="/login" class="font-medium text-primary-600 hover:text-primary-500">
+                    Prijavite se
+                </a>
+            </p>
+        </div>
+
+        <!-- Step indicator -->
+        <nav aria-label="Progress">
+            <ol class="flex items-center justify-center">
+                <li class="relative pr-8 sm:pr-20">
+                    <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div class="h-0.5 w-full" :class="step > 1 ? 'bg-primary-600' : 'bg-gray-200'"></div>
+                    </div>
+                    <div class="relative flex h-8 w-8 items-center justify-center rounded-full"
+                         :class="step >= 1 ? 'bg-primary-600' : 'border-2 border-gray-300 bg-white'">
+                        <span :class="step >= 1 ? 'text-white' : 'text-gray-500'" class="text-sm font-medium">1</span>
+                    </div>
+                </li>
+                <li class="relative pr-8 sm:pr-20">
+                    <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div class="h-0.5 w-full" :class="step > 2 ? 'bg-primary-600' : 'bg-gray-200'"></div>
+                    </div>
+                    <div class="relative flex h-8 w-8 items-center justify-center rounded-full"
+                         :class="step >= 2 ? 'bg-primary-600' : 'border-2 border-gray-300 bg-white'">
+                        <span :class="step >= 2 ? 'text-white' : 'text-gray-500'" class="text-sm font-medium">2</span>
+                    </div>
+                </li>
+                <li class="relative">
+                    <div class="relative flex h-8 w-8 items-center justify-center rounded-full"
+                         :class="step >= 3 ? 'bg-primary-600' : 'border-2 border-gray-300 bg-white'">
+                        <span :class="step >= 3 ? 'text-white' : 'text-gray-500'" class="text-sm font-medium">3</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <form @submit.prevent="submitStep()" class="mt-8 space-y-6">
+            <!-- Step 1: Business Info -->
+            <div x-show="step === 1" class="space-y-4">
+                <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Podaci o firmi</h3>
+
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">Naziv firme *</label>
+                    <input type="text" id="name" x-model="form.name" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="pib" class="block text-sm font-medium text-gray-700">PIB *</label>
+                    <input type="text" id="pib" x-model="form.pib" required pattern="\d{9}"
+                           placeholder="9 cifara"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="maticni_broj" class="block text-sm font-medium text-gray-700">Matični broj</label>
+                    <input type="text" id="maticni_broj" x-model="form.maticni_broj" pattern="\d{8}"
+                           placeholder="8 cifara"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="adresa_sedista" class="block text-sm font-medium text-gray-700">Adresa sedišta *</label>
+                    <input type="text" id="adresa_sedista" x-model="form.adresa_sedista" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="telefon" class="block text-sm font-medium text-gray-700">Telefon *</label>
+                    <input type="tel" id="telefon" x-model="form.telefon" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+            </div>
+
+            <!-- Step 2: Location -->
+            <div x-show="step === 2" class="space-y-4">
+                <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Prva lokacija servisa</h3>
+
+                <div>
+                    <label for="location_name" class="block text-sm font-medium text-gray-700">Naziv lokacije *</label>
+                    <input type="text" id="location_name" x-model="form.location_name" required
+                           placeholder="npr. Glavni servis"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="location_address" class="block text-sm font-medium text-gray-700">Adresa *</label>
+                    <input type="text" id="location_address" x-model="form.location_address" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="location_city" class="block text-sm font-medium text-gray-700">Grad *</label>
+                        <input type="text" id="location_city" x-model="form.location_city" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="location_postal" class="block text-sm font-medium text-gray-700">Poštanski broj</label>
+                        <input type="text" id="location_postal" x-model="form.location_postal_code"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label for="location_phone" class="block text-sm font-medium text-gray-700">Telefon lokacije</label>
+                    <input type="tel" id="location_phone" x-model="form.location_phone"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+            </div>
+
+            <!-- Step 3: Admin Account -->
+            <div x-show="step === 3" class="space-y-4">
+                <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Vaš admin nalog</h3>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="ime" class="block text-sm font-medium text-gray-700">Ime *</label>
+                        <input type="text" id="ime" x-model="form.ime" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="prezime" class="block text-sm font-medium text-gray-700">Prezime *</label>
+                        <input type="text" id="prezime" x-model="form.prezime" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email *</label>
+                    <input type="email" id="email" x-model="form.email" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Lozinka *</label>
+                    <input type="password" id="password" x-model="form.password" required minlength="8"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    <p class="mt-1 text-xs text-gray-500">Minimum 8 karaktera</p>
+                </div>
+                <div>
+                    <label for="password_confirm" class="block text-sm font-medium text-gray-700">Potvrdi lozinku *</label>
+                    <input type="password" id="password_confirm" x-model="form.password_confirm" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+
+                <div class="flex items-start">
+                    <input type="checkbox" id="terms" x-model="acceptTerms" required
+                           class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                    <label for="terms" class="ml-2 block text-sm text-gray-900">
+                        Prihvatam <a href="#" class="text-primary-600 hover:text-primary-500">uslove korišćenja</a>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Error message -->
+            <div x-show="error" class="rounded-md bg-red-50 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-red-800" x-text="error"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation buttons -->
+            <div class="flex justify-between">
+                <button type="button" @click="prevStep()" x-show="step > 1"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Nazad
+                </button>
+                <div x-show="step === 1"></div>
+
+                <button type="submit" :disabled="loading"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50">
+                    <svg x-show="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span x-text="step < 3 ? 'Dalje' : 'Registruj se'"></span>
+                </button>
+            </div>
+        </form>
+
+        <!-- Info box -->
+        <div class="bg-blue-50 rounded-lg p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-blue-700">
+                        <strong>3 meseca besplatno!</strong> Nakon registracije dobijate trial period bez obaveza.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function registerPage() {
+    return {
+        step: 1,
+        loading: false,
+        error: '',
+        acceptTerms: false,
+
+        form: {
+            // Business
+            name: '',
+            pib: '',
+            maticni_broj: '',
+            adresa_sedista: '',
+            telefon: '',
+            // Location
+            location_name: '',
+            location_address: '',
+            location_city: '',
+            location_postal_code: '',
+            location_phone: '',
+            // Admin
+            ime: '',
+            prezime: '',
+            email: '',
+            password: '',
+            password_confirm: ''
+        },
+
+        prevStep() {
+            if (this.step > 1) this.step--;
+        },
+
+        async submitStep() {
+            this.error = '';
+
+            // Validate current step
+            if (this.step === 1) {
+                if (!this.form.name || !this.form.pib || !this.form.adresa_sedista || !this.form.telefon) {
+                    this.error = 'Popunite sva obavezna polja';
+                    return;
+                }
+                this.step = 2;
+                return;
+            }
+
+            if (this.step === 2) {
+                if (!this.form.location_name || !this.form.location_address || !this.form.location_city) {
+                    this.error = 'Popunite sva obavezna polja';
+                    return;
+                }
+                this.step = 3;
+                return;
+            }
+
+            // Step 3 - Submit
+            if (!this.form.ime || !this.form.prezime || !this.form.email || !this.form.password) {
+                this.error = 'Popunite sva obavezna polja';
+                return;
+            }
+
+            if (this.form.password !== this.form.password_confirm) {
+                this.error = 'Lozinke se ne poklapaju';
+                return;
+            }
+
+            if (this.form.password.length < 8) {
+                this.error = 'Lozinka mora imati minimum 8 karaktera';
+                return;
+            }
+
+            if (!this.acceptTerms) {
+                this.error = 'Morate prihvatiti uslove korišćenja';
+                return;
+            }
+
+            this.loading = true;
+
+            try {
+                const response = await fetch('/api/v1/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.form)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Store tokens
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('refresh_token', data.refresh_token);
+                    // Redirect to dashboard
+                    window.location.href = '/dashboard';
+                } else {
+                    this.error = data.message || 'Greška pri registraciji';
+                }
+            } catch (e) {
+                console.error('Registration failed:', e);
+                this.error = 'Greška pri povezivanju sa serverom';
+            } finally {
+                this.loading = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,453 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Nalog #{{ ticket_id }} - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="ticketDetailPage({{ ticket_id }})" x-init="loadTicket()">
+    <!-- Loading -->
+    <div x-show="loading" class="flex justify-center items-center h-64">
+        <svg class="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+    </div>
+
+    <div x-show="!loading && ticket">
+        <!-- Header -->
+        <div class="md:flex md:items-center md:justify-between mb-8">
+            <div class="min-w-0 flex-1">
+                <div class="flex items-center">
+                    <a href="/tickets" class="mr-4 text-gray-400 hover:text-gray-600">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                    </a>
+                    <div>
+                        <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                            Nalog #<span x-text="ticket.ticket_number"></span>
+                        </h2>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Kreiran <span x-text="formatDate(ticket.created_at)"></span>
+                            <span x-show="ticket.location_name"> • <span x-text="ticket.location_name"></span></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 flex gap-3 md:ml-4 md:mt-0">
+                <!-- Print button -->
+                <button @click="printTicket()" type="button"
+                        class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <svg class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    Štampaj
+                </button>
+                <!-- Edit button -->
+                <a :href="'/tickets/' + ticket.id + '/edit'"
+                   class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <svg class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Izmeni
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main content -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Status Card -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Status naloga</h3>
+                        <span class="px-3 py-1 text-sm font-semibold rounded-full"
+                              :class="getStatusClass(ticket.status)"
+                              x-text="statusLabels[ticket.status]"></span>
+                    </div>
+                    <div class="flex gap-2 flex-wrap">
+                        <template x-for="status in availableStatuses" :key="status.value">
+                            <button @click="changeStatus(status.value)"
+                                    :disabled="ticket.status === status.value || updating"
+                                    :class="ticket.status === status.value ? 'ring-2 ring-primary-500' : ''"
+                                    class="px-3 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50">
+                                <span x-text="status.label"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Device Info -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Uređaj</h3>
+                    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Tip</dt>
+                            <dd class="mt-1 text-sm text-gray-900" x-text="deviceTypes[ticket.device_type] || ticket.device_type"></dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Marka / Model</dt>
+                            <dd class="mt-1 text-sm text-gray-900" x-text="ticket.brand + ' ' + ticket.model"></dd>
+                        </div>
+                        <div x-show="ticket.imei">
+                            <dt class="text-sm font-medium text-gray-500">IMEI / Serijski broj</dt>
+                            <dd class="mt-1 text-sm text-gray-900" x-text="ticket.imei"></dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Stanje</dt>
+                            <dd class="mt-1 text-sm text-gray-900" x-text="conditionLabels[ticket.device_condition] || ticket.device_condition"></dd>
+                        </div>
+                        <div x-show="ticket.device_password">
+                            <dt class="text-sm font-medium text-gray-500">Lozinka</dt>
+                            <dd class="mt-1 text-sm text-gray-900 font-mono" x-text="ticket.device_password"></dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <!-- Problem / Diagnosis / Resolution -->
+                <div class="bg-white shadow rounded-lg p-6 space-y-6">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-2">Opis problema</h4>
+                        <p class="text-gray-900" x-text="ticket.problem_description"></p>
+                    </div>
+                    <div x-show="ticket.diagnosis">
+                        <h4 class="text-sm font-medium text-gray-500 mb-2">Dijagnoza</h4>
+                        <p class="text-gray-900" x-text="ticket.diagnosis"></p>
+                    </div>
+                    <div x-show="ticket.resolution">
+                        <h4 class="text-sm font-medium text-gray-500 mb-2">Rešenje</h4>
+                        <p class="text-gray-900" x-text="ticket.resolution"></p>
+                    </div>
+
+                    <!-- Add diagnosis/resolution form -->
+                    <div x-show="!ticket.diagnosis || !ticket.resolution" class="border-t pt-4">
+                        <form @submit.prevent="updateNotes()">
+                            <div x-show="!ticket.diagnosis" class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Dodaj dijagnozu</label>
+                                <textarea x-model="notes.diagnosis" rows="2"
+                                          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"></textarea>
+                            </div>
+                            <div x-show="ticket.status === 'READY' || ticket.status === 'DELIVERED'" class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Rešenje</label>
+                                <textarea x-model="notes.resolution" rows="2"
+                                          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"></textarea>
+                            </div>
+                            <button type="submit" :disabled="updating"
+                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-500 disabled:opacity-50">
+                                Sačuvaj
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Internal Notes -->
+                <div class="bg-white shadow rounded-lg p-6" x-show="ticket.internal_notes">
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Interne beleške</h3>
+                    <p class="text-gray-600 text-sm" x-text="ticket.internal_notes"></p>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Customer Card -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Kupac</h3>
+                    <dl class="space-y-3">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Ime</dt>
+                            <dd class="mt-1 text-sm text-gray-900" x-text="ticket.customer_name"></dd>
+                        </div>
+                        <div x-show="ticket.customer_phone">
+                            <dt class="text-sm font-medium text-gray-500">Telefon</dt>
+                            <dd class="mt-1">
+                                <a :href="'tel:' + ticket.customer_phone" class="text-sm text-primary-600 hover:text-primary-900" x-text="ticket.customer_phone"></a>
+                            </dd>
+                        </div>
+                        <div x-show="ticket.customer_email">
+                            <dt class="text-sm font-medium text-gray-500">Email</dt>
+                            <dd class="mt-1">
+                                <a :href="'mailto:' + ticket.customer_email" class="text-sm text-primary-600 hover:text-primary-900" x-text="ticket.customer_email"></a>
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <!-- Pricing Card -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Cena</h3>
+                    <dl class="space-y-3">
+                        <div x-show="ticket.estimated_price">
+                            <dt class="text-sm font-medium text-gray-500">Procena</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                <span x-text="formatPrice(ticket.estimated_price)"></span>
+                                <span x-text="ticket.currency || 'RSD'"></span>
+                            </dd>
+                        </div>
+                        <div x-show="ticket.final_price">
+                            <dt class="text-sm font-medium text-gray-500">Konačna cena</dt>
+                            <dd class="mt-1 text-lg font-semibold text-gray-900">
+                                <span x-text="formatPrice(ticket.final_price)"></span>
+                                <span x-text="ticket.currency || 'RSD'"></span>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Status plaćanja</dt>
+                            <dd class="mt-1">
+                                <span x-show="ticket.is_paid" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Plaćeno
+                                </span>
+                                <span x-show="!ticket.is_paid" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    Nije plaćeno
+                                </span>
+                            </dd>
+                        </div>
+                    </dl>
+                    <!-- Payment action -->
+                    <div class="mt-4 pt-4 border-t" x-show="!ticket.is_paid && (ticket.status === 'READY' || ticket.status === 'DELIVERED')">
+                        <div class="mb-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Konačna cena</label>
+                            <input type="number" x-model="paymentAmount" step="0.01" min="0"
+                                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        </div>
+                        <button @click="markAsPaid()" :disabled="updating"
+                                class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-500 disabled:opacity-50">
+                            Označi kao plaćeno
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Warranty Card -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Garancija</h3>
+                    <dl class="space-y-3">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Trajanje</dt>
+                            <dd class="mt-1 text-sm text-gray-900" x-text="ticket.warranty_days + ' dana'"></dd>
+                        </div>
+                        <div x-show="ticket.closed_at">
+                            <dt class="text-sm font-medium text-gray-500">Zatvoreno</dt>
+                            <dd class="mt-1 text-sm text-gray-900" x-text="formatDate(ticket.closed_at)"></dd>
+                        </div>
+                        <div x-show="ticket.warranty_expires_at">
+                            <dt class="text-sm font-medium text-gray-500">Ističe</dt>
+                            <dd class="mt-1 text-sm text-gray-900" x-text="formatDate(ticket.warranty_expires_at)"></dd>
+                        </div>
+                        <div x-show="ticket.warranty_remaining_days !== undefined && ticket.warranty_remaining_days !== null">
+                            <dt class="text-sm font-medium text-gray-500">Preostalo</dt>
+                            <dd class="mt-1">
+                                <span :class="ticket.warranty_remaining_days > 0 ? 'text-green-600' : 'text-red-600'"
+                                      class="text-sm font-medium"
+                                      x-text="ticket.warranty_remaining_days > 0 ? ticket.warranty_remaining_days + ' dana' : 'Istekla'"></span>
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <!-- QR Code -->
+                <div class="bg-white shadow rounded-lg p-6" x-show="ticket.access_token">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">QR kod za praćenje</h3>
+                    <div class="text-center">
+                        <div class="bg-gray-100 p-4 rounded-lg inline-block">
+                            <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(window.location.origin + '/track/' + ticket.access_token)"
+                                 alt="QR kod" class="mx-auto">
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Kupac može skenirati za praćenje statusa</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Not found -->
+    <div x-show="!loading && !ticket" class="text-center py-12">
+        <h3 class="text-lg font-medium text-gray-900">Nalog nije pronađen</h3>
+        <p class="mt-2 text-gray-500">Nalog sa ovim ID-om ne postoji ili nemate pristup.</p>
+        <a href="/tickets" class="mt-4 inline-flex items-center text-primary-600 hover:text-primary-900">
+            ← Nazad na listu naloga
+        </a>
+    </div>
+</div>
+
+<script>
+function ticketDetailPage(ticketId) {
+    return {
+        ticketId: ticketId,
+        ticket: null,
+        loading: true,
+        updating: false,
+        paymentAmount: 0,
+
+        notes: {
+            diagnosis: '',
+            resolution: ''
+        },
+
+        statusLabels: {
+            'RECEIVED': 'Primljeno',
+            'DIAGNOSED': 'Dijagnostifikovano',
+            'IN_PROGRESS': 'U obradi',
+            'WAITING_PARTS': 'Čeka delove',
+            'READY': 'Spremno',
+            'DELIVERED': 'Isporučeno',
+            'CANCELLED': 'Otkazano'
+        },
+
+        deviceTypes: {
+            'PHONE': 'Mobilni telefon',
+            'TABLET': 'Tablet',
+            'LAPTOP': 'Laptop',
+            'COMPUTER': 'Desktop računar',
+            'OTHER': 'Ostalo'
+        },
+
+        conditionLabels: {
+            'GOOD': 'Dobro',
+            'SCRATCHED': 'Ogrebano',
+            'CRACKED': 'Napuklo',
+            'BROKEN': 'Polomljeno'
+        },
+
+        availableStatuses: [
+            { value: 'RECEIVED', label: 'Primljeno' },
+            { value: 'DIAGNOSED', label: 'Dijagnostifikovano' },
+            { value: 'IN_PROGRESS', label: 'U obradi' },
+            { value: 'WAITING_PARTS', label: 'Čeka delove' },
+            { value: 'READY', label: 'Spremno' },
+            { value: 'DELIVERED', label: 'Isporučeno' }
+        ],
+
+        async loadTicket() {
+            this.loading = true;
+            try {
+                const response = await api('/api/v1/tickets/' + this.ticketId);
+                if (response.ok) {
+                    this.ticket = await response.json();
+                    this.paymentAmount = this.ticket.final_price || this.ticket.estimated_price || 0;
+                }
+            } catch (e) {
+                console.error('Failed to load ticket:', e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async changeStatus(newStatus) {
+            if (this.updating) return;
+            this.updating = true;
+            try {
+                const response = await api('/api/v1/tickets/' + this.ticketId + '/status', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.ticket.status = data.status;
+                    if (data.closed_at) this.ticket.closed_at = data.closed_at;
+                    showToast('Status promenjen', 'success');
+                } else {
+                    const error = await response.json();
+                    showToast(error.message || 'Greška pri promeni statusa', 'error');
+                }
+            } catch (e) {
+                console.error('Failed to change status:', e);
+                showToast('Greška pri promeni statusa', 'error');
+            } finally {
+                this.updating = false;
+            }
+        },
+
+        async updateNotes() {
+            if (this.updating) return;
+            this.updating = true;
+            try {
+                const payload = {};
+                if (this.notes.diagnosis) payload.diagnosis = this.notes.diagnosis;
+                if (this.notes.resolution) payload.resolution = this.notes.resolution;
+
+                const response = await api('/api/v1/tickets/' + this.ticketId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.ticket = data;
+                    this.notes.diagnosis = '';
+                    this.notes.resolution = '';
+                    showToast('Sačuvano', 'success');
+                } else {
+                    showToast('Greška pri čuvanju', 'error');
+                }
+            } catch (e) {
+                console.error('Failed to update notes:', e);
+                showToast('Greška pri čuvanju', 'error');
+            } finally {
+                this.updating = false;
+            }
+        },
+
+        async markAsPaid() {
+            if (this.updating) return;
+            this.updating = true;
+            try {
+                const response = await api('/api/v1/tickets/' + this.ticketId + '/pay', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ final_price: parseFloat(this.paymentAmount) })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.ticket.is_paid = true;
+                    this.ticket.final_price = data.final_price;
+                    showToast('Označeno kao plaćeno', 'success');
+                } else {
+                    showToast('Greška', 'error');
+                }
+            } catch (e) {
+                console.error('Failed to mark as paid:', e);
+                showToast('Greška', 'error');
+            } finally {
+                this.updating = false;
+            }
+        },
+
+        printTicket() {
+            window.print();
+        },
+
+        getStatusClass(status) {
+            const classes = {
+                'RECEIVED': 'bg-yellow-100 text-yellow-800',
+                'DIAGNOSED': 'bg-blue-100 text-blue-800',
+                'IN_PROGRESS': 'bg-blue-100 text-blue-800',
+                'WAITING_PARTS': 'bg-purple-100 text-purple-800',
+                'READY': 'bg-green-100 text-green-800',
+                'DELIVERED': 'bg-gray-100 text-gray-800',
+                'CANCELLED': 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        },
+
+        formatPrice(price) {
+            if (!price) return '-';
+            return new Intl.NumberFormat('sr-RS').format(price);
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('sr-Latn-RS', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

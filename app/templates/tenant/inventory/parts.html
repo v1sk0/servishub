@@ -1,0 +1,491 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Rezervni delovi - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="partsPage()" x-init="loadParts()">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-8">
+        <div class="min-w-0 flex-1">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl">
+                Rezervni delovi
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                Upravljajte lagerom rezervnih delova
+            </p>
+        </div>
+        <div class="mt-4 flex md:ml-4 md:mt-0">
+            <button @click="showAddModal = true"
+                    class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
+                <svg class="-ml-0.5 mr-1.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                </svg>
+                Dodaj deo
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-4 mb-6">
+        <div class="bg-white overflow-hidden shadow rounded-lg p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                </div>
+                <div class="ml-5">
+                    <dt class="text-sm font-medium text-gray-500">Ukupno artikala</dt>
+                    <dd class="text-lg font-semibold text-gray-900" x-text="stats.total_items"></dd>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                </div>
+                <div class="ml-5">
+                    <dt class="text-sm font-medium text-gray-500">Ukupno komada</dt>
+                    <dd class="text-lg font-semibold text-green-600" x-text="stats.total_quantity"></dd>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <div class="ml-5">
+                    <dt class="text-sm font-medium text-gray-500">Nisko stanje</dt>
+                    <dd class="text-lg font-semibold text-red-600" x-text="stats.low_stock"></dd>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+                    </svg>
+                </div>
+                <div class="ml-5">
+                    <dt class="text-sm font-medium text-gray-500">Javno deljeno</dt>
+                    <dd class="text-lg font-semibold text-blue-600" x-text="stats.public_count"></dd>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white shadow rounded-lg mb-6 p-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Pretraga</label>
+                <input type="text" x-model="filters.search" @input.debounce.300ms="loadParts()"
+                       placeholder="Naziv, sifra, model..."
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Kategorija</label>
+                <select x-model="filters.category" @change="loadParts()"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    <option value="">Sve kategorije</option>
+                    <option value="DISPLAY">Ekran</option>
+                    <option value="BATTERY">Baterija</option>
+                    <option value="CHARGING_PORT">Port za punjenje</option>
+                    <option value="CAMERA">Kamera</option>
+                    <option value="SPEAKER">Zvucnik</option>
+                    <option value="BUTTON">Taster</option>
+                    <option value="FRAME">Okvir</option>
+                    <option value="BACK_COVER">Zadnja maska</option>
+                    <option value="OTHER">Ostalo</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Vidljivost</label>
+                <select x-model="filters.visibility" @change="loadParts()"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    <option value="">Sva</option>
+                    <option value="PRIVATE">Privatno</option>
+                    <option value="PARTNER">Partneri</option>
+                    <option value="PUBLIC">Javno</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Stanje</label>
+                <select x-model="filters.low_stock" @change="loadParts()"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    <option value="">Svi</option>
+                    <option value="true">Nisko stanje</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button @click="resetFilters()" class="w-full px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Resetuj
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Naziv</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategorija</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Za uredjaj</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kolicina</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cena</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vidljivost</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Akcije</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <template x-for="part in parts" :key="part.id">
+                        <tr class="hover:bg-gray-50" :class="part.quantity <= part.min_stock_level ? 'bg-red-50' : ''">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900" x-text="part.part_name"></div>
+                                <div class="text-sm text-gray-500" x-text="part.part_number || ''"></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800" x-text="categoryLabels[part.part_category] || part.part_category"></span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <span x-text="[part.brand, part.model].filter(Boolean).join(' ') || '-'"></span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <span class="text-sm font-semibold" :class="part.quantity <= part.min_stock_level ? 'text-red-600' : 'text-gray-900'" x-text="part.quantity"></span>
+                                    <span class="ml-1 text-xs text-gray-500" x-text="'(min: ' + (part.min_stock_level || 0) + ')'"></span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <div x-text="formatPrice(part.selling_price) + ' ' + (part.currency || 'RSD')"></div>
+                                <div class="text-xs text-gray-500" x-show="part.public_price" x-text="'Javna: ' + formatPrice(part.public_price)"></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs rounded-full"
+                                      :class="visibilityClass(part.visibility)"
+                                      x-text="visibilityLabels[part.visibility]"></span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                <button @click="openAdjustModal(part)" class="text-blue-600 hover:text-blue-900">+/-</button>
+                                <button @click="openEditModal(part)" class="text-primary-600 hover:text-primary-900">Izmeni</button>
+                            </td>
+                        </tr>
+                    </template>
+
+                    <!-- Empty -->
+                    <tr x-show="!loading && parts.length === 0">
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">Nema delova</h3>
+                            <p class="mt-1 text-sm text-gray-500">Dodajte prvi rezervni deo.</p>
+                        </td>
+                    </tr>
+
+                    <!-- Loading -->
+                    <tr x-show="loading">
+                        <td colspan="7" class="px-6 py-12 text-center">
+                            <svg class="animate-spin mx-auto h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200" x-show="totalPages > 1">
+            <div class="flex-1 flex justify-between sm:hidden">
+                <button @click="prevPage()" :disabled="page === 1" class="px-4 py-2 border rounded-md text-sm disabled:opacity-50">Prethodna</button>
+                <button @click="nextPage()" :disabled="page === totalPages" class="px-4 py-2 border rounded-md text-sm disabled:opacity-50">Sledeca</button>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <p class="text-sm text-gray-700">
+                    <span class="font-medium" x-text="(page - 1) * perPage + 1"></span> -
+                    <span class="font-medium" x-text="Math.min(page * perPage, total)"></span> od
+                    <span class="font-medium" x-text="total"></span>
+                </p>
+                <nav class="inline-flex rounded-md shadow-sm -space-x-px">
+                    <button @click="prevPage()" :disabled="page === 1" class="px-2 py-2 rounded-l-md border bg-white text-sm disabled:opacity-50">&lt;</button>
+                    <span class="px-4 py-2 border bg-white text-sm" x-text="page + ' / ' + totalPages"></span>
+                    <button @click="nextPage()" :disabled="page === totalPages" class="px-2 py-2 rounded-r-md border bg-white text-sm disabled:opacity-50">&gt;</button>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div x-show="showAddModal || showEditModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="closeModals()"></div>
+            <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full max-h-screen overflow-y-auto">
+                <form @submit.prevent="submitPart()">
+                    <div class="px-6 py-4 border-b">
+                        <h3 class="text-lg font-medium text-gray-900" x-text="showEditModal ? 'Izmeni deo' : 'Dodaj deo'"></h3>
+                    </div>
+                    <div class="px-6 py-4 space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700">Naziv dela *</label>
+                                <input type="text" x-model="form.part_name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Kategorija</label>
+                                <select x-model="form.part_category" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                    <option value="DISPLAY">Ekran</option>
+                                    <option value="BATTERY">Baterija</option>
+                                    <option value="CHARGING_PORT">Port za punjenje</option>
+                                    <option value="CAMERA">Kamera</option>
+                                    <option value="SPEAKER">Zvucnik</option>
+                                    <option value="BUTTON">Taster</option>
+                                    <option value="FRAME">Okvir</option>
+                                    <option value="BACK_COVER">Zadnja maska</option>
+                                    <option value="OTHER">Ostalo</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Sifra</label>
+                                <input type="text" x-model="form.part_number" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Marka uredjaja</label>
+                                <input type="text" x-model="form.brand" placeholder="Samsung" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Model uredjaja</label>
+                                <input type="text" x-model="form.model" placeholder="Galaxy S21" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Kolicina</label>
+                                <input type="number" x-model="form.quantity" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Min. stanje</label>
+                                <input type="number" x-model="form.min_stock_level" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Nabavna cena</label>
+                                <input type="number" x-model="form.purchase_price" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Prodajna cena</label>
+                                <input type="number" x-model="form.selling_price" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Javna cena</label>
+                                <input type="number" x-model="form.public_price" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Vidljivost</label>
+                                <select x-model="form.visibility" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                    <option value="PRIVATE">Privatno (samo ja)</option>
+                                    <option value="PARTNER">Partneri</option>
+                                    <option value="PUBLIC">Javno (marketplace)</option>
+                                </select>
+                            </div>
+                            <div class="col-span-2 flex items-center">
+                                <input type="checkbox" x-model="form.is_original" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                <label class="ml-2 text-sm text-gray-700">Originalni deo</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 border-t bg-gray-50 flex justify-end space-x-3">
+                        <button type="button" @click="closeModals()" class="px-4 py-2 border rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Otkazi</button>
+                        <button type="submit" :disabled="saving" class="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-500 disabled:opacity-50">
+                            <span x-text="saving ? 'Cuvanje...' : (showEditModal ? 'Sacuvaj' : 'Dodaj')"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Adjust Quantity Modal -->
+    <div x-show="showAdjustModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="showAdjustModal = false"></div>
+            <div class="relative bg-white rounded-lg shadow-xl max-w-sm w-full">
+                <form @submit.prevent="adjustQuantity()">
+                    <div class="px-6 py-4 border-b">
+                        <h3 class="text-lg font-medium text-gray-900">Prilagodi kolicinu</h3>
+                        <p class="text-sm text-gray-500" x-text="selectedPart?.part_name"></p>
+                    </div>
+                    <div class="px-6 py-4">
+                        <p class="text-sm text-gray-600 mb-4">Trenutno: <span class="font-semibold" x-text="selectedPart?.quantity"></span> kom</p>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Promena (+/-)</label>
+                            <input type="number" x-model="adjustForm.delta" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" placeholder="+5 ili -3">
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700">Razlog</label>
+                            <input type="text" x-model="adjustForm.reason" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" placeholder="Nabavka, korekcija...">
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 border-t bg-gray-50 flex justify-end space-x-3">
+                        <button type="button" @click="showAdjustModal = false" class="px-4 py-2 border rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Otkazi</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-500">Primeni</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function partsPage() {
+    return {
+        parts: [],
+        loading: true,
+        saving: false,
+        page: 1,
+        perPage: 20,
+        total: 0,
+        totalPages: 1,
+
+        stats: { total_items: 0, total_quantity: 0, low_stock: 0, public_count: 0 },
+        filters: { search: '', category: '', visibility: '', low_stock: '' },
+
+        showAddModal: false,
+        showEditModal: false,
+        showAdjustModal: false,
+        selectedPart: null,
+
+        form: {
+            part_name: '', part_category: 'OTHER', part_number: '', brand: '', model: '',
+            quantity: 0, min_stock_level: 0, purchase_price: '', selling_price: '', public_price: '',
+            visibility: 'PRIVATE', is_original: false
+        },
+        adjustForm: { delta: 0, reason: '' },
+
+        categoryLabels: {
+            'DISPLAY': 'Ekran', 'BATTERY': 'Baterija', 'CHARGING_PORT': 'Port', 'CAMERA': 'Kamera',
+            'SPEAKER': 'Zvucnik', 'BUTTON': 'Taster', 'FRAME': 'Okvir', 'BACK_COVER': 'Maska', 'OTHER': 'Ostalo'
+        },
+        visibilityLabels: { 'PRIVATE': 'Privatno', 'PARTNER': 'Partneri', 'PUBLIC': 'Javno' },
+
+        async loadParts() {
+            this.loading = true;
+            try {
+                const params = new URLSearchParams({ page: this.page, per_page: this.perPage });
+                if (this.filters.search) params.append('search', this.filters.search);
+                if (this.filters.category) params.append('category', this.filters.category);
+                if (this.filters.visibility) params.append('visibility', this.filters.visibility);
+                if (this.filters.low_stock) params.append('low_stock', this.filters.low_stock);
+
+                const response = await api('/api/v1/inventory/parts?' + params);
+                if (response.ok) {
+                    const data = await response.json();
+                    this.parts = data.items || [];
+                    this.total = data.total || 0;
+                    this.totalPages = data.pages || 1;
+                    this.calculateStats();
+                }
+            } catch (e) {
+                console.error('Failed to load parts:', e);
+                showToast('Greska pri ucitavanju', 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        calculateStats() {
+            this.stats.total_items = this.total;
+            this.stats.total_quantity = this.parts.reduce((sum, p) => sum + (p.quantity || 0), 0);
+            this.stats.low_stock = this.parts.filter(p => p.quantity <= p.min_stock_level).length;
+            this.stats.public_count = this.parts.filter(p => p.visibility === 'PUBLIC').length;
+        },
+
+        visibilityClass(v) {
+            return { 'PRIVATE': 'bg-gray-100 text-gray-800', 'PARTNER': 'bg-blue-100 text-blue-800', 'PUBLIC': 'bg-green-100 text-green-800' }[v] || 'bg-gray-100';
+        },
+
+        formatPrice(price) {
+            if (!price) return '-';
+            return new Intl.NumberFormat('sr-RS').format(price);
+        },
+
+        resetFilters() {
+            this.filters = { search: '', category: '', visibility: '', low_stock: '' };
+            this.page = 1;
+            this.loadParts();
+        },
+
+        openEditModal(part) {
+            this.selectedPart = part;
+            this.form = { ...part };
+            this.showEditModal = true;
+        },
+
+        openAdjustModal(part) {
+            this.selectedPart = part;
+            this.adjustForm = { delta: 0, reason: '' };
+            this.showAdjustModal = true;
+        },
+
+        closeModals() {
+            this.showAddModal = false;
+            this.showEditModal = false;
+            this.selectedPart = null;
+            this.form = { part_name: '', part_category: 'OTHER', part_number: '', brand: '', model: '', quantity: 0, min_stock_level: 0, purchase_price: '', selling_price: '', public_price: '', visibility: 'PRIVATE', is_original: false };
+        },
+
+        async submitPart() {
+            this.saving = true;
+            try {
+                const url = this.showEditModal ? `/api/v1/inventory/parts/${this.selectedPart.id}` : '/api/v1/inventory/parts';
+                const method = this.showEditModal ? 'PUT' : 'POST';
+
+                const response = await api(url, { method, body: JSON.stringify(this.form) });
+                if (response.ok) {
+                    showToast(this.showEditModal ? 'Deo azuriran' : 'Deo dodat', 'success');
+                    this.closeModals();
+                    this.loadParts();
+                } else {
+                    const err = await response.json();
+                    showToast(err.message || 'Greska', 'error');
+                }
+            } catch (e) {
+                showToast('Greska pri cuvanju', 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        async adjustQuantity() {
+            try {
+                const response = await api(`/api/v1/inventory/parts/${this.selectedPart.id}/adjust`, {
+                    method: 'POST',
+                    body: JSON.stringify({ delta: parseInt(this.adjustForm.delta), reason: this.adjustForm.reason })
+                });
+                if (response.ok) {
+                    showToast('Kolicina azurirana', 'success');
+                    this.showAdjustModal = false;
+                    this.loadParts();
+                } else {
+                    const err = await response.json();
+                    showToast(err.message || 'Greska', 'error');
+                }
+            } catch (e) {
+                showToast('Greska', 'error');
+            }
+        },
+
+        prevPage() { if (this.page > 1) { this.page--; this.loadParts(); } },
+        nextPage() { if (this.page < this.totalPages) { this.page++; this.loadParts(); } }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,514 @@
+{% extends "layouts/supplier.html" %}
+
+{% block title %}Katalog - Supplier Portal{% endblock %}
+
+{% block content %}
+<div x-data="catalogPage()" x-init="init()">
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Katalog</h1>
+            <p class="text-gray-600 mt-1">Upravljajte svojim artiklima</p>
+        </div>
+        <button @click="openAddModal()"
+                class="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors">
+            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Dodaj artikal
+        </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg p-4 border border-gray-200">
+            <p class="text-sm text-gray-500">Ukupno</p>
+            <p class="text-2xl font-bold text-gray-900" x-text="stats.total_listings || 0"></p>
+        </div>
+        <div class="bg-white rounded-lg p-4 border border-gray-200">
+            <p class="text-sm text-gray-500">Aktivni</p>
+            <p class="text-2xl font-bold text-green-600" x-text="stats.active_listings || 0"></p>
+        </div>
+        <div class="bg-white rounded-lg p-4 border border-gray-200">
+            <p class="text-sm text-gray-500">Na stanju</p>
+            <p class="text-2xl font-bold text-blue-600" x-text="stats.in_stock || 0"></p>
+        </div>
+        <div class="bg-white rounded-lg p-4 border border-gray-200">
+            <p class="text-sm text-gray-500">Nema stanja</p>
+            <p class="text-2xl font-bold text-red-600" x-text="stats.out_of_stock || 0"></p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Search -->
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Pretraga</label>
+                <input type="text" x-model="filters.q" @input.debounce.300ms="loadListings()"
+                       placeholder="Naziv, sifra, brend..."
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+            </div>
+
+            <!-- Category -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Kategorija</label>
+                <select x-model="filters.category" @change="loadListings()"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    <option value="">Sve kategorije</option>
+                    <option value="display">Display</option>
+                    <option value="battery">Baterija</option>
+                    <option value="camera">Kamera</option>
+                    <option value="charging">Punjenje</option>
+                    <option value="speaker">Zvucnik</option>
+                    <option value="other">Ostalo</option>
+                </select>
+            </div>
+
+            <!-- Status -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select x-model="filters.include_inactive" @change="loadListings()"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    <option value="false">Samo aktivni</option>
+                    <option value="true">Svi artikli</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Listings Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Artikal</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategorija</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cena</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stanje</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Akcije</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <template x-if="loading">
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <svg class="animate-spin h-8 w-8 mx-auto text-purple-600" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </td>
+                        </tr>
+                    </template>
+                    <template x-if="!loading && listings.length === 0">
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                Nema artikala
+                            </td>
+                        </tr>
+                    </template>
+                    <template x-for="listing in listings" :key="listing.id">
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div>
+                                    <p class="font-medium text-gray-900" x-text="listing.name"></p>
+                                    <p class="text-sm text-gray-500">
+                                        <span x-text="listing.brand"></span>
+                                        <span x-show="listing.part_number" class="ml-2 text-gray-400" x-text="'#' + listing.part_number"></span>
+                                    </p>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                                      x-text="listing.part_category || 'Bez kategorije'"></span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="font-medium text-gray-900" x-text="formatPrice(listing.price)"></p>
+                                <p class="text-xs text-gray-500" x-text="'Min: ' + (listing.min_order_qty || 1) + ' kom'"></p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span :class="listing.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'"
+                                      class="font-medium" x-text="listing.stock_quantity + ' kom'"></span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                      :class="listing.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
+                                      x-text="listing.is_active ? 'Aktivan' : 'Neaktivan'"></span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button @click="editListing(listing)"
+                                        class="text-purple-600 hover:text-purple-900 mr-3">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </button>
+                                <button @click="toggleActive(listing)"
+                                        class="text-gray-400 hover:text-gray-600">
+                                    <svg x-show="listing.is_active" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                    </svg>
+                                    <svg x-show="!listing.is_active" x-cloak class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <p class="text-sm text-gray-700">
+                Prikazano <span class="font-medium" x-text="listings.length"></span> od
+                <span class="font-medium" x-text="pagination.total"></span> artikala
+            </p>
+            <div class="flex space-x-2">
+                <button @click="prevPage()" :disabled="pagination.page <= 1"
+                        class="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+                    Prethodna
+                </button>
+                <button @click="nextPage()" :disabled="pagination.page >= pagination.pages"
+                        class="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+                    Sledeca
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div x-show="showModal" x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/50" @click="closeModal()"></div>
+
+            <div class="relative bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900" x-text="editingId ? 'Izmeni artikal' : 'Novi artikal'"></h3>
+                    <button @click="closeModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <form @submit.prevent="saveListing()" class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Name -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Naziv *</label>
+                            <input type="text" x-model="form.name" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="Display Samsung Galaxy S21">
+                        </div>
+
+                        <!-- Brand -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Brend</label>
+                            <input type="text" x-model="form.brand"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="Samsung">
+                        </div>
+
+                        <!-- Part Number -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Sifra artikla</label>
+                            <input type="text" x-model="form.part_number"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="DSP-S21-001">
+                        </div>
+
+                        <!-- Category -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kategorija</label>
+                            <select x-model="form.part_category"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                <option value="">Izaberi kategoriju</option>
+                                <option value="display">Display</option>
+                                <option value="battery">Baterija</option>
+                                <option value="camera">Kamera</option>
+                                <option value="charging">Punjenje</option>
+                                <option value="speaker">Zvucnik</option>
+                                <option value="other">Ostalo</option>
+                            </select>
+                        </div>
+
+                        <!-- Model Compatibility -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kompatibilni modeli</label>
+                            <input type="text" x-model="form.model_compatibility"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="Galaxy S21, S21+, S21 Ultra">
+                        </div>
+
+                        <!-- Price -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Cena (RSD) *</label>
+                            <input type="number" x-model="form.price" required min="1" step="0.01"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="15000">
+                        </div>
+
+                        <!-- Stock Quantity -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kolicina na stanju</label>
+                            <input type="number" x-model="form.stock_quantity" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="10">
+                        </div>
+
+                        <!-- Min Order Qty -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Min. narudzbina</label>
+                            <input type="number" x-model="form.min_order_qty" min="1"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="1">
+                        </div>
+
+                        <!-- Delivery Days -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Rok isporuke (dana)</label>
+                            <input type="number" x-model="form.delivery_days" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="2">
+                        </div>
+
+                        <!-- Quality -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kvalitet</label>
+                            <select x-model="form.quality_grade"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                <option value="">Izaberi</option>
+                                <option value="original">Original</option>
+                                <option value="oem">OEM</option>
+                                <option value="aaa">AAA</option>
+                                <option value="aa">AA</option>
+                            </select>
+                        </div>
+
+                        <!-- Is Original -->
+                        <div class="flex items-center">
+                            <input type="checkbox" x-model="form.is_original" id="is_original"
+                                   class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                            <label for="is_original" class="ml-2 text-sm text-gray-700">Originalni deo</label>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Opis</label>
+                            <textarea x-model="form.description" rows="3"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                      placeholder="Dodatne informacije o artiklu..."></textarea>
+                        </div>
+
+                        <!-- Active -->
+                        <div class="md:col-span-2" x-show="editingId">
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="form.is_active"
+                                       class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                                <span class="ml-2 text-sm text-gray-700">Artikal je aktivan</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Error -->
+                    <div x-show="error" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p class="text-sm text-red-600" x-text="error"></p>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" @click="closeModal()"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                            Odustani
+                        </button>
+                        <button type="submit" :disabled="saving"
+                                class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                            <span x-show="!saving" x-text="editingId ? 'Sacuvaj' : 'Dodaj'"></span>
+                            <span x-show="saving">Cuvanje...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function catalogPage() {
+    return {
+        listings: [],
+        stats: {},
+        loading: false,
+        filters: {
+            q: '',
+            category: '',
+            include_inactive: 'false'
+        },
+        pagination: {
+            page: 1,
+            per_page: 20,
+            total: 0,
+            pages: 1
+        },
+        showModal: false,
+        editingId: null,
+        form: {},
+        error: null,
+        saving: false,
+
+        async init() {
+            await Promise.all([
+                this.loadListings(),
+                this.loadStats()
+            ]);
+        },
+
+        async loadListings() {
+            this.loading = true;
+            try {
+                const params = new URLSearchParams({
+                    page: this.pagination.page,
+                    per_page: this.pagination.per_page,
+                    include_inactive: this.filters.include_inactive
+                });
+                if (this.filters.q) params.append('q', this.filters.q);
+                if (this.filters.category) params.append('category', this.filters.category);
+
+                const data = await supplierApi(`/api/supplier/listings?${params}`);
+                this.listings = data.listings || [];
+                this.pagination.total = data.total || 0;
+                this.pagination.pages = data.pages || 1;
+            } catch (err) {
+                console.error('Error loading listings:', err);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async loadStats() {
+            try {
+                const data = await supplierApi('/api/supplier/listings/stats');
+                this.stats = data;
+            } catch (err) {
+                console.error('Error loading stats:', err);
+            }
+        },
+
+        openAddModal() {
+            this.editingId = null;
+            this.form = {
+                name: '',
+                brand: '',
+                part_number: '',
+                part_category: '',
+                model_compatibility: '',
+                price: '',
+                stock_quantity: 0,
+                min_order_qty: 1,
+                delivery_days: '',
+                quality_grade: '',
+                is_original: false,
+                description: '',
+                is_active: true
+            };
+            this.error = null;
+            this.showModal = true;
+        },
+
+        editListing(listing) {
+            this.editingId = listing.id;
+            this.form = { ...listing };
+            this.error = null;
+            this.showModal = true;
+        },
+
+        closeModal() {
+            this.showModal = false;
+            this.editingId = null;
+            this.form = {};
+            this.error = null;
+        },
+
+        async saveListing() {
+            this.saving = true;
+            this.error = null;
+
+            try {
+                const url = this.editingId
+                    ? `/api/supplier/listings/${this.editingId}`
+                    : '/api/supplier/listings';
+                const method = this.editingId ? 'PUT' : 'POST';
+
+                await supplierApi(url, {
+                    method,
+                    body: JSON.stringify({
+                        name: this.form.name,
+                        brand: this.form.brand || null,
+                        part_number: this.form.part_number || null,
+                        part_category: this.form.part_category || null,
+                        model_compatibility: this.form.model_compatibility || null,
+                        price: parseFloat(this.form.price),
+                        stock_quantity: parseInt(this.form.stock_quantity) || 0,
+                        min_order_qty: parseInt(this.form.min_order_qty) || 1,
+                        delivery_days: this.form.delivery_days ? parseInt(this.form.delivery_days) : null,
+                        quality_grade: this.form.quality_grade || null,
+                        is_original: this.form.is_original,
+                        description: this.form.description || null,
+                        is_active: this.form.is_active
+                    })
+                });
+
+                this.closeModal();
+                await Promise.all([this.loadListings(), this.loadStats()]);
+
+            } catch (err) {
+                this.error = err.message;
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        async toggleActive(listing) {
+            try {
+                await supplierApi(`/api/supplier/listings/${listing.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ is_active: !listing.is_active })
+                });
+                await this.loadListings();
+            } catch (err) {
+                console.error('Error toggling active:', err);
+            }
+        },
+
+        formatPrice(price) {
+            return new Intl.NumberFormat('sr-RS').format(price) + ' RSD';
+        },
+
+        prevPage() {
+            if (this.pagination.page > 1) {
+                this.pagination.page--;
+                this.loadListings();
+            }
+        },
+
+        nextPage() {
+            if (this.pagination.page < this.pagination.pages) {
+                this.pagination.page++;
+                this.loadListings();
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

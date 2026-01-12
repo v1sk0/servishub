@@ -1,0 +1,586 @@
+{% extends "layouts/supplier.html" %}
+
+{% block title %}Narudzbine - Supplier Portal{% endblock %}
+
+{% block content %}
+<div x-data="ordersPage()" x-init="init()">
+    <!-- Page Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Narudzbine</h1>
+        <p class="text-gray-600 mt-1">Upravljajte narudzbinama od servisa</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg p-4 border border-gray-200">
+            <p class="text-sm text-gray-500">Ukupno</p>
+            <p class="text-2xl font-bold text-gray-900" x-text="stats.total_orders || 0"></p>
+        </div>
+        <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+            <p class="text-sm text-yellow-700">Na cekanju</p>
+            <p class="text-2xl font-bold text-yellow-600" x-text="stats.pending_confirmation || 0"></p>
+        </div>
+        <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <p class="text-sm text-blue-700">Potvrdjene</p>
+            <p class="text-2xl font-bold text-blue-600" x-text="stats.status_breakdown?.CONFIRMED || 0"></p>
+        </div>
+        <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+            <p class="text-sm text-green-700">Ukupni prihod</p>
+            <p class="text-2xl font-bold text-green-600" x-text="formatPrice(stats.total_revenue || 0)"></p>
+        </div>
+    </div>
+
+    <!-- Status Tabs -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div class="border-b border-gray-200">
+            <nav class="flex -mb-px overflow-x-auto">
+                <button @click="filterStatus = ''"
+                        :class="filterStatus === '' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm">
+                    Sve
+                </button>
+                <button @click="filterStatus = 'SENT'"
+                        :class="filterStatus === 'SENT' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm flex items-center">
+                    Na cekanju
+                    <span x-show="stats.pending_confirmation > 0"
+                          class="ml-2 px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded-full"
+                          x-text="stats.pending_confirmation"></span>
+                </button>
+                <button @click="filterStatus = 'CONFIRMED'"
+                        :class="filterStatus === 'CONFIRMED' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm">
+                    Potvrdjene
+                </button>
+                <button @click="filterStatus = 'SHIPPED'"
+                        :class="filterStatus === 'SHIPPED' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm">
+                    Poslate
+                </button>
+                <button @click="filterStatus = 'COMPLETED'"
+                        :class="filterStatus === 'COMPLETED' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm">
+                    Zavrsene
+                </button>
+            </nav>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Narudzbina</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kupac</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Artikli</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Iznos</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Akcije</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <template x-if="loading">
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center">
+                                <svg class="animate-spin h-8 w-8 mx-auto text-purple-600" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </td>
+                        </tr>
+                    </template>
+                    <template x-if="!loading && orders.length === 0">
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                                Nema narudzbina
+                            </td>
+                        </tr>
+                    </template>
+                    <template x-for="order in orders" :key="order.id">
+                        <tr class="hover:bg-gray-50 cursor-pointer" @click="viewOrder(order)">
+                            <td class="px-6 py-4">
+                                <p class="font-medium text-gray-900" x-text="order.order_number"></p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-gray-900" x-text="order.buyer_name"></p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-gray-600" x-text="order.items_count + ' artikala'"></span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="font-medium text-gray-900" x-text="formatPrice(order.total_amount)"></p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                      :class="getStatusClass(order.status)"
+                                      x-text="getStatusLabel(order.status)"></span>
+                            </td>
+                            <td class="px-6 py-4 text-gray-500" x-text="formatDate(order.created_at)"></td>
+                            <td class="px-6 py-4 text-right">
+                                <button @click.stop="viewOrder(order)"
+                                        class="text-purple-600 hover:text-purple-900">
+                                    Detalji
+                                </button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <p class="text-sm text-gray-700">
+                Prikazano <span class="font-medium" x-text="orders.length"></span> od
+                <span class="font-medium" x-text="pagination.total"></span> narudzbina
+            </p>
+            <div class="flex space-x-2">
+                <button @click="prevPage()" :disabled="pagination.page <= 1"
+                        class="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+                    Prethodna
+                </button>
+                <button @click="nextPage()" :disabled="pagination.page >= pagination.pages"
+                        class="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+                    Sledeca
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div x-show="showDetailModal" x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        <div class="flex items-start justify-center min-h-screen px-4 pt-4 pb-20">
+            <div class="fixed inset-0 bg-black/50" @click="closeDetailModal()"></div>
+
+            <div class="relative bg-white rounded-xl shadow-xl max-w-3xl w-full mt-8 max-h-[90vh] overflow-y-auto">
+                <!-- Modal Header -->
+                <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between z-10">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900" x-text="selectedOrder?.order_number"></h3>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1"
+                              :class="getStatusClass(selectedOrder?.status)"
+                              x-text="getStatusLabel(selectedOrder?.status)"></span>
+                    </div>
+                    <button @click="closeDetailModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="p-6" x-show="orderDetail">
+                    <!-- Buyer Info -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-medium text-gray-500 uppercase mb-2">Kupac</h4>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="font-medium text-gray-900" x-text="orderDetail?.buyer?.name"></p>
+                            <p class="text-sm text-gray-600" x-text="orderDetail?.buyer?.email"></p>
+                            <p class="text-sm text-gray-600" x-text="orderDetail?.buyer?.telefon"></p>
+                        </div>
+                    </div>
+
+                    <!-- Items -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-medium text-gray-500 uppercase mb-2">Stavke</h4>
+                        <div class="bg-gray-50 rounded-lg overflow-hidden">
+                            <table class="min-w-full">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Artikal</th>
+                                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-500">Kol.</th>
+                                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-500">Cena</th>
+                                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-500">Ukupno</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <template x-for="item in orderDetail?.items" :key="item.id">
+                                        <tr>
+                                            <td class="px-4 py-3">
+                                                <p class="text-sm font-medium text-gray-900" x-text="item.part_name"></p>
+                                                <p class="text-xs text-gray-500" x-text="item.part_number"></p>
+                                            </td>
+                                            <td class="px-4 py-3 text-right text-sm" x-text="item.quantity"></td>
+                                            <td class="px-4 py-3 text-right text-sm" x-text="formatPrice(item.unit_price)"></td>
+                                            <td class="px-4 py-3 text-right text-sm font-medium" x-text="formatPrice(item.total_price)"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                                <tfoot class="bg-gray-100">
+                                    <tr>
+                                        <td colspan="3" class="px-4 py-2 text-right text-sm font-medium text-gray-700">Ukupno:</td>
+                                        <td class="px-4 py-2 text-right text-sm font-bold text-gray-900" x-text="formatPrice(orderDetail?.total_amount)"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-6" x-show="orderDetail?.buyer_notes">
+                        <h4 class="text-sm font-medium text-gray-500 uppercase mb-2">Napomena kupca</h4>
+                        <div class="bg-yellow-50 rounded-lg p-4 text-sm text-yellow-800" x-text="orderDetail?.buyer_notes"></div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-medium text-gray-500 uppercase mb-2">Istorija</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center text-sm" x-show="orderDetail?.timestamps?.created_at">
+                                <span class="w-24 text-gray-500">Kreirana:</span>
+                                <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.created_at)"></span>
+                            </div>
+                            <div class="flex items-center text-sm" x-show="orderDetail?.timestamps?.sent_at">
+                                <span class="w-24 text-gray-500">Poslata:</span>
+                                <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.sent_at)"></span>
+                            </div>
+                            <div class="flex items-center text-sm" x-show="orderDetail?.timestamps?.confirmed_at">
+                                <span class="w-24 text-gray-500">Potvrdjena:</span>
+                                <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.confirmed_at)"></span>
+                            </div>
+                            <div class="flex items-center text-sm" x-show="orderDetail?.timestamps?.shipped_at">
+                                <span class="w-24 text-gray-500">Poslata:</span>
+                                <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.shipped_at)"></span>
+                            </div>
+                            <div class="flex items-center text-sm" x-show="orderDetail?.timestamps?.delivered_at">
+                                <span class="w-24 text-gray-500">Isporucena:</span>
+                                <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.delivered_at)"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Messages -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-medium text-gray-500 uppercase mb-2">Poruke</h4>
+                        <div class="bg-gray-50 rounded-lg p-4 max-h-48 overflow-y-auto space-y-3">
+                            <template x-if="!orderDetail?.messages?.length">
+                                <p class="text-sm text-gray-500 text-center">Nema poruka</p>
+                            </template>
+                            <template x-for="msg in orderDetail?.messages" :key="msg.id">
+                                <div :class="msg.sender_type === 'seller' ? 'text-right' : 'text-left'">
+                                    <div class="inline-block max-w-[80%] px-3 py-2 rounded-lg text-sm"
+                                         :class="msg.sender_type === 'seller' ? 'bg-purple-100 text-purple-900' : 'bg-white text-gray-900 border'">
+                                        <p x-text="msg.message"></p>
+                                        <p class="text-xs mt-1 opacity-60" x-text="formatDateTime(msg.created_at)"></p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Send Message -->
+                        <div class="mt-3 flex gap-2">
+                            <input type="text" x-model="newMessage" @keyup.enter="sendMessage()"
+                                   placeholder="Unesite poruku..."
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                            <button @click="sendMessage()" :disabled="!newMessage"
+                                    class="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 disabled:opacity-50">
+                                Posalji
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Shipping Info (for confirmed orders) -->
+                    <div class="mb-6" x-show="selectedOrder?.status === 'CONFIRMED'">
+                        <h4 class="text-sm font-medium text-gray-500 uppercase mb-2">Informacije o isporuci</h4>
+                        <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Broj za pracenje</label>
+                                <input type="text" x-model="shippingInfo.tracking_number"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                                       placeholder="npr. YU123456789RS">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Link za pracenje</label>
+                                <input type="url" x-model="shippingInfo.tracking_url"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                                       placeholder="https://...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="border-t border-gray-200 pt-4 flex flex-wrap gap-3 justify-end">
+                        <!-- For SENT status -->
+                        <template x-if="selectedOrder?.status === 'SENT'">
+                            <div class="flex gap-3">
+                                <button @click="rejectOrder()"
+                                        class="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50">
+                                    Odbij
+                                </button>
+                                <button @click="confirmOrder()"
+                                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                    Potvrdi narudzbinu
+                                </button>
+                            </div>
+                        </template>
+
+                        <!-- For CONFIRMED status -->
+                        <template x-if="selectedOrder?.status === 'CONFIRMED'">
+                            <button @click="shipOrder()"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                Oznaci kao poslato
+                            </button>
+                        </template>
+
+                        <button @click="closeDetailModal()"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                            Zatvori
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div x-show="showRejectModal" x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         x-transition>
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/50" @click="showRejectModal = false"></div>
+            <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Odbij narudzbinu</h3>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Razlog odbijanja</label>
+                    <textarea x-model="rejectReason" rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                              placeholder="Unesite razlog..."></textarea>
+                </div>
+                <div class="mt-4 flex justify-end gap-3">
+                    <button @click="showRejectModal = false"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        Odustani
+                    </button>
+                    <button @click="submitReject()"
+                            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                        Odbij
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function ordersPage() {
+    return {
+        orders: [],
+        stats: {},
+        loading: false,
+        filterStatus: '',
+        pagination: {
+            page: 1,
+            per_page: 20,
+            total: 0,
+            pages: 1
+        },
+        showDetailModal: false,
+        selectedOrder: null,
+        orderDetail: null,
+        newMessage: '',
+        shippingInfo: {
+            tracking_number: '',
+            tracking_url: ''
+        },
+        showRejectModal: false,
+        rejectReason: '',
+
+        async init() {
+            await Promise.all([
+                this.loadOrders(),
+                this.loadStats()
+            ]);
+
+            // Watch for filter changes
+            this.$watch('filterStatus', () => {
+                this.pagination.page = 1;
+                this.loadOrders();
+            });
+        },
+
+        async loadOrders() {
+            this.loading = true;
+            try {
+                const params = new URLSearchParams({
+                    page: this.pagination.page,
+                    per_page: this.pagination.per_page
+                });
+                if (this.filterStatus) {
+                    params.append('status', this.filterStatus);
+                }
+
+                const data = await supplierApi(`/api/supplier/orders?${params}`);
+                this.orders = data.orders || [];
+                this.pagination.total = data.total || 0;
+                this.pagination.pages = data.pages || 1;
+            } catch (err) {
+                console.error('Error loading orders:', err);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async loadStats() {
+            try {
+                const data = await supplierApi('/api/supplier/orders/stats');
+                this.stats = data;
+            } catch (err) {
+                console.error('Error loading stats:', err);
+            }
+        },
+
+        async viewOrder(order) {
+            this.selectedOrder = order;
+            this.showDetailModal = true;
+            this.shippingInfo = { tracking_number: '', tracking_url: '' };
+
+            try {
+                const data = await supplierApi(`/api/supplier/orders/${order.id}`);
+                this.orderDetail = data;
+                if (data.tracking_number) {
+                    this.shippingInfo.tracking_number = data.tracking_number;
+                }
+                if (data.tracking_url) {
+                    this.shippingInfo.tracking_url = data.tracking_url;
+                }
+            } catch (err) {
+                console.error('Error loading order:', err);
+            }
+        },
+
+        closeDetailModal() {
+            this.showDetailModal = false;
+            this.selectedOrder = null;
+            this.orderDetail = null;
+            this.newMessage = '';
+        },
+
+        async confirmOrder() {
+            if (!confirm('Da li ste sigurni da zelite da potvrdite ovu narudzbinu?')) return;
+
+            try {
+                await supplierApi(`/api/supplier/orders/${this.selectedOrder.id}/confirm`, {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                });
+                this.closeDetailModal();
+                await Promise.all([this.loadOrders(), this.loadStats()]);
+            } catch (err) {
+                alert('Greska: ' + err.message);
+            }
+        },
+
+        rejectOrder() {
+            this.rejectReason = '';
+            this.showRejectModal = true;
+        },
+
+        async submitReject() {
+            try {
+                await supplierApi(`/api/supplier/orders/${this.selectedOrder.id}/reject`, {
+                    method: 'POST',
+                    body: JSON.stringify({ reason: this.rejectReason })
+                });
+                this.showRejectModal = false;
+                this.closeDetailModal();
+                await Promise.all([this.loadOrders(), this.loadStats()]);
+            } catch (err) {
+                alert('Greska: ' + err.message);
+            }
+        },
+
+        async shipOrder() {
+            try {
+                await supplierApi(`/api/supplier/orders/${this.selectedOrder.id}/ship`, {
+                    method: 'POST',
+                    body: JSON.stringify(this.shippingInfo)
+                });
+                this.closeDetailModal();
+                await Promise.all([this.loadOrders(), this.loadStats()]);
+            } catch (err) {
+                alert('Greska: ' + err.message);
+            }
+        },
+
+        async sendMessage() {
+            if (!this.newMessage.trim()) return;
+
+            try {
+                await supplierApi(`/api/supplier/orders/${this.selectedOrder.id}/messages`, {
+                    method: 'POST',
+                    body: JSON.stringify({ message: this.newMessage })
+                });
+                this.newMessage = '';
+                // Reload order to get new message
+                const data = await supplierApi(`/api/supplier/orders/${this.selectedOrder.id}`);
+                this.orderDetail = data;
+            } catch (err) {
+                alert('Greska: ' + err.message);
+            }
+        },
+
+        formatPrice(price) {
+            if (!price) return '0 RSD';
+            return new Intl.NumberFormat('sr-RS').format(price) + ' RSD';
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '';
+            return new Date(dateStr).toLocaleDateString('sr-RS');
+        },
+
+        formatDateTime(dateStr) {
+            if (!dateStr) return '';
+            return new Date(dateStr).toLocaleString('sr-RS');
+        },
+
+        getStatusClass(status) {
+            const classes = {
+                'SENT': 'bg-yellow-100 text-yellow-800',
+                'CONFIRMED': 'bg-blue-100 text-blue-800',
+                'SHIPPED': 'bg-purple-100 text-purple-800',
+                'DELIVERED': 'bg-green-100 text-green-800',
+                'COMPLETED': 'bg-green-100 text-green-800',
+                'CANCELLED': 'bg-red-100 text-red-800',
+                'REJECTED': 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        },
+
+        getStatusLabel(status) {
+            const labels = {
+                'SENT': 'Na cekanju',
+                'CONFIRMED': 'Potvrdjena',
+                'SHIPPED': 'Poslata',
+                'DELIVERED': 'Isporucena',
+                'COMPLETED': 'Zavrsena',
+                'CANCELLED': 'Otkazana',
+                'REJECTED': 'Odbijena'
+            };
+            return labels[status] || status;
+        },
+
+        prevPage() {
+            if (this.pagination.page > 1) {
+                this.pagination.page--;
+                this.loadOrders();
+            }
+        },
+
+        nextPage() {
+            if (this.pagination.page < this.pagination.pages) {
+                this.pagination.page++;
+                this.loadOrders();
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

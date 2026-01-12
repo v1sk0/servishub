@@ -1,0 +1,329 @@
+{% extends "layouts/supplier.html" %}
+
+{% block title %}Podesavanja - Supplier Portal{% endblock %}
+
+{% block content %}
+<div x-data="settingsPage()" x-init="init()">
+    <!-- Page Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Podesavanja</h1>
+        <p class="text-gray-600 mt-1">Upravljajte svojim nalogom i podesavanjima</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div class="border-b border-gray-200">
+            <nav class="flex -mb-px">
+                <button @click="activeTab = 'profile'"
+                        :class="activeTab === 'profile' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="py-4 px-6 border-b-2 font-medium text-sm">
+                    Profil
+                </button>
+                <button @click="activeTab = 'company'"
+                        :class="activeTab === 'company' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="py-4 px-6 border-b-2 font-medium text-sm">
+                    Kompanija
+                </button>
+                <button @click="activeTab = 'security'"
+                        :class="activeTab === 'security' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="py-4 px-6 border-b-2 font-medium text-sm">
+                    Bezbednost
+                </button>
+            </nav>
+        </div>
+
+        <div class="p-6">
+            <!-- Profile Tab -->
+            <div x-show="activeTab === 'profile'" x-cloak>
+                <form @submit.prevent="saveProfile()">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ime</label>
+                            <input type="text" x-model="profile.ime" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Prezime</label>
+                            <input type="text" x-model="profile.prezime" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" x-model="profile.email" disabled
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                            <p class="text-xs text-gray-500 mt-1">Email se ne moze menjati</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                            <input type="tel" x-model="profile.phone"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end">
+                        <button type="submit" :disabled="saving"
+                                class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                            <span x-show="!saving">Sacuvaj profil</span>
+                            <span x-show="saving">Cuvanje...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Company Tab -->
+            <div x-show="activeTab === 'company'" x-cloak>
+                <form @submit.prevent="saveCompany()">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Naziv kompanije</label>
+                            <input type="text" x-model="company.name" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email kompanije</label>
+                            <input type="email" x-model="company.email"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Telefon kompanije</label>
+                            <input type="tel" x-model="company.phone"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Grad</label>
+                            <input type="text" x-model="company.city"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">PIB</label>
+                            <input type="text" x-model="company.pib" disabled
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                            <p class="text-xs text-gray-500 mt-1">Kontaktirajte podrsku za izmenu PIB-a</p>
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="mt-8 p-4 bg-purple-50 rounded-lg">
+                        <h3 class="text-sm font-medium text-purple-900 mb-3">Statistika</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                                <p class="text-xs text-purple-600">Status</p>
+                                <p class="font-medium text-purple-900" x-text="company.status"></p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-purple-600">Verifikovan</p>
+                                <p class="font-medium text-purple-900" x-text="company.is_verified ? 'Da' : 'Ne'"></p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-purple-600">Ukupna prodaja</p>
+                                <p class="font-medium text-purple-900" x-text="formatPrice(company.total_sales)"></p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-purple-600">Provizija</p>
+                                <p class="font-medium text-purple-900" x-text="company.commission_rate + '%'"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end">
+                        <button type="submit" :disabled="saving"
+                                class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                            <span x-show="!saving">Sacuvaj kompaniju</span>
+                            <span x-show="saving">Cuvanje...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Security Tab -->
+            <div x-show="activeTab === 'security'" x-cloak>
+                <form @submit.prevent="changePassword()">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Promena lozinke</h3>
+
+                    <div class="max-w-md space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Trenutna lozinka</label>
+                            <input type="password" x-model="passwords.current" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nova lozinka</label>
+                            <input type="password" x-model="passwords.new" required minlength="6"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Potvrdi novu lozinku</label>
+                            <input type="password" x-model="passwords.confirm" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <button type="submit" :disabled="saving"
+                                class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                            <span x-show="!saving">Promeni lozinku</span>
+                            <span x-show="saving">Cuvanje...</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Danger Zone -->
+                <div class="mt-12 pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-medium text-red-600 mb-4">Opasna zona</h3>
+                    <p class="text-sm text-gray-600 mb-4">
+                        Brisanje naloga je trajno i ne moze se ponistiti. Svi vasi podaci ce biti obrisani.
+                    </p>
+                    <button class="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50">
+                        Obrisi nalog
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div x-show="message" x-cloak
+         x-transition
+         class="fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg"
+         :class="messageType === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'">
+        <p x-text="message"></p>
+    </div>
+</div>
+
+<script>
+function settingsPage() {
+    return {
+        activeTab: 'profile',
+        profile: {
+            ime: '',
+            prezime: '',
+            email: '',
+            phone: ''
+        },
+        company: {
+            name: '',
+            email: '',
+            phone: '',
+            city: '',
+            pib: '',
+            status: '',
+            is_verified: false,
+            total_sales: 0,
+            commission_rate: 5
+        },
+        passwords: {
+            current: '',
+            new: '',
+            confirm: ''
+        },
+        saving: false,
+        message: '',
+        messageType: 'success',
+
+        async init() {
+            await this.loadProfile();
+        },
+
+        async loadProfile() {
+            try {
+                const data = await supplierApi('/api/supplier/auth/me');
+
+                this.profile = {
+                    ime: data.user.ime,
+                    prezime: data.user.prezime,
+                    email: data.user.email,
+                    phone: data.user.phone || ''
+                };
+
+                this.company = {
+                    name: data.supplier.name,
+                    email: data.supplier.email || '',
+                    phone: data.supplier.phone || '',
+                    city: data.supplier.city || '',
+                    pib: data.supplier.pib || '',
+                    status: data.supplier.status,
+                    is_verified: data.supplier.is_verified,
+                    total_sales: data.supplier.total_sales || 0,
+                    commission_rate: data.supplier.commission_rate || 5
+                };
+            } catch (err) {
+                console.error('Error loading profile:', err);
+            }
+        },
+
+        async saveProfile() {
+            this.saving = true;
+            try {
+                await supplierApi('/api/supplier/auth/me', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        ime: this.profile.ime,
+                        prezime: this.profile.prezime,
+                        phone: this.profile.phone
+                    })
+                });
+                this.showMessage('Profil sacuvan', 'success');
+            } catch (err) {
+                this.showMessage('Greska: ' + err.message, 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        async saveCompany() {
+            this.saving = true;
+            try {
+                await supplierApi('/api/supplier/auth/me', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        company_name: this.company.name,
+                        company_email: this.company.email,
+                        company_phone: this.company.phone,
+                        city: this.company.city
+                    })
+                });
+                this.showMessage('Kompanija sacuvana', 'success');
+            } catch (err) {
+                this.showMessage('Greska: ' + err.message, 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        async changePassword() {
+            if (this.passwords.new !== this.passwords.confirm) {
+                this.showMessage('Lozinke se ne poklapaju', 'error');
+                return;
+            }
+
+            this.saving = true;
+            try {
+                await supplierApi('/api/supplier/auth/password', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        current_password: this.passwords.current,
+                        new_password: this.passwords.new
+                    })
+                });
+                this.passwords = { current: '', new: '', confirm: '' };
+                this.showMessage('Lozinka promenjena', 'success');
+            } catch (err) {
+                this.showMessage('Greska: ' + err.message, 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        showMessage(msg, type) {
+            this.message = msg;
+            this.messageType = type;
+            setTimeout(() => { this.message = ''; }, 3000);
+        },
+
+        formatPrice(price) {
+            return new Intl.NumberFormat('sr-RS').format(price || 0) + ' RSD';
+        }
+    };
+}
+</script>
+{% endblock %}

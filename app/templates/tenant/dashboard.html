@@ -1,0 +1,221 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Dashboard - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="dashboardPage()" x-init="loadData()">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-8">
+        <div class="min-w-0 flex-1">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                Dashboard
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                Pregled stanja vašeg servisa
+            </p>
+        </div>
+        <div class="mt-4 flex md:ml-4 md:mt-0">
+            <a href="/tickets/new"
+               class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+                <svg class="-ml-0.5 mr-1.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                </svg>
+                Novi nalog
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats cards -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <!-- Open tickets -->
+        <div class="relative overflow-hidden rounded-lg bg-white px-4 pb-12 pt-5 shadow sm:px-6 sm:pt-6">
+            <dt>
+                <div class="absolute rounded-md bg-primary-500 p-3">
+                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+                    </svg>
+                </div>
+                <p class="ml-16 truncate text-sm font-medium text-gray-500">Otvoreni nalozi</p>
+            </dt>
+            <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
+                <p class="text-2xl font-semibold text-gray-900" x-text="stats.openTickets || 0"></p>
+                <a href="/tickets?status=open" class="absolute inset-x-0 bottom-0 bg-gray-50 px-4 py-4 text-sm font-medium text-primary-600 hover:text-primary-500">
+                    Pogledaj sve
+                </a>
+            </dd>
+        </div>
+
+        <!-- Ready for pickup -->
+        <div class="relative overflow-hidden rounded-lg bg-white px-4 pb-12 pt-5 shadow sm:px-6 sm:pt-6">
+            <dt>
+                <div class="absolute rounded-md bg-green-500 p-3">
+                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <p class="ml-16 truncate text-sm font-medium text-gray-500">Spremno za preuzimanje</p>
+            </dt>
+            <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
+                <p class="text-2xl font-semibold text-gray-900" x-text="stats.readyTickets || 0"></p>
+                <a href="/tickets?status=ready" class="absolute inset-x-0 bottom-0 bg-gray-50 px-4 py-4 text-sm font-medium text-primary-600 hover:text-primary-500">
+                    Pogledaj sve
+                </a>
+            </dd>
+        </div>
+
+        <!-- Phones in stock -->
+        <div class="relative overflow-hidden rounded-lg bg-white px-4 pb-12 pt-5 shadow sm:px-6 sm:pt-6">
+            <dt>
+                <div class="absolute rounded-md bg-indigo-500 p-3">
+                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+                    </svg>
+                </div>
+                <p class="ml-16 truncate text-sm font-medium text-gray-500">Telefoni na lageru</p>
+            </dt>
+            <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
+                <p class="text-2xl font-semibold text-gray-900" x-text="stats.phonesInStock || 0"></p>
+                <a href="/inventory/phones" class="absolute inset-x-0 bottom-0 bg-gray-50 px-4 py-4 text-sm font-medium text-primary-600 hover:text-primary-500">
+                    Pogledaj sve
+                </a>
+            </dd>
+        </div>
+
+        <!-- Pending orders -->
+        <div class="relative overflow-hidden rounded-lg bg-white px-4 pb-12 pt-5 shadow sm:px-6 sm:pt-6">
+            <dt>
+                <div class="absolute rounded-md bg-yellow-500 p-3">
+                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                    </svg>
+                </div>
+                <p class="ml-16 truncate text-sm font-medium text-gray-500">Aktivne narudžbine</p>
+            </dt>
+            <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
+                <p class="text-2xl font-semibold text-gray-900" x-text="stats.pendingOrders || 0"></p>
+                <a href="/orders" class="absolute inset-x-0 bottom-0 bg-gray-50 px-4 py-4 text-sm font-medium text-primary-600 hover:text-primary-500">
+                    Pogledaj sve
+                </a>
+            </dd>
+        </div>
+    </div>
+
+    <!-- Recent tickets -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium leading-6 text-gray-900">Poslednji nalozi</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kupac</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uređaj</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                        <th scope="col" class="relative px-6 py-3"><span class="sr-only">Akcije</span></th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <template x-for="ticket in recentTickets" :key="ticket.id">
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="'#' + ticket.ticket_number"></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="ticket.customer_name"></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="ticket.brand + ' ' + ticket.model"></td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                      :class="{
+                                          'bg-yellow-100 text-yellow-800': ticket.status === 'RECEIVED',
+                                          'bg-blue-100 text-blue-800': ticket.status === 'IN_PROGRESS',
+                                          'bg-purple-100 text-purple-800': ticket.status === 'WAITING_PARTS',
+                                          'bg-green-100 text-green-800': ticket.status === 'READY',
+                                          'bg-gray-100 text-gray-800': ticket.status === 'DELIVERED'
+                                      }"
+                                      x-text="statusLabels[ticket.status] || ticket.status"></span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(ticket.created_at)"></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a :href="'/tickets/' + ticket.id" class="text-primary-600 hover:text-primary-900">Detalji</a>
+                            </td>
+                        </tr>
+                    </template>
+                    <tr x-show="recentTickets.length === 0">
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            Nema naloga. <a href="/tickets/new" class="text-primary-600 hover:underline">Kreirajte prvi nalog</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function dashboardPage() {
+    return {
+        stats: {},
+        recentTickets: [],
+        loading: true,
+
+        statusLabels: {
+            'RECEIVED': 'Primljeno',
+            'DIAGNOSED': 'Dijagnostifikovano',
+            'IN_PROGRESS': 'U obradi',
+            'WAITING_PARTS': 'Čeka delove',
+            'READY': 'Spremno',
+            'DELIVERED': 'Isporučeno',
+            'CANCELLED': 'Otkazano'
+        },
+
+        async loadData() {
+            try {
+                // Load tickets
+                const ticketsResponse = await api('/api/v1/tickets?per_page=10');
+                if (ticketsResponse.ok) {
+                    const data = await ticketsResponse.json();
+                    this.recentTickets = data.tickets || [];
+
+                    // Calculate stats from tickets
+                    this.stats.openTickets = this.recentTickets.filter(t =>
+                        !['DELIVERED', 'CANCELLED'].includes(t.status)
+                    ).length;
+                    this.stats.readyTickets = this.recentTickets.filter(t =>
+                        t.status === 'READY'
+                    ).length;
+                }
+
+                // Load phones
+                const phonesResponse = await api('/api/v1/inventory/phones?sold=false');
+                if (phonesResponse.ok) {
+                    const data = await phonesResponse.json();
+                    this.stats.phonesInStock = data.total || 0;
+                }
+
+                // Load orders
+                const ordersResponse = await api('/api/v1/orders?status=sent');
+                if (ordersResponse.ok) {
+                    const data = await ordersResponse.json();
+                    this.stats.pendingOrders = data.total || 0;
+                }
+
+            } catch (e) {
+                console.error('Failed to load dashboard data:', e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('sr-Latn-RS', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

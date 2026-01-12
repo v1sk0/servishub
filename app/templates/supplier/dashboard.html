@@ -1,0 +1,276 @@
+{% extends "layouts/supplier.html" %}
+
+{% block title %}Dashboard - Supplier Portal{% endblock %}
+
+{% block content %}
+<div x-data="dashboardPage()" x-init="init()">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p class="text-gray-600 mt-1">Dobrodosli nazad! Evo pregleda vase aktivnosti.</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Listings -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Ukupno artikala</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1" x-text="stats.total_listings || 0"></p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
+                    <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">
+                <span class="text-green-600 font-medium" x-text="stats.active_listings || 0"></span> aktivnih
+            </p>
+        </div>
+
+        <!-- In Stock -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Na stanju</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1" x-text="stats.in_stock || 0"></p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">
+                <span class="text-red-600 font-medium" x-text="stats.out_of_stock || 0"></span> nema na stanju
+            </p>
+        </div>
+
+        <!-- Pending Orders -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Nove narudzbine</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1" x-text="orderStats.pending || 0"></p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                    <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">Ceka potvrdu</p>
+        </div>
+
+        <!-- Total Sales -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Ukupna prodaja</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1" x-text="formatPrice(supplierInfo.total_sales || 0)"></p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">
+                    <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">
+                Provizija: <span class="font-medium" x-text="(supplierInfo.commission_rate || 5) + '%'"></span>
+            </p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Recent Orders -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900">Poslednje narudzbine</h2>
+                    <a href="/supplier/orders" class="text-purple-600 hover:text-purple-700 text-sm font-medium">
+                        Vidi sve &rarr;
+                    </a>
+                </div>
+            </div>
+            <div class="divide-y divide-gray-100">
+                <template x-if="recentOrders.length === 0">
+                    <div class="p-6 text-center text-gray-500">
+                        Nema narudzbina
+                    </div>
+                </template>
+                <template x-for="order in recentOrders" :key="order.id">
+                    <div class="p-4 hover:bg-gray-50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-medium text-gray-900" x-text="order.order_number"></p>
+                                <p class="text-sm text-gray-500" x-text="order.buyer_name"></p>
+                            </div>
+                            <div class="text-right">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                      :class="getStatusClass(order.status)"
+                                      x-text="getStatusLabel(order.status)"></span>
+                                <p class="text-sm text-gray-500 mt-1" x-text="formatDate(order.created_at)"></p>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Categories Breakdown -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-lg font-semibold text-gray-900">Kategorije</h2>
+            </div>
+            <div class="p-6">
+                <template x-if="Object.keys(stats.categories || {}).length === 0">
+                    <p class="text-center text-gray-500">Nema kategorija</p>
+                </template>
+                <div class="space-y-4">
+                    <template x-for="(count, category) in stats.categories" :key="category">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-700" x-text="category"></span>
+                                <span class="text-sm text-gray-500" x-text="count + ' artikala'"></span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-purple-600 h-2 rounded-full"
+                                     :style="'width: ' + (count / stats.active_listings * 100) + '%'"></div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="/supplier/catalog"
+           class="flex items-center p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:border-purple-300 transition-colors">
+            <div class="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center mr-4">
+                <svg class="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+            </div>
+            <div>
+                <p class="font-medium text-gray-900">Dodaj artikal</p>
+                <p class="text-sm text-gray-500">Prosiri svoj katalog</p>
+            </div>
+        </a>
+
+        <a href="/supplier/orders"
+           class="flex items-center p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:border-purple-300 transition-colors">
+            <div class="h-10 w-10 rounded-lg bg-yellow-100 flex items-center justify-center mr-4">
+                <svg class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+            </div>
+            <div>
+                <p class="font-medium text-gray-900">Pregled narudzbina</p>
+                <p class="text-sm text-gray-500">Obradi narudzbine</p>
+            </div>
+        </a>
+
+        <a href="/supplier/settings"
+           class="flex items-center p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:border-purple-300 transition-colors">
+            <div class="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center mr-4">
+                <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="font-medium text-gray-900">Podesavanja</p>
+                <p class="text-sm text-gray-500">Azuriraj profil</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+<script>
+function dashboardPage() {
+    return {
+        stats: {},
+        orderStats: { pending: 0 },
+        supplierInfo: {},
+        recentOrders: [],
+
+        async init() {
+            await Promise.all([
+                this.loadStats(),
+                this.loadOrders(),
+                this.loadSupplierInfo()
+            ]);
+        },
+
+        async loadStats() {
+            try {
+                const data = await supplierApi('/api/supplier/listings/stats');
+                this.stats = data;
+            } catch (err) {
+                console.error('Error loading stats:', err);
+            }
+        },
+
+        async loadOrders() {
+            try {
+                const data = await supplierApi('/api/supplier/orders?per_page=5');
+                this.recentOrders = data.orders || [];
+                // Count pending orders
+                const allOrders = await supplierApi('/api/supplier/orders?status=SENT');
+                this.orderStats.pending = allOrders.total || 0;
+            } catch (err) {
+                console.error('Error loading orders:', err);
+            }
+        },
+
+        async loadSupplierInfo() {
+            try {
+                const data = await supplierApi('/api/supplier/auth/me');
+                this.supplierInfo = data.supplier || {};
+            } catch (err) {
+                console.error('Error loading supplier info:', err);
+            }
+        },
+
+        formatPrice(price) {
+            return new Intl.NumberFormat('sr-RS').format(price) + ' RSD';
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '';
+            return new Date(dateStr).toLocaleDateString('sr-RS');
+        },
+
+        getStatusClass(status) {
+            const classes = {
+                'SENT': 'bg-yellow-100 text-yellow-800',
+                'CONFIRMED': 'bg-blue-100 text-blue-800',
+                'SHIPPED': 'bg-purple-100 text-purple-800',
+                'DELIVERED': 'bg-green-100 text-green-800',
+                'COMPLETED': 'bg-green-100 text-green-800',
+                'CANCELLED': 'bg-red-100 text-red-800',
+                'REJECTED': 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        },
+
+        getStatusLabel(status) {
+            const labels = {
+                'SENT': 'Nova',
+                'CONFIRMED': 'Potvrdjena',
+                'SHIPPED': 'Poslato',
+                'DELIVERED': 'Isporuceno',
+                'COMPLETED': 'Zavrseno',
+                'CANCELLED': 'Otkazano',
+                'REJECTED': 'Odbijeno'
+            };
+            return labels[status] || status;
+        }
+    };
+}
+</script>
+{% endblock %}

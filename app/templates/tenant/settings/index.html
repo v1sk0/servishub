@@ -1,0 +1,803 @@
+{% extends "tenant/layout.html" %}
+
+{% block title %}Podesavanja - ServisHub{% endblock %}
+
+{% block content %}
+<div x-data="settingsPage()" x-init="init()">
+
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Podesavanja</h1>
+        <p class="text-gray-600 mt-1">Upravljajte vasim servisom, timom i lokacijama</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="flex space-x-8 overflow-x-auto" aria-label="Tabs">
+            <button @click="activeTab = 'profile'"
+                    :class="activeTab === 'profile' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Profil
+            </button>
+            <button @click="activeTab = 'settings'"
+                    :class="activeTab === 'settings' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Podesavanja
+            </button>
+            <button @click="activeTab = 'subscription'"
+                    :class="activeTab === 'subscription' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Pretplata
+            </button>
+            <button @click="activeTab = 'team'"
+                    :class="activeTab === 'team' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Tim
+            </button>
+            <button @click="activeTab = 'locations'"
+                    :class="activeTab === 'locations' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Lokacije
+            </button>
+            <button @click="activeTab = 'kyc'"
+                    :class="activeTab === 'kyc' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                KYC
+            </button>
+        </nav>
+    </div>
+
+    <!-- Loading -->
+    <div x-show="loading" class="flex justify-center py-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    </div>
+
+    <!-- ==================== PROFILE TAB ==================== -->
+    <div x-show="!loading && activeTab === 'profile'" class="space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Podaci servisa</h2>
+
+            <form @submit.prevent="saveProfile()">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Naziv servisa *</label>
+                        <input type="text" x-model="profile.name" required
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">PIB</label>
+                        <input type="text" :value="profile.pib" disabled
+                               class="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-gray-500">
+                        <p class="text-xs text-gray-400 mt-1">PIB se ne moze menjati</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Maticni broj</label>
+                        <input type="text" :value="profile.maticni_broj" disabled
+                               class="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-gray-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" x-model="profile.email"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                        <input type="text" x-model="profile.telefon"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Adresa sedista</label>
+                        <input type="text" x-model="profile.adresa_sedista"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" :disabled="saving"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                        <span x-show="!saving">Sacuvaj izmene</span>
+                        <span x-show="saving">Cuvam...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== SETTINGS TAB ==================== -->
+    <div x-show="!loading && activeTab === 'settings'" class="space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Podesavanja naloga</h2>
+
+            <form @submit.prevent="saveSettings()">
+                <div class="space-y-6">
+                    <!-- Warranty -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Default garancija (dana)</label>
+                        <input type="number" x-model="settings.default_warranty_days" min="0" max="365"
+                               class="w-32 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">Koliko dana garancije se automatski dodaje na nove naloge</p>
+                    </div>
+
+                    <!-- Ticket Prefix -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Prefix naloga</label>
+                        <input type="text" x-model="settings.ticket_prefix" maxlength="10"
+                               placeholder="SRV" class="w-32 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">Npr. SRV-0001 umesto 0001</p>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="border-t border-gray-200 pt-6">
+                        <h3 class="text-sm font-medium text-gray-900 mb-4">Notifikacije</h3>
+                        <div class="space-y-4">
+                            <label class="flex items-center gap-3">
+                                <input type="checkbox" x-model="settings.email_notifications"
+                                       class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <span class="text-sm text-gray-700">Email notifikacije</span>
+                            </label>
+                            <label class="flex items-center gap-3">
+                                <input type="checkbox" x-model="settings.sms_notifications"
+                                       class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <span class="text-sm text-gray-700">SMS notifikacije</span>
+                            </label>
+                            <label class="flex items-center gap-3">
+                                <input type="checkbox" x-model="settings.auto_sms_on_ready"
+                                       class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <span class="text-sm text-gray-700">Automatski SMS kada je nalog spreman</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" :disabled="saving"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                        <span x-show="!saving">Sacuvaj podesavanja</span>
+                        <span x-show="saving">Cuvam...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== SUBSCRIPTION TAB ==================== -->
+    <div x-show="!loading && activeTab === 'subscription'" class="space-y-6">
+        <!-- Status Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">Status pretplate</h2>
+                <span :class="getSubscriptionStatusClass(subscription.status)"
+                      class="text-sm font-medium px-3 py-1 rounded-full"
+                      x-text="getSubscriptionStatusLabel(subscription.status)"></span>
+            </div>
+
+            <div x-show="subscription.is_trial" class="mb-6 p-4 bg-blue-50 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>
+                        <p class="font-medium text-blue-900">Trial period</p>
+                        <p class="text-sm text-blue-700">
+                            Preostalo: <strong x-text="subscription.trial_days_left"></strong> dana
+                            <span x-show="subscription.trial_ends_at">
+                                (do <span x-text="formatDate(subscription.trial_ends_at)"></span>)
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pricing -->
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                    <h3 class="font-medium text-gray-900">Mesecni troskovi</h3>
+                </div>
+                <div class="p-4 space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Bazni paket (1 lokacija)</span>
+                        <span class="font-medium" x-text="formatPrice(subscription.pricing?.base_price) + ' RSD'"></span>
+                    </div>
+                    <div class="flex justify-between" x-show="subscription.pricing?.additional_locations > 0">
+                        <span class="text-gray-600">
+                            Dodatne lokacije (<span x-text="subscription.pricing?.additional_locations"></span> x <span x-text="formatPrice(subscription.pricing?.location_price)"></span>)
+                        </span>
+                        <span class="font-medium" x-text="formatPrice(subscription.pricing?.additional_locations * subscription.pricing?.location_price) + ' RSD'"></span>
+                    </div>
+                    <div class="flex justify-between pt-3 border-t border-gray-200">
+                        <span class="font-semibold text-gray-900">Ukupno mesecno</span>
+                        <span class="font-bold text-lg text-gray-900" x-text="formatPrice(subscription.pricing?.monthly_total) + ' RSD'"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                <p class="text-sm text-gray-600">
+                    Za produzenje pretplate ili dodatne informacije, kontaktirajte nas na
+                    <a href="mailto:office@servishub.rs" class="text-blue-600 hover:text-blue-700">office@servishub.rs</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TEAM TAB ==================== -->
+    <div x-show="!loading && activeTab === 'team'" class="space-y-6">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900">Tim</h2>
+            <button @click="openUserModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <span>Dodaj korisnika</span>
+            </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Korisnik</th>
+                            <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Email</th>
+                            <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Rola</th>
+                            <th class="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Akcije</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <template x-for="user in users" :key="user.id">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <span class="text-blue-600 font-medium text-sm" x-text="user.ime?.charAt(0) + user.prezime?.charAt(0)"></span>
+                                        </div>
+                                        <span class="font-medium text-gray-900" x-text="user.ime + ' ' + user.prezime"></span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-600" x-text="user.email"></td>
+                                <td class="px-4 py-3">
+                                    <span :class="getRoleClass(user.role)" class="text-xs font-medium px-2 py-1 rounded-full"
+                                          x-text="getRoleLabel(user.role)"></span>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span :class="user.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
+                                          class="text-xs font-medium px-2 py-1 rounded-full"
+                                          x-text="user.is_active ? 'Aktivan' : 'Neaktivan'"></span>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <button @click="editUser(user)" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                        </svg>
+                                    </button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== LOCATIONS TAB ==================== -->
+    <div x-show="!loading && activeTab === 'locations'" class="space-y-6">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900">Lokacije</h2>
+            <button @click="openLocationModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <span>Dodaj lokaciju</span>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <template x-for="location in locations" :key="location.id">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-medium text-gray-900" x-text="location.name"></h3>
+                            <span x-show="location.is_primary" class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Glavna</span>
+                        </div>
+                        <button @click="editLocation(location)" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="space-y-1 text-sm text-gray-600">
+                        <p x-show="location.address" x-text="location.address"></p>
+                        <p x-show="location.city" x-text="location.city + (location.postal_code ? ', ' + location.postal_code : '')"></p>
+                        <p x-show="location.phone" x-text="location.phone"></p>
+                        <p x-show="location.email" x-text="location.email"></p>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- ==================== KYC TAB ==================== -->
+    <div x-show="!loading && activeTab === 'kyc'" class="space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">KYC Verifikacija</h2>
+
+            <!-- Status -->
+            <div class="mb-6">
+                <div class="flex items-center gap-3 p-4 rounded-lg"
+                     :class="kyc.kyc_status === 'VERIFIED' ? 'bg-green-50' : kyc.kyc_status === 'PENDING' ? 'bg-yellow-50' : kyc.kyc_status === 'REJECTED' ? 'bg-red-50' : 'bg-gray-50'">
+                    <template x-if="kyc.kyc_status === 'VERIFIED'">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </template>
+                    <template x-if="kyc.kyc_status === 'PENDING'">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </template>
+                    <template x-if="!kyc.kyc_submitted">
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </template>
+                    <div>
+                        <p class="font-medium"
+                           :class="kyc.kyc_status === 'VERIFIED' ? 'text-green-800' : kyc.kyc_status === 'PENDING' ? 'text-yellow-800' : kyc.kyc_status === 'REJECTED' ? 'text-red-800' : 'text-gray-800'"
+                           x-text="kyc.kyc_status === 'VERIFIED' ? 'Verifikovan' : kyc.kyc_status === 'PENDING' ? 'Ceka se verifikacija' : kyc.kyc_status === 'REJECTED' ? 'Odbijeno' : 'Nije prijavljeno'"></p>
+                        <p class="text-sm"
+                           :class="kyc.kyc_status === 'VERIFIED' ? 'text-green-700' : kyc.kyc_status === 'PENDING' ? 'text-yellow-700' : kyc.kyc_status === 'REJECTED' ? 'text-red-700' : 'text-gray-600'"
+                           x-text="kyc.kyc_status === 'VERIFIED' ? 'Vas servis je verifikovan za B2C prodaju' : kyc.kyc_status === 'PENDING' ? 'Podaci su poslati na verifikaciju' : kyc.kyc_status === 'REJECTED' ? 'Molimo popravite podatke i posaljite ponovo' : 'Popunite podatke za KYC verifikaciju'"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KYC Form -->
+            <div x-show="kyc.kyc_status !== 'VERIFIED'">
+                <h3 class="font-medium text-gray-900 mb-4">Podaci predstavnika</h3>
+                <form @submit.prevent="submitKyc()">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ime *</label>
+                            <input type="text" x-model="kycForm.ime" required
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Prezime *</label>
+                            <input type="text" x-model="kycForm.prezime" required
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">JMBG</label>
+                            <input type="text" x-model="kycForm.jmbg" maxlength="13"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Broj licne karte</label>
+                            <input type="text" x-model="kycForm.broj_licne_karte"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" x-model="kycForm.email"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                            <input type="text" x-model="kycForm.telefon"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Adresa</label>
+                            <input type="text" x-model="kycForm.adresa"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                        <p class="text-sm text-gray-600">
+                            Nakon slanja, vas zahtev ce biti pregledan od strane naseg tima.
+                            Mozda cemo zatraziti dodatne dokumente (slike licne karte).
+                        </p>
+                    </div>
+
+                    <div class="mt-6 flex justify-end">
+                        <button type="submit" :disabled="saving"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                            <span x-show="!saving" x-text="kyc.kyc_submitted ? 'Azuriraj i posalji' : 'Posalji na verifikaciju'"></span>
+                            <span x-show="saving">Saljem...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Verified Info -->
+            <div x-show="kyc.kyc_status === 'VERIFIED' && kyc.representative">
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-2">Verifikovani predstavnik:</p>
+                    <p class="font-medium text-gray-900" x-text="kyc.representative?.ime + ' ' + kyc.representative?.prezime"></p>
+                    <p class="text-sm text-gray-600" x-text="kyc.representative?.email"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== USER MODAL ==================== -->
+    <div x-show="userModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div class="fixed inset-0 bg-black/50" @click="userModal = false"></div>
+            <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full mx-auto p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4" x-text="editingUser ? 'Izmeni korisnika' : 'Novi korisnik'"></h2>
+
+                <form @submit.prevent="saveUser()">
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Ime *</label>
+                                <input type="text" x-model="userForm.ime" required
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Prezime *</label>
+                                <input type="text" x-model="userForm.prezime" required
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                            <input type="email" x-model="userForm.email" required :disabled="editingUser"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50">
+                        </div>
+                        <div x-show="!editingUser">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Lozinka *</label>
+                            <input type="password" x-model="userForm.password" :required="!editingUser" minlength="6"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                            <input type="text" x-model="userForm.phone"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Rola</label>
+                            <select x-model="userForm.role"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                                <option value="TECHNICIAN">Serviser</option>
+                                <option value="RECEPTIONIST">Recepcionar</option>
+                                <option value="MANAGER">Menadzer</option>
+                                <option value="ADMIN">Administrator</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 mt-6">
+                        <button type="button" @click="userModal = false"
+                                class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                            Otkazi
+                        </button>
+                        <button type="submit" :disabled="saving"
+                                class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                            <span x-show="!saving">Sacuvaj</span>
+                            <span x-show="saving">Cuvam...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== LOCATION MODAL ==================== -->
+    <div x-show="locationModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div class="fixed inset-0 bg-black/50" @click="locationModal = false"></div>
+            <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full mx-auto p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4" x-text="editingLocation ? 'Izmeni lokaciju' : 'Nova lokacija'"></h2>
+
+                <form @submit.prevent="saveLocation()">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Naziv *</label>
+                            <input type="text" x-model="locationForm.name" required
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Adresa</label>
+                            <input type="text" x-model="locationForm.address"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Grad</label>
+                                <input type="text" x-model="locationForm.city"
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Postanski broj</label>
+                                <input type="text" x-model="locationForm.postal_code"
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                            <input type="text" x-model="locationForm.phone"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" x-model="locationForm.email"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 mt-6">
+                        <button type="button" @click="locationModal = false"
+                                class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                            Otkazi
+                        </button>
+                        <button type="submit" :disabled="saving"
+                                class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                            <span x-show="!saving">Sacuvaj</span>
+                            <span x-show="saving">Cuvam...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function settingsPage() {
+    return {
+        // State
+        loading: true,
+        saving: false,
+        activeTab: 'profile',
+
+        // Modals
+        userModal: false,
+        locationModal: false,
+        editingUser: null,
+        editingLocation: null,
+
+        // Data
+        profile: {},
+        settings: {},
+        subscription: {},
+        users: [],
+        locations: [],
+        kyc: {},
+
+        // Forms
+        userForm: {},
+        locationForm: {},
+        kycForm: {},
+
+        async init() {
+            await this.loadAll();
+        },
+
+        async loadAll() {
+            this.loading = true;
+            try {
+                const [profile, settings, subscription, users, locations, kyc] = await Promise.all([
+                    api('/tenant/profile'),
+                    api('/tenant/settings'),
+                    api('/tenant/subscription'),
+                    api('/users'),
+                    api('/locations'),
+                    api('/tenant/kyc')
+                ]);
+
+                this.profile = profile;
+                this.settings = settings;
+                this.subscription = subscription;
+                this.users = users.users || [];
+                this.locations = locations.locations || [];
+                this.kyc = kyc;
+
+                // Init KYC form
+                if (kyc.representative) {
+                    this.kycForm = { ...kyc.representative };
+                }
+            } catch (e) {
+                console.error('Failed to load data:', e);
+                showToast('Greska pri ucitavanju', 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async saveProfile() {
+            this.saving = true;
+            try {
+                await api('/tenant/profile', 'PUT', {
+                    name: this.profile.name,
+                    email: this.profile.email,
+                    telefon: this.profile.telefon,
+                    adresa_sedista: this.profile.adresa_sedista
+                });
+                showToast('Profil sacuvan', 'success');
+            } catch (e) {
+                showToast('Greska pri cuvanju', 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        async saveSettings() {
+            this.saving = true;
+            try {
+                await api('/tenant/settings', 'PUT', this.settings);
+                showToast('Podesavanja sacuvana', 'success');
+            } catch (e) {
+                showToast('Greska pri cuvanju', 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        async submitKyc() {
+            this.saving = true;
+            try {
+                await api('/tenant/kyc', 'POST', this.kycForm);
+                showToast('KYC zahtev poslat', 'success');
+                const kyc = await api('/tenant/kyc');
+                this.kyc = kyc;
+            } catch (e) {
+                showToast(e.message || 'Greska pri slanju', 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        // Users
+        openUserModal() {
+            this.editingUser = null;
+            this.userForm = {
+                ime: '',
+                prezime: '',
+                email: '',
+                password: '',
+                phone: '',
+                role: 'TECHNICIAN'
+            };
+            this.userModal = true;
+        },
+
+        editUser(user) {
+            this.editingUser = user;
+            this.userForm = {
+                ime: user.ime,
+                prezime: user.prezime,
+                email: user.email,
+                phone: user.phone,
+                role: user.role
+            };
+            this.userModal = true;
+        },
+
+        async saveUser() {
+            this.saving = true;
+            try {
+                if (this.editingUser) {
+                    await api(`/users/${this.editingUser.id}`, 'PUT', this.userForm);
+                } else {
+                    await api('/users', 'POST', this.userForm);
+                }
+                showToast('Korisnik sacuvan', 'success');
+                this.userModal = false;
+                const data = await api('/users');
+                this.users = data.users || [];
+            } catch (e) {
+                showToast(e.message || 'Greska pri cuvanju', 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        // Locations
+        openLocationModal() {
+            this.editingLocation = null;
+            this.locationForm = {
+                name: '',
+                address: '',
+                city: '',
+                postal_code: '',
+                phone: '',
+                email: ''
+            };
+            this.locationModal = true;
+        },
+
+        editLocation(location) {
+            this.editingLocation = location;
+            this.locationForm = {
+                name: location.name,
+                address: location.address,
+                city: location.city,
+                postal_code: location.postal_code,
+                phone: location.phone,
+                email: location.email
+            };
+            this.locationModal = true;
+        },
+
+        async saveLocation() {
+            this.saving = true;
+            try {
+                if (this.editingLocation) {
+                    await api(`/locations/${this.editingLocation.id}`, 'PUT', this.locationForm);
+                } else {
+                    await api('/locations', 'POST', this.locationForm);
+                }
+                showToast('Lokacija sacuvana', 'success');
+                this.locationModal = false;
+                const data = await api('/locations');
+                this.locations = data.locations || [];
+            } catch (e) {
+                showToast(e.message || 'Greska pri cuvanju', 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        // Helpers
+        getRoleLabel(role) {
+            const labels = {
+                'OWNER': 'Vlasnik',
+                'ADMIN': 'Admin',
+                'MANAGER': 'Menadzer',
+                'TECHNICIAN': 'Serviser',
+                'RECEPTIONIST': 'Recepcionar'
+            };
+            return labels[role] || role;
+        },
+
+        getRoleClass(role) {
+            const classes = {
+                'OWNER': 'bg-purple-100 text-purple-700',
+                'ADMIN': 'bg-red-100 text-red-700',
+                'MANAGER': 'bg-blue-100 text-blue-700',
+                'TECHNICIAN': 'bg-green-100 text-green-700',
+                'RECEPTIONIST': 'bg-gray-100 text-gray-700'
+            };
+            return classes[role] || 'bg-gray-100 text-gray-700';
+        },
+
+        getSubscriptionStatusLabel(status) {
+            const labels = {
+                'PENDING': 'Cekanje',
+                'TRIAL': 'Trial',
+                'ACTIVE': 'Aktivan',
+                'EXPIRED': 'Istekao',
+                'SUSPENDED': 'Suspendovan'
+            };
+            return labels[status] || status;
+        },
+
+        getSubscriptionStatusClass(status) {
+            const classes = {
+                'PENDING': 'bg-yellow-100 text-yellow-700',
+                'TRIAL': 'bg-blue-100 text-blue-700',
+                'ACTIVE': 'bg-green-100 text-green-700',
+                'EXPIRED': 'bg-red-100 text-red-700',
+                'SUSPENDED': 'bg-gray-100 text-gray-700'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-700';
+        },
+
+        formatPrice(price) {
+            if (!price) return '0';
+            return new Intl.NumberFormat('sr-RS').format(price);
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleDateString('sr-RS');
+        }
+    }
+}
+</script>
+{% endblock %}

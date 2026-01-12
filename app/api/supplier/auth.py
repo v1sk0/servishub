@@ -300,6 +300,64 @@ def get_me():
     }
 
 
+@bp.route('/me', methods=['PUT'])
+@supplier_jwt_required
+def update_profile():
+    """Update supplier profile"""
+    data = request.json or {}
+
+    user = SupplierUser.query.get(g.supplier_user_id)
+    supplier = Supplier.query.get(g.supplier_id)
+
+    # Update user fields
+    if 'ime' in data:
+        user.ime = data['ime']
+    if 'prezime' in data:
+        user.prezime = data['prezime']
+    if 'phone' in data:
+        user.phone = data['phone']
+
+    # Update supplier fields (only admin can update)
+    if user.is_admin:
+        if 'company_name' in data:
+            supplier.name = data['company_name']
+        if 'company_email' in data:
+            supplier.email = data['company_email']
+        if 'company_phone' in data:
+            supplier.phone = data['company_phone']
+        if 'city' in data:
+            supplier.city = data['city']
+
+    db.session.commit()
+
+    return {'message': 'Profile updated'}
+
+
+@bp.route('/password', methods=['PUT'])
+@supplier_jwt_required
+def change_password():
+    """Change password"""
+    data = request.json or {}
+    current_password = data.get('current_password')
+    new_password = data.get('new_password')
+
+    if not current_password or not new_password:
+        return {'error': 'Both current and new password required'}, 400
+
+    if len(new_password) < 6:
+        return {'error': 'Password must be at least 6 characters'}, 400
+
+    user = SupplierUser.query.get(g.supplier_user_id)
+
+    if not user.check_password(current_password):
+        return {'error': 'Current password is incorrect'}, 400
+
+    user.set_password(new_password)
+    db.session.commit()
+
+    return {'message': 'Password changed successfully'}
+
+
 @bp.route('/logout', methods=['POST'])
 @supplier_jwt_required
 def logout():

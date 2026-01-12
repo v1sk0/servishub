@@ -1,0 +1,260 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Praćenje naloga - ServisHub{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="trackPage('{{ token }}')" x-init="loadTicket()">
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center">
+                        <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
+                        <span class="ml-3 text-xl font-bold text-gray-900">ServisHub</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="max-w-3xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Loading -->
+        <div x-show="loading" class="text-center py-12">
+            <svg class="animate-spin mx-auto h-12 w-12 text-primary-600" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="mt-4 text-gray-600">Učitavanje...</p>
+        </div>
+
+        <!-- Error -->
+        <div x-show="!loading && error" class="text-center py-12">
+            <div class="w-16 h-16 bg-red-100 rounded-full mx-auto flex items-center justify-center mb-4">
+                <svg class="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900 mb-2">Nalog nije pronađen</h2>
+            <p class="text-gray-600 mb-6">Token nije validan ili je nalog uklonjen.</p>
+            <a href="/" class="text-primary-600 hover:text-primary-700 font-medium">← Nazad na početnu</a>
+        </div>
+
+        <!-- Ticket info -->
+        <div x-show="!loading && ticket">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
+                <div class="bg-primary-600 px-6 py-8 text-center">
+                    <h1 class="text-2xl font-bold text-white">
+                        Nalog #<span x-text="ticket.ticket_number"></span>
+                    </h1>
+                    <p class="text-primary-100 mt-1" x-text="ticket.service?.name"></p>
+                </div>
+
+                <!-- Status badge -->
+                <div class="px-6 py-4 border-b">
+                    <div class="flex items-center justify-center">
+                        <span class="px-4 py-2 rounded-full text-lg font-semibold"
+                              :class="getStatusClass(ticket.status?.value)"
+                              x-text="ticket.status?.label"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress steps -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-6 text-center">Status popravke</h2>
+                <div class="relative">
+                    <!-- Progress line -->
+                    <div class="absolute top-5 left-0 right-0 h-0.5 bg-gray-200"></div>
+                    <div class="absolute top-5 left-0 h-0.5 bg-primary-600 transition-all duration-500"
+                         :style="{ width: getProgressWidth() + '%' }"></div>
+
+                    <!-- Steps -->
+                    <div class="relative flex justify-between">
+                        <template x-for="(step, index) in ticket.progress" :key="step.status">
+                            <div class="flex flex-col items-center" style="width: 16.66%;">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center z-10 transition-all duration-300"
+                                     :class="step.is_completed || step.is_current ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-500'">
+                                    <svg x-show="step.is_completed" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span x-show="!step.is_completed" x-text="index + 1" class="text-sm font-medium"></span>
+                                </div>
+                                <p class="mt-2 text-xs text-center font-medium"
+                                   :class="step.is_current ? 'text-primary-600' : 'text-gray-500'"
+                                   x-text="step.label"></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Device info -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Uređaj</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-500">Marka / Model</p>
+                        <p class="font-medium" x-text="ticket.device?.brand + ' ' + ticket.device?.model"></p>
+                    </div>
+                    <div x-show="ticket.device?.imei">
+                        <p class="text-sm text-gray-500">IMEI (poslednje 4 cifre)</p>
+                        <p class="font-medium">****<span x-text="ticket.device?.imei"></span></p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-sm text-gray-500">Opis problema</p>
+                    <p class="text-gray-900" x-text="ticket.problem"></p>
+                </div>
+                <div class="mt-4" x-show="ticket.diagnosis">
+                    <p class="text-sm text-gray-500">Dijagnoza</p>
+                    <p class="text-gray-900" x-text="ticket.diagnosis"></p>
+                </div>
+                <div class="mt-4" x-show="ticket.resolution">
+                    <p class="text-sm text-gray-500">Rešenje</p>
+                    <p class="text-gray-900" x-text="ticket.resolution"></p>
+                </div>
+            </div>
+
+            <!-- Price info -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Cena</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div x-show="ticket.price?.estimated">
+                        <p class="text-sm text-gray-500">Procenjena cena</p>
+                        <p class="font-medium">
+                            <span x-text="formatPrice(ticket.price?.estimated)"></span>
+                            <span x-text="ticket.price?.currency"></span>
+                        </p>
+                    </div>
+                    <div x-show="ticket.price?.final">
+                        <p class="text-sm text-gray-500">Konačna cena</p>
+                        <p class="text-xl font-bold text-gray-900">
+                            <span x-text="formatPrice(ticket.price?.final)"></span>
+                            <span x-text="ticket.price?.currency"></span>
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <span x-show="ticket.price?.is_paid" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Plaćeno
+                    </span>
+                    <span x-show="!ticket.price?.is_paid" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                        Čeka plaćanje
+                    </span>
+                </div>
+            </div>
+
+            <!-- Warranty -->
+            <div x-show="ticket.warranty" class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Garancija</h2>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Trajanje</p>
+                        <p class="font-medium" x-text="ticket.warranty?.days_total + ' dana'"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Preostalo</p>
+                        <p class="font-medium" :class="ticket.warranty?.is_active ? 'text-green-600' : 'text-red-600'"
+                           x-text="ticket.warranty?.is_active ? ticket.warranty?.days_left + ' dana' : 'Istekla'"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Ističe</p>
+                        <p class="font-medium" x-text="formatDate(ticket.warranty?.expires_at)"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Service info -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Servis</h2>
+                <p class="font-medium text-gray-900" x-text="ticket.service?.name"></p>
+                <div x-show="ticket.service?.location" class="mt-2 text-gray-600">
+                    <p x-text="ticket.service?.location?.name"></p>
+                    <p x-text="ticket.service?.location?.address"></p>
+                    <p x-text="ticket.service?.location?.city"></p>
+                    <a :href="'tel:' + ticket.service?.location?.phone" class="text-primary-600 hover:text-primary-700"
+                       x-text="ticket.service?.location?.phone"></a>
+                </div>
+            </div>
+
+            <!-- Dates -->
+            <div class="mt-6 text-center text-sm text-gray-500">
+                <p>Kreiran: <span x-text="formatDate(ticket.created_at)"></span></p>
+                <p>Poslednja izmena: <span x-text="formatDate(ticket.updated_at)"></span></p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+function trackPage(token) {
+    return {
+        token: token,
+        ticket: null,
+        loading: true,
+        error: false,
+
+        async loadTicket() {
+            try {
+                const response = await fetch('/api/public/track/' + this.token);
+                if (response.ok) {
+                    this.ticket = await response.json();
+                } else {
+                    this.error = true;
+                }
+            } catch (e) {
+                console.error('Failed to load ticket:', e);
+                this.error = true;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        getStatusClass(status) {
+            const classes = {
+                'RECEIVED': 'bg-yellow-100 text-yellow-800',
+                'DIAGNOSED': 'bg-blue-100 text-blue-800',
+                'IN_PROGRESS': 'bg-blue-100 text-blue-800',
+                'WAITING_PARTS': 'bg-purple-100 text-purple-800',
+                'READY': 'bg-green-100 text-green-800',
+                'DELIVERED': 'bg-gray-100 text-gray-800',
+                'CANCELLED': 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        },
+
+        getProgressWidth() {
+            if (!this.ticket?.progress) return 0;
+            const currentIndex = this.ticket.progress.findIndex(s => s.is_current);
+            if (currentIndex === -1) return 100;
+            return ((currentIndex) / (this.ticket.progress.length - 1)) * 100;
+        },
+
+        formatPrice(price) {
+            if (!price) return '-';
+            return new Intl.NumberFormat('sr-RS').format(price);
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('sr-Latn-RS', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

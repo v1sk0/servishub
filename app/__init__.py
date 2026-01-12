@@ -87,6 +87,11 @@ def _register_blueprints(app):
     register_public_routes()
     app.register_blueprint(api_public_bp, url_prefix='/api/public')
 
+    # Frontend - HTML stranice (Jinja2 templates)
+    from .frontend import bp as frontend_bp, register_routes as register_frontend_routes
+    register_frontend_routes()
+    app.register_blueprint(frontend_bp)
+
     # Zdravstvena provera - uvek dostupna
     @app.route('/health')
     def health_check():

@@ -1,0 +1,90 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Admin Login - ServisHub{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8" x-data="adminLogin()">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <div class="flex justify-center">
+                <div class="w-16 h-16 bg-red-600 rounded-xl flex items-center justify-center">
+                    <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+            </div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-white">
+                Platform Admin
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-400">
+                ServisHub Administration Panel
+            </p>
+        </div>
+
+        <form @submit.prevent="submit()" class="mt-8 space-y-6">
+            <div class="space-y-4">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-300">Email</label>
+                    <input id="email" type="email" x-model="form.email" required autocomplete="email"
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white bg-gray-800 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-300">Lozinka</label>
+                    <input id="password" type="password" x-model="form.password" required autocomplete="current-password"
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white bg-gray-800 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm">
+                </div>
+            </div>
+
+            <div x-show="error" class="rounded-md bg-red-900/50 p-4">
+                <p class="text-sm font-medium text-red-400" x-text="error"></p>
+            </div>
+
+            <button type="submit" :disabled="loading"
+                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50">
+                <svg x-show="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Prijavi se
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function adminLogin() {
+    return {
+        form: { email: '', password: '' },
+        loading: false,
+        error: '',
+
+        async submit() {
+            this.loading = true;
+            this.error = '';
+
+            try {
+                const response = await fetch('/api/admin/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.form)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('admin_access_token', data.access_token);
+                    localStorage.setItem('admin_refresh_token', data.refresh_token);
+                    window.location.href = '/admin/dashboard';
+                } else {
+                    this.error = data.message || 'Pogrešan email ili lozinka';
+                }
+            } catch (e) {
+                this.error = 'Greška pri povezivanju sa serverom';
+            } finally {
+                this.loading = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

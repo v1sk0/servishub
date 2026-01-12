@@ -1,0 +1,328 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Servisni nalozi - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="ticketsPage()" x-init="loadTickets()">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-8">
+        <div class="min-w-0 flex-1">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                Servisni nalozi
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                Upravljajte servisnim nalozima i pratite status popravki
+            </p>
+        </div>
+        <div class="mt-4 flex md:ml-4 md:mt-0">
+            <a href="/tickets/new"
+               class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+                <svg class="-ml-0.5 mr-1.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                </svg>
+                Novi nalog
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white shadow rounded-lg mb-6 p-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <!-- Search -->
+            <div>
+                <label for="search" class="block text-sm font-medium text-gray-700">Pretraga</label>
+                <input type="text" id="search" x-model="filters.search" @input.debounce.300ms="loadTickets()"
+                       placeholder="Broj naloga, kupac, IMEI..."
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+            </div>
+
+            <!-- Status filter -->
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                <select id="status" x-model="filters.status" @change="loadTickets()"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    <option value="">Svi statusi</option>
+                    <option value="RECEIVED">Primljeno</option>
+                    <option value="DIAGNOSED">Dijagnostifikovano</option>
+                    <option value="IN_PROGRESS">U obradi</option>
+                    <option value="WAITING_PARTS">Čeka delove</option>
+                    <option value="READY">Spremno</option>
+                    <option value="DELIVERED">Isporučeno</option>
+                    <option value="CANCELLED">Otkazano</option>
+                </select>
+            </div>
+
+            <!-- Location filter -->
+            <div>
+                <label for="location" class="block text-sm font-medium text-gray-700">Lokacija</label>
+                <select id="location" x-model="filters.location_id" @change="loadTickets()"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    <option value="">Sve lokacije</option>
+                    <template x-for="location in locations" :key="location.id">
+                        <option :value="location.id" x-text="location.name"></option>
+                    </template>
+                </select>
+            </div>
+
+            <!-- Date range -->
+            <div>
+                <label for="date_from" class="block text-sm font-medium text-gray-700">Datum od</label>
+                <input type="date" id="date_from" x-model="filters.date_from" @change="loadTickets()"
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+            </div>
+        </div>
+    </div>
+
+    <!-- Tickets table -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Nalog
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Kupac
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Uređaj
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Cena
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Datum
+                        </th>
+                        <th scope="col" class="relative px-6 py-3">
+                            <span class="sr-only">Akcije</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <template x-for="ticket in tickets" :key="ticket.id">
+                        <tr class="hover:bg-gray-50 cursor-pointer" @click="window.location.href='/tickets/' + ticket.id">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900" x-text="'#' + ticket.ticket_number"></div>
+                                <div class="text-sm text-gray-500" x-text="ticket.location_name || ''"></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900" x-text="ticket.customer_name"></div>
+                                <div class="text-sm text-gray-500" x-text="ticket.customer_phone || ''"></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900" x-text="ticket.brand + ' ' + ticket.model"></div>
+                                <div class="text-sm text-gray-500" x-text="ticket.imei ? 'IMEI: ...' + ticket.imei.slice(-4) : ''"></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                      :class="getStatusClass(ticket.status)"
+                                      x-text="statusLabels[ticket.status] || ticket.status"></span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <span x-text="formatPrice(ticket.final_price || ticket.estimated_price)"></span>
+                                <span class="text-gray-500" x-text="ticket.currency || 'RSD'"></span>
+                                <span x-show="ticket.is_paid" class="ml-1 text-green-600" title="Naplaćeno">✓</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(ticket.created_at)"></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a :href="'/tickets/' + ticket.id" class="text-primary-600 hover:text-primary-900" @click.stop>
+                                    Detalji
+                                </a>
+                            </td>
+                        </tr>
+                    </template>
+
+                    <!-- Empty state -->
+                    <tr x-show="!loading && tickets.length === 0">
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">Nema naloga</h3>
+                            <p class="mt-1 text-sm text-gray-500">Kreirajte prvi servisni nalog.</p>
+                            <div class="mt-6">
+                                <a href="/tickets/new" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700">
+                                    <svg class="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                                    </svg>
+                                    Novi nalog
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Loading state -->
+                    <tr x-show="loading">
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <svg class="animate-spin mx-auto h-8 w-8 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="mt-2 text-sm">Učitavanje...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6" x-show="totalPages > 1">
+            <div class="flex-1 flex justify-between sm:hidden">
+                <button @click="prevPage()" :disabled="currentPage === 1"
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+                    Prethodna
+                </button>
+                <button @click="nextPage()" :disabled="currentPage === totalPages"
+                        class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+                    Sledeća
+                </button>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Prikazano <span class="font-medium" x-text="(currentPage - 1) * perPage + 1"></span> do
+                        <span class="font-medium" x-text="Math.min(currentPage * perPage, total)"></span> od
+                        <span class="font-medium" x-text="total"></span> rezultata
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        <button @click="prevPage()" :disabled="currentPage === 1"
+                                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                            <span class="sr-only">Prethodna</span>
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                            <span x-text="currentPage"></span> / <span x-text="totalPages"></span>
+                        </span>
+                        <button @click="nextPage()" :disabled="currentPage === totalPages"
+                                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                            <span class="sr-only">Sledeća</span>
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function ticketsPage() {
+    return {
+        tickets: [],
+        locations: [],
+        loading: true,
+        currentPage: 1,
+        perPage: 20,
+        total: 0,
+        totalPages: 1,
+
+        filters: {
+            search: '',
+            status: '',
+            location_id: '',
+            date_from: ''
+        },
+
+        statusLabels: {
+            'RECEIVED': 'Primljeno',
+            'DIAGNOSED': 'Dijagnostifikovano',
+            'IN_PROGRESS': 'U obradi',
+            'WAITING_PARTS': 'Čeka delove',
+            'READY': 'Spremno',
+            'DELIVERED': 'Isporučeno',
+            'CANCELLED': 'Otkazano'
+        },
+
+        async loadTickets() {
+            this.loading = true;
+            try {
+                // Build query string
+                const params = new URLSearchParams({
+                    page: this.currentPage,
+                    per_page: this.perPage
+                });
+
+                if (this.filters.search) params.append('search', this.filters.search);
+                if (this.filters.status) params.append('status', this.filters.status);
+                if (this.filters.location_id) params.append('location_id', this.filters.location_id);
+                if (this.filters.date_from) params.append('date_from', this.filters.date_from);
+
+                const response = await api('/api/v1/tickets?' + params.toString());
+                if (response.ok) {
+                    const data = await response.json();
+                    this.tickets = data.tickets || [];
+                    this.total = data.total || 0;
+                    this.totalPages = Math.ceil(this.total / this.perPage) || 1;
+                }
+
+                // Load locations for filter
+                if (this.locations.length === 0) {
+                    const locResponse = await api('/api/v1/locations');
+                    if (locResponse.ok) {
+                        const locData = await locResponse.json();
+                        this.locations = locData.locations || [];
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load tickets:', e);
+                showToast('Greška pri učitavanju naloga', 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        getStatusClass(status) {
+            const classes = {
+                'RECEIVED': 'bg-yellow-100 text-yellow-800',
+                'DIAGNOSED': 'bg-blue-100 text-blue-800',
+                'IN_PROGRESS': 'bg-blue-100 text-blue-800',
+                'WAITING_PARTS': 'bg-purple-100 text-purple-800',
+                'READY': 'bg-green-100 text-green-800',
+                'DELIVERED': 'bg-gray-100 text-gray-800',
+                'CANCELLED': 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        },
+
+        formatPrice(price) {
+            if (!price) return '-';
+            return new Intl.NumberFormat('sr-RS').format(price);
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('sr-Latn-RS', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        },
+
+        prevPage() {
+            if (this.currentPage > 1) {
+                this.currentPage--;
+                this.loadTickets();
+            }
+        },
+
+        nextPage() {
+            if (this.currentPage < this.totalPages) {
+                this.currentPage++;
+                this.loadTickets();
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

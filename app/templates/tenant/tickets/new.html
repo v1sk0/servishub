@@ -1,0 +1,306 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Novi nalog - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="newTicketPage()" x-init="loadData()">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-8">
+        <div class="min-w-0 flex-1">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                Novi servisni nalog
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                Popunite podatke o kupcu i uređaju
+            </p>
+        </div>
+        <div class="mt-4 flex md:ml-4 md:mt-0">
+            <a href="/tickets"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                <svg class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
+                </svg>
+                Nazad
+            </a>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <form @submit.prevent="submitForm()" class="space-y-8">
+        <!-- Customer Info -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Podaci o kupcu</h3>
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                    <label for="customer_name" class="block text-sm font-medium text-gray-700">Ime i prezime *</label>
+                    <input type="text" id="customer_name" x-model="form.customer_name" required
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="customer_phone" class="block text-sm font-medium text-gray-700">Telefon *</label>
+                    <input type="tel" id="customer_phone" x-model="form.customer_phone" required
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div class="sm:col-span-2">
+                    <label for="customer_email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="customer_email" x-model="form.customer_email"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+            </div>
+        </div>
+
+        <!-- Device Info -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Podaci o uređaju</h3>
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div>
+                    <label for="device_type" class="block text-sm font-medium text-gray-700">Tip uređaja *</label>
+                    <select id="device_type" x-model="form.device_type" required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <option value="">Izaberite...</option>
+                        <option value="PHONE">Mobilni telefon</option>
+                        <option value="TABLET">Tablet</option>
+                        <option value="LAPTOP">Laptop</option>
+                        <option value="COMPUTER">Desktop računar</option>
+                        <option value="OTHER">Ostalo</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="brand" class="block text-sm font-medium text-gray-700">Marka *</label>
+                    <input type="text" id="brand" x-model="form.brand" required list="brands-list"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    <datalist id="brands-list">
+                        <option value="Apple">
+                        <option value="Samsung">
+                        <option value="Xiaomi">
+                        <option value="Huawei">
+                        <option value="OnePlus">
+                        <option value="Google">
+                        <option value="Motorola">
+                        <option value="Nokia">
+                        <option value="Sony">
+                        <option value="LG">
+                        <option value="Lenovo">
+                        <option value="HP">
+                        <option value="Dell">
+                        <option value="Asus">
+                        <option value="Acer">
+                    </datalist>
+                </div>
+                <div>
+                    <label for="model" class="block text-sm font-medium text-gray-700">Model *</label>
+                    <input type="text" id="model" x-model="form.model" required
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="imei" class="block text-sm font-medium text-gray-700">IMEI / Serijski broj</label>
+                    <input type="text" id="imei" x-model="form.imei"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="device_password" class="block text-sm font-medium text-gray-700">Lozinka uređaja</label>
+                    <input type="text" id="device_password" x-model="form.device_password"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="device_condition" class="block text-sm font-medium text-gray-700">Stanje uređaja</label>
+                    <select id="device_condition" x-model="form.device_condition"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <option value="GOOD">Dobro</option>
+                        <option value="SCRATCHED">Ogrebano</option>
+                        <option value="CRACKED">Napuklo</option>
+                        <option value="BROKEN">Polomljeno</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Problem Description -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Opis problema</h3>
+            <div class="space-y-6">
+                <div>
+                    <label for="problem_description" class="block text-sm font-medium text-gray-700">Opis kvara *</label>
+                    <textarea id="problem_description" x-model="form.problem_description" rows="4" required
+                              placeholder="Opišite problem sa uređajem..."
+                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"></textarea>
+                </div>
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div>
+                        <label for="priority" class="block text-sm font-medium text-gray-700">Prioritet</label>
+                        <select id="priority" x-model="form.priority"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            <option value="LOW">Nizak</option>
+                            <option value="NORMAL" selected>Normalan</option>
+                            <option value="HIGH">Visok</option>
+                            <option value="URGENT">Hitno</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="location_id" class="block text-sm font-medium text-gray-700">Lokacija *</label>
+                        <select id="location_id" x-model="form.location_id" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            <option value="">Izaberite lokaciju...</option>
+                            <template x-for="location in locations" :key="location.id">
+                                <option :value="location.id" x-text="location.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Cena i garancija</h3>
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                <div>
+                    <label for="estimated_price" class="block text-sm font-medium text-gray-700">Procenjena cena</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <input type="number" id="estimated_price" x-model="form.estimated_price" step="0.01" min="0"
+                               class="block w-full pr-16 rounded-md border-gray-300 focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <div class="absolute inset-y-0 right-0 flex items-center">
+                            <select x-model="form.currency" class="h-full rounded-md border-transparent bg-transparent py-0 pl-2 pr-7 text-gray-500 focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                <option value="RSD">RSD</option>
+                                <option value="EUR">EUR</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label for="warranty_days" class="block text-sm font-medium text-gray-700">Garancija (dana)</label>
+                    <input type="number" id="warranty_days" x-model="form.warranty_days" min="0" max="365"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="technician_id" class="block text-sm font-medium text-gray-700">Tehničar</label>
+                    <select id="technician_id" x-model="form.technician_id"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <option value="">Nije dodeljen</option>
+                        <template x-for="user in technicians" :key="user.id">
+                            <option :value="user.id" x-text="user.ime + ' ' + user.prezime"></option>
+                        </template>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Internal Notes -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Interne beleške</h3>
+            <div>
+                <textarea id="internal_notes" x-model="form.internal_notes" rows="3"
+                          placeholder="Beleške vidljive samo zaposlenima..."
+                          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"></textarea>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex justify-end gap-3">
+            <a href="/tickets"
+               class="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                Odustani
+            </a>
+            <button type="submit" :disabled="submitting"
+                    class="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 disabled:opacity-50">
+                <svg x-show="submitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Kreiraj nalog
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function newTicketPage() {
+    return {
+        locations: [],
+        technicians: [],
+        submitting: false,
+
+        form: {
+            customer_name: '',
+            customer_phone: '',
+            customer_email: '',
+            device_type: 'PHONE',
+            brand: '',
+            model: '',
+            imei: '',
+            device_password: '',
+            device_condition: 'GOOD',
+            problem_description: '',
+            priority: 'NORMAL',
+            location_id: '',
+            estimated_price: '',
+            currency: 'RSD',
+            warranty_days: 30,
+            technician_id: '',
+            internal_notes: ''
+        },
+
+        async loadData() {
+            try {
+                // Load locations
+                const locResponse = await api('/api/v1/locations');
+                if (locResponse.ok) {
+                    const data = await locResponse.json();
+                    this.locations = data.locations || [];
+                    // Set default to primary location
+                    const primary = this.locations.find(l => l.is_primary);
+                    if (primary) {
+                        this.form.location_id = primary.id;
+                    }
+                }
+
+                // Load team members (technicians)
+                const teamResponse = await api('/api/v1/users');
+                if (teamResponse.ok) {
+                    const data = await teamResponse.json();
+                    this.technicians = (data.users || []).filter(u =>
+                        u.role === 'TECHNICIAN' || u.role === 'ADMIN' || u.role === 'OWNER'
+                    );
+                }
+            } catch (e) {
+                console.error('Failed to load data:', e);
+            }
+        },
+
+        async submitForm() {
+            this.submitting = true;
+            try {
+                // Prepare data
+                const payload = {
+                    ...this.form,
+                    location_id: parseInt(this.form.location_id),
+                    estimated_price: this.form.estimated_price ? parseFloat(this.form.estimated_price) : null,
+                    warranty_days: parseInt(this.form.warranty_days),
+                    technician_id: this.form.technician_id ? parseInt(this.form.technician_id) : null
+                };
+
+                const response = await api('/api/v1/tickets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showToast('Nalog uspešno kreiran', 'success');
+                    window.location.href = '/tickets/' + data.id;
+                } else {
+                    const error = await response.json();
+                    showToast(error.message || 'Greška pri kreiranju naloga', 'error');
+                }
+            } catch (e) {
+                console.error('Failed to create ticket:', e);
+                showToast('Greška pri kreiranju naloga', 'error');
+            } finally {
+                this.submitting = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}
