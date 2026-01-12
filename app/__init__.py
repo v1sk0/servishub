@@ -77,6 +77,11 @@ def _register_blueprints(app):
     register_admin_routes()
     app.register_blueprint(api_admin_bp, url_prefix='/api/admin')
 
+    # Supplier API - Za dobavljace
+    from .api.supplier import bp as api_supplier_bp, register_routes as register_supplier_routes
+    register_supplier_routes()
+    app.register_blueprint(api_supplier_bp, url_prefix='/api/supplier')
+
     # TODO: Public API - B2C za krajnje kupce
     # from .api.public import bp as api_public_bp
     # app.register_blueprint(api_public_bp, url_prefix='/api/public')
