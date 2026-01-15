@@ -142,31 +142,32 @@ def get_tenant(tenant_id):
     from app.models.tenant import ServiceLocation
     locations_count = ServiceLocation.query.filter_by(tenant_id=tenant.id, is_active=True).count()
 
+    # Flat response - svi podaci na istom nivou za frontend
     return jsonify({
-        'tenant': {
-            'id': tenant.id,
-            'name': tenant.name,
-            'slug': tenant.slug,
-            'email': tenant.email,
-            'phone': tenant.telefon,
-            'telefon': tenant.telefon,
-            'address': tenant.adresa_sedista,
-            'adresa_sedista': tenant.adresa_sedista,
-            'city': None,  # TODO: Dodati city u model ako je potrebno
-            'pib': tenant.pib,
-            'maticni_broj': tenant.maticni_broj,
-            'bank_account': tenant.bank_account,
-            'status': tenant.status.value if tenant.status else None,
-            'subscription_plan': 'Bazni',  # TODO: Dodati subscription_plan u model
-            'demo_ends_at': tenant.demo_ends_at.isoformat() if tenant.demo_ends_at else None,
-            'trial_ends_at': tenant.trial_ends_at.isoformat() if tenant.trial_ends_at else None,
-            'subscription_ends_at': tenant.subscription_ends_at.isoformat() if tenant.subscription_ends_at else None,
-            'locations_count': locations_count,
-            'users_count': len(users),
-            'settings': tenant.settings_json,
-            'created_at': tenant.created_at.isoformat(),
-            'updated_at': tenant.updated_at.isoformat() if tenant.updated_at else None
-        },
+        # Osnovni podaci tenanta
+        'id': tenant.id,
+        'name': tenant.name,
+        'slug': tenant.slug,
+        'email': tenant.email,
+        'phone': tenant.telefon,
+        'telefon': tenant.telefon,
+        'address': tenant.adresa_sedista,
+        'adresa_sedista': tenant.adresa_sedista,
+        'city': None,  # TODO: Dodati city u model ako je potrebno
+        'pib': tenant.pib,
+        'maticni_broj': tenant.maticni_broj,
+        'bank_account': tenant.bank_account,
+        'status': tenant.status.value if tenant.status else None,
+        'subscription_plan': 'Bazni',  # TODO: Dodati subscription_plan u model
+        'demo_ends_at': tenant.demo_ends_at.isoformat() if tenant.demo_ends_at else None,
+        'trial_ends_at': tenant.trial_ends_at.isoformat() if tenant.trial_ends_at else None,
+        'subscription_ends_at': tenant.subscription_ends_at.isoformat() if tenant.subscription_ends_at else None,
+        'locations_count': locations_count,
+        'users_count': len(users),
+        'settings': tenant.settings_json,
+        'created_at': tenant.created_at.isoformat(),
+        'updated_at': tenant.updated_at.isoformat() if tenant.updated_at else None,
+        # Povezani podaci
         'users': [{
             'id': u.id,
             'email': u.email,
