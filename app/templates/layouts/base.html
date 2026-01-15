@@ -293,7 +293,24 @@
         }
 
         // Global fetch helper with auth
-        async function api(url, options = {}) {
+        // Supports: api('/path') or api('/path', 'POST', data) or api('/path', {method, body})
+        async function api(url, methodOrOptions = 'GET', data = null) {
+            // Add /api/v1 prefix if not already present
+            if (!url.startsWith('/api/')) {
+                url = '/api/v1' + url;
+            }
+
+            // Handle both api(url, method, data) and api(url, options) formats
+            let options = {};
+            if (typeof methodOrOptions === 'string') {
+                options.method = methodOrOptions;
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+            } else {
+                options = methodOrOptions;
+            }
+
             const token = localStorage.getItem('access_token');
             const headers = {
                 'Content-Type': 'application/json',
@@ -316,7 +333,14 @@
                 }
             }
 
-            return response;
+            // Parse JSON response
+            if (response.ok) {
+                const text = await response.text();
+                return text ? JSON.parse(text) : {};
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Server error');
+            }
         }
 
         async function refreshToken() {
