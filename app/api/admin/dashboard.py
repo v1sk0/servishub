@@ -20,6 +20,24 @@ from app.api.middleware.auth import platform_admin_required
 bp = Blueprint('admin_dashboard', __name__, url_prefix='/dashboard')
 
 
+# PRIVREMENO - Debug endpoint za proveru baze
+@bp.route('/debug-tenants', methods=['GET'])
+def debug_tenants():
+    """Debug: Lista svih tenanta u bazi (PRIVREMENO - ukloniti posle testiranja!)"""
+    from app.models import Tenant
+    tenants = Tenant.query.all()
+    return jsonify({
+        'total': len(tenants),
+        'tenants': [{
+            'id': t.id,
+            'name': t.name,
+            'email': t.email,
+            'status': t.status.value if t.status else None,
+            'created_at': t.created_at.isoformat() if t.created_at else None
+        } for t in tenants]
+    }), 200
+
+
 @bp.route('/stats', methods=['GET'])
 @platform_admin_required
 def get_dashboard_stats():
