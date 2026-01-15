@@ -200,23 +200,31 @@
                 </div>
             </div>
 
-            <!-- Step 4: KYC Verification -->
+            <!-- Step 4: KYC Verification (opciono) -->
             <div x-show="step === 4" class="space-y-4">
-                <h3 class="text-lg font-medium text-gray-900 text-center mb-4">KYC Verifikacija</h3>
+                <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Dodatni podaci</h3>
                 <p class="text-sm text-gray-500 text-center mb-4">
-                    Podaci ovlašćenog lica za zastupanje servisa
+                    Opciono - potrebno samo za korišćenje B2C marketplace-a
                 </p>
+
+                <div class="bg-blue-50 rounded-lg p-4 mb-4">
+                    <p class="text-sm text-blue-700">
+                        <strong>Napomena:</strong> KYC verifikacija i SMS potvrda nisu obavezni za registraciju.
+                        Možete ih dodati kasnije ako želite da koristite marketplace za prodaju krajnjim kupcima.
+                    </p>
+                </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="kyc_jmbg" class="block text-sm font-medium text-gray-700">JMBG *</label>
+                        <label for="kyc_jmbg" class="block text-sm font-medium text-gray-700">JMBG</label>
                         <input type="text" id="kyc_jmbg" x-model="form.kyc_jmbg" maxlength="13"
-                               placeholder="13 cifara"
+                               placeholder="13 cifara (opciono)"
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     </div>
                     <div>
-                        <label for="kyc_broj_licne" class="block text-sm font-medium text-gray-700">Broj lične karte *</label>
+                        <label for="kyc_broj_licne" class="block text-sm font-medium text-gray-700">Broj lične karte</label>
                         <input type="text" id="kyc_broj_licne" x-model="form.kyc_broj_licne"
+                               placeholder="opciono"
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     </div>
                 </div>
@@ -268,9 +276,9 @@
                     </div>
                 </div>
 
-                <!-- SMS Verification -->
+                <!-- SMS Verification (opciono) -->
                 <div class="border rounded-lg p-4 bg-gray-50">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">SMS Verifikacija *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">SMS Verifikacija (opciono)</label>
                     <p class="text-xs text-gray-500 mb-3">Broj telefona: <span x-text="form.owner_phone" class="font-medium"></span></p>
 
                     <div x-show="!otpSent">
@@ -438,7 +446,8 @@ window.registerPage = function() {
         },
 
         get canSubmit() {
-            return this.phoneVerified && this.acceptTerms && this.form.kyc_jmbg && this.form.kyc_broj_licne;
+            // Samo uslovi koriscenja su obavezni, KYC i SMS su opcioni
+            return this.acceptTerms;
         },
 
         init() {
@@ -692,20 +701,13 @@ window.registerPage = function() {
             }
 
             // Validate Step 4 and Submit
-            if (!this.form.kyc_jmbg || !this.form.kyc_broj_licne) {
-                this.error = 'Unesite JMBG i broj lične karte';
-                return;
-            }
-
-            if (!/^\d{13}$/.test(this.form.kyc_jmbg)) {
+            // KYC polja su opciona - validiramo samo ako su unesena
+            if (this.form.kyc_jmbg && !/^\d{13}$/.test(this.form.kyc_jmbg)) {
                 this.error = 'JMBG mora imati tačno 13 cifara';
                 return;
             }
 
-            if (!this.phoneVerified) {
-                this.error = 'Morate verifikovati broj telefona';
-                return;
-            }
+            // SMS verifikacija je opciona
 
             if (!this.acceptTerms) {
                 this.error = 'Morate prihvatiti uslove korišćenja';

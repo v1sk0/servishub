@@ -47,9 +47,9 @@ class RegisterRequest(BaseModel):
     owner_prezime: str = Field(..., min_length=2, max_length=50, description="Prezime vlasnika")
     owner_phone: str = Field(..., max_length=30, description="Mobilni telefon vlasnika")
 
-    # KYC podaci (Korak 4)
-    kyc_jmbg: str = Field(..., min_length=13, max_length=13, description="JMBG (13 cifara)")
-    kyc_broj_licne: str = Field(..., max_length=20, description="Broj licne karte")
+    # KYC podaci (Korak 4) - OPCIONI, potrebni samo za B2C marketplace
+    kyc_jmbg: Optional[str] = Field(None, max_length=13, description="JMBG (13 cifara) - opciono")
+    kyc_broj_licne: Optional[str] = Field(None, max_length=20, description="Broj licne karte - opciono")
     kyc_lk_front_url: Optional[str] = Field(None, description="URL slike prednje strane LK")
     kyc_lk_back_url: Optional[str] = Field(None, description="URL slike zadnje strane LK")
 
@@ -93,12 +93,13 @@ class RegisterRequest(BaseModel):
     @field_validator('kyc_jmbg')
     @classmethod
     def validate_jmbg(cls, v):
-        """JMBG mora biti 13 cifara."""
-        if v is not None:
+        """JMBG mora biti 13 cifara (ako je unet)."""
+        if v is not None and v.strip():
             v = v.strip()
             if not re.match(r'^\d{13}$', v):
                 raise ValueError('JMBG mora imati tacno 13 cifara')
-        return v
+            return v
+        return None
 
     @field_validator('bank_account')
     @classmethod
