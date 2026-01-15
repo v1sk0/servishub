@@ -172,7 +172,7 @@
                                                     <button @click="openExtendModal(tenant)" class="text-blue-600 hover:text-blue-900">Produzi</button>
                                                 </template>
                                                 <template x-if="tenant.status !== 'SUSPENDED'">
-                                                    <button @click="openSuspendModal(tenant)" class="text-red-600 hover:text-red-900">Suspenduj</button>
+                                                    <button @click="openSuspendModal(tenant)" class="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700">Suspenduj</button>
                                                 </template>
                                                 <template x-if="tenant.status === 'SUSPENDED'">
                                                     <button @click="unsuspendTenant(tenant)" class="text-yellow-600 hover:text-yellow-900">Aktiviraj</button>
