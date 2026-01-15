@@ -102,7 +102,7 @@ def get_dashboard():
 
     # Mesečni prihod
     monthly_revenue = db.session.query(
-        func.coalesce(func.sum(SubscriptionPayment.amount), 0)
+        func.coalesce(func.sum(SubscriptionPayment.total_amount), 0)
     ).filter(
         SubscriptionPayment.status == 'PAID',
         SubscriptionPayment.created_at >= start_of_month
@@ -194,7 +194,7 @@ def get_dashboard_stats():
     # =========================================================================
     # Mesecni prihod od pretplata
     monthly_revenue = db.session.query(
-        func.coalesce(func.sum(SubscriptionPayment.amount), 0)
+        func.coalesce(func.sum(SubscriptionPayment.total_amount), 0)
     ).filter(
         SubscriptionPayment.status == 'PAID',
         SubscriptionPayment.created_at >= start_of_month
@@ -202,7 +202,7 @@ def get_dashboard_stats():
 
     # Godisnji prihod
     yearly_revenue = db.session.query(
-        func.coalesce(func.sum(SubscriptionPayment.amount), 0)
+        func.coalesce(func.sum(SubscriptionPayment.total_amount), 0)
     ).filter(
         SubscriptionPayment.status == 'PAID',
         SubscriptionPayment.created_at >= start_of_year
@@ -345,7 +345,7 @@ def get_revenue_chart():
 
         # Prihod od pretplata
         subscriptions = db.session.query(
-            func.coalesce(func.sum(SubscriptionPayment.amount), 0)
+            func.coalesce(func.sum(SubscriptionPayment.total_amount), 0)
         ).filter(
             SubscriptionPayment.status == 'PAID',
             SubscriptionPayment.created_at >= month_start,
