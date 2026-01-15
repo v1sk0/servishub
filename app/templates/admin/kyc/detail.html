@@ -2,68 +2,140 @@
 
 {% block title %}Detalji predstavnika - ServisHub Admin{% endblock %}
 
+{% block head %}
+{% include "admin/_admin_styles.html" %}
+{% endblock %}
+
 {% block content %}
-<div class="min-h-screen bg-gray-100" x-data="kycDetailPage({{ representative_id }})" x-init="loadKyc()">
-    <div class="fixed inset-y-0 left-0 w-64 bg-gray-900">
-        <div class="flex items-center h-16 px-6 bg-gray-800">
-            <span class="text-lg font-bold text-white">ServisHub Admin</span>
-        </div>
-        <nav class="mt-6 px-3">
-            <a href="/admin/dashboard" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Dashboard</a>
-            <a href="/admin/tenants" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Servisi</a>
-            <a href="/admin/kyc" class="flex items-center px-4 py-3 text-white bg-gray-800 rounded-lg mb-1">Predstavnici</a>
-        </nav>
-    </div>
+<div :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
+     x-data="kycDetailPage({{ representative_id }})" x-init="loadKyc()">
+    <div class="admin-wrapper min-h-screen bg-gray-100">
+        {% set active_page = 'representatives' %}
+        {% include "admin/_sidebar.html" %}
 
-    <div class="ml-64">
-        <div class="bg-white shadow-sm h-16 flex items-center px-8">
-            <a href="/admin/kyc" class="mr-4 text-gray-400 hover:text-gray-600">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-            </a>
-            <h1 class="text-xl font-semibold text-gray-900">Detalji predstavnika</h1>
-        </div>
-
-        <div class="p-8">
-            <div x-show="loading" class="flex justify-center py-12">
-                <svg class="animate-spin h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+        <!-- Main content -->
+        <div class="ml-64">
+            <div class="admin-topbar bg-white shadow-sm h-16 flex items-center justify-between px-8">
+                <div class="flex items-center">
+                    <a href="/admin/kyc" class="mr-4 text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                    </a>
+                    <h1 class="text-xl font-semibold text-gray-900">Detalji predstavnika</h1>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button @click="setTheme('light')" :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'light'}" class="theme-btn p-2 rounded-lg bg-white border border-gray-200 hover:border-gray-300" title="Svetla tema">
+                        <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z"/></svg>
+                    </button>
+                    <button @click="setTheme('glass')" :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'glass'}" class="theme-btn p-2 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600 hover:border-gray-500" title="Glassmorphism tema">
+                        <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+                    </button>
+                </div>
             </div>
 
-            <div x-show="!loading && kyc" class="space-y-6">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <div class="flex items-center justify-between">
-                        <span class="px-3 py-1 text-sm font-medium rounded-full" :class="{'bg-yellow-100 text-yellow-800': kyc.status === 'PENDING', 'bg-green-100 text-green-800': kyc.status === 'VERIFIED', 'bg-red-100 text-red-800': kyc.status === 'REJECTED'}" x-text="statusLabels[kyc.status]"></span>
-                        <div x-show="kyc.status === 'PENDING'" class="flex gap-2">
-                            <button @click="verify()" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-500">Verifikuj</button>
-                            <button @click="reject()" class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">Odbij</button>
+            <div class="p-8">
+                <div x-show="loading" class="flex justify-center py-12">
+                    <svg class="animate-spin h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                </div>
+
+                <div x-show="!loading && kyc" class="space-y-6">
+                    <!-- Status & Actions -->
+                    <div class="admin-card bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="px-3 py-1 text-sm font-medium rounded-full"
+                                      :class="{'bg-yellow-100 text-yellow-800': kyc.status === 'PENDING', 'bg-green-100 text-green-800': kyc.status === 'VERIFIED', 'bg-red-100 text-red-800': kyc.status === 'REJECTED'}"
+                                      x-text="statusLabels[kyc.status]"></span>
+                            </div>
+                            <div x-show="kyc.status === 'PENDING'" class="flex gap-2">
+                                <button @click="verify()" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-500">
+                                    Verifikuj
+                                </button>
+                                <button @click="reject()" class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                                    Odbij
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Licni podaci</h3>
-                        <dl class="space-y-3">
-                            <div class="flex justify-between"><dt class="text-sm text-gray-500">Ime</dt><dd class="text-sm font-medium text-gray-900" x-text="kyc.ime + ' ' + kyc.prezime"></dd></div>
-                            <div class="flex justify-between"><dt class="text-sm text-gray-500">JMBG</dt><dd class="text-sm font-mono text-gray-900" x-text="kyc.jmbg || '-'"></dd></div>
-                            <div class="flex justify-between"><dt class="text-sm text-gray-500">Broj LK</dt><dd class="text-sm text-gray-900" x-text="kyc.broj_licne_karte || '-'"></dd></div>
-                            <div class="flex justify-between"><dt class="text-sm text-gray-500">Adresa</dt><dd class="text-sm text-gray-900" x-text="kyc.adresa || '-'"></dd></div>
-                            <div class="flex justify-between"><dt class="text-sm text-gray-500">Email</dt><dd class="text-sm text-gray-900" x-text="kyc.email || '-'"></dd></div>
-                        </dl>
-                    </div>
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Servis</h3>
-                        <dl class="space-y-3">
-                            <div class="flex justify-between"><dt class="text-sm text-gray-500">Naziv</dt><dd class="text-sm font-medium text-gray-900" x-text="kyc.tenant_name"></dd></div>
-                            <div class="flex justify-between"><dt class="text-sm text-gray-500">Glavni</dt><dd class="text-sm text-gray-900" x-text="kyc.is_primary ? 'Da' : 'Ne'"></dd></div>
-                        </dl>
-                    </div>
-                </div>
+                    <!-- Info Cards -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="admin-card bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Licni podaci</h3>
+                            <dl class="space-y-3">
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-500">Ime</dt>
+                                    <dd class="text-sm font-medium text-gray-900" x-text="kyc.ime + ' ' + kyc.prezime"></dd>
+                                </div>
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-500">JMBG</dt>
+                                    <dd class="text-sm font-mono text-gray-900" x-text="kyc.jmbg || '-'"></dd>
+                                </div>
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-500">Broj LK</dt>
+                                    <dd class="text-sm text-gray-900" x-text="kyc.broj_licne_karte || '-'"></dd>
+                                </div>
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-500">Adresa</dt>
+                                    <dd class="text-sm text-gray-900" x-text="kyc.adresa || '-'"></dd>
+                                </div>
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-500">Email</dt>
+                                    <dd class="text-sm text-gray-900" x-text="kyc.email || '-'"></dd>
+                                </div>
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-500">Telefon</dt>
+                                    <dd class="text-sm text-gray-900" x-text="kyc.telefon || '-'"></dd>
+                                </div>
+                            </dl>
+                        </div>
 
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Slike licne karte</h3>
-                    <div class="grid grid-cols-2 gap-6">
-                        <div><p class="text-sm text-gray-500 mb-2">Prednja</p><div x-show="kyc.lk_front_url" class="border rounded-lg overflow-hidden"><img :src="kyc.lk_front_url" class="w-full"></div><div x-show="!kyc.lk_front_url" class="border rounded-lg p-8 text-center text-gray-400">Nema</div></div>
-                        <div><p class="text-sm text-gray-500 mb-2">Zadnja</p><div x-show="kyc.lk_back_url" class="border rounded-lg overflow-hidden"><img :src="kyc.lk_back_url" class="w-full"></div><div x-show="!kyc.lk_back_url" class="border rounded-lg p-8 text-center text-gray-400">Nema</div></div>
+                        <div class="admin-card bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Servis</h3>
+                            <dl class="space-y-3">
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-500">Naziv servisa</dt>
+                                    <dd class="text-sm font-medium text-gray-900" x-text="kyc.tenant_name"></dd>
+                                </div>
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-500">Glavni predstavnik</dt>
+                                    <dd class="text-sm text-gray-900" x-text="kyc.is_primary ? 'Da' : 'Ne'"></dd>
+                                </div>
+                                <div class="flex justify-between">
+                                    <dt class="text-sm text-gray-500">Kreiran</dt>
+                                    <dd class="text-sm text-gray-900" x-text="formatDate(kyc.created_at)"></dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <!-- ID Card Images -->
+                    <div class="admin-card bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Slike licne karte</h3>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <p class="text-sm text-gray-500 mb-2">Prednja strana</p>
+                                <div x-show="kyc.lk_front_url" class="border rounded-lg overflow-hidden">
+                                    <img :src="kyc.lk_front_url" class="w-full">
+                                </div>
+                                <div x-show="!kyc.lk_front_url" class="border rounded-lg p-8 text-center text-gray-400">
+                                    Nije uploadovano
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 mb-2">Zadnja strana</p>
+                                <div x-show="kyc.lk_back_url" class="border rounded-lg overflow-hidden">
+                                    <img :src="kyc.lk_back_url" class="w-full">
+                                </div>
+                                <div x-show="!kyc.lk_back_url" class="border rounded-lg p-8 text-center text-gray-400">
+                                    Nije uploadovano
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -74,27 +146,86 @@
 <script>
 function kycDetailPage(id) {
     return {
-        representativeId: id, kyc: null, loading: true,
-        statusLabels: { 'PENDING': 'Na cekanju', 'VERIFIED': 'Verifikovan', 'REJECTED': 'Odbijen' },
+        representativeId: id,
+        kyc: null,
+        loading: true,
+        theme: localStorage.getItem('admin-theme') || 'light',
+
+        statusLabels: {
+            'PENDING': 'Na cekanju',
+            'VERIFIED': 'Verifikovan',
+            'REJECTED': 'Odbijen'
+        },
+
+        setTheme(newTheme) {
+            this.theme = newTheme;
+            localStorage.setItem('admin-theme', newTheme);
+        },
+
+        logout() {
+            localStorage.removeItem('admin_access_token');
+            localStorage.removeItem('admin_refresh_token');
+            window.location.href = '/admin/login';
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleDateString('sr-Latn-RS');
+        },
+
         async loadKyc() {
             const token = localStorage.getItem('admin_access_token');
             if (!token) { window.location.href = '/admin/login'; return; }
             try {
-                const r = await fetch('/api/admin/kyc/' + this.representativeId, { headers: { 'Authorization': 'Bearer ' + token } });
-                if (r.ok) this.kyc = await r.json();
-            } catch (e) { console.error(e); } finally { this.loading = false; }
+                const r = await fetch('/api/admin/kyc/' + this.representativeId, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (r.ok) {
+                    this.kyc = await r.json();
+                } else if (r.status === 401) {
+                    window.location.href = '/admin/login';
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                this.loading = false;
+            }
         },
+
         async verify() {
             const token = localStorage.getItem('admin_access_token');
-            await fetch('/api/admin/kyc/' + this.representativeId + '/verify', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token } });
-            window.location.href = '/admin/kyc';
+            try {
+                const response = await fetch('/api/admin/kyc/' + this.representativeId + '/verify', {
+                    method: 'PUT',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (response.ok) {
+                    window.location.href = '/admin/kyc';
+                }
+            } catch (e) {
+                console.error(e);
+            }
         },
+
         async reject() {
             const reason = prompt('Razlog odbijanja:');
             if (!reason) return;
             const token = localStorage.getItem('admin_access_token');
-            await fetch('/api/admin/kyc/' + this.representativeId + '/reject', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ reason }) });
-            window.location.href = '/admin/kyc';
+            try {
+                const response = await fetch('/api/admin/kyc/' + this.representativeId + '/reject', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason })
+                });
+                if (response.ok) {
+                    window.location.href = '/admin/kyc';
+                }
+            } catch (e) {
+                console.error(e);
+            }
         }
     }
 }

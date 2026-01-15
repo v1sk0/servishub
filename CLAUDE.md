@@ -6,18 +6,23 @@ Instrukcije za Claude Code agente. **CITAJ OVO PRE BILO KAKVIH IZMENA.**
 
 ## RESUME POINT
 
-**v0.5.5** | 2026-01-12 | Backend 100% | Frontend 100%
+**v0.5.7** | 2026-01-15 | Backend 100% | Frontend 100%
 
-### Status: KOMPLETNO - Spreman za deploy
+### Status: KOMPLETNO - Platform Admin standardizovan
+
+**Poslednje izmene (v0.5.7):**
+- Sve Platform Admin stranice vizuelno uskladjene (isti topbar, stat kartice, tabele)
+- KYC/Predstavnici uklonjen iz sidebar navigacije - premesta se u tenant detalje
+- Standardizovan pattern za sve admin stranice (dashboard, settings, suppliers, payments)
 
 Svi frontend moduli zavrseni i verifikovani:
 - Tenant panel (23 stranica)
-- Admin panel (7 stranica)
+- Admin panel (10 stranica + 2 partials)
 - Supplier panel (6 stranica)
 - Public stranice (2 stranice)
 - Layouts (3 fajla)
 
-**Ukupno:** 51 HTML template
+**Ukupno:** 53 HTML fajla (51 template + 2 admin partial)
 
 > Azuriraj ovaj RESUME POINT nakon svake znacajne izmene!
 
@@ -111,10 +116,12 @@ servishub/
 │   │   │   ├── team/ (list, new, detail)
 │   │   │   └── settings/ (index, profile, subscription, kyc)
 │   │   │
-│   │   ├── admin/           # 7 stranica
+│   │   ├── admin/           # 10 stranica + 2 partials
+│   │   │   ├── _sidebar.html        # SHARED: navigacija za sve admin stranice
+│   │   │   ├── _admin_styles.html   # SHARED: CSS teme (light/glass)
 │   │   │   ├── login.html, dashboard.html
 │   │   │   ├── tenants/ (list, detail)
-│   │   │   ├── kyc/ (list, detail)
+│   │   │   ├── kyc/ (list, detail) - preimenovano: "Predstavnici"
 │   │   │   ├── suppliers/ (list, detail)
 │   │   │   ├── payments/ (list)
 │   │   │   └── settings/ (index)
@@ -199,19 +206,29 @@ flask create-admin         # Kreiraj platform admin-a
 | `/settings/subscription` | tenant/settings/subscription.html |
 | `/settings/kyc` | tenant/settings/kyc.html |
 
-### Admin Panel (7)
-| URL | Template |
-|-----|----------|
-| `/admin/login` | admin/login.html |
-| `/admin/dashboard` | admin/dashboard.html |
-| `/admin/tenants` | admin/tenants/list.html |
-| `/admin/tenants/:id` | admin/tenants/detail.html |
-| `/admin/kyc` | admin/kyc/list.html |
-| `/admin/kyc/:id` | admin/kyc/detail.html |
-| `/admin/suppliers` | admin/suppliers/list.html |
-| `/admin/suppliers/:id` | admin/suppliers/detail.html |
-| `/admin/payments` | admin/payments/list.html |
-| `/admin/settings` | admin/settings/index.html |
+### Admin Panel (10 stranica + 2 partials)
+
+**Partials (shared komponente):**
+| Fajl | Namena |
+|------|--------|
+| `_sidebar.html` | Navigacija - koristi `active_page` varijablu |
+| `_admin_styles.html` | CSS teme (light/glassmorphism) |
+
+**Stranice:**
+| URL | Template | active_page |
+|-----|----------|-------------|
+| `/admin/login` | admin/login.html | - |
+| `/admin/dashboard` | admin/dashboard.html | dashboard |
+| `/admin/tenants` | admin/tenants/list.html | tenants |
+| `/admin/tenants/:id` | admin/tenants/detail.html | tenants |
+| `/admin/kyc` | admin/kyc/list.html | - (nije u navigaciji) |
+| `/admin/kyc/:id` | admin/kyc/detail.html | - (nije u navigaciji) |
+| `/admin/suppliers` | admin/suppliers/list.html | suppliers |
+| `/admin/suppliers/:id` | admin/suppliers/detail.html | suppliers |
+| `/admin/payments` | admin/payments/list.html | payments |
+| `/admin/settings` | admin/settings/index.html | settings |
+
+**Napomena:** KYC stranice postoje ali nisu u sidebar navigaciji - funkcionalnost se premesta u detalje servisa.
 
 ### Supplier Panel (6)
 | URL | Template |
@@ -306,6 +323,64 @@ const data = await supplierApi('/api/supplier/listings');
 
 ---
 
+## Platform Admin - Koriscenje Partials
+
+### Struktura Admin Stranice
+
+```jinja2
+{% extends "layouts/base.html" %}
+{% block title %}Naslov - ServisHub Admin{% endblock %}
+
+{% block head %}
+{% include "admin/_admin_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
+     x-data="pageFunction()" x-init="init()">
+    <div class="admin-wrapper min-h-screen bg-gray-100">
+        {% set active_page = 'dashboard' %}
+        {% include "admin/_sidebar.html" %}
+
+        <div class="ml-64">
+            <!-- Topbar -->
+            <div class="admin-topbar ...">...</div>
+            <!-- Content -->
+            <div class="p-8">...</div>
+        </div>
+    </div>
+</div>
+<script>
+function pageFunction() {
+    return {
+        theme: localStorage.getItem('admin-theme') || 'light',
+        setTheme(t) { this.theme = t; localStorage.setItem('admin-theme', t); },
+        logout() {
+            localStorage.removeItem('admin_access_token');
+            localStorage.removeItem('admin_refresh_token');
+            window.location.href = '/admin/login';
+        },
+        // ... ostale funkcije
+    }
+}
+</script>
+{% endblock %}
+```
+
+### active_page Vrednosti
+
+| Vrednost | Stranica |
+|----------|----------|
+| `dashboard` | Dashboard |
+| `tenants` | Servisi (lista i detalj) |
+| `suppliers` | Dobavljaci (lista i detalj) |
+| `payments` | Uplate |
+| `settings` | Podesavanja |
+
+**Napomena:** KYC/Predstavnici je uklonjen iz sidebar navigacije - premesta se u detalje servisa.
+
+---
+
 ## Kredencijali (DEV)
 
 ```
@@ -330,6 +405,8 @@ GitHub: github.com/v1sk0/servishub
 
 | Verzija | Datum | Izmene |
 |---------|-------|--------|
+| v0.5.7 | 2026-01-15 | **Platform Admin standardizacija:** vizuelna konzistencija svih stranica, KYC uklonjen iz sidebar-a |
+| v0.5.6 | 2026-01-15 | **Platform Admin refaktoring:** sidebar partial, theme support, KYC→Predstavnici |
 | v0.5.5 | 2026-01-12 | Verifikacija strukture, fix layout extends, cleanup |
 | v0.5.4 | 2026-01-12 | Supplier settings, register; Frontend 100% komplet |
 | v0.5.3 | 2026-01-12 | Supplier panel komplet (login, dashboard, catalog, orders) |
@@ -343,4 +420,4 @@ GitHub: github.com/v1sk0/servishub
 
 ---
 
-*Backend: 115+ ruta | Frontend: 51 template | Heroku: Ready*
+*Backend: 115+ ruta | Frontend: 53 fajla (51 template + 2 admin partials) | Heroku: Ready*

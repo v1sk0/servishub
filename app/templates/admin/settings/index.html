@@ -3,235 +3,40 @@
 {% block title %}Podesavanja - ServisHub Admin{% endblock %}
 
 {% block head %}
-<style>
-    /* ==================== ADMIN GLASSMORPHISM THEME ==================== */
-    .admin-glass {
-        --glass-bg: rgba(15, 23, 42, 0.95);
-        --glass-card: rgba(30, 41, 59, 0.8);
-        --glass-border: rgba(255, 255, 255, 0.1);
-        --glass-text: #f1f5f9;
-        --glass-text-muted: #94a3b8;
-        --glass-accent: #ef4444;
-        --glass-accent-hover: #dc2626;
-    }
-
-    .admin-glass .admin-wrapper {
-        background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 50%, #0f172a 100%) !important;
-        background-attachment: fixed !important;
-        min-height: 100vh;
-    }
-
-    /* Sidebar */
-    .admin-glass .admin-sidebar {
-        background: var(--glass-card) !important;
-        backdrop-filter: blur(20px) !important;
-        border-right: 1px solid var(--glass-border) !important;
-    }
-
-    .admin-glass .admin-sidebar-header {
-        background: rgba(15, 23, 42, 0.6) !important;
-        border-bottom: 1px solid var(--glass-border) !important;
-    }
-
-    .admin-glass .admin-sidebar nav a {
-        color: var(--glass-text-muted) !important;
-    }
-
-    .admin-glass .admin-sidebar nav a:hover {
-        background: rgba(239, 68, 68, 0.15) !important;
-        color: var(--glass-text) !important;
-    }
-
-    .admin-glass .admin-sidebar nav a.active {
-        background: rgba(239, 68, 68, 0.25) !important;
-        color: white !important;
-        border-left: 3px solid var(--glass-accent) !important;
-    }
-
-    /* Top bar */
-    .admin-glass .admin-topbar {
-        background: var(--glass-card) !important;
-        backdrop-filter: blur(20px) !important;
-        border-bottom: 1px solid var(--glass-border) !important;
-    }
-
-    .admin-glass .admin-topbar h1 {
-        color: var(--glass-text) !important;
-    }
-
-    /* Cards */
-    .admin-glass .admin-card {
-        background: var(--glass-card) !important;
-        backdrop-filter: blur(10px) !important;
-        border: 1px solid var(--glass-border) !important;
-    }
-
-    .admin-glass .admin-card h3 {
-        color: var(--glass-text) !important;
-    }
-
-    /* Text colors */
-    .admin-glass .text-gray-900,
-    .admin-glass .text-gray-800 {
-        color: var(--glass-text) !important;
-    }
-
-    .admin-glass .text-gray-700,
-    .admin-glass .text-gray-600,
-    .admin-glass .text-gray-500 {
-        color: var(--glass-text-muted) !important;
-    }
-
-    /* Input fields */
-    .admin-glass input,
-    .admin-glass select,
-    .admin-glass textarea {
-        background: rgba(15, 23, 42, 0.6) !important;
-        border-color: var(--glass-border) !important;
-        color: var(--glass-text) !important;
-    }
-
-    .admin-glass input::placeholder {
-        color: var(--glass-text-muted) !important;
-    }
-
-    .admin-glass input:focus,
-    .admin-glass select:focus {
-        border-color: var(--glass-accent) !important;
-        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
-    }
-
-    /* Labels */
-    .admin-glass label {
-        color: var(--glass-text-muted) !important;
-    }
-
-    /* Primary button stays red */
-    .admin-glass .btn-primary {
-        background: var(--glass-accent) !important;
-    }
-
-    .admin-glass .btn-primary:hover {
-        background: var(--glass-accent-hover) !important;
-    }
-
-    /* Theme toggle buttons */
-    .theme-btn {
-        transition: all 0.2s ease;
-    }
-
-    .theme-btn.active {
-        ring: 2px;
-        ring-offset: 2px;
-    }
-
-    /* Light theme specific overrides */
-    .admin-light .admin-wrapper {
-        background: #f3f4f6 !important;
-    }
-
-    .admin-light .admin-sidebar {
-        background: #111827 !important;
-    }
-
-    .admin-light .admin-sidebar-header {
-        background: #1f2937 !important;
-    }
-
-    .admin-light .admin-topbar {
-        background: white !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .admin-light .admin-card {
-        background: white !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-</style>
+{% include "admin/_admin_styles.html" %}
 {% endblock %}
 
 {% block content %}
 <div :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
      x-data="settingsPage()" x-init="init()">
     <div class="admin-wrapper min-h-screen bg-gray-100">
-        <!-- Sidebar -->
-        <div class="admin-sidebar fixed inset-y-0 left-0 w-64 bg-gray-900">
-            <div class="admin-sidebar-header flex items-center h-16 px-6 bg-gray-800">
-                <span class="text-lg font-bold text-white">ServisHub Admin</span>
-            </div>
-            <nav class="mt-6 px-3">
-                <a href="/admin/dashboard" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                    </svg>
-                    Dashboard
-                </a>
-                <a href="/admin/tenants" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                    </svg>
-                    Servisi
-                </a>
-                <a href="/admin/kyc" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                    </svg>
-                    KYC
-                </a>
-                <a href="/admin/suppliers" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
-                    </svg>
-                    Dobavljaci
-                </a>
-                <a href="/admin/payments" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                    </svg>
-                    Uplate
-                </a>
-                <a href="/admin/settings" class="active flex items-center px-4 py-3 text-white bg-gray-800 rounded-lg">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    Podesavanja
-                </a>
-                <div class="mt-8 px-4">
-                    <button @click="logout()" class="flex items-center w-full px-4 py-2 text-gray-400 hover:text-white hover:bg-red-600/20 rounded-lg transition-colors">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                        </svg>
-                        Odjavi se
-                    </button>
-                </div>
-            </nav>
-        </div>
+        {% set active_page = 'settings' %}
+        {% include "admin/_sidebar.html" %}
 
         <!-- Main content -->
         <div class="ml-64">
             <div class="admin-topbar bg-white shadow-sm h-16 flex items-center justify-between px-8">
                 <h1 class="text-xl font-semibold text-gray-900">Podesavanja platforme</h1>
-
-                <!-- Theme Toggle in topbar -->
-                <div class="flex items-center space-x-2">
-                    <span class="text-sm text-gray-500 mr-2">Tema:</span>
-                    <button @click="setTheme('light')"
-                            :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'light'}"
-                            class="theme-btn p-2 rounded-lg bg-white border border-gray-200 hover:border-gray-300"
-                            title="Svetla tema">
-                        <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z"/>
-                        </svg>
-                    </button>
-                    <button @click="setTheme('glass')"
-                            :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'glass'}"
-                            class="theme-btn p-2 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600 hover:border-gray-500"
-                            title="Glassmorphism tema">
-                        <svg class="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/>
-                        </svg>
-                    </button>
+                <div class="flex items-center space-x-4">
+                    <!-- Theme Toggle -->
+                    <div class="flex items-center space-x-2">
+                        <button @click="setTheme('light')"
+                                :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'light'}"
+                                class="theme-btn p-2 rounded-lg bg-white border border-gray-200 hover:border-gray-300"
+                                title="Svetla tema">
+                            <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z"/>
+                            </svg>
+                        </button>
+                        <button @click="setTheme('glass')"
+                                :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'glass'}"
+                                class="theme-btn p-2 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600 hover:border-gray-500"
+                                title="Glassmorphism tema">
+                            <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -370,6 +175,12 @@ function settingsPage() {
             localStorage.setItem('admin-theme', newTheme);
         },
 
+        logout() {
+            localStorage.removeItem('admin_access_token');
+            localStorage.removeItem('admin_refresh_token');
+            window.location.href = '/admin/login';
+        },
+
         async loadSettings() {
             const token = localStorage.getItem('admin_access_token');
             if (!token) {
@@ -383,6 +194,8 @@ function settingsPage() {
                 if (r.ok) {
                     const data = await r.json();
                     Object.assign(this.form, data);
+                } else if (r.status === 401) {
+                    window.location.href = '/admin/login';
                 }
             } catch (e) {
                 console.error(e);
@@ -403,19 +216,13 @@ function settingsPage() {
                     },
                     body: JSON.stringify(this.form)
                 });
-                showToast('Podesavanja sacuvana!', 'success');
+                alert('Podesavanja sacuvana!');
             } catch (e) {
                 console.error(e);
-                showToast('Greska pri cuvanju', 'error');
+                alert('Greska pri cuvanju');
             } finally {
                 this.saving = false;
             }
-        },
-
-        logout() {
-            localStorage.removeItem('admin_access_token');
-            localStorage.removeItem('admin_refresh_token');
-            window.location.href = '/admin/login';
         }
     }
 }
