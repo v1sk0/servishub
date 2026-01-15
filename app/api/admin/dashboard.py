@@ -38,6 +38,27 @@ def debug_tenants():
     }), 200
 
 
+# PRIVREMENO - Debug endpoint za proveru korisnika
+@bp.route('/debug-users', methods=['GET'])
+def debug_users():
+    """Debug: Lista svih korisnika u bazi (PRIVREMENO - ukloniti posle testiranja!)"""
+    from app.models import User
+    users = User.query.all()
+    return jsonify({
+        'total': len(users),
+        'users': [{
+            'id': u.id,
+            'tenant_id': u.tenant_id,
+            'email': u.email,
+            'ime': u.ime,
+            'prezime': u.prezime,
+            'role': u.role.value if u.role else None,
+            'is_active': u.is_active,
+            'created_at': u.created_at.isoformat() if u.created_at else None
+        } for u in users]
+    }), 200
+
+
 @bp.route('/stats', methods=['GET'])
 @platform_admin_required
 def get_dashboard_stats():
