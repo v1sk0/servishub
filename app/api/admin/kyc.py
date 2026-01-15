@@ -16,6 +16,40 @@ from app.api.middleware.auth import platform_admin_required
 bp = Blueprint('admin_kyc', __name__, url_prefix='/kyc')
 
 
+@bp.route('', methods=['GET'])
+@platform_admin_required
+def list_all_representatives():
+    """
+    Lista svih reprezentativa (za KYC list page).
+    Vraća sve statuse - frontend filtrira po tabu.
+    """
+    representatives = ServiceRepresentative.query.order_by(
+        ServiceRepresentative.created_at.desc()
+    ).all()
+
+    items = []
+    for rep in representatives:
+        tenant = Tenant.query.get(rep.tenant_id)
+        items.append({
+            'id': rep.id,
+            'tenant_id': rep.tenant_id,
+            'tenant_name': tenant.name if tenant else None,
+            'ime': rep.ime,
+            'prezime': rep.prezime,
+            'email': rep.email,
+            'telefon': rep.telefon,
+            'jmbg': rep.jmbg,
+            'broj_licne_karte': rep.broj_licne_karte,
+            'is_primary': rep.is_primary,
+            'status': rep.status.value,
+            'created_at': rep.created_at.isoformat() if rep.created_at else None
+        })
+
+    return jsonify({
+        'representatives': items
+    }), 200
+
+
 @bp.route('/pending', methods=['GET'])
 @platform_admin_required
 def list_pending_verifications():
