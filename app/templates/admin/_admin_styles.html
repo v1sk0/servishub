@@ -248,7 +248,14 @@
         --glass-accent-hover: #dc2626;
     }
 
-    .admin-glass .admin-wrapper {
+    /* Body pozadina za tamnu temu */
+    .admin-glass,
+    .admin-glass body {
+        background: #0f0f23 !important;
+    }
+
+    .admin-glass .admin-wrapper,
+    .admin-glass .admin-wrapper.bg-gray-100 {
         background: linear-gradient(145deg, #0f0f23 0%, #1a1a3e 50%, #0d1b2a 100%) !important;
         background-attachment: fixed !important;
         min-height: 100vh;
