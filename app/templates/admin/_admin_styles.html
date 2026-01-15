@@ -1,5 +1,49 @@
 {# Admin Panel - Glassmorphism i Light Theme Stilovi #}
+
+{# Odmah primeni temu pre renderovanja - sprečava flash bele boje #}
+<script>
+(function() {
+    var theme = localStorage.getItem('admin-theme') || 'light';
+    document.documentElement.setAttribute('data-admin-theme', theme);
+})();
+</script>
+
 <style>
+    /* Sakrij sadržaj dok se ne učita tema */
+    html:not([data-admin-theme]) .admin-wrapper {
+        visibility: hidden;
+    }
+
+    /* Primeni temu na osnovu data atributa (pre nego što Alpine učita) */
+    html[data-admin-theme="glass"] .admin-wrapper {
+        background: linear-gradient(145deg, #0f0f23 0%, #1a1a3e 50%, #0d1b2a 100%) !important;
+        background-attachment: fixed !important;
+    }
+
+    html[data-admin-theme="glass"] .admin-sidebar {
+        background: rgba(20, 20, 45, 0.9) !important;
+    }
+
+    html[data-admin-theme="glass"] .admin-topbar {
+        background: rgba(20, 20, 45, 0.9) !important;
+    }
+
+    html[data-admin-theme="glass"] .admin-card,
+    html[data-admin-theme="glass"] .bg-white {
+        background: rgba(20, 20, 45, 0.9) !important;
+    }
+
+    html[data-admin-theme="glass"] .text-gray-900,
+    html[data-admin-theme="glass"] .text-gray-800 {
+        color: #e2e8f0 !important;
+    }
+
+    html[data-admin-theme="glass"] .text-gray-700,
+    html[data-admin-theme="glass"] .text-gray-600,
+    html[data-admin-theme="glass"] .text-gray-500 {
+        color: #8b92a5 !important;
+    }
+
     /* ==================== ADMIN GLASSMORPHISM THEME ==================== */
     .admin-glass {
         --glass-bg: rgba(15, 15, 35, 0.98);
