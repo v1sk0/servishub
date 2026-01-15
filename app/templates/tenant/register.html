@@ -111,11 +111,12 @@
                     </div>
                 </div>
                 <div>
-                    <label for="bank_account" class="block text-sm font-medium text-gray-700">Bankovni račun *</label>
-                    <input type="text" id="bank_account" x-model="form.bank_account" required
-                           placeholder="265-1234567890-12"
+                    <label for="bank_account" class="block text-sm font-medium text-gray-700">Bankovni račun</label>
+                    <input type="text" id="bank_account" x-model="form.bank_account"
+                           @blur="formatBankAccount()"
+                           placeholder="265-123456789-12"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                    <p class="mt-1 text-xs text-gray-500">Format: XXX-XXXXXXXXX-XX</p>
+                    <p class="mt-1 text-xs text-gray-500">Format: XXX-XXXXXXXXX-XX (opciono)</p>
                 </div>
             </div>
 
@@ -553,13 +554,65 @@ function registerPage() {
             // });
         },
 
+        formatBankAccount() {
+            // Auto-formatiranje bankovnog racuna u format XXX-XXXXXXXXX-XX
+            // Srednji deo uvek ima 9 cifara (dopunjava se nulama s leva)
+            // Primer: 192-75224-22 -> 192-000075224-22
+
+            let value = this.form.bank_account;
+            if (!value) return;
+
+            // Ukloni sve osim brojeva
+            let digits = value.replace(/\D/g, '');
+            if (!digits) {
+                this.form.bank_account = '';
+                return;
+            }
+
+            // Ako ima crtice, parsiraj delove
+            let parts = value.split('-').map(p => p.replace(/\D/g, ''));
+
+            if (parts.length >= 3) {
+                // Imamo format sa crticama
+                let first = parts[0].slice(0, 3);  // Max 3 cifre
+                let middle = parts[1];
+                let last = parts[2].slice(0, 2);   // Max 2 cifre
+
+                // Dopuni srednji deo nulama do 9 cifara
+                if (middle.length < 9) {
+                    middle = middle.padStart(9, '0');
+                } else if (middle.length > 9) {
+                    middle = middle.slice(0, 9);
+                }
+
+                if (first && middle && last) {
+                    this.form.bank_account = `${first}-${middle}-${last}`;
+                }
+            } else if (digits.length >= 14) {
+                // Nema crtica ali ima dovoljno cifara - formatiraj automatski
+                // Pretpostavka: prve 3 cifre, poslednje 2 cifre, sredina ostalo
+                let first = digits.slice(0, 3);
+                let last = digits.slice(-2);
+                let middle = digits.slice(3, -2);
+
+                // Dopuni srednji deo nulama do 9 cifara
+                if (middle.length < 9) {
+                    middle = middle.padStart(9, '0');
+                } else if (middle.length > 9) {
+                    middle = middle.slice(0, 9);
+                }
+
+                this.form.bank_account = `${first}-${middle}-${last}`;
+            }
+        },
+
         async submitStep() {
             this.error = '';
 
             // Validate Step 1
             if (this.step === 1) {
                 if (!this.form.company_name || !this.form.pib || !this.form.adresa_sedista ||
-                    !this.form.company_phone || !this.form.company_email || !this.form.bank_account) {
+                    !this.form.company_phone || !this.form.company_email) {
                     this.error = 'Popunite sva obavezna polja';
                     return;
                 }
@@ -567,7 +620,8 @@ function registerPage() {
                     this.error = 'PIB mora imati tačno 9 cifara';
                     return;
                 }
-                if (!/^\d{3}-\d{10,13}-\d{2}$/.test(this.form.bank_account)) {
+                // Validiraj format bankovnog racuna samo ako je unet
+                if (this.form.bank_account && !/^\d{3}-\d{9}-\d{2}$/.test(this.form.bank_account)) {
                     this.error = 'Bankovni račun mora biti u formatu XXX-XXXXXXXXX-XX';
                     return;
                 }

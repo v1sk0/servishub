@@ -31,7 +31,7 @@ class RegisterRequest(BaseModel):
     adresa_sedista: str = Field(..., max_length=300, description="Adresa sedista")
     company_email: EmailStr = Field(..., description="Email preduzeca")
     company_phone: str = Field(..., max_length=30, description="Telefon preduzeca")
-    bank_account: str = Field(..., max_length=50, description="Bankovni racun (XXX-XXXXXXXXX-XX)")
+    bank_account: Optional[str] = Field(None, max_length=50, description="Bankovni racun (XXX-XXXXXXXXX-XX)")
 
     # Podaci lokacije (Korak 2)
     location_name: str = Field(..., min_length=2, max_length=100, description="Naziv lokacije")
@@ -103,12 +103,12 @@ class RegisterRequest(BaseModel):
     @field_validator('bank_account')
     @classmethod
     def validate_bank_account(cls, v):
-        """Bankovni racun mora biti u formatu XXX-XXXXXXXXX-XX."""
-        if v is not None:
+        """Bankovni racun mora biti u formatu XXX-XXXXXXXXX-XX (3-9-2 cifre)."""
+        if v is not None and v.strip():
             v = v.strip()
-            if not re.match(r'^\d{3}-\d{10,13}-\d{2}$', v):
+            if not re.match(r'^\d{3}-\d{9}-\d{2}$', v):
                 raise ValueError('Bankovni racun mora biti u formatu XXX-XXXXXXXXX-XX')
-        return v
+        return v if v and v.strip() else None
 
 
 class LoginRequest(BaseModel):
