@@ -1,0 +1,230 @@
+{# Admin Panel - Glassmorphism i Light Theme Stilovi #}
+<style>
+    /* ==================== ADMIN GLASSMORPHISM THEME ==================== */
+    .admin-glass {
+        --glass-bg: rgba(15, 23, 42, 0.95);
+        --glass-card: rgba(30, 41, 59, 0.8);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --glass-text: #f1f5f9;
+        --glass-text-muted: #94a3b8;
+        --glass-accent: #ef4444;
+        --glass-accent-hover: #dc2626;
+    }
+
+    .admin-glass .admin-wrapper {
+        background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 50%, #0f172a 100%) !important;
+        background-attachment: fixed !important;
+        min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .admin-glass .admin-sidebar {
+        background: var(--glass-card) !important;
+        backdrop-filter: blur(20px) !important;
+        border-right: 1px solid var(--glass-border) !important;
+    }
+
+    .admin-glass .admin-sidebar-header {
+        background: rgba(15, 23, 42, 0.6) !important;
+        border-bottom: 1px solid var(--glass-border) !important;
+    }
+
+    .admin-glass .admin-sidebar nav a {
+        color: var(--glass-text-muted) !important;
+    }
+
+    .admin-glass .admin-sidebar nav a:hover {
+        background: rgba(239, 68, 68, 0.15) !important;
+        color: var(--glass-text) !important;
+    }
+
+    .admin-glass .admin-sidebar nav a.active {
+        background: rgba(239, 68, 68, 0.25) !important;
+        color: white !important;
+        border-left: 3px solid var(--glass-accent) !important;
+    }
+
+    /* Top bar */
+    .admin-glass .admin-topbar {
+        background: var(--glass-card) !important;
+        backdrop-filter: blur(20px) !important;
+        border-bottom: 1px solid var(--glass-border) !important;
+    }
+
+    .admin-glass .admin-topbar h1 {
+        color: var(--glass-text) !important;
+    }
+
+    /* Cards */
+    .admin-glass .admin-card,
+    .admin-glass .bg-white {
+        background: var(--glass-card) !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid var(--glass-border) !important;
+    }
+
+    .admin-glass .admin-card h3,
+    .admin-glass h3 {
+        color: var(--glass-text) !important;
+    }
+
+    /* Stat cards with colored borders */
+    .admin-glass .stat-card {
+        background: var(--glass-card) !important;
+        backdrop-filter: blur(10px) !important;
+    }
+
+    /* Text colors */
+    .admin-glass .text-gray-900,
+    .admin-glass .text-gray-800 {
+        color: var(--glass-text) !important;
+    }
+
+    .admin-glass .text-gray-700,
+    .admin-glass .text-gray-600,
+    .admin-glass .text-gray-500,
+    .admin-glass .text-gray-400 {
+        color: var(--glass-text-muted) !important;
+    }
+
+    /* Input fields */
+    .admin-glass input,
+    .admin-glass select,
+    .admin-glass textarea {
+        background: rgba(15, 23, 42, 0.6) !important;
+        border-color: var(--glass-border) !important;
+        color: var(--glass-text) !important;
+    }
+
+    .admin-glass input::placeholder,
+    .admin-glass textarea::placeholder {
+        color: var(--glass-text-muted) !important;
+    }
+
+    .admin-glass input:focus,
+    .admin-glass select:focus,
+    .admin-glass textarea:focus {
+        border-color: var(--glass-accent) !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+    }
+
+    /* Labels */
+    .admin-glass label {
+        color: var(--glass-text-muted) !important;
+    }
+
+    /* Tables */
+    .admin-glass table {
+        background: transparent !important;
+    }
+
+    .admin-glass thead {
+        background: rgba(15, 23, 42, 0.5) !important;
+    }
+
+    .admin-glass thead th {
+        color: var(--glass-text-muted) !important;
+        border-color: var(--glass-border) !important;
+    }
+
+    .admin-glass tbody tr {
+        border-color: var(--glass-border) !important;
+    }
+
+    .admin-glass tbody tr:hover {
+        background: rgba(239, 68, 68, 0.1) !important;
+    }
+
+    .admin-glass tbody td {
+        color: var(--glass-text) !important;
+        border-color: var(--glass-border) !important;
+    }
+
+    /* Status badges - keep their colors */
+    .admin-glass .badge {
+        backdrop-filter: blur(4px);
+    }
+
+    /* Primary button stays red */
+    .admin-glass .btn-primary {
+        background: var(--glass-accent) !important;
+    }
+
+    .admin-glass .btn-primary:hover {
+        background: var(--glass-accent-hover) !important;
+    }
+
+    /* Secondary buttons */
+    .admin-glass .btn-secondary,
+    .admin-glass .border-gray-300 {
+        border-color: var(--glass-border) !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: var(--glass-text) !important;
+    }
+
+    .admin-glass .btn-secondary:hover,
+    .admin-glass .border-gray-300:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    /* Dividers */
+    .admin-glass .border-gray-200,
+    .admin-glass .divide-gray-200 > * {
+        border-color: var(--glass-border) !important;
+    }
+
+    /* Dropdown menus */
+    .admin-glass .dropdown-menu {
+        background: var(--glass-card) !important;
+        backdrop-filter: blur(20px) !important;
+        border: 1px solid var(--glass-border) !important;
+    }
+
+    /* Search input */
+    .admin-glass #search-field {
+        background: transparent !important;
+    }
+
+    /* Theme toggle buttons */
+    .theme-btn {
+        transition: all 0.2s ease;
+    }
+
+    /* ==================== LIGHT THEME ==================== */
+    .admin-light .admin-wrapper {
+        background: #f3f4f6 !important;
+    }
+
+    .admin-light .admin-sidebar {
+        background: #111827 !important;
+    }
+
+    .admin-light .admin-sidebar-header {
+        background: #1f2937 !important;
+    }
+
+    .admin-light .admin-topbar {
+        background: white !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .admin-light .admin-card,
+    .admin-light .bg-white {
+        background: white !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* Stat card colors for light theme */
+    .admin-light .stat-card.blue { border-left: 4px solid #3b82f6; }
+    .admin-light .stat-card.green { border-left: 4px solid #10b981; }
+    .admin-light .stat-card.yellow { border-left: 4px solid #f59e0b; }
+    .admin-light .stat-card.red { border-left: 4px solid #ef4444; }
+    .admin-light .stat-card.purple { border-left: 4px solid #8b5cf6; }
+
+    /* Stat card colors for glass theme */
+    .admin-glass .stat-card.blue { border-left: 4px solid #3b82f6; }
+    .admin-glass .stat-card.green { border-left: 4px solid #10b981; }
+    .admin-glass .stat-card.yellow { border-left: 4px solid #f59e0b; }
+    .admin-glass .stat-card.red { border-left: 4px solid #ef4444; }
+    .admin-glass .stat-card.purple { border-left: 4px solid #8b5cf6; }
+</style>
