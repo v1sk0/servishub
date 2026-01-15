@@ -608,24 +608,37 @@ function registerPage() {
         },
 
         async submitStep() {
+            console.log('submitStep called, current step:', this.step);
+            console.log('form data:', JSON.stringify(this.form));
             this.error = '';
 
             // Validate Step 1
             if (this.step === 1) {
+                console.log('Validating Step 1...');
+                console.log('company_name:', this.form.company_name);
+                console.log('pib:', this.form.pib);
+                console.log('adresa_sedista:', this.form.adresa_sedista);
+                console.log('company_phone:', this.form.company_phone);
+                console.log('company_email:', this.form.company_email);
+
                 if (!this.form.company_name || !this.form.pib || !this.form.adresa_sedista ||
                     !this.form.company_phone || !this.form.company_email) {
                     this.error = 'Popunite sva obavezna polja';
+                    console.log('Validation failed: missing required fields');
                     return;
                 }
                 if (!/^\d{9}$/.test(this.form.pib)) {
                     this.error = 'PIB mora imati tačno 9 cifara';
+                    console.log('Validation failed: invalid PIB');
                     return;
                 }
                 // Validiraj format bankovnog racuna samo ako je unet
                 if (this.form.bank_account && !/^\d{3}-\d{9}-\d{2}$/.test(this.form.bank_account)) {
                     this.error = 'Bankovni račun mora biti u formatu XXX-XXXXXXXXX-XX';
+                    console.log('Validation failed: invalid bank account');
                     return;
                 }
+                console.log('Step 1 validation passed, moving to step 2');
                 this.step = 2;
                 return;
             }
