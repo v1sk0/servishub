@@ -72,8 +72,8 @@ function adminLogin() {
                 const data = await response.json();
 
                 if (response.ok) {
-                    localStorage.setItem('admin_access_token', data.access_token);
-                    localStorage.setItem('admin_refresh_token', data.refresh_token);
+                    localStorage.setItem('admin_access_token', data.tokens.access_token);
+                    localStorage.setItem('admin_refresh_token', data.tokens.refresh_token);
                     window.location.href = '/admin/dashboard';
                 } else {
                     this.error = data.message || 'Pogrešan email ili lozinka';

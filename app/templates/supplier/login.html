@@ -136,8 +136,8 @@ function supplierLoginPage() {
                 }
 
                 // Store tokens
-                localStorage.setItem('supplier_access_token', data.access_token);
-                localStorage.setItem('supplier_refresh_token', data.refresh_token);
+                localStorage.setItem('supplier_access_token', data.tokens.access_token);
+                localStorage.setItem('supplier_refresh_token', data.tokens.refresh_token);
 
                 // Redirect to dashboard
                 window.location.href = '/supplier/dashboard';
