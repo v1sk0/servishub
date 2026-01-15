@@ -46,10 +46,9 @@ def upgrade():
 
     # Update TenantStatus enum - dodaj DEMO vrednost
     # PostgreSQL enum update
+    # Napomena: UPDATE PENDING->DEMO ne radimo ovde jer PostgreSQL zahteva commit
+    # pre koriscenja nove enum vrednosti. Novi registrovani tenant-i ce dobiti DEMO direktno.
     op.execute("ALTER TYPE tenantstatus ADD VALUE IF NOT EXISTS 'DEMO'")
-
-    # Prebaci sve PENDING statuse u DEMO
-    op.execute("UPDATE tenant SET status = 'DEMO' WHERE status = 'PENDING'")
 
 
 def downgrade():
