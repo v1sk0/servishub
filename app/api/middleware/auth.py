@@ -136,11 +136,7 @@ def tenant_required(f):
                 'message': 'Vasa pretplata je istekla. Obnovite pretplatu.'
             }), 402
 
-        if tenant.status == TenantStatus.PENDING:
-            return jsonify({
-                'error': 'Forbidden',
-                'message': 'Vas nalog ceka odobrenje.'
-            }), 403
+        # DEMO, TRIAL i ACTIVE imaju pun pristup - ne treba dodatna provera
 
         # Ucitaj korisnika
         user = User.query.get(g.current_user_id)
