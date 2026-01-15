@@ -15,42 +15,229 @@
         display: none !important;
     }
 
-    /* Odmah sakrij body dok sve ne bude spremno */
+    /* ==================== PRE-ALPINE STILOVI (data atribut) ==================== */
+
+    /* LIGHT THEME - Pre-Alpine */
+    html[data-admin-theme="light"] body {
+        background: #f3f4f6 !important;
+    }
+    html[data-admin-theme="light"] .admin-wrapper {
+        background: #f3f4f6 !important;
+    }
+    html[data-admin-theme="light"] .admin-sidebar {
+        background: #111827 !important;
+    }
+    html[data-admin-theme="light"] .admin-topbar,
+    html[data-admin-theme="light"] .admin-card,
+    html[data-admin-theme="light"] .bg-white {
+        background: white !important;
+    }
+
+    /* GLASS/DARK THEME - Pre-Alpine */
     html[data-admin-theme="glass"] body {
         background: #0f0f23 !important;
     }
-
-    /* Primeni temu na osnovu data atributa (pre nego što Alpine učita) */
     html[data-admin-theme="glass"] .admin-wrapper {
         background: linear-gradient(145deg, #0f0f23 0%, #1a1a3e 50%, #0d1b2a 100%) !important;
         background-attachment: fixed !important;
     }
-
-    html[data-admin-theme="glass"] .admin-sidebar {
-        background: rgba(20, 20, 45, 0.9) !important;
-    }
-
-    html[data-admin-theme="glass"] .admin-topbar {
-        background: rgba(20, 20, 45, 0.9) !important;
-    }
-
+    html[data-admin-theme="glass"] .admin-sidebar,
+    html[data-admin-theme="glass"] .admin-topbar,
     html[data-admin-theme="glass"] .admin-card,
     html[data-admin-theme="glass"] .bg-white {
         background: rgba(20, 20, 45, 0.9) !important;
     }
-
     html[data-admin-theme="glass"] .text-gray-900,
     html[data-admin-theme="glass"] .text-gray-800 {
         color: #e2e8f0 !important;
     }
-
     html[data-admin-theme="glass"] .text-gray-700,
     html[data-admin-theme="glass"] .text-gray-600,
     html[data-admin-theme="glass"] .text-gray-500 {
         color: #8b92a5 !important;
     }
 
-    /* ==================== ADMIN GLASSMORPHISM THEME ==================== */
+    /* ==================== LIGHT THEME (Alpine klasa) ==================== */
+    .admin-light {
+        --light-bg: #f3f4f6;
+        --light-card: #ffffff;
+        --light-border: #e5e7eb;
+        --light-text: #111827;
+        --light-text-muted: #6b7280;
+        --light-accent: #ef4444;
+    }
+
+    .admin-light .admin-wrapper {
+        background: var(--light-bg) !important;
+        min-height: 100vh;
+    }
+
+    /* Sidebar ostaje tamna u obe teme */
+    .admin-light .admin-sidebar {
+        background: #111827 !important;
+    }
+
+    .admin-light .admin-sidebar-header {
+        background: #1f2937 !important;
+        border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+    }
+
+    .admin-light .admin-sidebar nav a {
+        color: #9ca3af !important;
+    }
+
+    .admin-light .admin-sidebar nav a:hover {
+        background: rgba(239, 68, 68, 0.15) !important;
+        color: #f3f4f6 !important;
+    }
+
+    .admin-light .admin-sidebar nav a.active {
+        background: rgba(239, 68, 68, 0.25) !important;
+        color: white !important;
+        border-left: 3px solid #ef4444 !important;
+    }
+
+    /* Top bar - svetla */
+    .admin-light .admin-topbar {
+        background: var(--light-card) !important;
+        border-bottom: 1px solid var(--light-border) !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .admin-light .admin-topbar h1 {
+        color: var(--light-text) !important;
+    }
+
+    /* Cards - svetle */
+    .admin-light .admin-card,
+    .admin-light .bg-white {
+        background: var(--light-card) !important;
+        border: 1px solid var(--light-border) !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .admin-light .admin-card h3,
+    .admin-light h3 {
+        color: var(--light-text) !important;
+    }
+
+    /* Text colors - tamni na svetloj pozadini */
+    .admin-light .text-gray-900 {
+        color: #111827 !important;
+    }
+    .admin-light .text-gray-800 {
+        color: #1f2937 !important;
+    }
+    .admin-light .text-gray-700 {
+        color: #374151 !important;
+    }
+    .admin-light .text-gray-600 {
+        color: #4b5563 !important;
+    }
+    .admin-light .text-gray-500 {
+        color: #6b7280 !important;
+    }
+    .admin-light .text-gray-400 {
+        color: #9ca3af !important;
+    }
+
+    /* Input fields - svetli */
+    .admin-light input,
+    .admin-light select,
+    .admin-light textarea {
+        background: white !important;
+        border-color: var(--light-border) !important;
+        color: var(--light-text) !important;
+    }
+
+    .admin-light input::placeholder,
+    .admin-light textarea::placeholder {
+        color: #9ca3af !important;
+    }
+
+    .admin-light input:focus,
+    .admin-light select:focus,
+    .admin-light textarea:focus {
+        border-color: var(--light-accent) !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+    }
+
+    /* Labels */
+    .admin-light label {
+        color: #374151 !important;
+    }
+
+    /* Tables - svetle */
+    .admin-light table {
+        background: white !important;
+    }
+
+    .admin-light thead {
+        background: #f9fafb !important;
+    }
+
+    .admin-light thead th {
+        color: #6b7280 !important;
+        border-color: var(--light-border) !important;
+    }
+
+    .admin-light tbody tr {
+        border-color: var(--light-border) !important;
+    }
+
+    .admin-light tbody tr:hover {
+        background: #f9fafb !important;
+    }
+
+    .admin-light tbody td {
+        color: var(--light-text) !important;
+        border-color: var(--light-border) !important;
+    }
+
+    /* Inner cards - svetle nijanse */
+    .admin-light .bg-gray-50 {
+        background: #f9fafb !important;
+        border: 1px solid #e5e7eb !important;
+    }
+
+    .admin-light .bg-gray-100 {
+        background: #f3f4f6 !important;
+    }
+
+    .admin-light .bg-purple-50 {
+        background: #faf5ff !important;
+        border: 1px solid #e9d5ff !important;
+    }
+
+    .admin-light .border-purple-300 {
+        border-color: #d8b4fe !important;
+    }
+
+    .admin-light .border-gray-200 {
+        border-color: var(--light-border) !important;
+    }
+
+    /* Secondary buttons - svetli */
+    .admin-light .btn-secondary,
+    .admin-light .border-gray-300 {
+        border-color: var(--light-border) !important;
+        background: white !important;
+        color: var(--light-text) !important;
+    }
+
+    .admin-light .btn-secondary:hover,
+    .admin-light .border-gray-300:hover {
+        background: #f9fafb !important;
+    }
+
+    /* Stat card colors for light theme */
+    .admin-light .stat-card.blue { border-left: 4px solid #3b82f6; }
+    .admin-light .stat-card.green { border-left: 4px solid #10b981; }
+    .admin-light .stat-card.yellow { border-left: 4px solid #f59e0b; }
+    .admin-light .stat-card.red { border-left: 4px solid #ef4444; }
+    .admin-light .stat-card.purple { border-left: 4px solid #8b5cf6; }
+
+    /* ==================== GLASS/DARK THEME (Alpine klasa) ==================== */
     .admin-glass {
         --glass-bg: rgba(15, 15, 35, 0.98);
         --glass-card: rgba(20, 20, 45, 0.9);
@@ -118,7 +305,7 @@
         color: var(--glass-text) !important;
     }
 
-    /* Stat cards with colored borders */
+    /* Stat cards */
     .admin-glass .stat-card {
         background: var(--glass-card) !important;
         backdrop-filter: blur(10px) !important;
@@ -190,7 +377,7 @@
         border-color: var(--glass-border) !important;
     }
 
-    /* Inner card backgrounds (stats, KYC, etc.) - Darker glassmorphism */
+    /* Inner card backgrounds */
     .admin-glass .bg-gray-50 {
         background: rgba(15, 15, 38, 0.85) !important;
         backdrop-filter: blur(8px) !important;
@@ -202,7 +389,7 @@
         backdrop-filter: blur(6px) !important;
     }
 
-    /* KYC representative card backgrounds - Dark purple glassmorphism */
+    /* KYC representative card backgrounds */
     .admin-glass .bg-purple-50 {
         background: rgba(88, 28, 135, 0.35) !important;
         backdrop-filter: blur(8px) !important;
@@ -217,12 +404,12 @@
         border-color: var(--glass-border) !important;
     }
 
-    /* Status badges - keep their colors */
+    /* Status badges */
     .admin-glass .badge {
         backdrop-filter: blur(4px);
     }
 
-    /* Primary button stays red */
+    /* Primary button */
     .admin-glass .btn-primary {
         background: var(--glass-accent) !important;
     }
@@ -262,46 +449,15 @@
         background: transparent !important;
     }
 
-    /* Theme toggle buttons */
-    .theme-btn {
-        transition: all 0.2s ease;
-    }
-
-    /* ==================== LIGHT THEME ==================== */
-    .admin-light .admin-wrapper {
-        background: #f3f4f6 !important;
-    }
-
-    .admin-light .admin-sidebar {
-        background: #111827 !important;
-    }
-
-    .admin-light .admin-sidebar-header {
-        background: #1f2937 !important;
-    }
-
-    .admin-light .admin-topbar {
-        background: white !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .admin-light .admin-card,
-    .admin-light .bg-white {
-        background: white !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    /* Stat card colors for light theme */
-    .admin-light .stat-card.blue { border-left: 4px solid #3b82f6; }
-    .admin-light .stat-card.green { border-left: 4px solid #10b981; }
-    .admin-light .stat-card.yellow { border-left: 4px solid #f59e0b; }
-    .admin-light .stat-card.red { border-left: 4px solid #ef4444; }
-    .admin-light .stat-card.purple { border-left: 4px solid #8b5cf6; }
-
     /* Stat card colors for glass theme */
     .admin-glass .stat-card.blue { border-left: 4px solid #3b82f6; }
     .admin-glass .stat-card.green { border-left: 4px solid #10b981; }
     .admin-glass .stat-card.yellow { border-left: 4px solid #f59e0b; }
     .admin-glass .stat-card.red { border-left: 4px solid #ef4444; }
     .admin-glass .stat-card.purple { border-left: 4px solid #8b5cf6; }
+
+    /* ==================== SHARED STYLES ==================== */
+    .theme-btn {
+        transition: all 0.2s ease;
+    }
 </style>
