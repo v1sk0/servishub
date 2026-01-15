@@ -45,7 +45,189 @@
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* ==================== GLASSMORPHISM THEME ==================== */
+        .glass-theme {
+            --glass-bg: rgba(15, 23, 42, 0.95);
+            --glass-card: rgba(30, 41, 59, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-text: #f1f5f9;
+            --glass-text-muted: #94a3b8;
+            --glass-accent: #8b5cf6;
+        }
+
+        .glass-theme body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%) !important;
+            background-attachment: fixed !important;
+        }
+
+        /* Sidebar */
+        .glass-theme .lg\:flex.lg\:w-72.lg\:flex-col > div,
+        .glass-theme .fixed.inset-y-0.left-0.z-50.w-72 > div {
+            background: var(--glass-card) !important;
+            backdrop-filter: blur(20px) !important;
+            border-right: 1px solid var(--glass-border) !important;
+        }
+
+        /* Top bar */
+        .glass-theme .sticky.top-0 {
+            background: var(--glass-card) !important;
+            backdrop-filter: blur(20px) !important;
+            border-color: var(--glass-border) !important;
+        }
+
+        /* Cards */
+        .glass-theme .bg-white {
+            background: var(--glass-card) !important;
+            backdrop-filter: blur(10px) !important;
+            border-color: var(--glass-border) !important;
+        }
+
+        /* Text colors */
+        .glass-theme .text-gray-900,
+        .glass-theme .text-gray-800 {
+            color: var(--glass-text) !important;
+        }
+
+        .glass-theme .text-gray-700,
+        .glass-theme .text-gray-600,
+        .glass-theme .text-gray-500 {
+            color: var(--glass-text-muted) !important;
+        }
+
+        /* Input fields */
+        .glass-theme input,
+        .glass-theme select,
+        .glass-theme textarea {
+            background: rgba(15, 23, 42, 0.6) !important;
+            border-color: var(--glass-border) !important;
+            color: var(--glass-text) !important;
+        }
+
+        .glass-theme input::placeholder,
+        .glass-theme textarea::placeholder {
+            color: var(--glass-text-muted) !important;
+        }
+
+        .glass-theme input:focus,
+        .glass-theme select:focus,
+        .glass-theme textarea:focus {
+            border-color: var(--glass-accent) !important;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3) !important;
+        }
+
+        /* Tables */
+        .glass-theme table {
+            background: transparent !important;
+        }
+
+        .glass-theme thead {
+            background: rgba(15, 23, 42, 0.5) !important;
+        }
+
+        .glass-theme tbody tr {
+            border-color: var(--glass-border) !important;
+        }
+
+        .glass-theme tbody tr:hover {
+            background: rgba(139, 92, 246, 0.1) !important;
+        }
+
+        /* Buttons - primary stays the same, secondary gets glass look */
+        .glass-theme .border-gray-300 {
+            border-color: var(--glass-border) !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            color: var(--glass-text) !important;
+        }
+
+        .glass-theme .border-gray-300:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* Modals */
+        .glass-theme .fixed.inset-0 .bg-white {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid var(--glass-border) !important;
+        }
+
+        /* Dividers */
+        .glass-theme .border-gray-200,
+        .glass-theme .divide-gray-200 > * {
+            border-color: var(--glass-border) !important;
+        }
+
+        /* KPI Cards special styling */
+        .glass-theme .kpi-card {
+            background: var(--glass-card) !important;
+            backdrop-filter: blur(10px) !important;
+            border: 1px solid var(--glass-border) !important;
+        }
+
+        /* Status badges - keep their colors but add glass effect */
+        .glass-theme [class*="bg-green-100"],
+        .glass-theme [class*="bg-yellow-100"],
+        .glass-theme [class*="bg-red-100"],
+        .glass-theme [class*="bg-blue-100"],
+        .glass-theme [class*="bg-purple-100"],
+        .glass-theme [class*="bg-gray-100"] {
+            backdrop-filter: blur(4px) !important;
+        }
+
+        /* Sidebar navigation items */
+        .glass-theme nav a {
+            color: var(--glass-text-muted) !important;
+        }
+
+        .glass-theme nav a:hover,
+        .glass-theme nav a.active {
+            background: rgba(139, 92, 246, 0.2) !important;
+            color: var(--glass-text) !important;
+        }
+
+        /* Search input in top bar */
+        .glass-theme #search-field {
+            background: transparent !important;
+        }
+
+        /* Tab navigation */
+        .glass-theme .border-b.border-gray-200 button {
+            color: var(--glass-text-muted) !important;
+        }
+
+        .glass-theme .border-b.border-gray-200 button.border-blue-500 {
+            color: var(--glass-accent) !important;
+            border-color: var(--glass-accent) !important;
+        }
+
+        /* Disabled inputs */
+        .glass-theme input:disabled,
+        .glass-theme select:disabled {
+            background: rgba(15, 23, 42, 0.3) !important;
+            color: var(--glass-text-muted) !important;
+        }
+
+        /* Dropdown menus */
+        .glass-theme .absolute.right-0.z-10 {
+            background: var(--glass-card) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid var(--glass-border) !important;
+        }
+
+        .glass-theme .absolute.right-0.z-10 a:hover {
+            background: rgba(139, 92, 246, 0.2) !important;
+        }
     </style>
+
+    <!-- Theme initialization (before Alpine loads) -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('servishub-theme') || 'light';
+            if (theme === 'glass') {
+                document.documentElement.classList.add('glass-theme');
+            }
+        })();
+    </script>
 
     {% block head %}{% endblock %}
 </head>

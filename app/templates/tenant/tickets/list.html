@@ -957,7 +957,7 @@
                         <!-- Kategorija -->
                         <div class="mb-4">
                             <label class="form-label">Kategorija *</label>
-                            <div class="category-selector">
+                            <div class="category-selector" @change="onCategoryChange()">
                                 <div class="category-option">
                                     <input type="radio" name="service_section" value="Telefoni" id="cat_tel" x-model="newTicket.service_section" checked>
                                     <label for="cat_tel">
@@ -1051,22 +1051,26 @@
                     <div class="form-section">
                         <div class="form-section-title">Opis problema</div>
                         <div class="mb-4">
-                            <label class="form-label">Opis kvara *</label>
-                            <textarea x-model="newTicket.problem_description" rows="2" required
+                            <label class="form-label">Opis kvara <span class="text-gray-400 text-xs">(ili izaberite brzi izbor)</span></label>
+                            <textarea x-model="newTicket.problem_description" rows="2"
                                       placeholder="Opisi problem..."
                                       class="form-input"></textarea>
                         </div>
 
-                        <!-- Brzi izbor problema -->
+                        <!-- Brzi izbor problema - Dolce Vita style -->
                         <div>
                             <label class="form-label" style="margin-bottom: 8px;">Brzi izbor problema</label>
                             <div class="problem-buttons">
-                                <template x-for="problem in problemOptions" :key="problem.id">
+                                <template x-for="problem in currentProblems" :key="problem.id">
                                     <button type="button"
                                             class="problem-btn"
                                             :class="{'selected': selectedProblems.includes(problem.id)}"
-                                            @click="toggleProblem(problem.id)"
-                                            x-text="problem.label"></button>
+                                            @click="toggleProblem(problem.id)">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="problem.icon" />
+                                        </svg>
+                                        <span x-text="problem.label"></span>
+                                    </button>
                                 </template>
                             </div>
                         </div>
@@ -1368,19 +1372,63 @@ function ticketsPage() {
             priority: 'normal'
         },
 
-        problemOptions: [
-            { id: 'display', label: 'Ekran' },
-            { id: 'battery', label: 'Baterija' },
-            { id: 'charging', label: 'Punjenje' },
-            { id: 'speaker', label: 'Zvucnik' },
-            { id: 'microphone', label: 'Mikrofon' },
-            { id: 'camera', label: 'Kamera' },
-            { id: 'software', label: 'Softver' },
-            { id: 'water', label: 'Voda' },
-            { id: 'buttons', label: 'Tasteri' },
-            { id: 'other', label: 'Ostalo' }
-        ],
+        // Category-specific problem options (Dolce Vita style)
+        PROBLEM_CATEGORIES: {
+            Telefoni: [
+                { id: 'zamena_ekrana', label: 'Zamena ekrana', icon: 'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z' },
+                { id: 'zamena_baterije', label: 'Zamena baterije', icon: 'M17 6h-2V5a1 1 0 00-1-1H10a1 1 0 00-1 1v1H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V8a2 2 0 00-2-2z' },
+                { id: 'zamena_punjenja', label: 'Zamena punjenja', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+                { id: 'zamena_zvucnika', label: 'Zamena zvucnika', icon: 'M15.536 8.464a5 5 0 010 7.072M12 6.5v11M18.364 5.636a9 9 0 010 12.728M9.586 9.586L6.707 6.707A1 1 0 005 7.414V16.586a1 1 0 001.707.707l2.879-2.879' },
+                { id: 'zamena_slusalice', label: 'Zamena slusalice', icon: 'M3 18v-6a9 9 0 0118 0v6M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z' },
+                { id: 'zamena_mikrofona', label: 'Zamena mikrofona', icon: 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z' },
+                { id: 'zamena_kamere_zadnje', label: 'Zadnja kamera', icon: 'M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z' },
+                { id: 'zamena_kamere_prednje', label: 'Prednja kamera', icon: 'M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z' },
+                { id: 'zamena_konektora', label: 'Zamena konektora', icon: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101' },
+                { id: 'zamena_vibro', label: 'Vibro motor', icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' },
+                { id: 'zamena_dugmadi', label: 'Zamena dugmadi', icon: 'M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122' },
+                { id: 'otkljucavanje', label: 'Otkljucavanje', icon: 'M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z' },
+                { id: 'prebacivanje', label: 'Prebacivanje podataka', icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
+                { id: 'prebacivanje_broken', label: 'Iz polomljenog', icon: 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636' },
+                { id: 'ciscenje_vode', label: 'Ciscenje od vode', icon: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z' },
+                { id: 'ciscenje_virusa', label: 'Ciscenje virusa', icon: 'M12 14l9-5-9-5-9 5 9 5zm0 7l9-5-9-5-9 5 9 5z' },
+                { id: 'dijagnostika', label: 'Dijagnostika', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' }
+            ],
+            Tableti: [
+                { id: 'zamena_ekrana', label: 'Zamena ekrana', icon: 'M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z' },
+                { id: 'zamena_baterije', label: 'Zamena baterije', icon: 'M17 6h-2V5a1 1 0 00-1-1H10a1 1 0 00-1 1v1H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V8a2 2 0 00-2-2z' },
+                { id: 'zamena_punjenja', label: 'Zamena punjenja', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+                { id: 'zamena_zvucnika', label: 'Zamena zvucnika', icon: 'M15.536 8.464a5 5 0 010 7.072M12 6.5v11' },
+                { id: 'otkljucavanje', label: 'Otkljucavanje', icon: 'M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z' },
+                { id: 'prebacivanje', label: 'Prebacivanje podataka', icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
+                { id: 'ciscenje_virusa', label: 'Ciscenje virusa', icon: 'M12 14l9-5-9-5-9 5 9 5zm0 7l9-5-9-5-9 5 9 5z' },
+                { id: 'dijagnostika', label: 'Dijagnostika', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' }
+            ],
+            Racunari: [
+                { id: 'zamena_laptop_ekrana', label: 'Zamena ekrana', icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+                { id: 'zamena_laptop_baterije', label: 'Zamena baterije', icon: 'M17 6h-2V5a1 1 0 00-1-1H10a1 1 0 00-1 1v1H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V8a2 2 0 00-2-2z' },
+                { id: 'zamena_tastature', label: 'Zamena tastature', icon: 'M4 6h16M4 10h16M4 14h16M4 18h16' },
+                { id: 'zamena_diska', label: 'SSD/HDD', icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4' },
+                { id: 'zamena_rama', label: 'RAM', icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z' },
+                { id: 'zamena_napajanja', label: 'Napajanje', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+                { id: 'reinstalacija_sistema', label: 'Reinstalacija', icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
+                { id: 'ciscenje_virusa', label: 'Ciscenje virusa', icon: 'M12 14l9-5-9-5-9 5 9 5zm0 7l9-5-9-5-9 5 9 5z' },
+                { id: 'prebacivanje', label: 'Prebacivanje', icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
+                { id: 'dijagnostika', label: 'Dijagnostika', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' }
+            ],
+            Konzole: [
+                { id: 'zamena_lasera', label: 'Zamena lasera', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+                { id: 'zamena_hdmi', label: 'HDMI port', icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+                { id: 'zamena_punjenja', label: 'Punjenje', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+                { id: 'ciscenje', label: 'Ciscenje/Servis', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
+                { id: 'dijagnostika', label: 'Dijagnostika', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' }
+            ],
+            Ostalo: [
+                { id: 'dijagnostika', label: 'Dijagnostika', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+                { id: 'ostalo', label: 'Ostalo', icon: 'M12 6v6m0 0v6m0-6h6m-6 0H6' }
+            ]
+        },
         selectedProblems: [],
+        lastAutoGeneratedComment: '',
 
         collectData: {
             final_price: 0,
@@ -1392,6 +1440,48 @@ function ticketsPage() {
         notifyData: {
             comment: '',
             contact_successful: false
+        },
+
+        // Get problems for current category
+        get currentProblems() {
+            return this.PROBLEM_CATEGORIES[this.newTicket.service_section] || this.PROBLEM_CATEGORIES['Ostalo'];
+        },
+
+        // Toggle problem selection and auto-fill description
+        toggleProblem(problemId) {
+            const idx = this.selectedProblems.indexOf(problemId);
+            if (idx > -1) {
+                this.selectedProblems.splice(idx, 1);
+            } else {
+                this.selectedProblems.push(problemId);
+            }
+            this.updateProblemDescription();
+        },
+
+        // Auto-fill problem description based on selected problems
+        updateProblemDescription() {
+            const selectedLabels = this.selectedProblems.map(id => {
+                const problem = this.currentProblems.find(p => p.id === id);
+                return problem ? problem.label : '';
+            }).filter(Boolean);
+
+            const newAutoComment = selectedLabels.join(', ');
+
+            // Only update if field is empty or contains previous auto-generated text
+            if (this.newTicket.problem_description === '' ||
+                this.newTicket.problem_description === this.lastAutoGeneratedComment) {
+                this.newTicket.problem_description = newAutoComment;
+                this.lastAutoGeneratedComment = newAutoComment;
+            }
+        },
+
+        // Reset problems when category changes
+        onCategoryChange() {
+            this.selectedProblems = [];
+            this.lastAutoGeneratedComment = '';
+            if (this.newTicket.problem_description === this.lastAutoGeneratedComment) {
+                this.newTicket.problem_description = '';
+            }
         },
 
         async init() {
