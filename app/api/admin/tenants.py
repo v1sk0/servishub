@@ -74,6 +74,10 @@ def list_tenants():
         # Broj korisnika
         user_count = User.query.filter_by(tenant_id=tenant.id).count()
 
+        # Broj lokacija
+        from app.models.tenant import ServiceLocation
+        locations_count = ServiceLocation.query.filter_by(tenant_id=tenant.id, is_active=True).count()
+
         # Broj tiketa ovog meseca
         start_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0)
         tickets_this_month = ServiceTicket.query.filter(
@@ -86,17 +90,17 @@ def list_tenants():
             'name': tenant.name,
             'slug': tenant.slug,
             'email': tenant.email,
-            'phone': tenant.phone,
+            'phone': tenant.telefon,  # Ispravka: telefon -> telefon
             'status': tenant.status.value if tenant.status else None,
-            'subscription_plan': tenant.subscription_plan,
+            'subscription_plan': 'Bazni',  # TODO: Dodati subscription_plan u model
             'demo_ends_at': tenant.demo_ends_at.isoformat() if tenant.demo_ends_at else None,
             'trial_ends_at': tenant.trial_ends_at.isoformat() if tenant.trial_ends_at else None,
             'subscription_ends_at': tenant.subscription_ends_at.isoformat() if tenant.subscription_ends_at else None,
-            'locations_count': tenant.locations_count,
+            'locations_count': locations_count,
             'user_count': user_count,
             'tickets_this_month': tickets_this_month,
             'created_at': tenant.created_at.isoformat(),
-            'is_trial_expired': tenant.is_trial_expired if hasattr(tenant, 'is_trial_expired') else False
+            'is_trial_expired': False  # TODO: Dodati logiku za proveru isteka
         })
 
     return jsonify({
@@ -134,28 +138,32 @@ def get_tenant(tenant_id):
     # KYC reprezentativi
     representatives = ServiceRepresentative.query.filter_by(tenant_id=tenant.id).all()
 
+    # Broj lokacija
+    from app.models.tenant import ServiceLocation
+    locations_count = ServiceLocation.query.filter_by(tenant_id=tenant.id, is_active=True).count()
+
     return jsonify({
         'tenant': {
             'id': tenant.id,
             'name': tenant.name,
             'slug': tenant.slug,
             'email': tenant.email,
-            'phone': tenant.phone,
+            'phone': tenant.telefon,
             'telefon': tenant.telefon,
-            'address': tenant.address,
+            'address': tenant.adresa_sedista,
             'adresa_sedista': tenant.adresa_sedista,
-            'city': tenant.city,
+            'city': None,  # TODO: Dodati city u model ako je potrebno
             'pib': tenant.pib,
             'maticni_broj': tenant.maticni_broj,
             'bank_account': tenant.bank_account,
             'status': tenant.status.value if tenant.status else None,
-            'subscription_plan': tenant.subscription_plan,
+            'subscription_plan': 'Bazni',  # TODO: Dodati subscription_plan u model
             'demo_ends_at': tenant.demo_ends_at.isoformat() if tenant.demo_ends_at else None,
             'trial_ends_at': tenant.trial_ends_at.isoformat() if tenant.trial_ends_at else None,
             'subscription_ends_at': tenant.subscription_ends_at.isoformat() if tenant.subscription_ends_at else None,
-            'locations_count': tenant.locations_count,
+            'locations_count': locations_count,
             'users_count': len(users),
-            'settings': tenant.settings,
+            'settings': tenant.settings_json,
             'created_at': tenant.created_at.isoformat(),
             'updated_at': tenant.updated_at.isoformat() if tenant.updated_at else None
         },
