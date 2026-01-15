@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}KYC Detalji - ServisHub Admin{% endblock %}
+{% block title %}Detalji predstavnika - ServisHub Admin{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-100" x-data="kycDetailPage({{ representative_id }})" x-init="loadKyc()">
@@ -11,7 +11,7 @@
         <nav class="mt-6 px-3">
             <a href="/admin/dashboard" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Dashboard</a>
             <a href="/admin/tenants" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">Servisi</a>
-            <a href="/admin/kyc" class="flex items-center px-4 py-3 text-white bg-gray-800 rounded-lg mb-1">KYC</a>
+            <a href="/admin/kyc" class="flex items-center px-4 py-3 text-white bg-gray-800 rounded-lg mb-1">Predstavnici</a>
         </nav>
     </div>
 
@@ -20,7 +20,7 @@
             <a href="/admin/kyc" class="mr-4 text-gray-400 hover:text-gray-600">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             </a>
-            <h1 class="text-xl font-semibold text-gray-900">KYC Detalji</h1>
+            <h1 class="text-xl font-semibold text-gray-900">Detalji predstavnika</h1>
         </div>
 
         <div class="p-8">

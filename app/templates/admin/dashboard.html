@@ -32,7 +32,7 @@
                 <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
-                KYC Verifikacija
+                Predstavnici
             </a>
             <a href="/admin/suppliers" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg mb-1">
                 <svg class="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -119,7 +119,7 @@
                             </svg>
                         </div>
                         <div class="ml-4">
-                            <p class="text-sm text-gray-500">KYC na čekanju</p>
+                            <p class="text-sm text-gray-500">Predstavnici na čekanju</p>
                             <p class="text-2xl font-bold text-gray-900" x-text="stats.pending_kyc || 0"></p>
                         </div>
                     </div>
@@ -177,7 +177,7 @@
                 <!-- Pending KYC -->
                 <div class="bg-white rounded-lg shadow">
                     <div class="px-6 py-4 border-b flex items-center justify-between">
-                        <h2 class="text-lg font-medium text-gray-900">KYC zahtevi</h2>
+                        <h2 class="text-lg font-medium text-gray-900">Verifikacija predstavnika</h2>
                         <a href="/admin/kyc" class="text-sm text-primary-600 hover:text-primary-700">Vidi sve</a>
                     </div>
                     <div class="divide-y">
@@ -195,7 +195,7 @@
                             </div>
                         </template>
                         <div x-show="pendingKyc.length === 0" class="px-6 py-8 text-center text-gray-500">
-                            Nema KYC zahteva na čekanju
+                            Nema zahteva za verifikaciju
                         </div>
                     </div>
                 </div>
