@@ -296,8 +296,13 @@
         // Supports: api('/path') or api('/path', 'POST', data) or api('/path', {method, body})
         async function api(url, methodOrOptions = 'GET', data = null) {
             // Add /api/v1 prefix if not already present
-            if (!url.startsWith('/api/')) {
-                url = '/api/v1' + url;
+            if (!url.startsWith('/api/v1/') && !url.startsWith('/api/v1?')) {
+                if (url.startsWith('/api/')) {
+                    // Already has /api/ but not /api/v1/
+                    url = '/api/v1' + url.substring(4);
+                } else {
+                    url = '/api/v1' + url;
+                }
             }
 
             // Handle both api(url, method, data) and api(url, options) formats
@@ -333,14 +338,7 @@
                 }
             }
 
-            // Parse JSON response
-            if (response.ok) {
-                const text = await response.text();
-                return text ? JSON.parse(text) : {};
-            } else {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || 'Server error');
-            }
+            return response;
         }
 
         async function refreshToken() {

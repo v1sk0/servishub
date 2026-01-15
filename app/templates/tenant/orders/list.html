@@ -513,10 +513,13 @@ function ordersPage() {
 
                 if (this.filters.status) params.append('status', this.filters.status);
 
-                const data = await api(`/orders?${params}`);
-                this.orders = data.orders || [];
-                this.total = data.total || 0;
-                this.pages = data.pages || 0;
+                const response = await api(`/orders?${params}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    this.orders = data.orders || [];
+                    this.total = data.total || 0;
+                    this.pages = data.pages || 0;
+                }
 
                 // Calculate stats
                 await this.loadStats();
@@ -531,17 +534,20 @@ function ordersPage() {
         async loadStats() {
             // Load all orders for stats (without status filter)
             try {
-                const all = await api('/orders?per_page=100');
-                const orders = all.orders || [];
+                const response = await api('/orders?per_page=100');
+                if (response.ok) {
+                    const all = await response.json();
+                    const orders = all.orders || [];
 
-                this.stats = {
-                    total: orders.length,
-                    draft: orders.filter(o => o.status === 'DRAFT').length,
-                    sent: orders.filter(o => o.status === 'SENT').length,
-                    confirmed: orders.filter(o => o.status === 'CONFIRMED').length,
-                    delivered: orders.filter(o => o.status === 'DELIVERED').length,
-                    completed: orders.filter(o => o.status === 'COMPLETED').length
-                };
+                    this.stats = {
+                        total: orders.length,
+                        draft: orders.filter(o => o.status === 'DRAFT').length,
+                        sent: orders.filter(o => o.status === 'SENT').length,
+                        confirmed: orders.filter(o => o.status === 'CONFIRMED').length,
+                        delivered: orders.filter(o => o.status === 'DELIVERED').length,
+                        completed: orders.filter(o => o.status === 'COMPLETED').length
+                    };
+                }
             } catch (e) {
                 console.error('Failed to load stats:', e);
             }
@@ -553,8 +559,10 @@ function ordersPage() {
             this.selectedOrder = null;
 
             try {
-                const data = await api(`/orders/${order.id}`);
-                this.selectedOrder = data;
+                const response = await api(`/orders/${order.id}`);
+                if (response.ok) {
+                    this.selectedOrder = await response.json();
+                }
             } catch (e) {
                 console.error('Failed to load order:', e);
                 showToast('Greska pri ucitavanju narudzbine', 'error');
@@ -639,8 +647,10 @@ function ordersPage() {
                 this.newMessage = '';
 
                 // Reload order details
-                const data = await api(`/orders/${this.selectedOrder.id}`);
-                this.selectedOrder = data;
+                const response = await api(`/orders/${this.selectedOrder.id}`);
+                if (response.ok) {
+                    this.selectedOrder = await response.json();
+                }
             } catch (e) {
                 console.error('Failed to send message:', e);
                 showToast('Greska pri slanju poruke', 'error');

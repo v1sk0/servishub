@@ -541,8 +541,11 @@ function marketplacePage() {
 
         async loadBrands() {
             try {
-                const data = await api('/marketplace/brands');
-                this.brands = data.brands || [];
+                const response = await api('/marketplace/brands');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.brands = data.brands || [];
+                }
             } catch (e) {
                 console.error('Failed to load brands:', e);
             }
@@ -569,10 +572,13 @@ function marketplacePage() {
                 if (this.filters.min_price) params.append('min_price', this.filters.min_price);
                 if (this.filters.max_price) params.append('max_price', this.filters.max_price);
 
-                const data = await api(`/marketplace/parts?${params}`);
-                this.parts = data.parts || [];
-                this.total = data.total || 0;
-                this.pages = data.pages || 0;
+                const response = await api(`/marketplace/parts?${params}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    this.parts = data.parts || [];
+                    this.total = data.total || 0;
+                    this.pages = data.pages || 0;
+                }
                 this.hasSearched = true;
             } catch (e) {
                 console.error('Search failed:', e);
@@ -601,8 +607,10 @@ function marketplacePage() {
             this.selectedPart = null;
 
             try {
-                const data = await api(`/marketplace/parts/${part.source}/${part.id}`);
-                this.selectedPart = data;
+                const response = await api(`/marketplace/parts/${part.source}/${part.id}`);
+                if (response.ok) {
+                    this.selectedPart = await response.json();
+                }
             } catch (e) {
                 console.error('Failed to load details:', e);
                 showToast('Greska pri ucitavanju detalja', 'error');

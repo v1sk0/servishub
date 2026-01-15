@@ -651,7 +651,7 @@ function settingsPage() {
         async loadAll() {
             this.loading = true;
             try {
-                const [profile, settings, subscription, users, locations, kyc] = await Promise.all([
+                const [profileRes, settingsRes, subscriptionRes, usersRes, locationsRes, kycRes] = await Promise.all([
                     api('/tenant/profile'),
                     api('/tenant/settings'),
                     api('/tenant/subscription'),
@@ -660,16 +660,24 @@ function settingsPage() {
                     api('/tenant/kyc')
                 ]);
 
-                this.profile = profile;
-                this.settings = settings;
-                this.subscription = subscription;
-                this.users = users.users || [];
-                this.locations = locations.locations || [];
-                this.kyc = kyc;
-
-                // Init KYC form
-                if (kyc.representative) {
-                    this.kycForm = { ...kyc.representative };
+                if (profileRes.ok) this.profile = await profileRes.json();
+                if (settingsRes.ok) this.settings = await settingsRes.json();
+                if (subscriptionRes.ok) this.subscription = await subscriptionRes.json();
+                if (usersRes.ok) {
+                    const usersData = await usersRes.json();
+                    this.users = usersData.users || [];
+                }
+                if (locationsRes.ok) {
+                    const locationsData = await locationsRes.json();
+                    this.locations = locationsData.locations || [];
+                }
+                if (kycRes.ok) {
+                    const kycData = await kycRes.json();
+                    this.kyc = kycData;
+                    // Init KYC form
+                    if (kycData.representative) {
+                        this.kycForm = { ...kycData.representative };
+                    }
                 }
             } catch (e) {
                 console.error('Failed to load data:', e);
@@ -682,13 +690,18 @@ function settingsPage() {
         async saveProfile() {
             this.saving = true;
             try {
-                await api('/tenant/profile', 'PUT', {
+                const response = await api('/tenant/profile', 'PUT', {
                     name: this.profile.name,
                     email: this.profile.email,
                     telefon: this.profile.telefon,
                     adresa_sedista: this.profile.adresa_sedista
                 });
-                showToast('Profil sacuvan', 'success');
+                if (response.ok) {
+                    showToast('Profil sacuvan', 'success');
+                } else {
+                    const err = await response.json();
+                    showToast(err.error || 'Greska pri cuvanju', 'error');
+                }
             } catch (e) {
                 showToast('Greska pri cuvanju', 'error');
             } finally {
@@ -699,8 +712,13 @@ function settingsPage() {
         async saveSettings() {
             this.saving = true;
             try {
-                await api('/tenant/settings', 'PUT', this.settings);
-                showToast('Podesavanja sacuvana', 'success');
+                const response = await api('/tenant/settings', 'PUT', this.settings);
+                if (response.ok) {
+                    showToast('Podesavanja sacuvana', 'success');
+                } else {
+                    const err = await response.json();
+                    showToast(err.error || 'Greska pri cuvanju', 'error');
+                }
             } catch (e) {
                 showToast('Greska pri cuvanju', 'error');
             } finally {
@@ -711,12 +729,19 @@ function settingsPage() {
         async submitKyc() {
             this.saving = true;
             try {
-                await api('/tenant/kyc', 'POST', this.kycForm);
-                showToast('KYC zahtev poslat', 'success');
-                const kyc = await api('/tenant/kyc');
-                this.kyc = kyc;
+                const response = await api('/tenant/kyc', 'POST', this.kycForm);
+                if (response.ok) {
+                    showToast('KYC zahtev poslat', 'success');
+                    const kycRes = await api('/tenant/kyc');
+                    if (kycRes.ok) {
+                        this.kyc = await kycRes.json();
+                    }
+                } else {
+                    const err = await response.json();
+                    showToast(err.error || 'Greska pri slanju', 'error');
+                }
             } catch (e) {
-                showToast(e.message || 'Greska pri slanju', 'error');
+                showToast('Greska pri slanju', 'error');
             } finally {
                 this.saving = false;
             }
@@ -751,15 +776,23 @@ function settingsPage() {
         async saveUser() {
             this.saving = true;
             try {
+                let response;
                 if (this.editingUser) {
-                    await api(`/users/${this.editingUser.id}`, 'PUT', this.userForm);
+                    response = await api(`/users/${this.editingUser.id}`, 'PUT', this.userForm);
                 } else {
-                    await api('/users', 'POST', this.userForm);
+                    response = await api('/users', 'POST', this.userForm);
+                }
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Greska pri cuvanju');
                 }
                 showToast('Korisnik sacuvan', 'success');
                 this.userModal = false;
-                const data = await api('/users');
-                this.users = data.users || [];
+                const usersRes = await api('/users');
+                if (usersRes.ok) {
+                    const data = await usersRes.json();
+                    this.users = data.users || [];
+                }
             } catch (e) {
                 showToast(e.message || 'Greska pri cuvanju', 'error');
             } finally {
@@ -797,15 +830,23 @@ function settingsPage() {
         async saveLocation() {
             this.saving = true;
             try {
+                let response;
                 if (this.editingLocation) {
-                    await api(`/locations/${this.editingLocation.id}`, 'PUT', this.locationForm);
+                    response = await api(`/locations/${this.editingLocation.id}`, 'PUT', this.locationForm);
                 } else {
-                    await api('/locations', 'POST', this.locationForm);
+                    response = await api('/locations', 'POST', this.locationForm);
+                }
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Greska pri cuvanju');
                 }
                 showToast('Lokacija sacuvana', 'success');
                 this.locationModal = false;
-                const data = await api('/locations');
-                this.locations = data.locations || [];
+                const locationsRes = await api('/locations');
+                if (locationsRes.ok) {
+                    const data = await locationsRes.json();
+                    this.locations = data.locations || [];
+                }
             } catch (e) {
                 showToast(e.message || 'Greska pri cuvanju', 'error');
             } finally {
