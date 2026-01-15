@@ -75,38 +75,38 @@
 
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700">Naziv firme *</label>
-                    <input type="text" id="name" x-model="form.company_name" required
+                    <input type="text" id="name" x-model="form.company_name"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="pib" class="block text-sm font-medium text-gray-700">PIB *</label>
-                        <input type="text" id="pib" x-model="form.pib" required pattern="\d{9}" maxlength="9"
+                        <input type="text" id="pib" x-model="form.pib" maxlength="9"
                                placeholder="123456789"
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     </div>
                     <div>
                         <label for="maticni_broj" class="block text-sm font-medium text-gray-700">Matični broj</label>
-                        <input type="text" id="maticni_broj" x-model="form.maticni_broj" pattern="\d{8}" maxlength="8"
+                        <input type="text" id="maticni_broj" x-model="form.maticni_broj" maxlength="8"
                                placeholder="12345678"
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     </div>
                 </div>
                 <div>
                     <label for="adresa_sedista" class="block text-sm font-medium text-gray-700">Adresa sedišta *</label>
-                    <input type="text" id="adresa_sedista" x-model="form.adresa_sedista" required
+                    <input type="text" id="adresa_sedista" x-model="form.adresa_sedista"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="company_phone" class="block text-sm font-medium text-gray-700">Telefon firme *</label>
-                        <input type="tel" id="company_phone" x-model="form.company_phone" required
+                        <input type="tel" id="company_phone" x-model="form.company_phone"
                                placeholder="+381..."
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     </div>
                     <div>
                         <label for="company_email" class="block text-sm font-medium text-gray-700">Email firme *</label>
-                        <input type="email" id="company_email" x-model="form.company_email" required
+                        <input type="email" id="company_email" x-model="form.company_email"
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     </div>
                 </div>
@@ -126,19 +126,19 @@
 
                 <div>
                     <label for="location_name" class="block text-sm font-medium text-gray-700">Naziv lokacije *</label>
-                    <input type="text" id="location_name" x-model="form.location_name" required
+                    <input type="text" id="location_name" x-model="form.location_name"
                            placeholder="npr. Glavni servis"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                 </div>
                 <div>
                     <label for="location_address" class="block text-sm font-medium text-gray-700">Adresa *</label>
-                    <input type="text" id="location_address" x-model="form.location_address" required
+                    <input type="text" id="location_address" x-model="form.location_address"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="location_city" class="block text-sm font-medium text-gray-700">Grad *</label>
-                        <input type="text" id="location_city" x-model="form.location_city" required
+                        <input type="text" id="location_city" x-model="form.location_city"
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     </div>
                     <div>
@@ -161,14 +161,14 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="ime" class="block text-sm font-medium text-gray-700">Ime *</label>
-                        <input type="text" id="ime" x-model="form.owner_ime" required
+                        <input type="text" id="ime" x-model="form.owner_ime"
                                :readonly="isOAuth"
                                :class="isOAuth ? 'bg-gray-100' : ''"
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     </div>
                     <div>
                         <label for="prezime" class="block text-sm font-medium text-gray-700">Prezime *</label>
-                        <input type="text" id="prezime" x-model="form.owner_prezime" required
+                        <input type="text" id="prezime" x-model="form.owner_prezime"
                                :readonly="isOAuth"
                                :class="isOAuth ? 'bg-gray-100' : ''"
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
@@ -176,26 +176,26 @@
                 </div>
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700">Email (za prijavu) *</label>
-                    <input type="email" id="email" x-model="form.owner_email" required
+                    <input type="email" id="email" x-model="form.owner_email"
                            :readonly="isOAuth"
                            :class="isOAuth ? 'bg-gray-100' : ''"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                 </div>
                 <div>
                     <label for="owner_phone" class="block text-sm font-medium text-gray-700">Mobilni telefon * (za SMS verifikaciju)</label>
-                    <input type="tel" id="owner_phone" x-model="form.owner_phone" required
+                    <input type="tel" id="owner_phone" x-model="form.owner_phone"
                            placeholder="+381 64..."
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                 </div>
                 <div x-show="!isOAuth">
                     <label for="password" class="block text-sm font-medium text-gray-700">Lozinka *</label>
-                    <input type="password" id="password" x-model="form.owner_password" :required="!isOAuth" minlength="8"
+                    <input type="password" id="password" x-model="form.owner_password"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     <p class="mt-1 text-xs text-gray-500">Minimum 8 karaktera, slovo + broj</p>
                 </div>
                 <div x-show="!isOAuth">
                     <label for="password_confirm" class="block text-sm font-medium text-gray-700">Potvrdi lozinku *</label>
-                    <input type="password" id="password_confirm" x-model="form.password_confirm" :required="!isOAuth"
+                    <input type="password" id="password_confirm" x-model="form.password_confirm"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                 </div>
             </div>
@@ -210,13 +210,13 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="kyc_jmbg" class="block text-sm font-medium text-gray-700">JMBG *</label>
-                        <input type="text" id="kyc_jmbg" x-model="form.kyc_jmbg" required pattern="\d{13}" maxlength="13"
+                        <input type="text" id="kyc_jmbg" x-model="form.kyc_jmbg" maxlength="13"
                                placeholder="13 cifara"
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     </div>
                     <div>
                         <label for="kyc_broj_licne" class="block text-sm font-medium text-gray-700">Broj lične karte *</label>
-                        <input type="text" id="kyc_broj_licne" x-model="form.kyc_broj_licne" required
+                        <input type="text" id="kyc_broj_licne" x-model="form.kyc_broj_licne"
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     </div>
                 </div>
@@ -311,7 +311,7 @@
 
                 <!-- Terms -->
                 <div class="flex items-start">
-                    <input type="checkbox" id="terms" x-model="acceptTerms" required
+                    <input type="checkbox" id="terms" x-model="acceptTerms"
                            class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded mt-1">
                     <label for="terms" class="ml-2 block text-sm text-gray-900">
                         Prihvatam <a href="#" class="text-primary-600 hover:text-primary-500">uslove korišćenja</a>
