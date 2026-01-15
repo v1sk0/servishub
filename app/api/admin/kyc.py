@@ -64,28 +64,61 @@ def list_pending_verifications():
 def get_representative(rep_id):
     """
     Detalji jednog reprezentativa za verifikaciju.
+    Vraća podatke u formatu koji očekuje detail.html template.
     """
     rep = ServiceRepresentative.query.get_or_404(rep_id)
     tenant = Tenant.query.get(rep.tenant_id)
 
+    # Vraćamo direktno objekat (ne ugnježđen), sa imenima koja template očekuje
     return jsonify({
-        'representative': {
-            'id': rep.id,
-            'tenant_id': rep.tenant_id,
-            'tenant_name': tenant.name if tenant else None,
-            'tenant_pib': tenant.pib if tenant else None,
-            'full_name': rep.full_name,
-            'jmbg': rep.jmbg,
-            'address': rep.address,
-            'phone': rep.phone,
-            'lk_front_url': rep.lk_front_url,
-            'lk_back_url': rep.lk_back_url,
-            'status': rep.status.value,
-            'rejection_reason': rep.rejection_reason,
-            'verified_at': rep.verified_at.isoformat() if rep.verified_at else None,
-            'verified_by': rep.verified_by,
-            'created_at': rep.created_at.isoformat()
-        }
+        'id': rep.id,
+        'tenant_id': rep.tenant_id,
+        'tenant_name': tenant.name if tenant else None,
+        'tenant_pib': tenant.pib if tenant else None,
+        'ime': rep.ime,
+        'prezime': rep.prezime,
+        'full_name': rep.full_name,
+        'jmbg': rep.jmbg,
+        'broj_licne_karte': rep.broj_licne_karte,
+        'adresa': rep.adresa,
+        'grad': rep.grad,
+        'email': rep.email,
+        'telefon': rep.telefon,
+        'lk_front_url': rep.lk_front_url,
+        'lk_back_url': rep.lk_back_url,
+        'is_primary': rep.is_primary,
+        'status': rep.status.value,
+        'rejection_reason': rep.rejection_reason,
+        'verified_at': rep.verified_at.isoformat() if rep.verified_at else None,
+        'verified_by_id': rep.verified_by_id,
+        'created_at': rep.created_at.isoformat() if rep.created_at else None
+    }), 200
+
+
+@bp.route('/<int:rep_id>/verify', methods=['PUT'])
+@platform_admin_required
+def verify_representative(rep_id):
+    """
+    Verifikuje KYC reprezentativa.
+    Alias za /approve endpoint, koristi frontend template.
+    """
+    rep = ServiceRepresentative.query.get_or_404(rep_id)
+
+    if rep.status == RepresentativeStatus.VERIFIED:
+        return jsonify({'error': 'Reprezentativ je vec verifikovan.'}), 400
+
+    rep.status = RepresentativeStatus.VERIFIED
+    rep.verified_at = datetime.utcnow()
+    rep.verified_by_id = g.current_admin.id
+    rep.rejection_reason = None
+
+    db.session.commit()
+
+    return jsonify({
+        'message': f'Reprezentativ "{rep.full_name}" je uspešno verifikovan.',
+        'id': rep.id,
+        'status': rep.status.value,
+        'verified_at': rep.verified_at.isoformat()
     }), 200
 
 
@@ -118,11 +151,12 @@ def approve_representative(rep_id):
     }), 200
 
 
-@bp.route('/<int:rep_id>/reject', methods=['POST'])
+@bp.route('/<int:rep_id>/reject', methods=['POST', 'PUT'])
 @platform_admin_required
 def reject_representative(rep_id):
     """
     Odbija KYC verifikaciju sa razlogom.
+    Prihvata i POST i PUT metode.
     """
     rep = ServiceRepresentative.query.get_or_404(rep_id)
     data = request.get_json() or {}
@@ -134,7 +168,7 @@ def reject_representative(rep_id):
     rep.status = RepresentativeStatus.REJECTED
     rep.rejection_reason = reason
     rep.verified_at = None
-    rep.verified_by = None
+    rep.verified_by_id = None
 
     db.session.commit()
 
@@ -142,7 +176,7 @@ def reject_representative(rep_id):
 
     return jsonify({
         'message': f'Verifikacija za "{rep.full_name}" je odbijena.',
-        'representative_id': rep.id,
+        'id': rep.id,
         'status': rep.status.value,
         'reason': reason
     }), 200
