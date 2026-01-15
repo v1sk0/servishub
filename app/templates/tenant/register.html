@@ -374,7 +374,18 @@
 
 <script>
 {% raw %}
-function registerPage() {
+// Debug: proveravamo da li se script uopste izvrsava
+console.log('=== REGISTER.HTML SCRIPT LOADED ===');
+
+// Proveri da li je Alpine.js dostupan
+document.addEventListener('alpine:init', () => {
+    console.log('Alpine.js initialized!');
+});
+
+// Definisemo funkciju na window objektu da bude sigurno dostupna
+window.registerPage = function() {
+    console.log('registerPage() function called');
+
     // Check for OAuth data from URL
     const urlParams = new URLSearchParams(window.location.search);
     const isOAuthFlow = urlParams.get('oauth') === 'google';
@@ -431,6 +442,8 @@ function registerPage() {
         },
 
         init() {
+            console.log('=== Alpine init() called, step:', this.step);
+            console.log('Form object exists:', !!this.form);
             // Load OAuth data from session if available
             if (this.isOAuth) {
                 this.loadOAuthData();
@@ -725,7 +738,12 @@ function registerPage() {
             }
         }
     }
-}
+};
+
+// Takodje dodajemo kao globalnu funkciju (bez window. prefiksa)
+var registerPage = window.registerPage;
+console.log('registerPage defined globally:', typeof registerPage);
+
 {% endraw %}
 </script>
 {% endblock %}
