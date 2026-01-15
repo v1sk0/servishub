@@ -17,7 +17,7 @@ app = create_app()
 if __name__ == '__main__':
     # Debug mode za lokalni razvoj
     debug = os.environ.get('FLASK_ENV') == 'development'
-    # Za lokalni razvoj koristi port 8000, Railway postavlja PORT automatski
+    # Za lokalni razvoj koristi port 8000, Heroku postavlja PORT automatski
     port = 8000 if debug else int(os.environ.get('PORT', 5000))
 
     print(f"""

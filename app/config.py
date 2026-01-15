@@ -24,7 +24,7 @@ class Config:
         'DATABASE_URL',
         'postgresql://localhost:5432/servishub'
     )
-    # Railway koristi postgres:// umesto postgresql://, moramo popraviti
+    # Heroku koristi postgres:// umesto postgresql://, moramo popraviti
     if SQLALCHEMY_DATABASE_URI.startswith('postgres://'):
         SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(
             'postgres://', 'postgresql://', 1

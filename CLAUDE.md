@@ -31,9 +31,9 @@ Svi frontend moduli zavrseni i verifikovani:
 |-------|-------------|
 | Backend | Python 3.11 + Flask 3.x + SQLAlchemy 2.0 |
 | Frontend | Tailwind CSS + Alpine.js (CDN) + Jinja2 |
-| Baza | PostgreSQL 15 (Railway) |
+| Baza | PostgreSQL 15 (Heroku) |
 | Auth | JWT (PyJWT) - odvojeni tokeni za tenant/admin/supplier |
-| Deploy | Railway + GitHub |
+| Deploy | Heroku + GitHub |
 
 ---
 
@@ -137,7 +137,7 @@ servishub/
 ├── migrations/              # Alembic migracije
 ├── run.py                   # Entry point
 ├── requirements.txt
-├── railway.json             # Railway konfiguracija
+├── Procfile                 # Heroku konfiguracija
 └── .env                     # Environment varijable
 ```
 
@@ -310,7 +310,7 @@ const data = await supplierApi('/api/supplier/listings');
 
 ```
 Admin: admin@servishub.rs / Admin123!
-Railway: mainline.proxy.rlwy.net:35540
+Heroku: servishub.herokuapp.com
 GitHub: github.com/v1sk0/servishub
 ```
 
@@ -319,7 +319,7 @@ GitHub: github.com/v1sk0/servishub
 ## Sledeci Koraci
 
 1. [ ] Testiranje svih stranica lokalno
-2. [ ] Deploy na Railway
+2. [x] Deploy na Heroku
 3. [ ] Custom domain setup (servishub.rs)
 4. [ ] Email notifikacije (Celery)
 5. [ ] SMS integracija
@@ -339,8 +339,8 @@ GitHub: github.com/v1sk0/servishub
 | v0.4.0 | 2026-01-11 | Public API, Supplier API |
 | v0.3.0 | 2026-01-10 | Admin API, Orders |
 | v0.2.0 | 2026-01-09 | V1 API komplet |
-| v0.1.0 | 2026-01-08 | Modeli, infrastruktura, Railway |
+| v0.1.0 | 2026-01-08 | Modeli, infrastruktura, Heroku |
 
 ---
 
-*Backend: 115+ ruta | Frontend: 51 template | Railway: Ready*
+*Backend: 115+ ruta | Frontend: 51 template | Heroku: Ready*

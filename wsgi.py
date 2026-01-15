@@ -1,7 +1,7 @@
 """
 ServisHub - WSGI Entry Point za Gunicorn.
 
-Koristi se u produkciji (Railway, Heroku, itd.)
+Koristi se u produkciji (Heroku, itd.)
 """
 
 import os

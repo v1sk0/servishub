@@ -95,7 +95,7 @@ def _register_blueprints(app):
     # Zdravstvena provera - uvek dostupna
     @app.route('/health')
     def health_check():
-        """Endpoint za health check (Railway, load balancer, itd.)"""
+        """Endpoint za health check (Heroku, load balancer, itd.)"""
         return jsonify({
             'status': 'healthy',
             'service': 'servishub'
