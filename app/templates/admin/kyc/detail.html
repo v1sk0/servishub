@@ -7,7 +7,8 @@
 {% endblock %}
 
 {% block content %}
-<div :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
+<div x-cloak
+     :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
      x-data="kycDetailPage({{ representative_id }})" x-init="loadKyc()">
     <div class="admin-wrapper min-h-screen bg-gray-100">
         {% set active_page = 'representatives' %}

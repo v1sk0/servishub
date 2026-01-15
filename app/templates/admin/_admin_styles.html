@@ -9,9 +9,15 @@
 </script>
 
 <style>
-    /* Sakrij sadržaj dok se ne učita tema */
-    html:not([data-admin-theme]) .admin-wrapper {
-        visibility: hidden;
+    /* Sakrij sadržaj dok se ne učita tema i Alpine */
+    html:not([data-admin-theme]) .admin-wrapper,
+    [x-cloak] {
+        display: none !important;
+    }
+
+    /* Odmah sakrij body dok sve ne bude spremno */
+    html[data-admin-theme="glass"] body {
+        background: #0f0f23 !important;
     }
 
     /* Primeni temu na osnovu data atributa (pre nego što Alpine učita) */
