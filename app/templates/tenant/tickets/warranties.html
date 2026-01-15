@@ -1,0 +1,534 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Garancije - ServisHub{% endblock %}
+
+{% block content %}
+<div class="p-6" x-data="warrantiesPage()" x-init="init()">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Garancije</h1>
+            <p class="text-gray-500 mt-1">Pracenje garancija servisnih naloga</p>
+        </div>
+        <a href="/tickets" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Nazad na naloge
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <!-- Active warranties -->
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+            <div class="flex items-center">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-500">Aktivne</p>
+                    <p class="text-2xl font-bold text-gray-900" x-text="stats.active"></p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expiring soon -->
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
+            <div class="flex items-center">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-500">Istice uskoro</p>
+                    <p class="text-2xl font-bold text-gray-900" x-text="stats.expiring_soon"></p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expired -->
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+            <div class="flex items-center">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-500">Istekle</p>
+                    <p class="text-2xl font-bold text-gray-900" x-text="stats.expired"></p>
+                </div>
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total -->
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+            <div class="flex items-center">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-500">Ukupno</p>
+                    <p class="text-2xl font-bold text-gray-900" x-text="stats.total"></p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow p-4 mb-6">
+        <div class="flex flex-wrap items-center gap-4">
+            <!-- Search -->
+            <div class="flex-1 min-w-[200px]">
+                <input type="text"
+                       x-model="filters.search"
+                       @input.debounce.300ms="loadWarranties()"
+                       placeholder="Pretrazi po kupcu, uredjaju..."
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            </div>
+
+            <!-- Status filter -->
+            <select x-model="filters.status"
+                    @change="loadWarranties()"
+                    class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                <option value="">Sve garancije</option>
+                <option value="active">Aktivne</option>
+                <option value="expiring">Istice uskoro (7 dana)</option>
+                <option value="expired">Istekle</option>
+            </select>
+
+            <!-- Location filter -->
+            <select x-model="filters.location_id"
+                    @change="loadWarranties()"
+                    class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                <option value="">Sve lokacije</option>
+                <template x-for="location in locations" :key="location.id">
+                    <option :value="location.id" x-text="location.name"></option>
+                </template>
+            </select>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div x-show="loading" class="text-center py-12">
+        <svg class="animate-spin mx-auto h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="mt-2 text-gray-500">Ucitavanje...</p>
+    </div>
+
+    <!-- Table -->
+    <div x-show="!loading" class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nalog</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kupac</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uredjaj</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Zatvoreno</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Garancija</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Istice</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preostalo</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Akcije</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <template x-for="ticket in warranties" :key="ticket.id">
+                        <tr class="hover:bg-gray-50">
+                            <!-- Ticket number -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900" x-text="'#' + ticket.ticket_number"></div>
+                            </td>
+
+                            <!-- Customer -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900" x-text="ticket.customer_name"></div>
+                                <div class="text-sm text-gray-500" x-text="ticket.customer_phone"></div>
+                            </td>
+
+                            <!-- Device -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900" x-text="ticket.brand + ' ' + ticket.model"></div>
+                                <div class="text-sm text-gray-500" x-text="ticket.service_section || 'Telefoni'"></div>
+                            </td>
+
+                            <!-- Closed date -->
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(ticket.closed_at)"></td>
+
+                            <!-- Warranty days -->
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="ticket.warranty_days + ' dana'"></td>
+
+                            <!-- Expires date -->
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(ticket.warranty_expires_at)"></td>
+
+                            <!-- Days remaining -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full"
+                                      :class="{
+                                          'bg-green-100 text-green-800': ticket.warranty_remaining_days > 10,
+                                          'bg-yellow-100 text-yellow-800': ticket.warranty_remaining_days > 0 && ticket.warranty_remaining_days <= 10,
+                                          'bg-red-100 text-red-800': ticket.warranty_remaining_days <= 0
+                                      }">
+                                    <span x-text="ticket.warranty_remaining_days > 0 ? ticket.warranty_remaining_days + ' dana' : 'Istekla'"></span>
+                                </span>
+                            </td>
+
+                            <!-- Warranty status -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full"
+                                      :class="{
+                                          'bg-green-100 text-green-800': ticket.warranty_remaining_days > 10,
+                                          'bg-yellow-100 text-yellow-800': ticket.warranty_remaining_days > 0 && ticket.warranty_remaining_days <= 10,
+                                          'bg-red-100 text-red-800': ticket.warranty_remaining_days <= 0
+                                      }">
+                                    <span x-text="ticket.warranty_remaining_days > 10 ? 'Aktivna' : (ticket.warranty_remaining_days > 0 ? 'Istice uskoro' : 'Istekla')"></span>
+                                </span>
+                            </td>
+
+                            <!-- Actions -->
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button @click="showDetail(ticket)"
+                                        class="text-primary-600 hover:text-primary-900 mr-3">
+                                    Detalji
+                                </button>
+                                <a :href="'/tickets/' + ticket.id"
+                                   class="text-gray-600 hover:text-gray-900">
+                                    Otvori
+                                </a>
+                            </td>
+                        </tr>
+                    </template>
+
+                    <!-- Empty state -->
+                    <tr x-show="warranties.length === 0">
+                        <td colspan="9" class="px-6 py-12 text-center text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                            <p class="text-lg font-medium">Nema garancija</p>
+                            <p class="text-sm">Garancije ce se pojaviti nakon zatvaranja naloga.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div x-show="pagination.total_pages > 1" class="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div class="flex-1 flex justify-between sm:hidden">
+                <button @click="prevPage()" :disabled="pagination.page <= 1"
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+                    Prethodna
+                </button>
+                <button @click="nextPage()" :disabled="pagination.page >= pagination.total_pages"
+                        class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+                    Sledeca
+                </button>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Prikazano <span class="font-medium" x-text="(pagination.page - 1) * pagination.per_page + 1"></span>
+                        do <span class="font-medium" x-text="Math.min(pagination.page * pagination.per_page, pagination.total)"></span>
+                        od <span class="font-medium" x-text="pagination.total"></span> rezultata
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        <button @click="prevPage()" :disabled="pagination.page <= 1"
+                                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        <button @click="nextPage()" :disabled="pagination.page >= pagination.total_pages"
+                                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div x-show="showDetailModal" x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="showDetailModal = false"></div>
+
+            <!-- Modal content -->
+            <div class="relative bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+                <!-- Header -->
+                <div class="px-6 py-4 border-b flex items-center justify-between"
+                     :class="{
+                         'bg-green-50 border-green-200': selectedTicket?.warranty_remaining_days > 10,
+                         'bg-yellow-50 border-yellow-200': selectedTicket?.warranty_remaining_days > 0 && selectedTicket?.warranty_remaining_days <= 10,
+                         'bg-red-50 border-red-200': selectedTicket?.warranty_remaining_days <= 0
+                     }">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">
+                            Garancija - Nalog #<span x-text="selectedTicket?.ticket_number"></span>
+                        </h3>
+                        <span class="text-sm"
+                              :class="{
+                                  'text-green-700': selectedTicket?.warranty_remaining_days > 10,
+                                  'text-yellow-700': selectedTicket?.warranty_remaining_days > 0 && selectedTicket?.warranty_remaining_days <= 10,
+                                  'text-red-700': selectedTicket?.warranty_remaining_days <= 0
+                              }"
+                              x-text="selectedTicket?.warranty_remaining_days > 0 ? 'Aktivna garancija' : 'Garancija istekla'"></span>
+                    </div>
+                    <button @click="showDetailModal = false" class="text-gray-400 hover:text-gray-600">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="px-6 py-4">
+                    <!-- Warranty info -->
+                    <div class="grid grid-cols-3 gap-4 mb-6 text-center">
+                        <div>
+                            <p class="text-sm text-gray-500">Trajanje</p>
+                            <p class="text-lg font-bold text-gray-900" x-text="selectedTicket?.warranty_days + ' dana'"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Preostalo</p>
+                            <p class="text-lg font-bold"
+                               :class="{
+                                   'text-green-600': selectedTicket?.warranty_remaining_days > 10,
+                                   'text-yellow-600': selectedTicket?.warranty_remaining_days > 0 && selectedTicket?.warranty_remaining_days <= 10,
+                                   'text-red-600': selectedTicket?.warranty_remaining_days <= 0
+                               }"
+                               x-text="selectedTicket?.warranty_remaining_days > 0 ? selectedTicket?.warranty_remaining_days + ' dana' : 'Istekla'"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Istice</p>
+                            <p class="text-lg font-bold text-gray-900" x-text="formatDate(selectedTicket?.warranty_expires_at)"></p>
+                        </div>
+                    </div>
+
+                    <!-- Customer info -->
+                    <div class="mb-4">
+                        <h4 class="text-sm font-medium text-gray-500 mb-2">Kupac</h4>
+                        <p class="text-gray-900" x-text="selectedTicket?.customer_name"></p>
+                        <p class="text-gray-600" x-text="selectedTicket?.customer_phone"></p>
+                        <p class="text-gray-600" x-text="selectedTicket?.customer_email"></p>
+                    </div>
+
+                    <!-- Device info -->
+                    <div class="mb-4">
+                        <h4 class="text-sm font-medium text-gray-500 mb-2">Uredjaj</h4>
+                        <p class="text-gray-900" x-text="selectedTicket?.brand + ' ' + selectedTicket?.model"></p>
+                        <p class="text-gray-600" x-text="selectedTicket?.imei ? 'IMEI: ' + selectedTicket?.imei : ''"></p>
+                    </div>
+
+                    <!-- Work done -->
+                    <div class="mb-4">
+                        <h4 class="text-sm font-medium text-gray-500 mb-2">Izvrseni rad</h4>
+                        <p class="text-gray-600" x-text="selectedTicket?.resolution || selectedTicket?.problem_description || '-'"></p>
+                    </div>
+
+                    <!-- Price -->
+                    <div class="mb-4">
+                        <h4 class="text-sm font-medium text-gray-500 mb-2">Naplaceno</h4>
+                        <p class="text-gray-900 font-medium">
+                            <span x-text="selectedTicket?.final_price || selectedTicket?.estimated_price || '-'"></span>
+                            <span x-text="selectedTicket?.currency || 'RSD'"></span>
+                        </p>
+                    </div>
+
+                    <!-- Dates -->
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-gray-500">Kreiran</p>
+                            <p class="text-gray-900" x-text="formatDate(selectedTicket?.created_at)"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Zatvoren</p>
+                            <p class="text-gray-900" x-text="formatDate(selectedTicket?.closed_at)"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
+                    <button @click="showDetailModal = false"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Zatvori
+                    </button>
+                    <a :href="'/tickets/' + selectedTicket?.id"
+                       class="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-lg hover:bg-primary-700">
+                        Otvori nalog
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function warrantiesPage() {
+    return {
+        loading: true,
+        warranties: [],
+        locations: [],
+        stats: {
+            active: 0,
+            expiring_soon: 0,
+            expired: 0,
+            total: 0
+        },
+        filters: {
+            search: '',
+            status: '',
+            location_id: ''
+        },
+        pagination: {
+            page: 1,
+            per_page: 20,
+            total: 0,
+            total_pages: 0
+        },
+        showDetailModal: false,
+        selectedTicket: null,
+
+        async init() {
+            await Promise.all([
+                this.loadLocations(),
+                this.loadWarranties()
+            ]);
+        },
+
+        getAccessToken() {
+            const tokenData = localStorage.getItem('servishub_token');
+            if (tokenData) {
+                try {
+                    const parsed = JSON.parse(tokenData);
+                    return parsed.access_token;
+                } catch (e) {
+                    return tokenData;
+                }
+            }
+            return null;
+        },
+
+        async loadLocations() {
+            const accessToken = this.getAccessToken();
+            if (!accessToken) return;
+
+            try {
+                const response = await fetch('/api/v1/locations', {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    this.locations = data.locations || [];
+                }
+            } catch (e) {
+                console.error('Error loading locations:', e);
+            }
+        },
+
+        async loadWarranties() {
+            this.loading = true;
+            const accessToken = this.getAccessToken();
+            if (!accessToken) {
+                window.location.href = '/login';
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams({
+                    page: this.pagination.page,
+                    per_page: this.pagination.per_page
+                });
+
+                if (this.filters.search) params.append('search', this.filters.search);
+                if (this.filters.status) params.append('warranty_status', this.filters.status);
+                if (this.filters.location_id) params.append('location_id', this.filters.location_id);
+
+                const response = await fetch(`/api/v1/tickets/warranties?${params}`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.warranties = data.tickets || [];
+                    this.pagination.total = data.total || 0;
+                    this.pagination.total_pages = Math.ceil(this.pagination.total / this.pagination.per_page);
+
+                    // Update stats
+                    this.stats = data.stats || {
+                        active: 0,
+                        expiring_soon: 0,
+                        expired: 0,
+                        total: 0
+                    };
+                } else if (response.status === 401) {
+                    window.location.href = '/login';
+                }
+            } catch (e) {
+                console.error('Error loading warranties:', e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        showDetail(ticket) {
+            this.selectedTicket = ticket;
+            this.showDetailModal = true;
+        },
+
+        prevPage() {
+            if (this.pagination.page > 1) {
+                this.pagination.page--;
+                this.loadWarranties();
+            }
+        },
+
+        nextPage() {
+            if (this.pagination.page < this.pagination.total_pages) {
+                this.pagination.page++;
+                this.loadWarranties();
+            }
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('sr-RS', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

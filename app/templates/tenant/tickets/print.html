@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Servisni nalog - ServisHub</title>
+  <style>
+    /* Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 11pt;
+      line-height: 1.2;
+      color: #000;
+    }
+
+    /* Page wrapper - A4 */
+    .page-wrapper {
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Ticket container - tacno polovina A4 */
+    .ticket-container {
+      width: 100%;
+      height: 140mm;
+      padding: 4mm 8mm;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    /* Company header */
+    .company-header {
+      text-align: center;
+      margin-bottom: 2mm;
+    }
+
+    .company-logo {
+      margin-bottom: 1mm;
+    }
+
+    .company-logo img {
+      width: 50px;
+      height: auto;
+    }
+
+    .company-logo .logo-text {
+      font-size: 20pt;
+      font-weight: bold;
+      color: #7c3aed;
+    }
+
+    .company-info h3 {
+      font-size: 13pt;
+      margin: 0;
+    }
+
+    .company-info p {
+      font-size: 9pt;
+      color: #333;
+      margin: 0;
+    }
+
+    /* Ticket header */
+    .ticket-header {
+      text-align: center;
+      margin-bottom: 2mm;
+      padding: 1.5mm;
+      background: #f0f0f0;
+      border: 1px solid #000;
+    }
+
+    .ticket-header p {
+      font-weight: bold;
+      font-size: 11pt;
+      margin: 0;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2mm;
+    }
+
+    th, td {
+      border: 1px solid #000;
+      padding: 1mm 1.5mm;
+      font-size: 10pt;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f5f5f5;
+      text-align: left;
+      width: 14%;
+      font-weight: bold;
+    }
+
+    /* Device condition grade */
+    .grade-badge {
+      display: inline-block;
+      padding: 1mm 3mm;
+      border-radius: 3px;
+      font-weight: bold;
+      color: #fff;
+    }
+    .grade-a { background: #22c55e; }
+    .grade-b { background: #f59e0b; }
+    .grade-c { background: #ef4444; }
+
+    /* Priority badge */
+    .priority-badge {
+      display: inline-block;
+      padding: 1mm 3mm;
+      border-radius: 3px;
+      font-size: 9pt;
+    }
+    .priority-normal { background: #e5e7eb; color: #374151; }
+    .priority-urgent { background: #fef2f2; color: #b91c1c; }
+    .priority-high { background: #fef3c7; color: #92400e; }
+
+    /* Clause text */
+    .clause-text {
+      font-size: 7pt;
+      color: #000;
+      margin: 2mm 0;
+      padding: 2mm 3mm;
+      border: 1px solid #000;
+      background: #f9f9f9;
+      line-height: 1.3;
+    }
+
+    /* Signatures + QR wrapper */
+    .bottom-section {
+      display: flex;
+      align-items: flex-start;
+      gap: 3mm;
+    }
+
+    /* Signatures */
+    .signatures-table {
+      flex: 1;
+    }
+
+    .signatures-table td {
+      border: none;
+      width: 50%;
+      padding: 1mm 2mm;
+      vertical-align: top;
+    }
+
+    .signatures-table small {
+      font-size: 9pt;
+      color: #333;
+    }
+
+    .signature-line {
+      border-bottom: 1px solid #000;
+      height: 8mm;
+      margin-top: 1mm;
+      width: 85%;
+    }
+
+    /* QR section */
+    .qr-section {
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .qr-section img,
+    .qr-section canvas {
+      width: 20mm;
+      height: 20mm;
+    }
+
+    .qr-section p {
+      font-size: 8pt;
+      color: #666;
+      margin-top: 1mm;
+    }
+
+    /* Copy label */
+    .copy-label {
+      text-align: right;
+      font-size: 9pt;
+      color: #999;
+      font-style: italic;
+      margin-top: 1mm;
+    }
+
+    /* Cut line - TACNO NA SREDINI */
+    .cut-line {
+      height: 12mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-top: 1px dashed #888;
+      border-bottom: 1px dashed #888;
+      margin: 0;
+    }
+
+    .cut-line span {
+      color: #888;
+      font-size: 10pt;
+      letter-spacing: 2px;
+    }
+
+    /* Loading state */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-size: 14pt;
+      color: #666;
+    }
+
+    .loading .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e5e7eb;
+      border-top-color: #7c3aed;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 10mm;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Error state */
+    .error {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: #b91c1c;
+      text-align: center;
+      padding: 20mm;
+    }
+
+    .error h2 {
+      margin-bottom: 5mm;
+    }
+
+    /* Print styles */
+    @media print {
+      @page {
+        size: A4;
+        margin: 5mm;
+      }
+
+      html, body {
+        width: 210mm;
+        height: 297mm;
+      }
+
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .page-wrapper {
+        page-break-after: avoid;
+        page-break-inside: avoid;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    /* Screen preview */
+    @media screen {
+      body {
+        background: #ccc;
+        padding: 10mm;
+      }
+      .page-wrapper {
+        background: #fff;
+        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      }
+    }
+
+    /* Print button */
+    .print-button {
+      position: fixed;
+      top: 10mm;
+      right: 10mm;
+      padding: 8px 16px;
+      background: #7c3aed;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12pt;
+      z-index: 1000;
+    }
+
+    .print-button:hover {
+      background: #6d28d9;
+    }
+  </style>
+  <!-- QR Code library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body>
+  <!-- Print button (hidden on print) -->
+  <button class="print-button no-print" onclick="window.print()">Stampaj</button>
+
+  <!-- Loading state -->
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Ucitavam nalog...</p>
+  </div>
+
+  <!-- Error state -->
+  <div id="error" class="error" style="display: none;">
+    <h2>Greska</h2>
+    <p id="error-message">Nalog nije pronadjen.</p>
+    <button onclick="window.close()" style="margin-top: 10mm; padding: 8px 16px; cursor: pointer;">Zatvori</button>
+  </div>
+
+  <!-- Content (hidden until loaded) -->
+  <div id="content" class="page-wrapper" style="display: none;">
+    <!-- First copy - for service -->
+    <div class="ticket-container">
+      <header class="company-header">
+        <div class="company-logo">
+          <span class="logo-text">ServisHub</span>
+        </div>
+        <div class="company-info">
+          <h3 id="tenant-name-1"></h3>
+          <p id="tenant-info-1"></p>
+        </div>
+      </header>
+
+      <div class="ticket-header">
+        <p>SERVISNI NALOG br: <span id="ticket-number-1"></span> | Datum: <span id="ticket-date-1"></span> | <span id="customer-name-1"></span></p>
+      </div>
+
+      <table>
+        <tbody>
+          <tr>
+            <th>Uredjaj:</th>
+            <td id="service-section-1"></td>
+            <th>Brand/Model:</th>
+            <td colspan="3" id="brand-model-1"></td>
+          </tr>
+          <tr>
+            <th>Korisnik:</th>
+            <td id="customer-full-1"></td>
+            <th>Telefon:</th>
+            <td id="customer-phone-1"></td>
+            <th>Prioritet:</th>
+            <td id="priority-1"></td>
+          </tr>
+          <tr id="company-row-1" style="display: none;">
+            <th>Firma:</th>
+            <td colspan="3" id="company-name-1"></td>
+            <th>PIB:</th>
+            <td id="company-pib-1"></td>
+          </tr>
+          <tr>
+            <th>Opis kvara:</th>
+            <td colspan="3" id="problem-1"></td>
+            <th>Cena:</th>
+            <td id="price-1"></td>
+          </tr>
+          <tr>
+            <th>Serviser:</th>
+            <td id="technician-1"></td>
+            <th>Lokacija:</th>
+            <td colspan="3" id="location-1"></td>
+          </tr>
+          <tr id="condition-row-1" style="display: none;">
+            <th>Stanje:</th>
+            <td colspan="5" id="device-condition-1"></td>
+          </tr>
+          <tr id="imei-row-1" style="display: none;">
+            <th>IMEI:</th>
+            <td colspan="5" id="imei-1"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="clause-text" id="clause-1">
+        Opremu ostavljate na servis na sopstvenu odgovornost. Servis ne snosi odgovornost za gubitak podataka.
+        Garancija vazi samo uz ovaj nalog. Maksimalno vreme cuvanja opreme je 30 dana od obavestenja o zavrsetku servisa.
+      </div>
+
+      <div class="bottom-section">
+        <table class="signatures-table">
+          <tr>
+            <td>
+              <small>Primio na servis:</small>
+              <div class="signature-line"></div>
+            </td>
+            <td>
+              <small>Saglasan sa stanjem:</small>
+              <div class="signature-line"></div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <small>Predao uredjaj:</small>
+              <div class="signature-line"></div>
+            </td>
+            <td>
+              <small>Preuzeo sa servisa:</small>
+              <div class="signature-line"></div>
+            </td>
+          </tr>
+        </table>
+        <div class="qr-section">
+          <canvas id="qr-code-1"></canvas>
+          <p>Pracenje naloga</p>
+        </div>
+      </div>
+
+      <div class="copy-label">PRIMERAK ZA SERVIS</div>
+    </div>
+
+    <!-- Cut line - NA SREDINI -->
+    <div class="cut-line">
+      <span>- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</span>
+    </div>
+
+    <!-- Second copy - for customer -->
+    <div class="ticket-container">
+      <header class="company-header">
+        <div class="company-logo">
+          <span class="logo-text">ServisHub</span>
+        </div>
+        <div class="company-info">
+          <h3 id="tenant-name-2"></h3>
+          <p id="tenant-info-2"></p>
+        </div>
+      </header>
+
+      <div class="ticket-header">
+        <p>SERVISNI NALOG br: <span id="ticket-number-2"></span> | Datum: <span id="ticket-date-2"></span> | <span id="customer-name-2"></span></p>
+      </div>
+
+      <table>
+        <tbody>
+          <tr>
+            <th>Uredjaj:</th>
+            <td id="service-section-2"></td>
+            <th>Brand/Model:</th>
+            <td colspan="3" id="brand-model-2"></td>
+          </tr>
+          <tr>
+            <th>Korisnik:</th>
+            <td id="customer-full-2"></td>
+            <th>Telefon:</th>
+            <td id="customer-phone-2"></td>
+            <th>Prioritet:</th>
+            <td id="priority-2"></td>
+          </tr>
+          <tr id="company-row-2" style="display: none;">
+            <th>Firma:</th>
+            <td colspan="3" id="company-name-2"></td>
+            <th>PIB:</th>
+            <td id="company-pib-2"></td>
+          </tr>
+          <tr>
+            <th>Opis kvara:</th>
+            <td colspan="3" id="problem-2"></td>
+            <th>Cena:</th>
+            <td id="price-2"></td>
+          </tr>
+          <tr>
+            <th>Serviser:</th>
+            <td id="technician-2"></td>
+            <th>Lokacija:</th>
+            <td colspan="3" id="location-2"></td>
+          </tr>
+          <tr id="condition-row-2" style="display: none;">
+            <th>Stanje:</th>
+            <td colspan="5" id="device-condition-2"></td>
+          </tr>
+          <tr id="imei-row-2" style="display: none;">
+            <th>IMEI:</th>
+            <td colspan="5" id="imei-2"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="clause-text" id="clause-2">
+        Opremu ostavljate na servis na sopstvenu odgovornost. Servis ne snosi odgovornost za gubitak podataka.
+        Garancija vazi samo uz ovaj nalog. Maksimalno vreme cuvanja opreme je 30 dana od obavestenja o zavrsetku servisa.
+      </div>
+
+      <div class="bottom-section">
+        <table class="signatures-table">
+          <tr>
+            <td>
+              <small>Primio na servis:</small>
+              <div class="signature-line"></div>
+            </td>
+            <td>
+              <small>Saglasan sa stanjem:</small>
+              <div class="signature-line"></div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <small>Predao uredjaj:</small>
+              <div class="signature-line"></div>
+            </td>
+            <td>
+              <small>Preuzeo sa servisa:</small>
+              <div class="signature-line"></div>
+            </td>
+          </tr>
+        </table>
+        <div class="qr-section">
+          <canvas id="qr-code-2"></canvas>
+          <p>Pracenje naloga</p>
+        </div>
+      </div>
+
+      <div class="copy-label">PRIMERAK ZA KORISNIKA</div>
+    </div>
+  </div>
+
+  <script>
+    // Ticket ID from URL
+    const ticketId = {{ ticket_id }};
+
+    // Get tokens from localStorage
+    function getAccessToken() {
+      const tokenData = localStorage.getItem('servishub_token');
+      if (tokenData) {
+        try {
+          const parsed = JSON.parse(tokenData);
+          return parsed.access_token;
+        } catch (e) {
+          return tokenData;
+        }
+      }
+      return null;
+    }
+
+    // Format date
+    function formatDate(dateString) {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('sr-RS', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+
+    // Format priority badge
+    function formatPriority(priority) {
+      const priorityMap = {
+        'LOW': '<span class="priority-badge priority-normal">Nizak</span>',
+        'NORMAL': '<span class="priority-badge priority-normal">Normalan</span>',
+        'HIGH': '<span class="priority-badge priority-high">Visok</span>',
+        'URGENT': '<span class="priority-badge priority-urgent">Hitan</span>'
+      };
+      return priorityMap[priority] || priority || '-';
+    }
+
+    // Format device condition
+    function formatCondition(grade, notes, notWorking) {
+      let result = '';
+      if (grade) {
+        const gradeClass = grade === 'A' ? 'grade-a' : (grade === 'B' ? 'grade-b' : 'grade-c');
+        result += `<span class="grade-badge ${gradeClass}">${grade}</span> `;
+      }
+      if (notWorking) {
+        result += '<strong style="color: red;">(Ne radi)</strong> ';
+      }
+      if (notes) {
+        result += notes;
+      }
+      return result || '-';
+    }
+
+    // Show error
+    function showError(message) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error').style.display = 'flex';
+      document.getElementById('error-message').textContent = message;
+    }
+
+    // Fill both copies with data
+    function fillTicketData(ticket, tenant) {
+      for (let i = 1; i <= 2; i++) {
+        // Tenant info
+        document.getElementById(`tenant-name-${i}`).textContent = tenant?.name || 'ServisHub';
+        document.getElementById(`tenant-info-${i}`).textContent =
+          [tenant?.address, tenant?.phone ? `Tel: ${tenant.phone}` : ''].filter(Boolean).join(' | ') || '';
+
+        // Ticket header
+        document.getElementById(`ticket-number-${i}`).textContent = ticket.ticket_number || ticket.id;
+        document.getElementById(`ticket-date-${i}`).textContent = formatDate(ticket.created_at);
+        document.getElementById(`customer-name-${i}`).textContent = ticket.customer_name || '-';
+
+        // Ticket details
+        document.getElementById(`service-section-${i}`).textContent = ticket.service_section || 'Telefoni';
+        document.getElementById(`brand-model-${i}`).textContent =
+          [ticket.brand, ticket.model].filter(Boolean).join(' ') || '-';
+        document.getElementById(`customer-full-${i}`).textContent = ticket.customer_name || '-';
+        document.getElementById(`customer-phone-${i}`).textContent = ticket.customer_phone || '-';
+        document.getElementById(`priority-${i}`).innerHTML = formatPriority(ticket.priority);
+
+        // Company info (if B2B)
+        if (ticket.customer_company_name) {
+          document.getElementById(`company-row-${i}`).style.display = '';
+          document.getElementById(`company-name-${i}`).textContent = ticket.customer_company_name;
+          document.getElementById(`company-pib-${i}`).textContent = ticket.customer_pib || '-';
+        }
+
+        // Problem and price
+        document.getElementById(`problem-${i}`).textContent = ticket.problem_description || '-';
+        document.getElementById(`price-${i}`).textContent =
+          ticket.estimated_price ? `${ticket.estimated_price} ${ticket.currency || 'RSD'}` : '-';
+
+        // Technician and location
+        document.getElementById(`technician-${i}`).textContent =
+          ticket.technician?.first_name ?
+            `${ticket.technician.first_name} ${ticket.technician.last_name || ''}`.trim() :
+            '-';
+        document.getElementById(`location-${i}`).textContent = ticket.location?.name || '-';
+
+        // Device condition
+        if (ticket.device_condition_grade || ticket.device_condition_notes || ticket.device_not_working) {
+          document.getElementById(`condition-row-${i}`).style.display = '';
+          document.getElementById(`device-condition-${i}`).innerHTML =
+            formatCondition(ticket.device_condition_grade, ticket.device_condition_notes, ticket.device_not_working);
+        }
+
+        // IMEI
+        if (ticket.imei) {
+          document.getElementById(`imei-row-${i}`).style.display = '';
+          document.getElementById(`imei-${i}`).textContent = ticket.imei;
+        }
+
+        // Generate QR code
+        if (ticket.access_token) {
+          const trackUrl = `${window.location.origin}/track/${ticket.access_token}`;
+          QRCode.toCanvas(document.getElementById(`qr-code-${i}`), trackUrl, {
+            width: 75,
+            margin: 1
+          });
+        }
+      }
+    }
+
+    // Fetch ticket data
+    async function loadTicket() {
+      const accessToken = getAccessToken();
+      if (!accessToken) {
+        showError('Niste prijavljeni. Molimo prijavite se ponovo.');
+        return;
+      }
+
+      try {
+        // Fetch ticket with print data
+        const response = await fetch(`/api/v1/tickets/${ticketId}/print`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            showError('Sesija je istekla. Molimo prijavite se ponovo.');
+            return;
+          }
+          if (response.status === 404) {
+            showError('Nalog nije pronadjen.');
+            return;
+          }
+          throw new Error('Greska pri ucitavanju naloga');
+        }
+
+        const data = await response.json();
+
+        // Fill both copies
+        fillTicketData(data.ticket, data.tenant);
+
+        // Show content
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'flex';
+
+        // Auto print after short delay
+        setTimeout(() => {
+          // Uncomment to auto-print:
+          // window.print();
+        }, 500);
+
+      } catch (error) {
+        console.error('Error loading ticket:', error);
+        showError(error.message || 'Greska pri ucitavanju naloga');
+      }
+    }
+
+    // Load on page ready
+    document.addEventListener('DOMContentLoaded', loadTicket);
+  </script>
+</body>
+</html>

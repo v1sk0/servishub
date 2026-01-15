@@ -11,7 +11,7 @@ from .user import TenantUser, UserLocation, UserRole
 User = TenantUser
 from .admin import PlatformAdmin, AdminRole
 from .audit import AuditLog, AuditAction, calculate_changes
-from .ticket import ServiceTicket, TicketStatus, TicketPriority, get_next_ticket_number
+from .ticket import ServiceTicket, TicketStatus, TicketPriority, TicketNotificationLog, get_next_ticket_number
 from .inventory import PhoneListing, SparePart, PhoneCondition, PartVisibility, PartCategory
 from .supplier import Supplier, SupplierListing, SupplierUser, SupplierStatus
 from .order import PartOrder, PartOrderItem, PartOrderMessage, OrderStatus, SellerType, generate_order_number
@@ -38,6 +38,7 @@ __all__ = [
     'ServiceTicket',
     'TicketStatus',
     'TicketPriority',
+    'TicketNotificationLog',
     'get_next_ticket_number',
     # Inventory modeli
     'PhoneListing',

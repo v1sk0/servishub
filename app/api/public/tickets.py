@@ -123,9 +123,15 @@ def track_ticket(token):
             'type': ticket.device_type,
             'brand': ticket.brand,
             'model': ticket.model,
-            'imei': ticket.imei[-4:] if ticket.imei else None  # Only last 4 digits
+            'imei': ticket.imei[-4:] if ticket.imei else None,  # Only last 4 digits
+            'condition_grade': ticket.device_condition_grade,
+            'condition_notes': ticket.device_condition_notes,
+            'not_working': ticket.device_not_working,
+            'service_section': ticket.service_section
         },
         'problem': ticket.problem_description,
+        'notification_count': ticket.notification_count if hasattr(ticket, 'notification_count') else 0,
+        'is_written_off': ticket.is_written_off if hasattr(ticket, 'is_written_off') else False,
         'diagnosis': ticket.diagnosis,
         'resolution': ticket.resolution if current_status in ['READY', 'DELIVERED'] else None,
         'price': {
