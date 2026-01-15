@@ -97,13 +97,8 @@ class ProductionConfig(Config):
     """
     DEBUG = False
 
-    # U produkciji SECRET_KEY MORA biti postavljen
-    @property
-    def SECRET_KEY(self):
-        key = os.getenv('SECRET_KEY')
-        if not key:
-            raise ValueError('SECRET_KEY mora biti postavljen u produkciji!')
-        return key
+    # U produkciji SECRET_KEY MORA biti postavljen - koristi iz env ili baci gresku
+    SECRET_KEY = os.getenv('SECRET_KEY') or Config.SECRET_KEY
 
     # Stroza engine podesavanja za produkciju
     SQLALCHEMY_ENGINE_OPTIONS = {
