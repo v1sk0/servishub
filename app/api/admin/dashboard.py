@@ -79,6 +79,77 @@ def debug_admins():
     }), 200
 
 
+@bp.route('', methods=['GET'])
+@platform_admin_required
+def get_dashboard():
+    """
+    Glavni dashboard endpoint za admin panel.
+    Vraća podatke u formatu koji očekuje dashboard.html template.
+    """
+    now = datetime.utcnow()
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # Statistike
+    total_tenants = Tenant.query.count()
+    active_tenants = Tenant.query.filter(
+        Tenant.status.in_([TenantStatus.ACTIVE, TenantStatus.TRIAL, TenantStatus.DEMO])
+    ).count()
+
+    # Pending KYC
+    pending_kyc_count = ServiceRepresentative.query.filter(
+        ServiceRepresentative.status == RepresentativeStatus.PENDING
+    ).count()
+
+    # Mesečni prihod
+    monthly_revenue = db.session.query(
+        func.coalesce(func.sum(SubscriptionPayment.amount), 0)
+    ).filter(
+        SubscriptionPayment.status == 'PAID',
+        SubscriptionPayment.created_at >= start_of_month
+    ).scalar() or 0
+
+    # Poslednji tenanti
+    recent_tenants = Tenant.query.order_by(
+        Tenant.created_at.desc()
+    ).limit(5).all()
+
+    # Pending KYC lista
+    pending_kyc_list = ServiceRepresentative.query.filter(
+        ServiceRepresentative.status == RepresentativeStatus.PENDING
+    ).order_by(
+        ServiceRepresentative.created_at.desc()
+    ).limit(5).all()
+
+    # Uzmi tenant name za svaki KYC
+    kyc_with_tenant = []
+    for rep in pending_kyc_list:
+        tenant = Tenant.query.get(rep.tenant_id)
+        kyc_with_tenant.append({
+            'id': rep.id,
+            'ime': rep.ime,
+            'prezime': rep.prezime,
+            'tenant_name': tenant.name if tenant else 'Nepoznato',
+            'created_at': rep.created_at.isoformat() if rep.created_at else None
+        })
+
+    return jsonify({
+        'stats': {
+            'total_tenants': total_tenants,
+            'active_tenants': active_tenants,
+            'pending_kyc': pending_kyc_count,
+            'monthly_revenue': float(monthly_revenue)
+        },
+        'recent_tenants': [{
+            'id': t.id,
+            'name': t.name,
+            'email': t.email,
+            'status': t.status.value if t.status else None,
+            'created_at': t.created_at.isoformat() if t.created_at else None
+        } for t in recent_tenants],
+        'pending_kyc': kyc_with_tenant
+    }), 200
+
+
 @bp.route('/stats', methods=['GET'])
 @platform_admin_required
 def get_dashboard_stats():
