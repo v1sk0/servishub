@@ -14,7 +14,8 @@ from ..models import (
     Tenant, ServiceLocation, TenantStatus,
     TenantUser, UserRole,
     PlatformAdmin,
-    AuditLog, AuditAction
+    AuditLog, AuditAction,
+    ServiceRepresentative, RepresentativeStatus
 )
 from ..api.middleware.jwt_utils import (
     create_access_token, create_refresh_token,
@@ -44,49 +45,52 @@ class AuthService:
 
     def register_tenant(
         self,
+        # Podaci preduzeca
         company_name: str,
         company_email: str,
-        company_phone: Optional[str],
-        pib: Optional[str],
-        location_name: str,
-        location_address: Optional[str],
-        location_city: str,
-        owner_email: str,
-        owner_password: str,
-        owner_ime: str,
-        owner_prezime: str,
-        owner_phone: Optional[str] = None
+        company_phone: str,
+        pib: str,
+        maticni_broj: Optional[str] = None,
+        adresa_sedista: Optional[str] = None,
+        bank_account: Optional[str] = None,
+        # Podaci lokacije
+        location_name: str = None,
+        location_address: Optional[str] = None,
+        location_city: str = None,
+        location_postal_code: Optional[str] = None,
+        location_phone: Optional[str] = None,
+        # Podaci vlasnika
+        owner_email: str = None,
+        owner_password: Optional[str] = None,
+        owner_ime: str = None,
+        owner_prezime: str = None,
+        owner_phone: Optional[str] = None,
+        # KYC podaci
+        kyc_jmbg: Optional[str] = None,
+        kyc_broj_licne: Optional[str] = None,
+        kyc_lk_front_url: Optional[str] = None,
+        kyc_lk_back_url: Optional[str] = None,
+        # OAuth
+        google_id: Optional[str] = None,
+        phone_verified: bool = False
     ) -> Tuple[Tenant, TenantUser]:
         """
-        Registruje novi servis (tenant) sa prvom lokacijom i vlasnikom.
+        Registruje novi servis (tenant) sa prvom lokacijom, vlasnikom i KYC.
 
         Kreira:
-        1. Tenant (preduzece) u PENDING statusu
+        1. Tenant (preduzece) u DEMO statusu (7 dana pun pristup)
         2. ServiceLocation (prva lokacija, is_primary=True)
         3. TenantUser (vlasnik, role=OWNER)
+        4. ServiceRepresentative (KYC podaci, is_primary=True, status=PENDING)
 
-        Servis ostaje u PENDING statusu dok platform admin ne odobri
-        i aktivira trial period.
-
-        Args:
-            company_name: Naziv preduzeca
-            company_email: Email preduzeca
-            company_phone: Telefon preduzeca (opciono)
-            pib: PIB preduzeca (opciono)
-            location_name: Naziv prve lokacije
-            location_address: Adresa lokacije (opciono)
-            location_city: Grad lokacije
-            owner_email: Email vlasnika za login
-            owner_password: Lozinka vlasnika
-            owner_ime: Ime vlasnika
-            owner_prezime: Prezime vlasnika
-            owner_phone: Telefon vlasnika (opciono)
+        Servis dobija 7 dana DEMO perioda sa punim pristupom.
+        Admin pregleda KYC i aktivira TRIAL (60 dana).
 
         Returns:
             Tuple (Tenant, TenantUser) - kreirani tenant i owner
 
         Raises:
-            AuthError: Ako email vec postoji ili validacija ne prodje
+            AuthError: Ako email/PIB vec postoji ili validacija ne prodje
         """
         # Proveri da email nije vec registrovan
         existing_tenant = Tenant.query.filter_by(email=company_email).first()
@@ -105,13 +109,16 @@ class AuthService:
                 raise AuthError('Preduzece sa ovim PIB-om vec postoji', 409)
 
         try:
-            # Kreiraj tenant
+            # Kreiraj tenant u DEMO statusu (7 dana)
             tenant = Tenant(
                 name=company_name,
                 email=company_email,
                 telefon=company_phone,
                 pib=pib,
-                status=TenantStatus.PENDING,
+                maticni_broj=maticni_broj,
+                adresa_sedista=adresa_sedista,
+                bank_account=bank_account,
+                status=TenantStatus.DEMO,
                 settings_json={
                     'warranty_defaults': {
                         'default': current_app.config.get('DEFAULT_WARRANTY_DAYS', 45)
@@ -122,12 +129,17 @@ class AuthService:
             db.session.add(tenant)
             db.session.flush()  # Da dobijemo tenant.id
 
+            # Postavi demo period (7 dana)
+            tenant.set_demo(demo_days=7)
+
             # Kreiraj prvu lokaciju
             location = ServiceLocation(
                 tenant_id=tenant.id,
                 name=location_name,
                 address=location_address,
                 city=location_city,
+                postal_code=location_postal_code,
+                phone=location_phone,
                 is_primary=True,
                 is_active=True
             )
@@ -142,10 +154,32 @@ class AuthService:
                 prezime=owner_prezime,
                 phone=owner_phone,
                 role=UserRole.OWNER,
-                is_active=True
+                is_active=True,
+                google_id=google_id,
+                auth_provider='google' if google_id else 'email',
+                phone_verified=phone_verified
             )
-            owner.set_password(owner_password)
+            # Postavi lozinku samo ako nije OAuth
+            if owner_password:
+                owner.set_password(owner_password)
             db.session.add(owner)
+            db.session.flush()
+
+            # Kreiraj ServiceRepresentative (KYC) - vlasnik je primarni predstavnik
+            representative = ServiceRepresentative(
+                tenant_id=tenant.id,
+                ime=owner_ime,
+                prezime=owner_prezime,
+                jmbg=kyc_jmbg,
+                broj_licne_karte=kyc_broj_licne,
+                telefon=owner_phone,
+                email=owner_email,
+                lk_front_url=kyc_lk_front_url,
+                lk_back_url=kyc_lk_back_url,
+                is_primary=True,
+                status=RepresentativeStatus.PENDING
+            )
+            db.session.add(representative)
 
             # Commit sve
             db.session.commit()
@@ -155,7 +189,14 @@ class AuthService:
                 entity_type='tenant',
                 entity_id=tenant.id,
                 action=AuditAction.CREATE,
-                changes={'registered': {'company': company_name, 'owner': owner_email}},
+                changes={
+                    'registered': {
+                        'company': company_name,
+                        'owner': owner_email,
+                        'pib': pib,
+                        'representative_id': representative.id
+                    }
+                },
                 tenant_id=tenant.id
             )
             db.session.commit()
@@ -216,7 +257,7 @@ class AuthService:
         if not tenant:
             raise AuthError('Preduzece nije pronadjeno', 403)
 
-        # Proveri status tenanta - dozvoli login za PENDING, TRIAL, ACTIVE
+        # Proveri status tenanta - dozvoli login za DEMO, TRIAL, ACTIVE
         # EXPIRED i SUSPENDED ne mogu da se uloguju
         if tenant.status == TenantStatus.SUSPENDED:
             raise AuthError('Vas nalog je suspendovan. Kontaktirajte podrsku.', 403)
@@ -255,6 +296,38 @@ class AuthService:
         }
 
         return user, tenant, tokens
+
+    def generate_tokens(self, user: TenantUser) -> dict:
+        """
+        Generise tokene za korisnika (koristi se za OAuth login).
+
+        Args:
+            user: TenantUser objekat
+
+        Returns:
+            Dict sa tokenima
+        """
+        tenant = Tenant.query.get(user.tenant_id)
+
+        access_token = create_access_token(
+            user_id=user.id,
+            tenant_id=tenant.id,
+            role=user.role.value
+        )
+        refresh_token = create_refresh_token(
+            user_id=user.id,
+            tenant_id=tenant.id
+        )
+
+        # Azuriraj last login
+        user.update_last_login()
+        db.session.commit()
+
+        return {
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'expires_in': int(current_app.config['JWT_ACCESS_TOKEN_EXPIRES'].total_seconds())
+        }
 
     def refresh_tokens(self, refresh_token: str) -> dict:
         """

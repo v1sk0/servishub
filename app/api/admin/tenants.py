@@ -89,6 +89,7 @@ def list_tenants():
             'phone': tenant.phone,
             'status': tenant.status.value if tenant.status else None,
             'subscription_plan': tenant.subscription_plan,
+            'demo_ends_at': tenant.demo_ends_at.isoformat() if tenant.demo_ends_at else None,
             'trial_ends_at': tenant.trial_ends_at.isoformat() if tenant.trial_ends_at else None,
             'subscription_ends_at': tenant.subscription_ends_at.isoformat() if tenant.subscription_ends_at else None,
             'locations_count': tenant.locations_count,
@@ -140,15 +141,20 @@ def get_tenant(tenant_id):
             'slug': tenant.slug,
             'email': tenant.email,
             'phone': tenant.phone,
+            'telefon': tenant.telefon,
             'address': tenant.address,
+            'adresa_sedista': tenant.adresa_sedista,
             'city': tenant.city,
             'pib': tenant.pib,
             'maticni_broj': tenant.maticni_broj,
+            'bank_account': tenant.bank_account,
             'status': tenant.status.value if tenant.status else None,
             'subscription_plan': tenant.subscription_plan,
+            'demo_ends_at': tenant.demo_ends_at.isoformat() if tenant.demo_ends_at else None,
             'trial_ends_at': tenant.trial_ends_at.isoformat() if tenant.trial_ends_at else None,
             'subscription_ends_at': tenant.subscription_ends_at.isoformat() if tenant.subscription_ends_at else None,
             'locations_count': tenant.locations_count,
+            'users_count': len(users),
             'settings': tenant.settings,
             'created_at': tenant.created_at.isoformat(),
             'updated_at': tenant.updated_at.isoformat() if tenant.updated_at else None
@@ -161,9 +167,14 @@ def get_tenant(tenant_id):
             'is_active': u.is_active,
             'last_login_at': u.last_login_at.isoformat() if u.last_login_at else None
         } for u in users],
-        'statistics': {
-            'total_tickets': total_tickets,
-            'total_users': len(users)
+        'stats': {
+            'tickets_total': total_tickets,
+            'tickets_this_month': ServiceTicket.query.filter(
+                ServiceTicket.tenant_id == tenant.id,
+                ServiceTicket.created_at >= datetime.utcnow().replace(day=1, hour=0, minute=0, second=0)
+            ).count(),
+            'phones_total': 0,
+            'parts_total': 0
         },
         'payments': [{
             'id': p.id,
@@ -176,7 +187,13 @@ def get_tenant(tenant_id):
         'representatives': [{
             'id': r.id,
             'full_name': r.full_name,
-            'jmbg': r.jmbg[-4:] if r.jmbg else None,  # Samo poslednje 4 cifre
+            'email': r.email,
+            'telefon': r.telefon,
+            'jmbg_masked': f'*********{r.jmbg[-4:]}' if r.jmbg and len(r.jmbg) >= 4 else None,
+            'broj_licne_karte': r.broj_licne_karte,
+            'lk_front_url': r.lk_front_url,
+            'lk_back_url': r.lk_back_url,
+            'is_primary': r.is_primary,
             'status': r.status.value if r.status else None,
             'verified_at': r.verified_at.isoformat() if r.verified_at else None
         } for r in representatives]
@@ -186,6 +203,53 @@ def get_tenant(tenant_id):
 # ============================================================================
 # UPRAVLJANJE STATUSOM TENANTA
 # ============================================================================
+
+@bp.route('/<int:tenant_id>/activate-trial', methods=['POST'])
+@platform_admin_required
+def activate_trial(tenant_id):
+    """
+    Aktivira TRIAL za tenant iz DEMO statusa.
+
+    Ovo radi admin nakon sto kontaktira vlasnika servisa i verifikuje KYC.
+    - Menja status DEMO -> TRIAL
+    - Postavlja trial_ends_at na 60 dana od sada
+    - Verifikuje primarnog KYC predstavnika
+    """
+    tenant = Tenant.query.get_or_404(tenant_id)
+
+    from app.models.tenant import TenantStatus
+
+    # Proveri da je tenant u DEMO statusu
+    if tenant.status != TenantStatus.DEMO:
+        return jsonify({
+            'error': f'Tenant nije u DEMO statusu. Trenutni status: {tenant.status.value}'
+        }), 400
+
+    # Promeni status na TRIAL
+    tenant.status = TenantStatus.TRIAL
+    tenant.trial_ends_at = datetime.utcnow() + timedelta(days=60)
+
+    # Verifikuj primarnog predstavnika
+    primary_rep = ServiceRepresentative.query.filter_by(
+        tenant_id=tenant.id,
+        is_primary=True
+    ).first()
+
+    if primary_rep:
+        primary_rep.status = RepresentativeStatus.VERIFIED
+        primary_rep.verified_at = datetime.utcnow()
+        primary_rep.verified_by_id = g.current_admin.id
+
+    db.session.commit()
+
+    return jsonify({
+        'message': f'TRIAL aktiviran za "{tenant.name}" (60 dana).',
+        'tenant_id': tenant.id,
+        'status': tenant.status.value,
+        'trial_ends_at': tenant.trial_ends_at.isoformat(),
+        'representative_verified': primary_rep.id if primary_rep else None
+    }), 200
+
 
 @bp.route('/<int:tenant_id>/activate', methods=['POST'])
 @platform_admin_required

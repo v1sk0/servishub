@@ -18,30 +18,52 @@ class RegisterRequest(BaseModel):
     """
     Schema za registraciju novog servisa.
 
-    Kreira tenant (preduzece), prvu lokaciju i owner korisnika.
+    Kreira:
+    - Tenant (preduzece) u DEMO statusu (7 dana)
+    - ServiceLocation (prva lokacija)
+    - TenantUser (vlasnik, role=OWNER)
+    - ServiceRepresentative (KYC podaci)
     """
-    # Podaci preduzeca
+    # Podaci preduzeca (Korak 1)
     company_name: str = Field(..., min_length=2, max_length=200, description="Naziv preduzeca")
-    pib: Optional[str] = Field(None, max_length=20, description="PIB (opciono)")
+    pib: str = Field(..., min_length=9, max_length=9, description="PIB (9 cifara)")
+    maticni_broj: Optional[str] = Field(None, max_length=8, description="Maticni broj (8 cifara)")
+    adresa_sedista: str = Field(..., max_length=300, description="Adresa sedista")
     company_email: EmailStr = Field(..., description="Email preduzeca")
-    company_phone: Optional[str] = Field(None, max_length=30, description="Telefon preduzeca")
+    company_phone: str = Field(..., max_length=30, description="Telefon preduzeca")
+    bank_account: str = Field(..., max_length=50, description="Bankovni racun (XXX-XXXXXXXXX-XX)")
 
-    # Podaci lokacije
+    # Podaci lokacije (Korak 2)
     location_name: str = Field(..., min_length=2, max_length=100, description="Naziv lokacije")
-    location_address: Optional[str] = Field(None, max_length=300, description="Adresa lokacije")
+    location_address: str = Field(..., max_length=300, description="Adresa lokacije")
     location_city: str = Field(..., min_length=2, max_length=100, description="Grad")
+    location_postal_code: Optional[str] = Field(None, max_length=10, description="Postanski broj")
+    location_phone: Optional[str] = Field(None, max_length=30, description="Telefon lokacije")
 
-    # Podaci vlasnika (owner user)
+    # Podaci vlasnika (Korak 3)
     owner_email: EmailStr = Field(..., description="Email vlasnika za login")
-    owner_password: str = Field(..., min_length=8, max_length=100, description="Lozinka")
+    owner_password: Optional[str] = Field(None, min_length=8, max_length=100, description="Lozinka (opciono za OAuth)")
     owner_ime: str = Field(..., min_length=2, max_length=50, description="Ime vlasnika")
     owner_prezime: str = Field(..., min_length=2, max_length=50, description="Prezime vlasnika")
-    owner_phone: Optional[str] = Field(None, max_length=30, description="Telefon vlasnika")
+    owner_phone: str = Field(..., max_length=30, description="Mobilni telefon vlasnika")
+
+    # KYC podaci (Korak 4)
+    kyc_jmbg: str = Field(..., min_length=13, max_length=13, description="JMBG (13 cifara)")
+    kyc_broj_licne: str = Field(..., max_length=20, description="Broj licne karte")
+    kyc_lk_front_url: Optional[str] = Field(None, description="URL slike prednje strane LK")
+    kyc_lk_back_url: Optional[str] = Field(None, description="URL slike zadnje strane LK")
+
+    # OAuth flag
+    google_id: Optional[str] = Field(None, description="Google OAuth ID ako je OAuth registracija")
+    phone_verified: bool = Field(False, description="Da li je telefon verifikovan SMS-om")
 
     @field_validator('owner_password')
     @classmethod
-    def validate_password(cls, v):
-        """Lozinka mora imati bar jedno slovo i jedan broj."""
+    def validate_password(cls, v, info):
+        """Lozinka mora imati bar jedno slovo i jedan broj (osim za OAuth)."""
+        # Ako je OAuth registracija, lozinka nije obavezna
+        if v is None:
+            return v
         if not re.search(r'[A-Za-z]', v):
             raise ValueError('Lozinka mora sadrzati bar jedno slovo')
         if not re.search(r'\d', v):
@@ -54,8 +76,38 @@ class RegisterRequest(BaseModel):
         """PIB mora biti 9 cifara (srpski format)."""
         if v is not None:
             v = v.strip()
-            if v and not re.match(r'^\d{9}$', v):
+            if not re.match(r'^\d{9}$', v):
                 raise ValueError('PIB mora imati tacno 9 cifara')
+        return v
+
+    @field_validator('maticni_broj')
+    @classmethod
+    def validate_maticni(cls, v):
+        """Maticni broj mora biti 8 cifara."""
+        if v is not None:
+            v = v.strip()
+            if v and not re.match(r'^\d{8}$', v):
+                raise ValueError('Maticni broj mora imati tacno 8 cifara')
+        return v
+
+    @field_validator('kyc_jmbg')
+    @classmethod
+    def validate_jmbg(cls, v):
+        """JMBG mora biti 13 cifara."""
+        if v is not None:
+            v = v.strip()
+            if not re.match(r'^\d{13}$', v):
+                raise ValueError('JMBG mora imati tacno 13 cifara')
+        return v
+
+    @field_validator('bank_account')
+    @classmethod
+    def validate_bank_account(cls, v):
+        """Bankovni racun mora biti u formatu XXX-XXXXXXXXX-XX."""
+        if v is not None:
+            v = v.strip()
+            if not re.match(r'^\d{3}-\d{10,13}-\d{2}$', v):
+                raise ValueError('Bankovni racun mora biti u formatu XXX-XXXXXXXXX-XX')
         return v
 
 

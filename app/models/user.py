@@ -49,9 +49,18 @@ class TenantUser(db.Model):
     )
 
     # Auth podaci
-    email = db.Column(db.String(100), nullable=False)  # Email za login
+    email = db.Column(db.String(100), nullable=False)  # Email za login (username)
     username = db.Column(db.String(50))                 # Opciono korisnicko ime
-    password_hash = db.Column(db.String(200), nullable=False)
+    password_hash = db.Column(db.String(200))           # Nullable za OAuth korisnike
+
+    # OAuth podaci
+    google_id = db.Column(db.String(100), unique=True)  # Google OAuth ID
+    auth_provider = db.Column(db.String(20), default='email')  # 'email' ili 'google'
+
+    # SMS verifikacija
+    phone_verification_code = db.Column(db.String(6))   # OTP kod za SMS
+    phone_verification_expires = db.Column(db.DateTime) # Kada istice OTP
+    phone_verified = db.Column(db.Boolean, default=False)  # Da li je telefon verifikovan
 
     # Profil
     ime = db.Column(db.String(50), nullable=False)      # Ime

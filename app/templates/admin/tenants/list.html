@@ -43,10 +43,14 @@
 
             <div class="p-8">
                 <!-- Stats -->
-                <div class="grid grid-cols-1 gap-5 sm:grid-cols-5 mb-6">
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-6 mb-6">
                     <div class="stat-card blue admin-card bg-white rounded-lg shadow p-4">
                         <div class="text-sm text-gray-500">Ukupno</div>
                         <div class="text-2xl font-bold text-gray-900" x-text="stats.total"></div>
+                    </div>
+                    <div class="stat-card purple admin-card bg-white rounded-lg shadow p-4" style="border-left: 4px solid #9333ea;">
+                        <div class="text-sm text-gray-500">Demo</div>
+                        <div class="text-2xl font-bold text-purple-600" x-text="stats.demo"></div>
                     </div>
                     <div class="stat-card blue admin-card bg-white rounded-lg shadow p-4">
                         <div class="text-sm text-gray-500">Trial</div>
@@ -80,7 +84,7 @@
                             <select x-model="filters.status" @change="loadTenants()"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
                                 <option value="">Svi</option>
-                                <option value="PENDING">Ceka odobrenje</option>
+                                <option value="DEMO">Demo (novi)</option>
                                 <option value="TRIAL">Trial</option>
                                 <option value="ACTIVE">Aktivni</option>
                                 <option value="SUSPENDED">Suspendovani</option>
@@ -136,6 +140,9 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <div class="text-gray-900" x-text="tenant.subscription_plan || 'Bazni'"></div>
                                             <div class="text-xs text-gray-500">
+                                                <span x-show="tenant.demo_ends_at && tenant.status === 'DEMO'" class="text-purple-600 font-medium">
+                                                    Demo: <span x-text="daysRemaining(tenant.demo_ends_at)"></span> dana preostalo
+                                                </span>
                                                 <span x-show="tenant.trial_ends_at && tenant.status === 'TRIAL'">
                                                     Trial do: <span x-text="formatDate(tenant.trial_ends_at)"></span>
                                                 </span>
@@ -152,6 +159,11 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                                             <div class="flex justify-end space-x-2">
                                                 <a :href="'/admin/tenants/' + tenant.id" class="text-red-600 hover:text-red-900">Detalji</a>
+                                                <!-- DEMO -> TRIAL aktivacija -->
+                                                <template x-if="tenant.status === 'DEMO'">
+                                                    <button @click="activateTrial(tenant)" class="text-purple-600 hover:text-purple-900 font-medium">Aktiviraj TRIAL</button>
+                                                </template>
+                                                <!-- TRIAL/EXPIRED -> ACTIVE aktivacija -->
                                                 <template x-if="tenant.status === 'TRIAL' || tenant.status === 'EXPIRED'">
                                                     <button @click="activateTenant(tenant)" class="text-green-600 hover:text-green-900">Aktiviraj</button>
                                                 </template>
@@ -260,7 +272,7 @@ function tenantsPage() {
         tenants: [],
         loading: true,
         pagination: { page: 1, per_page: 20, total: 0, pages: 1, has_next: false, has_prev: false },
-        stats: { total: 0, trial: 0, active: 0, suspended: 0, expired: 0 },
+        stats: { total: 0, demo: 0, trial: 0, active: 0, suspended: 0, expired: 0 },
         filters: { search: '', status: '', sort: 'created_at' },
         theme: localStorage.getItem('admin-theme') || 'light',
 
@@ -271,7 +283,7 @@ function tenantsPage() {
         extendForm: { days: 30 },
 
         statusLabels: {
-            'PENDING': 'Ceka', 'TRIAL': 'Trial', 'ACTIVE': 'Aktivan',
+            'DEMO': 'Demo', 'TRIAL': 'Trial', 'ACTIVE': 'Aktivan',
             'SUSPENDED': 'Suspendovan', 'EXPIRED': 'Istekao', 'CANCELLED': 'Otkazan'
         },
 
@@ -317,6 +329,7 @@ function tenantsPage() {
 
         calculateStats() {
             this.stats.total = this.pagination.total;
+            this.stats.demo = this.tenants.filter(t => t.status === 'DEMO').length;
             this.stats.trial = this.tenants.filter(t => t.status === 'TRIAL').length;
             this.stats.active = this.tenants.filter(t => t.status === 'ACTIVE').length;
             this.stats.suspended = this.tenants.filter(t => t.status === 'SUSPENDED').length;
@@ -325,7 +338,7 @@ function tenantsPage() {
 
         statusClass(status) {
             const classes = {
-                'PENDING': 'bg-gray-100 text-gray-800',
+                'DEMO': 'bg-purple-100 text-purple-800',
                 'TRIAL': 'bg-blue-100 text-blue-800',
                 'ACTIVE': 'bg-green-100 text-green-800',
                 'SUSPENDED': 'bg-red-100 text-red-800',
@@ -338,6 +351,15 @@ function tenantsPage() {
         formatDate(dateStr) {
             if (!dateStr) return '-';
             return new Date(dateStr).toLocaleDateString('sr-Latn-RS');
+        },
+
+        daysRemaining(dateStr) {
+            if (!dateStr) return 0;
+            const endDate = new Date(dateStr);
+            const today = new Date();
+            const diffTime = endDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return Math.max(0, diffDays);
         },
 
         resetFilters() {
@@ -356,6 +378,26 @@ function tenantsPage() {
             this.selectedTenant = tenant;
             this.extendForm.days = 30;
             this.showExtendModal = true;
+        },
+
+        async activateTrial(tenant) {
+            if (!confirm(`Aktiviraj TRIAL (60 dana) za "${tenant.name}"?\n\nOvo će:\n- Promeniti status u TRIAL\n- Postaviti trial period na 60 dana\n- Verifikovati KYC predstavnika`)) return;
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                const response = await fetch(`/api/admin/tenants/${tenant.id}/activate-trial`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (response.ok) {
+                    showToast('TRIAL aktiviran (60 dana)', 'success');
+                    this.loadTenants();
+                } else {
+                    const data = await response.json();
+                    showToast(data.error || 'Greška pri aktivaciji', 'error');
+                }
+            } catch (e) {
+                showToast('Greska', 'error');
+            }
         },
 
         async activateTenant(tenant) {
