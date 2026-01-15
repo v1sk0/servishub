@@ -59,6 +59,26 @@ def debug_users():
     }), 200
 
 
+# PRIVREMENO - Debug endpoint za proveru admina
+@bp.route('/debug-admins', methods=['GET'])
+def debug_admins():
+    """Debug: Lista svih platform admina u bazi (PRIVREMENO - ukloniti posle testiranja!)"""
+    from app.models.admin import PlatformAdmin
+    admins = PlatformAdmin.query.all()
+    return jsonify({
+        'total': len(admins),
+        'admins': [{
+            'id': a.id,
+            'email': a.email,
+            'ime': a.ime,
+            'prezime': a.prezime,
+            'role': a.role.value if a.role else None,
+            'is_active': a.is_active,
+            'created_at': a.created_at.isoformat() if a.created_at else None
+        } for a in admins]
+    }), 200
+
+
 @bp.route('/stats', methods=['GET'])
 @platform_admin_required
 def get_dashboard_stats():
