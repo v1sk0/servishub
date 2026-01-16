@@ -54,18 +54,19 @@
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700">Naziv firme *</label>
                     <input type="text" id="name" x-model="form.company_name"
-                           :class="aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300'"
-                           class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                           @input="clearFieldError('company_name')"
+                           class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                           :class="fieldErrors.company_name ? 'border-red-500 bg-red-50' : (aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300')">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="pib" class="block text-sm font-medium text-gray-700">PIB *</label>
                         <div class="relative">
                             <input type="text" id="pib" x-model="form.pib" maxlength="9"
-                                   @input="onPibInput()"
+                                   @input="filterDigitsOnly('pib'); clearFieldError('pib'); onPibInput()"
                                    placeholder="123456789"
-                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                                   :class="{'border-green-500 bg-green-50': aprCompanyFound, 'border-yellow-500': loadingApr}">
+                                   class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                                   :class="fieldErrors.pib ? 'border-red-500 bg-red-50' : (aprCompanyFound ? 'border-green-500 bg-green-50' : (loadingApr ? 'border-yellow-500' : 'border-gray-300'))">
                             <!-- Loading indicator -->
                             <div x-show="loadingApr" class="absolute right-2 top-1/2 transform -translate-y-1/2 mt-0.5">
                                 <svg class="animate-spin h-5 w-5 text-primary-500" fill="none" viewBox="0 0 24 24">
@@ -85,9 +86,10 @@
                     <div>
                         <label for="maticni_broj" class="block text-sm font-medium text-gray-700">Matični broj</label>
                         <input type="text" id="maticni_broj" x-model="form.maticni_broj" maxlength="8"
+                               @input="filterDigitsOnly('maticni_broj'); clearFieldError('maticni_broj')"
                                placeholder="12345678"
-                               :class="aprCompanyFound ? 'bg-green-50' : ''"
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                               class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                               :class="fieldErrors.maticni_broj ? 'border-red-500 bg-red-50' : (aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300')">
                     </div>
                 </div>
 
@@ -106,10 +108,10 @@
                 <div>
                     <label for="adresa_sedista" class="block text-sm font-medium text-gray-700">Adresa sedišta *</label>
                     <input type="text" id="adresa_sedista" x-model="form.adresa_sedista"
-                           @input="syncLocationAddress()"
+                           @input="syncLocationAddress(); clearFieldError('adresa_sedista')"
                            placeholder="Ulica i broj"
-                           :class="aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300'"
-                           class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                           class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                           :class="fieldErrors.adresa_sedista ? 'border-red-500 bg-red-50' : (aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300')">
                     <!-- Mapa za prikaz adrese firme -->
                     <div id="company_map_container" class="mt-2 hidden">
                         <div id="company_map" class="w-full h-48 rounded-lg border border-gray-300"></div>
@@ -125,41 +127,45 @@
                     <div>
                         <label for="company_city" class="block text-sm font-medium text-gray-700">Grad *</label>
                         <input type="text" id="company_city" x-model="form.company_city"
-                               @input="syncLocationAddress()"
+                               @input="syncLocationAddress(); clearFieldError('company_city')"
                                placeholder="npr. Beograd"
-                               :class="aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300'"
-                               class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                               class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                               :class="fieldErrors.company_city ? 'border-red-500 bg-red-50' : (aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300')">
                     </div>
                     <div>
-                        <label for="company_postal_code" class="block text-sm font-medium text-gray-700">Poštanski broj *</label>
+                        <label for="company_postal_code" class="block text-sm font-medium text-gray-700">Poštanski broj</label>
                         <input type="text" id="company_postal_code" x-model="form.company_postal_code" maxlength="5"
-                               @input="syncLocationAddress()"
+                               @input="filterDigitsOnly('company_postal_code'); syncLocationAddress()"
                                placeholder="11000"
-                               :class="aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300'"
-                               class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                               class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                               :class="aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300'">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="company_phone" class="block text-sm font-medium text-gray-700">Telefon firme *</label>
                         <input type="tel" id="company_phone" x-model="form.company_phone"
-                               @input="syncOwnerPhone(); syncLocationPhone()"
+                               @input="filterPhoneInput('company_phone'); clearFieldError('company_phone'); syncOwnerPhone(); syncLocationPhone()"
                                placeholder="+381..."
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                               class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                               :class="fieldErrors.company_phone ? 'border-red-500 bg-red-50' : 'border-gray-300'">
                     </div>
                     <div>
                         <label for="company_email" class="block text-sm font-medium text-gray-700">Email firme *</label>
                         <input type="email" id="company_email" x-model="form.company_email"
-                               @input="syncOwnerEmail()"
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                               @input="clearFieldError('company_email'); syncOwnerEmail()"
+                               class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                               :class="fieldErrors.company_email ? 'border-red-500 bg-red-50' : 'border-gray-300'">
                     </div>
                 </div>
                 <div>
                     <label for="bank_account" class="block text-sm font-medium text-gray-700">Bankovni račun</label>
                     <input type="text" id="bank_account" x-model="form.bank_account"
                            @blur="formatBankAccount()"
+                           @input="clearFieldError('bank_account')"
                            placeholder="265-123456789-12"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                           class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                           :class="fieldErrors.bank_account ? 'border-red-500 bg-red-50' : 'border-gray-300'">
                     <p class="mt-1 text-xs text-gray-500">Format: XXX-XXXXXXXXX-XX (opciono)</p>
                 </div>
             </div>
@@ -312,7 +318,7 @@
                 <div>
                     <label for="owner_phone" class="block text-sm font-medium text-gray-700">Mobilni telefon *</label>
                     <input type="tel" id="owner_phone" x-model="form.owner_phone"
-                           @input="onOwnerPhoneChange()"
+                           @input="filterPhoneInput('owner_phone'); onOwnerPhoneChange()"
                            placeholder="+381 64..."
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     <p x-show="!ownerPhoneManuallyChanged && form.company_phone" class="mt-1 text-xs text-green-600">
@@ -369,14 +375,15 @@
                     </div>
                     <div>
                         <label for="location_postal" class="block text-sm font-medium text-gray-700">Poštanski broj</label>
-                        <input type="text" id="location_postal" x-model="form.location_postal_code"
+                        <input type="text" id="location_postal" x-model="form.location_postal_code" maxlength="5"
+                               @input="filterDigitsOnly('location_postal_code')"
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     </div>
                 </div>
                 <div>
                     <label for="location_phone" class="block text-sm font-medium text-gray-700">Telefon lokacije</label>
                     <input type="tel" id="location_phone" x-model="form.location_phone"
-                           @input="onLocationPhoneChange()"
+                           @input="filterPhoneInput('location_phone'); onLocationPhoneChange()"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     <p x-show="!locationPhoneManuallyChanged && form.company_phone" class="mt-1 text-xs text-green-600">
                         Automatski kopirano sa telefona firme
@@ -402,6 +409,7 @@
                     <div>
                         <label for="kyc_jmbg" class="block text-sm font-medium text-gray-700">JMBG</label>
                         <input type="text" id="kyc_jmbg" x-model="form.kyc_jmbg" maxlength="13"
+                               @input="filterDigitsOnly('kyc_jmbg')"
                                placeholder="13 cifara (opciono)"
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     </div>
@@ -584,6 +592,9 @@ window.registerPage = function() {
         aprCompanyFound: false,
         aprLookupTimeout: null,
 
+        // Field validation errors
+        fieldErrors: {},
+
         form: {
             // Business (Step 1)
             company_name: '',
@@ -627,6 +638,44 @@ window.registerPage = function() {
         get canSubmit() {
             // Samo uslovi koriscenja su obavezni, KYC i SMS su opcioni
             return this.acceptTerms;
+        },
+
+        // Filtrira input - dozvoljava samo brojeve
+        filterDigitsOnly(field) {
+            this.form[field] = this.form[field].replace(/\D/g, '');
+        },
+
+        // Filtrira input - dozvoljava brojeve i + na pocetku (za telefon)
+        filterPhoneInput(field) {
+            let val = this.form[field];
+            // Dozvoli + samo na pocetku
+            if (val.startsWith('+')) {
+                val = '+' + val.slice(1).replace(/\D/g, '');
+            } else {
+                val = val.replace(/\D/g, '');
+            }
+            this.form[field] = val;
+        },
+
+        // Validira email format
+        isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        },
+
+        // Vraca klasu za polje na osnovu greske
+        fieldClass(field, baseClass = 'border-gray-300') {
+            if (this.fieldErrors[field]) {
+                return 'border-red-500 bg-red-50';
+            }
+            return baseClass;
+        },
+
+        // Brise gresku za polje
+        clearFieldError(field) {
+            if (this.fieldErrors[field]) {
+                delete this.fieldErrors[field];
+                this.fieldErrors = {...this.fieldErrors}; // Trigger reactivity
+            }
         },
 
         init() {
@@ -1226,24 +1275,56 @@ window.registerPage = function() {
             // Validate Step 1 - Business Info
             if (this.step === 1) {
                 console.log('Validating Step 1...');
-                if (!this.form.company_name || !this.form.pib || !this.form.adresa_sedista ||
-                    !this.form.company_city || !this.form.company_postal_code ||
-                    !this.form.company_phone || !this.form.company_email) {
-                    this.error = 'Popunite sva obavezna polja';
-                    console.log('Validation failed: missing required fields');
-                    return;
+                this.fieldErrors = {};
+                let hasErrors = false;
+
+                // Proveri obavezna polja (postanski broj nije obavezan)
+                const requiredFields = {
+                    'company_name': 'Naziv firme',
+                    'pib': 'PIB',
+                    'adresa_sedista': 'Adresa sedišta',
+                    'company_city': 'Grad',
+                    'company_phone': 'Telefon firme',
+                    'company_email': 'Email firme'
+                };
+
+                for (const [field, label] of Object.entries(requiredFields)) {
+                    if (!this.form[field] || !this.form[field].trim()) {
+                        this.fieldErrors[field] = `${label} je obavezan`;
+                        hasErrors = true;
+                    }
                 }
-                if (!/^\d{9}$/.test(this.form.pib)) {
-                    this.error = 'PIB mora imati tačno 9 cifara';
-                    console.log('Validation failed: invalid PIB');
-                    return;
+
+                // Validiraj PIB format (9 cifara)
+                if (this.form.pib && !/^\d{9}$/.test(this.form.pib)) {
+                    this.fieldErrors['pib'] = 'PIB mora imati tačno 9 cifara';
+                    hasErrors = true;
                 }
+
+                // Validiraj matični broj ako je unet (8 cifara)
+                if (this.form.maticni_broj && !/^\d{8}$/.test(this.form.maticni_broj)) {
+                    this.fieldErrors['maticni_broj'] = 'Matični broj mora imati 8 cifara';
+                    hasErrors = true;
+                }
+
+                // Validiraj email format
+                if (this.form.company_email && !this.isValidEmail(this.form.company_email)) {
+                    this.fieldErrors['company_email'] = 'Neispravan format email adrese';
+                    hasErrors = true;
+                }
+
                 // Validiraj format bankovnog racuna samo ako je unet
-                if (this.form.bank_account && !/^\d{3}-\d{9}-\d{2}$/.test(this.form.bank_account)) {
-                    this.error = 'Bankovni račun mora biti u formatu XXX-XXXXXXXXX-XX';
-                    console.log('Validation failed: invalid bank account');
+                if (this.form.bank_account && !/^\d{3}-\d{9,13}-\d{2}$/.test(this.form.bank_account)) {
+                    this.fieldErrors['bank_account'] = 'Neispravan format bankovnog računa';
+                    hasErrors = true;
+                }
+
+                if (hasErrors) {
+                    this.error = 'Ispravite označena polja';
+                    console.log('Validation failed:', this.fieldErrors);
                     return;
                 }
+
                 console.log('Step 1 validation passed, moving to step 2');
                 this.step = 2;
                 return;
