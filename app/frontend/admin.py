@@ -83,6 +83,14 @@ def admin_activity_list():
     return render_template('admin/activity/list.html')
 
 
+# ============== Security Events ==============
+
+@bp.route('/admin/security')
+def admin_security_events():
+    """Security events - login pokusaji, rate limits, itd."""
+    return render_template('admin/security/events.html')
+
+
 # ============== Settings ==============
 
 @bp.route('/admin/settings')

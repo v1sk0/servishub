@@ -105,7 +105,8 @@ class SecurityEventLogger:
     @classmethod
     def log_event(cls, event_type: str, details: Optional[Dict[str, Any]] = None,
                   user_id: Optional[int] = None, email: Optional[str] = None,
-                  level: str = 'info') -> None:
+                  level: str = 'info', user_type: Optional[str] = None,
+                  save_to_db: bool = True) -> None:
         """
         Loguje bezbednosni dogadjaj.
 
@@ -115,25 +116,61 @@ class SecurityEventLogger:
             user_id: ID korisnika (ako je poznat)
             email: Email korisnika (bice hashiran)
             level: Log level (info, warning, error)
+            user_type: Tip korisnika (tenant_user, admin, guest)
+            save_to_db: Da li da sacuva u bazu (default: True)
         """
         context = cls._get_request_context()
+        email_hash = cls._hash_sensitive_data(email) if email else None
 
         log_data = {
             'event': event_type,
             'context': context,
             'user_id': user_id,
-            'email_hash': cls._hash_sensitive_data(email) if email else None,
+            'email_hash': email_hash,
             'details': details or {}
         }
 
         log_message = json.dumps(log_data)
 
+        # Loguj u konzolu
         if level == 'error':
             security_logger.error(log_message)
         elif level == 'warning':
             security_logger.warning(log_message)
         else:
             security_logger.info(log_message)
+
+        # Sacuvaj u bazu ako je omoguceno
+        if save_to_db:
+            try:
+                from ..models.security_event import SecurityEvent
+                from ..extensions import db
+
+                # Mapiraj level na severity
+                severity_map = {
+                    'info': 'info',
+                    'warning': 'warning',
+                    'error': 'error',
+                    'critical': 'critical'
+                }
+                severity = severity_map.get(level, 'info')
+
+                SecurityEvent.log(
+                    event_type=event_type,
+                    severity=severity,
+                    user_id=user_id,
+                    user_type=user_type,
+                    email_hash=email_hash,
+                    ip_address=context.get('ip'),
+                    user_agent=context.get('user_agent'),
+                    endpoint=context.get('path'),
+                    method=context.get('method'),
+                    details=details
+                )
+                db.session.commit()
+            except Exception as e:
+                # Ako ne uspe upis u bazu, samo loguj gresku - ne prekidaj aplikaciju
+                security_logger.error(f"Failed to save security event to database: {e}")
 
     @classmethod
     def log_login_success(cls, user_id: int, email: str, auth_method: str = 'email') -> None:

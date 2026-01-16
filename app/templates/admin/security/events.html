@@ -1,0 +1,425 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Security Events - ServisHub Admin{% endblock %}
+
+{% block head %}
+{% include "admin/_admin_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div x-cloak
+     :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
+     x-data="securityEventsPage()" x-init="loadEvents()">
+    <div class="admin-wrapper min-h-screen bg-gray-100">
+        {% set active_page = 'security' %}
+        {% include "admin/_sidebar.html" %}
+
+        <!-- Main content -->
+        <div class="ml-64">
+            <div class="admin-topbar bg-white shadow-sm h-16 flex items-center justify-between px-8">
+                <h1 class="text-xl font-semibold text-gray-900">Security Events</h1>
+                <div class="flex items-center space-x-2">
+                    <button @click="setTheme('light')" :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'light'}" class="theme-btn p-2 rounded-lg bg-white border border-gray-200 hover:border-gray-300" title="Svetla tema">
+                        <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z"/></svg>
+                    </button>
+                    <button @click="setTheme('glass')" :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'glass'}" class="theme-btn p-2 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600 hover:border-gray-500" title="Glassmorphism tema">
+                        <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-8">
+                <!-- Stats kartice -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                    <!-- Ukupno eventova -->
+                    <div class="admin-card bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Ukupno (24h)</p>
+                                <p class="text-2xl font-bold text-gray-900" x-text="stats.total || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Failed logins -->
+                    <div class="admin-card bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Neuspeli logini</p>
+                                <p class="text-2xl font-bold text-gray-900" x-text="stats.failed_logins || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rate limits -->
+                    <div class="admin-card bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Rate Limits</p>
+                                <p class="text-2xl font-bold text-gray-900" x-text="stats.rate_limits || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Unique IPs -->
+                    <div class="admin-card bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Unique IPs</p>
+                                <p class="text-2xl font-bold text-gray-900" x-text="stats.unique_ips || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top IPs kartica -->
+                <div x-show="topIps.length > 0" class="admin-card bg-white rounded-lg shadow mb-6 p-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Top IP adrese (24h)</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="ip in topIps" :key="ip.ip">
+                            <button @click="filterByIp(ip.ip)"
+                                    class="px-3 py-1 text-xs font-mono bg-gray-100 hover:bg-gray-200 rounded-full">
+                                <span x-text="ip.ip"></span>
+                                <span class="ml-1 text-gray-500" x-text="'(' + ip.count + ')'"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Filteri -->
+                <div class="admin-card bg-white rounded-lg shadow mb-6 p-4">
+                    <div class="flex flex-wrap gap-4 items-center">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Period</label>
+                            <select x-model="filterHours" @change="loadEvents()" class="block w-32 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm">
+                                <option value="1">1 sat</option>
+                                <option value="6">6 sati</option>
+                                <option value="24" selected>24 sata</option>
+                                <option value="48">48 sati</option>
+                                <option value="168">7 dana</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tip eventa</label>
+                            <select x-model="filterEventType" @change="loadEvents()" class="block w-48 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm">
+                                <option value="">Svi tipovi</option>
+                                <optgroup label="Auth">
+                                    <option value="login_success">Login Success</option>
+                                    <option value="login_failed">Login Failed</option>
+                                    <option value="logout">Logout</option>
+                                </optgroup>
+                                <optgroup label="OAuth">
+                                    <option value="oauth_started">OAuth Started</option>
+                                    <option value="oauth_success">OAuth Success</option>
+                                    <option value="oauth_failed">OAuth Failed</option>
+                                </optgroup>
+                                <optgroup label="Rate Limit">
+                                    <option value="rate_limit_exceeded">Rate Limit Exceeded</option>
+                                </optgroup>
+                                <optgroup label="Admin">
+                                    <option value="admin_login_success">Admin Login Success</option>
+                                    <option value="admin_login_failed">Admin Login Failed</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+                            <select x-model="filterSeverity" @change="loadEvents()" class="block w-32 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm">
+                                <option value="">Svi</option>
+                                <option value="info">Info</option>
+                                <option value="warning">Warning</option>
+                                <option value="error">Error</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">IP adresa</label>
+                            <input type="text" x-model="filterIp" @input.debounce.500ms="loadEvents()" placeholder="npr. 192.168.1.1"
+                                   class="block w-40 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Pretraga</label>
+                            <input type="text" x-model="filterSearch" @input.debounce.500ms="loadEvents()" placeholder="Pretrazi..."
+                                   class="block w-40 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm">
+                        </div>
+                        <div class="ml-auto">
+                            <button @click="resetFilters()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                                Reset filtera
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading -->
+                <div x-show="loading" class="flex justify-center py-12">
+                    <svg class="animate-spin h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                </div>
+
+                <!-- Tabela -->
+                <div x-show="!loading" class="admin-card bg-white shadow rounded-lg overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vreme</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tip</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Severity</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Adresa</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Endpoint</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User ID</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Detalji</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="event in events" :key="event.id">
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500" x-text="formatDate(event.created_at)"></td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full"
+                                              :class="getEventTypeBadgeClass(event.event_type)"
+                                              x-text="event.event_type"></span>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full"
+                                              :class="getSeverityBadgeClass(event.severity)"
+                                              x-text="event.severity"></span>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <button @click="filterByIp(event.ip_address)" class="text-xs font-mono text-blue-600 hover:underline" x-text="event.ip_address || '-'"></button>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500" x-text="event.endpoint || '-'"></td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500" x-text="event.user_id || '-'"></td>
+                                    <td class="px-4 py-3">
+                                        <template x-if="event.details && Object.keys(event.details).length > 0">
+                                            <button @click="showDetails(event)" class="text-red-600 hover:text-red-900 text-xs font-medium">
+                                                Detalji
+                                            </button>
+                                        </template>
+                                        <template x-if="!event.details || Object.keys(event.details).length === 0">
+                                            <span class="text-xs text-gray-400">-</span>
+                                        </template>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                    <div x-show="events.length === 0" class="text-center py-12 text-gray-500">Nema security eventova za izabrani period</div>
+
+                    <!-- Paginacija -->
+                    <div x-show="pagination.pages > 1" class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                        <div class="text-sm text-gray-500">
+                            Stranica <span x-text="pagination.page"></span> od <span x-text="pagination.pages"></span>
+                            (<span x-text="pagination.total"></span> ukupno)
+                        </div>
+                        <div class="flex space-x-2">
+                            <button @click="goToPage(pagination.page - 1)" :disabled="!pagination.has_prev"
+                                    :class="pagination.has_prev ? 'bg-white hover:bg-gray-50' : 'bg-gray-100 cursor-not-allowed'"
+                                    class="px-3 py-1 text-sm border border-gray-300 rounded-md">
+                                Prethodna
+                            </button>
+                            <button @click="goToPage(pagination.page + 1)" :disabled="!pagination.has_next"
+                                    :class="pagination.has_next ? 'bg-white hover:bg-gray-50' : 'bg-gray-100 cursor-not-allowed'"
+                                    class="px-3 py-1 text-sm border border-gray-300 rounded-md">
+                                Sledeca
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div x-show="showDetailsModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/50" @click="showDetailsModal = false"></div>
+            <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Detalji Security Eventa</h3>
+
+                <!-- Event info -->
+                <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div><span class="text-gray-500">ID:</span> <span class="font-mono" x-text="selectedEvent?.id"></span></div>
+                        <div><span class="text-gray-500">Tip:</span> <span x-text="selectedEvent?.event_type"></span></div>
+                        <div><span class="text-gray-500">Severity:</span> <span x-text="selectedEvent?.severity"></span></div>
+                        <div><span class="text-gray-500">IP:</span> <span class="font-mono" x-text="selectedEvent?.ip_address"></span></div>
+                        <div class="col-span-2"><span class="text-gray-500">Endpoint:</span> <span x-text="selectedEvent?.endpoint"></span></div>
+                        <div class="col-span-2"><span class="text-gray-500">User Agent:</span> <span class="text-xs" x-text="selectedEvent?.user_agent"></span></div>
+                    </div>
+                </div>
+
+                <!-- Details JSON -->
+                <div x-show="selectedEvent?.details && Object.keys(selectedEvent.details).length > 0" class="space-y-2">
+                    <h4 class="text-sm font-medium text-gray-700">Details:</h4>
+                    <template x-for="(value, key) in selectedEvent?.details || {}" :key="key">
+                        <div class="flex justify-between py-2 border-b border-gray-100">
+                            <span class="text-sm font-medium text-gray-500" x-text="key"></span>
+                            <span class="text-sm text-gray-900" x-text="typeof value === 'object' ? JSON.stringify(value) : value"></span>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="mt-6">
+                    <button @click="showDetailsModal = false" class="w-full px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
+                        Zatvori
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function securityEventsPage() {
+    return {
+        loading: true,
+        events: [],
+        stats: {},
+        topIps: [],
+        pagination: { page: 1, pages: 1, total: 0, has_next: false, has_prev: false },
+        theme: localStorage.getItem('admin-theme') || 'light',
+        filterHours: '24',
+        filterEventType: '',
+        filterSeverity: '',
+        filterIp: '',
+        filterSearch: '',
+        showDetailsModal: false,
+        selectedEvent: null,
+
+        setTheme(newTheme) {
+            this.theme = newTheme;
+            localStorage.setItem('admin-theme', newTheme);
+            document.documentElement.setAttribute('data-admin-theme', newTheme);
+        },
+
+        async loadEvents(page = 1) {
+            const token = localStorage.getItem('admin_access_token');
+            if (!token) { window.location.href = '/admin/login'; return; }
+
+            this.loading = true;
+
+            try {
+                // Build query params
+                const params = new URLSearchParams({ page: page, per_page: 50, hours: this.filterHours });
+                if (this.filterEventType) params.append('event_type', this.filterEventType);
+                if (this.filterSeverity) params.append('severity', this.filterSeverity);
+                if (this.filterIp) params.append('ip_address', this.filterIp);
+                if (this.filterSearch) params.append('search', this.filterSearch);
+
+                // Load events
+                const response = await fetch('/api/admin/security/events?' + params.toString(), {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    this.events = data.events || [];
+                    this.pagination = data.pagination || { page: 1, pages: 1, total: 0 };
+                } else if (response.status === 401) {
+                    window.location.href = '/admin/login';
+                }
+
+                // Load stats
+                const statsParams = new URLSearchParams({ hours: this.filterHours });
+                const statsResponse = await fetch('/api/admin/security/events/stats?' + statsParams.toString(), {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (statsResponse.ok) {
+                    const statsData = await statsResponse.json();
+                    this.stats = statsData.stats || {};
+                    this.topIps = statsData.top_ips || [];
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        goToPage(page) {
+            if (page >= 1 && page <= this.pagination.pages) {
+                this.loadEvents(page);
+            }
+        },
+
+        filterByIp(ip) {
+            if (ip) {
+                this.filterIp = ip;
+                this.loadEvents(1);
+            }
+        },
+
+        resetFilters() {
+            this.filterHours = '24';
+            this.filterEventType = '';
+            this.filterSeverity = '';
+            this.filterIp = '';
+            this.filterSearch = '';
+            this.loadEvents(1);
+        },
+
+        showDetails(event) {
+            this.selectedEvent = event;
+            this.showDetailsModal = true;
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('sr-RS') + ' ' + d.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        },
+
+        getEventTypeBadgeClass(eventType) {
+            const classes = {
+                'login_success': 'bg-green-100 text-green-800',
+                'login_failed': 'bg-red-100 text-red-800',
+                'logout': 'bg-gray-100 text-gray-800',
+                'oauth_started': 'bg-blue-100 text-blue-800',
+                'oauth_success': 'bg-green-100 text-green-800',
+                'oauth_failed': 'bg-red-100 text-red-800',
+                'oauth_csrf_invalid': 'bg-red-100 text-red-800',
+                'oauth_pkce_invalid': 'bg-red-100 text-red-800',
+                'rate_limit_exceeded': 'bg-yellow-100 text-yellow-800',
+                'admin_login_success': 'bg-green-100 text-green-800',
+                'admin_login_failed': 'bg-red-100 text-red-800',
+                'token_refresh': 'bg-blue-100 text-blue-800',
+                'token_invalid': 'bg-red-100 text-red-800',
+                'token_expired': 'bg-yellow-100 text-yellow-800'
+            };
+            return classes[eventType] || 'bg-gray-100 text-gray-800';
+        },
+
+        getSeverityBadgeClass(severity) {
+            const classes = {
+                'info': 'bg-blue-100 text-blue-800',
+                'warning': 'bg-yellow-100 text-yellow-800',
+                'error': 'bg-red-100 text-red-800',
+                'critical': 'bg-purple-100 text-purple-800'
+            };
+            return classes[severity] || 'bg-gray-100 text-gray-800';
+        }
+    }
+}
+</script>
+{% endblock %}
