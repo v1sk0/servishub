@@ -114,12 +114,16 @@ def register():
             company_city=data.company_city,
             company_postal_code=data.company_postal_code,
             bank_account=data.bank_account,
+            company_latitude=data.company_latitude,
+            company_longitude=data.company_longitude,
             # Podaci lokacije
             location_name=data.location_name,
             location_address=data.location_address,
             location_city=data.location_city,
             location_postal_code=data.location_postal_code,
             location_phone=data.location_phone,
+            location_latitude=data.location_latitude,
+            location_longitude=data.location_longitude,
             # Podaci vlasnika
             owner_email=data.owner_email,
             owner_password=data.owner_password,

@@ -41,6 +41,12 @@ class RegisterRequest(BaseModel):
     location_city: str = Field(..., min_length=2, max_length=100, description="Grad")
     location_postal_code: Optional[str] = Field(None, max_length=10, description="Postanski broj")
     location_phone: Optional[str] = Field(None, max_length=30, description="Telefon lokacije")
+    location_latitude: Optional[float] = Field(None, description="Geografska sirina lokacije")
+    location_longitude: Optional[float] = Field(None, description="Geografska duzina lokacije")
+
+    # Koordinate firme (sedista)
+    company_latitude: Optional[float] = Field(None, description="Geografska sirina sedista")
+    company_longitude: Optional[float] = Field(None, description="Geografska duzina sedista")
 
     # Podaci vlasnika (Korak 3)
     owner_email: EmailStr = Field(..., description="Email vlasnika za login")

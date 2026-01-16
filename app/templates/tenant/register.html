@@ -575,6 +575,11 @@ window.registerPage = function() {
             location_city: '',
             location_postal_code: '',
             location_phone: '',
+            location_latitude: null,
+            location_longitude: null,
+            // Company coordinates
+            company_latitude: null,
+            company_longitude: null,
             // KYC (Step 4)
             kyc_jmbg: '',
             kyc_broj_licne: '',
@@ -1188,7 +1193,9 @@ function initGooglePlacesAutocomplete() {
 }
 
 function showMapWithMarker(prefix, location, address) {
-    console.log('[Google Maps] Showing map for', prefix, 'at', location.lat(), location.lng());
+    const lat = location.lat();
+    const lng = location.lng();
+    console.log('[Google Maps] Showing map for', prefix, 'at', lat, lng);
 
     const mapContainerId = prefix + '_map_container';
     const mapId = prefix + '_map';
@@ -1202,6 +1209,21 @@ function showMapWithMarker(prefix, location, address) {
 
     // Prikazi container
     mapContainer.classList.remove('hidden');
+
+    // Sacuvaj koordinate u Alpine.js form (preko Alpine.$data)
+    const alpineRoot = document.querySelector('[x-data]');
+    if (alpineRoot && alpineRoot._x_dataStack) {
+        const alpineData = alpineRoot._x_dataStack[0];
+        if (prefix === 'company') {
+            alpineData.form.company_latitude = lat;
+            alpineData.form.company_longitude = lng;
+            console.log('[Google Maps] Saved company coordinates:', lat, lng);
+        } else if (prefix === 'location') {
+            alpineData.form.location_latitude = lat;
+            alpineData.form.location_longitude = lng;
+            console.log('[Google Maps] Saved location coordinates:', lat, lng);
+        }
+    }
 
     // Kreiraj ili azuriraj mapu
     const mapOptions = {

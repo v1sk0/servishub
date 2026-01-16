@@ -55,12 +55,16 @@ class AuthService:
         company_city: Optional[str] = None,
         company_postal_code: Optional[str] = None,
         bank_account: Optional[str] = None,
+        company_latitude: Optional[float] = None,
+        company_longitude: Optional[float] = None,
         # Podaci lokacije
         location_name: str = None,
         location_address: Optional[str] = None,
         location_city: str = None,
         location_postal_code: Optional[str] = None,
         location_phone: Optional[str] = None,
+        location_latitude: Optional[float] = None,
+        location_longitude: Optional[float] = None,
         # Podaci vlasnika
         owner_email: str = None,
         owner_password: Optional[str] = None,
@@ -122,6 +126,8 @@ class AuthService:
                 grad=company_city,
                 postanski_broj=company_postal_code,
                 bank_account=bank_account,
+                latitude=company_latitude,
+                longitude=company_longitude,
                 status=TenantStatus.DEMO,
                 settings_json={
                     'warranty_defaults': {
@@ -144,6 +150,8 @@ class AuthService:
                 city=location_city,
                 postal_code=location_postal_code,
                 phone=location_phone,
+                latitude=location_latitude,
+                longitude=location_longitude,
                 is_primary=True,
                 is_active=True
             )
