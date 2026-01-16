@@ -105,39 +105,37 @@ def upgrade():
     # Check if table already exists
     result = conn.execute(sa.text("SELECT 1 FROM information_schema.tables WHERE table_name = 'tenant_message'"))
     if not result.fetchone():
-        op.create_table('tenant_message',
-            sa.Column('id', sa.Integer(), nullable=False),
-            sa.Column('tenant_id', sa.Integer(), nullable=False),
-            sa.Column('message_type', sa.Enum('SYSTEM', 'ADMIN', 'TENANT', 'SUPPLIER', name='messagetype', create_type=False), nullable=False),
-            sa.Column('sender_admin_id', sa.Integer(), nullable=True),
-            sa.Column('sender_tenant_id', sa.Integer(), nullable=True),
-            sa.Column('subject', sa.String(200), nullable=False),
-            sa.Column('body', sa.Text(), nullable=False),
-            sa.Column('action_url', sa.String(500), nullable=True),
-            sa.Column('action_label', sa.String(100), nullable=True),
-            sa.Column('priority', sa.Enum('LOW', 'NORMAL', 'HIGH', 'URGENT', name='messagepriority', create_type=False), nullable=False, server_default='NORMAL'),
-            sa.Column('category', sa.Enum('BILLING', 'PACKAGE_CHANGE', 'SYSTEM', 'SUPPORT', 'ANNOUNCEMENT', 'OTHER', name='messagecategory', create_type=False), nullable=False, server_default='SYSTEM'),
-            sa.Column('is_read', sa.Boolean(), nullable=False, server_default='false'),
-            sa.Column('read_at', sa.DateTime(), nullable=True),
-            sa.Column('read_by_user_id', sa.Integer(), nullable=True),
-            sa.Column('related_payment_id', sa.BigInteger(), nullable=True),
-            sa.Column('is_deleted', sa.Boolean(), nullable=False, server_default='false'),
-            sa.Column('deleted_at', sa.DateTime(), nullable=True),
-            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
-            sa.PrimaryKeyConstraint('id'),
-            sa.ForeignKeyConstraint(['tenant_id'], ['tenant.id'], ondelete='CASCADE'),
-            sa.ForeignKeyConstraint(['sender_admin_id'], ['platform_admin.id'], ondelete='SET NULL'),
-            sa.ForeignKeyConstraint(['sender_tenant_id'], ['tenant.id'], ondelete='SET NULL'),
-            sa.ForeignKeyConstraint(['read_by_user_id'], ['tenant_user.id'], ondelete='SET NULL'),
-            sa.ForeignKeyConstraint(['related_payment_id'], ['subscription_payment.id'], ondelete='SET NULL'),
-        )
+        # Use raw SQL to create table with existing enum types
+        # This avoids SQLAlchemy trying to recreate enum types
+        op.execute("""
+            CREATE TABLE tenant_message (
+                id SERIAL PRIMARY KEY,
+                tenant_id INTEGER NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+                message_type messagetype NOT NULL,
+                sender_admin_id INTEGER REFERENCES platform_admin(id) ON DELETE SET NULL,
+                sender_tenant_id INTEGER REFERENCES tenant(id) ON DELETE SET NULL,
+                subject VARCHAR(200) NOT NULL,
+                body TEXT NOT NULL,
+                action_url VARCHAR(500),
+                action_label VARCHAR(100),
+                priority messagepriority NOT NULL DEFAULT 'NORMAL',
+                category messagecategory NOT NULL DEFAULT 'SYSTEM',
+                is_read BOOLEAN NOT NULL DEFAULT false,
+                read_at TIMESTAMP,
+                read_by_user_id INTEGER REFERENCES tenant_user(id) ON DELETE SET NULL,
+                related_payment_id BIGINT REFERENCES subscription_payment(id) ON DELETE SET NULL,
+                is_deleted BOOLEAN NOT NULL DEFAULT false,
+                deleted_at TIMESTAMP,
+                created_at TIMESTAMP NOT NULL DEFAULT now()
+            )
+        """)
 
-        # Create indexes only if table was just created
-        op.create_index('ix_tenant_message_tenant_id', 'tenant_message', ['tenant_id'])
-        op.create_index('ix_tenant_message_is_read', 'tenant_message', ['is_read'])
-        op.create_index('ix_tenant_message_category', 'tenant_message', ['category'])
-        op.create_index('ix_tenant_message_created_at', 'tenant_message', ['created_at'])
-        op.create_index('ix_tenant_message_unread', 'tenant_message', ['tenant_id', 'is_read', 'is_deleted'])
+        # Create indexes
+        op.execute("CREATE INDEX ix_tenant_message_tenant_id ON tenant_message(tenant_id)")
+        op.execute("CREATE INDEX ix_tenant_message_is_read ON tenant_message(is_read)")
+        op.execute("CREATE INDEX ix_tenant_message_category ON tenant_message(category)")
+        op.execute("CREATE INDEX ix_tenant_message_created_at ON tenant_message(created_at)")
+        op.execute("CREATE INDEX ix_tenant_message_unread ON tenant_message(tenant_id, is_read, is_deleted)")
 
     # ============================================
     # 4. ADMIN_ACTION_TYPE ENUM - Add new values
