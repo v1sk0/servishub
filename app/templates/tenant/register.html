@@ -224,6 +224,9 @@
                             <p class="mt-1 text-sm" :class="checkingEmailVerification ? 'text-blue-700' : 'text-yellow-700'">
                                 Otvorite email i kliknite na link za verifikaciju. Ova strana će se automatski ažurirati.
                             </p>
+                            <p class="mt-1 text-xs text-yellow-600 font-medium">
+                                ⚠️ Proverite i SPAM/Junk folder ako ne vidite email!
+                            </p>
                             <!-- Resend button -->
                             <button type="button" @click="sendVerificationEmail()"
                                     x-show="!checkingEmailVerification"
