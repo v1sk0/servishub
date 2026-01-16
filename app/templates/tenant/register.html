@@ -176,22 +176,27 @@
                 </div>
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700">Email (za prijavu) *</label>
-                    <div class="flex space-x-2">
-                        <input type="email" id="email" x-model="form.owner_email"
-                               :readonly="isOAuth || emailVerified"
-                               :class="(isOAuth || emailVerified) ? 'bg-gray-100' : ''"
-                               class="mt-1 flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                        <button type="button" @click="sendVerificationEmail()"
-                                x-show="!emailVerified && !isOAuth"
-                                :disabled="sendingVerificationEmail || emailVerificationCooldown > 0 || !form.owner_email"
-                                class="mt-1 inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 whitespace-nowrap">
-                            <svg x-show="sendingVerificationEmail" class="animate-spin -ml-1 mr-1 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span x-text="emailVerificationCooldown > 0 ? 'Ponovo za ' + emailVerificationCooldown + 's' : (emailVerificationSent ? 'Pošalji ponovo' : 'Verifikuj')"></span>
-                        </button>
-                    </div>
+                    <input type="email" id="email" x-model="form.owner_email"
+                           :readonly="isOAuth || emailVerified"
+                           :class="(isOAuth || emailVerified) ? 'bg-gray-100' : ''"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+
+                <!-- Verify Email Button - shown when not verified and not OAuth -->
+                <div x-show="!emailVerified && !isOAuth && !emailVerificationSent">
+                    <button type="button" @click="sendVerificationEmail()"
+                            :disabled="sendingVerificationEmail || !form.owner_email"
+                            class="w-full inline-flex justify-center items-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg x-show="sendingVerificationEmail" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <svg x-show="!sendingVerificationEmail" class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <span x-text="sendingVerificationEmail ? 'Šaljem...' : 'Pošalji verifikacioni email'"></span>
+                    </button>
+                    <p class="mt-1 text-xs text-gray-500 text-center">Morate verifikovati email pre nastavka</p>
                 </div>
 
                 <!-- Email verification status - waiting -->
@@ -219,6 +224,13 @@
                             <p class="mt-1 text-sm" :class="checkingEmailVerification ? 'text-blue-700' : 'text-yellow-700'">
                                 Otvorite email i kliknite na link za verifikaciju. Ova strana će se automatski ažurirati.
                             </p>
+                            <!-- Resend button -->
+                            <button type="button" @click="sendVerificationEmail()"
+                                    x-show="!checkingEmailVerification"
+                                    :disabled="sendingVerificationEmail || emailVerificationCooldown > 0"
+                                    class="mt-2 text-sm font-medium text-yellow-800 hover:text-yellow-900 underline disabled:opacity-50 disabled:no-underline">
+                                <span x-text="emailVerificationCooldown > 0 ? 'Pošalji ponovo za ' + emailVerificationCooldown + 's' : 'Pošalji ponovo'"></span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -411,7 +423,10 @@
                 </button>
                 <div x-show="step === 1"></div>
 
-                <button type="submit" :disabled="loading || (step === 4 && !canSubmit)"
+                <!-- Dalje button - hidden on step 3 until email verified (unless OAuth) -->
+                <button type="submit"
+                        x-show="step !== 3 || emailVerified || isOAuth"
+                        :disabled="loading || (step === 4 && !canSubmit)"
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50">
                     <svg x-show="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
