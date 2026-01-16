@@ -17,6 +17,7 @@ from .inventory import PhoneListing, SparePart, PhoneCondition, PartVisibility, 
 from .supplier import Supplier, SupplierListing, SupplierUser, SupplierStatus
 from .order import PartOrder, PartOrderItem, PartOrderMessage, OrderStatus, SellerType, generate_order_number
 from .representative import ServiceRepresentative, RepresentativeStatus, SubscriptionPayment
+from .email_verification import PendingEmailVerification
 
 __all__ = [
     # Tenant modeli
@@ -66,4 +67,6 @@ __all__ = [
     'ServiceRepresentative',
     'RepresentativeStatus',
     'SubscriptionPayment',
+    # Email Verification modeli
+    'PendingEmailVerification',
 ]

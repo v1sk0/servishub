@@ -1,0 +1,149 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Verifikacija Email Adrese - ServisHub{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8" x-data="verifyEmailPage()">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <div class="flex justify-center">
+                <div class="w-16 h-16 bg-primary-600 rounded-xl flex items-center justify-center">
+                    <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                </div>
+            </div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Verifikacija Email Adrese
+            </h2>
+        </div>
+
+        <!-- Loading state -->
+        <div x-show="verifying" class="text-center">
+            <svg class="animate-spin h-12 w-12 text-primary-600 mx-auto" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="mt-4 text-gray-600">Verifikujem vašu email adresu...</p>
+        </div>
+
+        <!-- Success state -->
+        <div x-show="success" class="text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
+                <svg class="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h3 class="mt-4 text-lg font-medium text-gray-900">Email je verifikovan!</h3>
+            <p class="mt-2 text-gray-600">Vaša email adresa je uspešno potvrđena.</p>
+            <p class="mt-1 text-sm text-gray-500" x-text="'Email: ' + verifiedEmail"></p>
+
+            <div class="mt-6 space-y-3">
+                <p class="text-sm text-gray-600">
+                    Možete zatvoriti ovaj prozor i nastaviti sa registracijom u prethodnom tabu.
+                </p>
+                <div class="flex justify-center space-x-4">
+                    <a href="/register"
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700">
+                        Nova registracija
+                    </a>
+                    <button type="button" onclick="window.close()"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Zatvori prozor
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error state -->
+        <div x-show="error" class="text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100">
+                <svg class="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </div>
+            <h3 class="mt-4 text-lg font-medium text-gray-900">Verifikacija nije uspela</h3>
+            <p class="mt-2 text-gray-600" x-text="errorMessage"></p>
+
+            <div class="mt-6">
+                <a href="/register"
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700">
+                    Pokušaj ponovo
+                </a>
+            </div>
+        </div>
+
+        <!-- No token state -->
+        <div x-show="!verifying && !success && !error && !hasToken" class="text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100">
+                <svg class="h-10 w-10 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <h3 class="mt-4 text-lg font-medium text-gray-900">Neispravan link</h3>
+            <p class="mt-2 text-gray-600">Verifikacioni link nije ispravan ili je oštećen.</p>
+
+            <div class="mt-6">
+                <a href="/register"
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700">
+                    Nazad na registraciju
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+{% raw %}
+function verifyEmailPage() {
+    return {
+        verifying: false,
+        success: false,
+        error: false,
+        errorMessage: '',
+        verifiedEmail: '',
+        hasToken: false,
+
+        init() {
+            // Get token from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            if (token) {
+                this.hasToken = true;
+                this.verifyToken(token);
+            }
+        },
+
+        async verifyToken(token) {
+            this.verifying = true;
+
+            try {
+                const response = await fetch('/api/v1/auth/verify-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.verified) {
+                    this.success = true;
+                    this.verifiedEmail = data.email || '';
+                } else {
+                    this.error = true;
+                    this.errorMessage = data.message || 'Verifikacija nije uspela. Link je možda istekao ili je već iskorišćen.';
+                }
+            } catch (e) {
+                console.error('Verification error:', e);
+                this.error = true;
+                this.errorMessage = 'Greška pri povezivanju sa serverom. Pokušajte ponovo.';
+            } finally {
+                this.verifying = false;
+            }
+        }
+    }
+}
+{% endraw %}
+</script>
+{% endblock %}

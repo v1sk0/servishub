@@ -23,6 +23,16 @@ def register():
     return render_template('tenant/register.html')
 
 
+@bp.route('/verify-email')
+def verify_email():
+    """
+    Stranica za verifikaciju email adrese.
+    Korisnik dolazi ovde klikom na link iz emaila.
+    Token se cita iz URL query parametra i salje na API.
+    """
+    return render_template('tenant/verify_email.html')
+
+
 # ============== Dashboard ==============
 
 @bp.route('/dashboard')

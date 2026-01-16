@@ -31,6 +31,9 @@ def register():
     """
     Registracija novog servisa (tenanta).
 
+    VAZNO: Email vlasnika (owner_email) mora biti VERIFIKOVAN pre registracije!
+    Koristite /auth/send-verification-email i /auth/verify-email endpoints.
+
     Kreira preduzece, prvu lokaciju, owner korisnika i KYC predstavnika.
     Preduzece dobija DEMO status (7 dana pun pristup).
 
@@ -51,7 +54,7 @@ def register():
         - location_phone: Telefon lokacije (opciono)
 
     Request body (Korak 3 - Vlasnik):
-        - owner_email: Email vlasnika (za login)
+        - owner_email: Email vlasnika (za login) - MORA BITI VERIFIKOVAN
         - owner_password: Lozinka (opciono za OAuth)
         - owner_ime: Ime
         - owner_prezime: Prezime
@@ -69,7 +72,7 @@ def register():
 
     Returns:
         201: Uspesna registracija (DEMO 7 dana)
-        400: Validaciona greska
+        400: Validaciona greska ili email nije verifikovan
         409: Email/PIB vec postoji
     """
     try:
@@ -80,6 +83,22 @@ def register():
             'error': 'Validation Error',
             'details': e.errors()
         }), 400
+
+    # =========================================================================
+    # PROVERA: Email mora biti verifikovan pre registracije
+    # =========================================================================
+    from ...services.email_service import email_service
+
+    owner_email = data.owner_email.lower().strip()
+
+    # Skip email verifikaciju za Google OAuth korisnike (Google vec verifikuje email)
+    if not data.google_id:
+        if not email_service.is_email_verified(owner_email):
+            return jsonify({
+                'error': 'Email Not Verified',
+                'message': 'Email adresa mora biti verifikovana pre registracije. '
+                          'Kliknite na link u emailu koji smo vam poslali.'
+            }), 400
 
     try:
         tenant, user = auth_service.register_tenant(
@@ -112,6 +131,9 @@ def register():
             google_id=data.google_id,
             phone_verified=data.phone_verified
         )
+
+        # Obrisi verifikacioni zapis posle uspesne registracije
+        email_service.delete_verification(owner_email)
 
         return jsonify({
             'message': 'Registracija uspesna! Imate 7 dana DEMO perioda.',
@@ -657,3 +679,244 @@ def google_callback():
 
     except http_requests.RequestException:
         return redirect(f'/login?error=network')
+
+
+# =============================================================================
+# Email Verifikacija
+# =============================================================================
+
+@bp.route('/send-verification-email', methods=['POST'])
+def send_verification_email():
+    """
+    Salje verifikacioni email na zadatu adresu.
+
+    Koristi se TOKOM registracije, PRE nego sto se kreira korisnik.
+    Korisnik mora da potvrdi email pre nego sto moze da nastavi.
+
+    Request body:
+        - email: Email adresa za verifikaciju
+
+    Returns:
+        200: Email uspesno poslat
+        400: Neispravan email
+        429: Previse pokusaja (rate limiting)
+    """
+    from ...services.email_service import email_service, EmailError
+    import os
+
+    data = request.get_json() or {}
+    email = data.get('email', '').lower().strip()
+
+    if not email:
+        return jsonify({
+            'error': 'Validation Error',
+            'message': 'Email adresa je obavezna'
+        }), 400
+
+    # Osnovna validacija email formata
+    if '@' not in email or '.' not in email.split('@')[-1]:
+        return jsonify({
+            'error': 'Validation Error',
+            'message': 'Neispravan format email adrese'
+        }), 400
+
+    # Proveri da li email vec postoji u sistemu
+    from ...models import TenantUser, Tenant
+    existing_user = TenantUser.query.filter_by(email=email).first()
+    if existing_user:
+        return jsonify({
+            'error': 'Validation Error',
+            'message': 'Email adresa je vec registrovana'
+        }), 400
+
+    existing_tenant = Tenant.query.filter_by(email=email).first()
+    if existing_tenant:
+        return jsonify({
+            'error': 'Validation Error',
+            'message': 'Email adresa je vec registrovana'
+        }), 400
+
+    try:
+        success, message, dev_token = email_service.send_verification_email(email)
+
+        response = {
+            'message': 'Verifikacioni email je poslat na vasu adresu. '
+                      'Proverite inbox i kliknite na link za verifikaciju.'
+        }
+
+        # U dev modu, vrati token i URL za testiranje
+        if dev_token:
+            response['dev_token'] = dev_token
+            response['dev_verification_url'] = f"{email_service.frontend_url}/verify-email?token={dev_token}"
+
+        return jsonify(response), 200
+
+    except EmailError as e:
+        return jsonify({
+            'error': 'Email Error',
+            'message': e.message
+        }), e.code
+
+
+@bp.route('/verify-email', methods=['GET'])
+def verify_email():
+    """
+    Verifikuje email token iz linka u emailu.
+
+    Korisnik klikne link u emailu koji ga dovodi ovde.
+    Nakon uspesne verifikacije, redirektuje na registracionu formu.
+
+    Query params:
+        - token: Verifikacioni token
+
+    Returns:
+        302: Redirect na registraciju sa statusom
+    """
+    from flask import redirect
+    from ...services.email_service import email_service
+    import os
+
+    token = request.args.get('token')
+    frontend_url = os.environ.get('FRONTEND_URL', 'https://app.servishub.rs')
+
+    if not token:
+        return redirect(f'{frontend_url}/register?email_verified=false&error=missing_token')
+
+    success, result = email_service.verify_email_token(token)
+
+    if success:
+        # result je email adresa
+        return redirect(f'{frontend_url}/register?email_verified=true&email={result}')
+    else:
+        # result je error message
+        return redirect(f'{frontend_url}/register?email_verified=false&error={result}')
+
+
+@bp.route('/verify-email', methods=['POST'])
+def verify_email_api():
+    """
+    API verzija verifikacije tokena (za SPA).
+
+    Request body:
+        - token: Verifikacioni token
+
+    Returns:
+        200: Verifikacija uspesna
+        400: Neispravan ili istekao token
+    """
+    from ...services.email_service import email_service
+
+    data = request.get_json() or {}
+    token = data.get('token')
+
+    if not token:
+        return jsonify({
+            'error': 'Validation Error',
+            'message': 'Token je obavezan'
+        }), 400
+
+    success, result = email_service.verify_email_token(token)
+
+    if success:
+        return jsonify({
+            'message': 'Email uspesno verifikovan!',
+            'email': result,
+            'verified': True
+        }), 200
+    else:
+        return jsonify({
+            'error': 'Verification Error',
+            'message': result,
+            'verified': False
+        }), 400
+
+
+@bp.route('/check-email-verified', methods=['POST'])
+def check_email_verified():
+    """
+    Proverava da li je email verifikovan.
+
+    Koristi se od strane frontenda za polling dok korisnik
+    ceka da klikne link u emailu.
+
+    Request body:
+        - email: Email adresa za proveru
+
+    Returns:
+        200: Status verifikacije
+    """
+    from ...services.email_service import email_service
+
+    data = request.get_json() or {}
+    email = data.get('email', '').lower().strip()
+
+    if not email:
+        return jsonify({
+            'error': 'Validation Error',
+            'message': 'Email adresa je obavezna'
+        }), 400
+
+    is_verified = email_service.is_email_verified(email)
+
+    return jsonify({
+        'email': email,
+        'verified': is_verified
+    }), 200
+
+
+@bp.route('/resend-verification-email', methods=['POST'])
+def resend_verification_email():
+    """
+    Ponovo salje verifikacioni email.
+
+    Ima rate limiting - moze se pozvati jednom na 60 sekundi.
+
+    Request body:
+        - email: Email adresa
+
+    Returns:
+        200: Email poslat
+        429: Previse pokusaja
+    """
+    from ...services.email_service import email_service, EmailError
+
+    data = request.get_json() or {}
+    email = data.get('email', '').lower().strip()
+
+    if not email:
+        return jsonify({
+            'error': 'Validation Error',
+            'message': 'Email adresa je obavezna'
+        }), 400
+
+    # Proveri rate limiting
+    can_send, seconds_remaining = email_service.can_resend(email)
+    if not can_send:
+        if seconds_remaining == -1:
+            return jsonify({
+                'error': 'Rate Limit Error',
+                'message': 'Previse pokusaja. Pokusajte ponovo za nekoliko sati.'
+            }), 429
+        return jsonify({
+            'error': 'Rate Limit Error',
+            'message': f'Molimo sacekajte {seconds_remaining} sekundi pre nego sto zatrazite novi email.',
+            'seconds_remaining': seconds_remaining
+        }), 429
+
+    try:
+        success, message, dev_token = email_service.send_verification_email(email)
+
+        response = {
+            'message': 'Verifikacioni email je ponovo poslat.'
+        }
+
+        if dev_token:
+            response['dev_token'] = dev_token
+
+        return jsonify(response), 200
+
+    except EmailError as e:
+        return jsonify({
+            'error': 'Email Error',
+            'message': e.message
+        }), e.code

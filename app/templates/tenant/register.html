@@ -176,13 +176,61 @@
                 </div>
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700">Email (za prijavu) *</label>
-                    <input type="email" id="email" x-model="form.owner_email"
-                           :readonly="isOAuth"
-                           :class="isOAuth ? 'bg-gray-100' : ''"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    <div class="flex space-x-2">
+                        <input type="email" id="email" x-model="form.owner_email"
+                               :readonly="isOAuth || emailVerified"
+                               :class="(isOAuth || emailVerified) ? 'bg-gray-100' : ''"
+                               class="mt-1 flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                        <button type="button" @click="sendVerificationEmail()"
+                                x-show="!emailVerified && !isOAuth && form.owner_email"
+                                :disabled="sendingVerificationEmail || emailVerificationCooldown > 0"
+                                class="mt-1 inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 whitespace-nowrap">
+                            <svg x-show="sendingVerificationEmail" class="animate-spin -ml-1 mr-1 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span x-text="emailVerificationCooldown > 0 ? 'Ponovo za ' + emailVerificationCooldown + 's' : (emailVerificationSent ? 'Pošalji ponovo' : 'Verifikuj')"></span>
+                        </button>
+                    </div>
                 </div>
+
+                <!-- Email verification status -->
+                <div x-show="emailVerificationSent && !emailVerified" class="rounded-lg border p-4"
+                     :class="checkingEmailVerification ? 'bg-blue-50 border-blue-200' : 'bg-yellow-50 border-yellow-200'">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <svg x-show="checkingEmailVerification" class="animate-spin h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <svg x-show="!checkingEmailVerification" class="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-medium" :class="checkingEmailVerification ? 'text-blue-800' : 'text-yellow-800'">
+                                <span x-show="checkingEmailVerification">Proveravam verifikaciju...</span>
+                                <span x-show="!checkingEmailVerification">Verifikacioni email je poslat!</span>
+                            </p>
+                            <p class="mt-1 text-sm" :class="checkingEmailVerification ? 'text-blue-700' : 'text-yellow-700'">
+                                Otvorite email i kliknite na link za verifikaciju. Ova strana će se automatski ažurirati.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email verified success -->
+                <div x-show="emailVerified" class="rounded-lg bg-green-50 border border-green-200 p-4">
+                    <div class="flex items-center">
+                        <svg class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="ml-3 text-sm font-medium text-green-800">Email adresa je verifikovana!</p>
+                    </div>
+                </div>
+
                 <div>
-                    <label for="owner_phone" class="block text-sm font-medium text-gray-700">Mobilni telefon * (za SMS verifikaciju)</label>
+                    <label for="owner_phone" class="block text-sm font-medium text-gray-700">Mobilni telefon *</label>
                     <input type="tel" id="owner_phone" x-model="form.owner_phone"
                            placeholder="+381 64..."
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
@@ -405,7 +453,15 @@ window.registerPage = function() {
         acceptTerms: false,
         isOAuth: isOAuthFlow,
 
-        // OTP
+        // Email verification
+        emailVerified: false,
+        emailVerificationSent: false,
+        sendingVerificationEmail: false,
+        checkingEmailVerification: false,
+        emailVerificationCooldown: 0,
+        emailPollingInterval: null,
+
+        // OTP (SMS)
         otpSent: false,
         otpCode: '',
         sendingOtp: false,
@@ -442,7 +498,8 @@ window.registerPage = function() {
             kyc_lk_back_url: '',
             // OAuth
             google_id: '',
-            phone_verified: false
+            phone_verified: false,
+            email_verified: false
         },
 
         get canSubmit() {
@@ -552,6 +609,120 @@ window.registerPage = function() {
                     clearInterval(interval);
                 }
             }, 1000);
+        },
+
+        // Email verification methods
+        async sendVerificationEmail() {
+            if (!this.form.owner_email) {
+                this.error = 'Unesite email adresu';
+                return;
+            }
+
+            // Basic email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(this.form.owner_email)) {
+                this.error = 'Unesite validnu email adresu';
+                return;
+            }
+
+            this.sendingVerificationEmail = true;
+            this.error = '';
+
+            try {
+                const response = await fetch('/api/v1/auth/send-verification-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: this.form.owner_email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    this.emailVerificationSent = true;
+                    this.startEmailVerificationCooldown();
+                    this.startEmailVerificationPolling();
+
+                    // In dev mode, auto-verify (if token returned)
+                    if (data.dev_token) {
+                        console.log('[DEV] Verification token:', data.dev_token);
+                        console.log('[DEV] Use this URL to verify: /api/v1/auth/verify-email?token=' + data.dev_token);
+                    }
+                } else {
+                    this.error = data.message || 'Greška pri slanju verifikacionog emaila';
+                }
+            } catch (e) {
+                console.error('Email verification error:', e);
+                this.error = 'Greška pri povezivanju sa serverom';
+            } finally {
+                this.sendingVerificationEmail = false;
+            }
+        },
+
+        startEmailVerificationCooldown() {
+            this.emailVerificationCooldown = 60;
+            const interval = setInterval(() => {
+                this.emailVerificationCooldown--;
+                if (this.emailVerificationCooldown <= 0) {
+                    clearInterval(interval);
+                }
+            }, 1000);
+        },
+
+        startEmailVerificationPolling() {
+            // Stop any existing polling
+            if (this.emailPollingInterval) {
+                clearInterval(this.emailPollingInterval);
+            }
+
+            // Poll every 3 seconds for verification status
+            this.emailPollingInterval = setInterval(async () => {
+                await this.checkEmailVerification();
+            }, 3000);
+        },
+
+        async checkEmailVerification() {
+            if (this.emailVerified) {
+                // Stop polling if already verified
+                if (this.emailPollingInterval) {
+                    clearInterval(this.emailPollingInterval);
+                    this.emailPollingInterval = null;
+                }
+                return;
+            }
+
+            this.checkingEmailVerification = true;
+
+            try {
+                const response = await fetch('/api/v1/auth/check-email-verified', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: this.form.owner_email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.verified) {
+                    this.emailVerified = true;
+                    this.form.email_verified = true;
+
+                    // Stop polling
+                    if (this.emailPollingInterval) {
+                        clearInterval(this.emailPollingInterval);
+                        this.emailPollingInterval = null;
+                    }
+                }
+            } catch (e) {
+                console.error('Check email verification error:', e);
+            } finally {
+                this.checkingEmailVerification = false;
+            }
+        },
+
+        stopEmailPolling() {
+            if (this.emailPollingInterval) {
+                clearInterval(this.emailPollingInterval);
+                this.emailPollingInterval = null;
+            }
         },
 
         async uploadImage(event, side) {
@@ -679,6 +850,12 @@ window.registerPage = function() {
             if (this.step === 3) {
                 if (!this.form.owner_ime || !this.form.owner_prezime || !this.form.owner_email || !this.form.owner_phone) {
                     this.error = 'Popunite sva obavezna polja';
+                    return;
+                }
+
+                // Email verification is required (unless OAuth)
+                if (!this.isOAuth && !this.emailVerified) {
+                    this.error = 'Morate verifikovati email adresu pre nastavka';
                     return;
                 }
 
