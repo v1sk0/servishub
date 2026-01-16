@@ -109,6 +109,16 @@
                            placeholder="Ulica i broj"
                            :class="aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300'"
                            class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    <!-- Mapa za prikaz adrese firme -->
+                    <div id="company_map_container" class="mt-2 hidden">
+                        <div id="company_map" class="w-full h-48 rounded-lg border border-gray-300"></div>
+                        <p class="mt-1 text-xs text-green-600 flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Lokacija potvrđena na mapi
+                        </p>
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -323,6 +333,16 @@
                     <label for="location_address" class="block text-sm font-medium text-gray-700">Adresa *</label>
                     <input type="text" id="location_address" x-model="form.location_address"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    <!-- Mapa za prikaz adrese lokacije -->
+                    <div id="location_map_container" class="mt-2 hidden">
+                        <div id="location_map" class="w-full h-48 rounded-lg border border-gray-300"></div>
+                        <p class="mt-1 text-xs text-green-600 flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Lokacija servisa potvrđena na mapi
+                        </p>
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -1108,6 +1128,10 @@ console.log('registerPage defined globally:', typeof registerPage);
 // Google Maps Places Autocomplete initialization
 let companyAddressAutocomplete = null;
 let locationAddressAutocomplete = null;
+let companyMap = null;
+let locationMap = null;
+let companyMarker = null;
+let locationMarker = null;
 
 function initGooglePlacesAutocomplete() {
     console.log('[Google Places] Initializing autocomplete...');
@@ -1127,6 +1151,11 @@ function initGooglePlacesAutocomplete() {
 
             if (place.address_components) {
                 fillAddressFields(place.address_components, 'company');
+            }
+
+            // Prikazi mapu sa markerom
+            if (place.geometry && place.geometry.location) {
+                showMapWithMarker('company', place.geometry.location, place.formatted_address);
             }
         });
         console.log('[Google Places] Company address autocomplete initialized');
@@ -1148,9 +1177,84 @@ function initGooglePlacesAutocomplete() {
             if (place.address_components) {
                 fillAddressFields(place.address_components, 'location');
             }
+
+            // Prikazi mapu sa markerom
+            if (place.geometry && place.geometry.location) {
+                showMapWithMarker('location', place.geometry.location, place.formatted_address);
+            }
         });
         console.log('[Google Places] Location address autocomplete initialized');
     }
+}
+
+function showMapWithMarker(prefix, location, address) {
+    console.log('[Google Maps] Showing map for', prefix, 'at', location.lat(), location.lng());
+
+    const mapContainerId = prefix + '_map_container';
+    const mapId = prefix + '_map';
+    const mapContainer = document.getElementById(mapContainerId);
+    const mapElement = document.getElementById(mapId);
+
+    if (!mapContainer || !mapElement) {
+        console.error('[Google Maps] Map container not found:', mapContainerId);
+        return;
+    }
+
+    // Prikazi container
+    mapContainer.classList.remove('hidden');
+
+    // Kreiraj ili azuriraj mapu
+    const mapOptions = {
+        center: location,
+        zoom: 17,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        zoomControl: true
+    };
+
+    if (prefix === 'company') {
+        if (!companyMap) {
+            companyMap = new google.maps.Map(mapElement, mapOptions);
+        } else {
+            companyMap.setCenter(location);
+        }
+
+        // Ukloni stari marker ako postoji
+        if (companyMarker) {
+            companyMarker.setMap(null);
+        }
+
+        // Kreiraj novi marker
+        companyMarker = new google.maps.Marker({
+            position: location,
+            map: companyMap,
+            title: address,
+            animation: google.maps.Animation.DROP
+        });
+
+    } else if (prefix === 'location') {
+        if (!locationMap) {
+            locationMap = new google.maps.Map(mapElement, mapOptions);
+        } else {
+            locationMap.setCenter(location);
+        }
+
+        // Ukloni stari marker ako postoji
+        if (locationMarker) {
+            locationMarker.setMap(null);
+        }
+
+        // Kreiraj novi marker
+        locationMarker = new google.maps.Marker({
+            position: location,
+            map: locationMap,
+            title: address,
+            animation: google.maps.Animation.DROP
+        });
+    }
+
+    console.log('[Google Maps] Map and marker displayed for', prefix);
 }
 
 function fillAddressFields(addressComponents, prefix) {
