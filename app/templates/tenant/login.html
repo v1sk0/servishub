@@ -157,6 +157,9 @@ function loginForm() {
                     case 'csrf_invalid':
                         this.error = 'Sesija je istekla. Pokušajte ponovo.';
                         break;
+                    case 'pkce_invalid':
+                        this.error = 'Sigurnosna verifikacija nije uspela. Pokušajte ponovo.';
+                        break;
                     case 'token_exchange':
                     case 'userinfo':
                     case 'network':

@@ -103,7 +103,69 @@ if not state or not stored_state or state != stored_state:
 - URL-safe enkodiranje
 - Jednokratna upotreba (briše se iz sesije nakon provere)
 
-### 2.2 Siguran Transfer Tokena
+### 2.2 PKCE (Proof Key for Code Exchange)
+
+**Problem:** Čak i sa CSRF zaštitom, napadač može presresti authorization code (npr. kroz maliciozni redirect ili browser extension) i iskoristiti ga pre legitimnog korisnika.
+
+**Rešenje - PKCE S256:**
+```python
+# Generisanje code_verifier i code_challenge (auth.py)
+import hashlib
+import base64
+
+# 1. Generiši random code_verifier (64 bajta = 86 karaktera)
+code_verifier = secrets.token_urlsafe(64)
+session['oauth_code_verifier'] = code_verifier
+
+# 2. Kreiraj code_challenge = BASE64URL(SHA256(code_verifier))
+code_challenge_bytes = hashlib.sha256(code_verifier.encode('ascii')).digest()
+code_challenge = base64.urlsafe_b64encode(code_challenge_bytes).rstrip(b'=').decode('ascii')
+
+# 3. Pošalji code_challenge u authorization request
+params = {
+    ...
+    'code_challenge': code_challenge,
+    'code_challenge_method': 'S256'
+}
+
+# 4. U callback-u, pošalji code_verifier pri razmeni koda
+token_response = http_requests.post(
+    'https://oauth2.googleapis.com/token',
+    data={
+        ...
+        'code_verifier': code_verifier  # Google verifikuje SHA256(verifier) == challenge
+    }
+)
+```
+
+**Kako PKCE štiti:**
+- Napadač koji presretne authorization code NE MOŽE ga iskoristiti
+- Nema `code_verifier` koji je sačuvan samo u sesiji legitimnog korisnika
+- Google odbija razmenu koda bez validnog `code_verifier`
+
+### 2.3 Nonce (Replay Protection)
+
+**Problem:** Napadač može pokušati replay napad koristeći stari authorization response.
+
+**Rešenje:**
+```python
+# Generiši nonce i sačuvaj u sesiju
+nonce = secrets.token_urlsafe(32)
+session['oauth_nonce'] = nonce
+
+# Pošalji u authorization request
+params = {
+    ...
+    'nonce': nonce
+}
+```
+
+**Karakteristike:**
+- Jednokratna vrednost (number used once)
+- Vraća se u ID tokenu od Google-a
+- Može se verifikovati da odgovara originalnom zahtevu
+
+### 2.4 Siguran Transfer Tokena
 
 **Problem:** Prenošenje JWT tokena kroz URL parametar je nesigurno jer:
 - Token se pojavljuje u browser history-ju
@@ -146,7 +208,7 @@ if (authMethod === 'oauth') {
 - Endpoint `/api/v1/auth/google/tokens` je one-time use
 - URL se čisti nakon preuzimanja tokena
 
-### 2.3 One-Time Token Endpoint
+### 2.5 One-Time Token Endpoint
 
 ```python
 # auth.py, linija 617-644
@@ -173,6 +235,29 @@ def google_tokens():
     }), 200
 ```
 
+### 2.6 Session Cookie Security
+
+Flask session koristi cookie za čuvanje OAuth podataka (state, code_verifier, nonce). Sledeća podešavanja obezbeđuju sigurnost:
+
+**Konfiguracija (config.py):**
+```python
+# Bazna konfiguracija
+SESSION_COOKIE_HTTPONLY = True   # JavaScript ne može pristupiti cookie-u
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF zaštita za cookies
+PERMANENT_SESSION_LIFETIME = timedelta(hours=1)  # Sesija ističe nakon 1 sat
+
+# Produkcija (dodatno)
+SESSION_COOKIE_SECURE = True     # Cookie se šalje samo preko HTTPS
+```
+
+**Zaštite:**
+| Flag | Vrednost | Zaštita |
+|------|----------|---------|
+| `HTTPONLY` | True | XSS napadi ne mogu ukrasti cookie |
+| `SAMESITE` | Lax | CSRF napadi ne mogu koristiti cookie |
+| `SECURE` | True (prod) | MitM napadi ne mogu presresti cookie |
+| `LIFETIME` | 1 sat | Ograničen prozor za napade |
+
 ---
 
 ## 3. API Endpoints
@@ -193,7 +278,7 @@ def google_tokens():
 **Response (200):**
 ```json
 {
-    "auth_url": "https://accounts.google.com/o/oauth2/v2/auth?client_id=xxx&redirect_uri=xxx&response_type=code&scope=openid%20email%20profile&access_type=offline&prompt=select_account&state=xxx"
+    "auth_url": "https://accounts.google.com/o/oauth2/v2/auth?client_id=xxx&redirect_uri=xxx&response_type=code&scope=openid%20email%20profile&access_type=offline&prompt=select_account&state=xxx&code_challenge=xxx&code_challenge_method=S256&nonce=xxx"
 }
 ```
 
@@ -315,6 +400,7 @@ SECRET_KEY=your-secret-key-min-32-chars
 | `no_code` | Google nije vratio code | "Greška pri Google prijavi. Pokušajte ponovo." |
 | `config` | OAuth nije konfigurisan | "Google prijava nije konfigurisana." |
 | `csrf_invalid` | State se ne poklapa | "Sesija je istekla. Pokušajte ponovo." |
+| `pkce_invalid` | Code verifier nije pronađen | "Sigurnosna verifikacija nije uspela. Pokušajte ponovo." |
 | `token_exchange` | Greška pri razmeni tokena | "Greška u komunikaciji sa Google servisom." |
 | `userinfo` | Greška pri dohvatanju podataka | "Greška u komunikaciji sa Google servisom." |
 | `network` | Mrežna greška | "Greška u komunikaciji sa Google servisom." |
@@ -346,21 +432,31 @@ if (error) {
 - [ ] Login postojećeg korisnika preko Google-a
 - [ ] Registracija novog korisnika preko Google-a
 - [ ] CSRF zaštita - pokušaj sa pogrešnim state
+- [ ] PKCE zaštita - pokušaj bez code_verifier
 - [ ] Token nije vidljiv u URL-u nakon login-a
 - [ ] Token endpoint vraća 404 pri drugom pozivu (one-time)
 - [ ] OAuth korisnik može da se uloguje bez lozinke
 - [ ] Povezivanje Google naloga sa postojećim email nalogom
 - [ ] Error handling za sve error case-ove
+- [ ] Session cookie ima HttpOnly flag
+- [ ] Session cookie ima SameSite=Lax
+- [ ] Session cookie ima Secure flag (samo HTTPS, produkcija)
 
-### 8.2 Manuelno Testiranje CSRF Zaštite
+### 8.2 Manuelno Testiranje Sigurnosti
 
 ```bash
-# 1. Dobij OAuth URL bez validnog state-a
-curl "https://servicehubdolce-4c283dce32e9.herokuapp.com/api/v1/auth/google"
-
-# 2. Pokušaj callback sa lažnim state-om
+# 1. Test CSRF zaštite - pokušaj callback sa lažnim state-om
 curl "https://servicehubdolce-4c283dce32e9.herokuapp.com/api/v1/auth/google/callback?code=xxx&state=fake"
 # Očekivani rezultat: Redirect na /login?error=csrf_invalid
+
+# 2. Test PKCE zaštite - pokušaj callback bez aktivne sesije
+# (code_verifier nije u sesiji jer je nova sesija)
+curl "https://servicehubdolce-4c283dce32e9.herokuapp.com/api/v1/auth/google/callback?code=xxx&state=valid_but_no_session"
+# Očekivani rezultat: Redirect na /login?error=pkce_invalid
+
+# 3. Proveri session cookie flags
+curl -I "https://servicehubdolce-4c283dce32e9.herokuapp.com/login"
+# Očekivano u Set-Cookie: HttpOnly; SameSite=Lax; Secure
 ```
 
 ---
@@ -375,9 +471,9 @@ curl "https://servicehubdolce-4c283dce32e9.herokuapp.com/api/v1/auth/google/call
 
 ### 9.2 Token Expiry
 
-- OAuth state token nema eksplicitni TTL
-- Zavisi od Flask session lifetime
-- Preporuka: Postaviti `PERMANENT_SESSION_LIFETIME`
+- OAuth state, code_verifier i nonce su u Flask sesiji
+- ✅ `PERMANENT_SESSION_LIFETIME = 1 sat` je konfigurisan
+- Svi OAuth podaci automatski ističu nakon 1 sat neaktivnosti
 
 ### 9.3 Multiple Tabs
 
@@ -388,11 +484,11 @@ curl "https://servicehubdolce-4c283dce32e9.herokuapp.com/api/v1/auth/google/call
 
 ## 10. Buduća Poboljšanja
 
-1. **Refresh Token za Google** - Čuvanje Google refresh tokena za dugoročni pristup
-2. **Apple Sign In** - Dodati podršku za Apple OAuth
-3. **2FA** - Dvofaktorska autentifikacija
-4. **Session Management** - Pregled i revokacija aktivnih sesija
-5. **Rate Limiting** - Ograničiti broj OAuth pokušaja po IP-u
+1. **Apple Sign In** - Dodati podršku za Apple OAuth
+2. **2FA** - Dvofaktorska autentifikacija
+3. **Session Management** - Pregled i revokacija aktivnih sesija
+4. **Rate Limiting** - Ograničiti broj OAuth pokušaja po IP-u
+5. **Token Binding** - Vezivanje tokena za specifični uređaj/browser
 
 ---
 
@@ -400,12 +496,23 @@ curl "https://servicehubdolce-4c283dce32e9.herokuapp.com/api/v1/auth/google/call
 
 - [Google OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2)
 - [OAuth 2.0 Security Best Practices](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics)
+- [PKCE RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
 - [Flask Session Documentation](https://flask.palletsprojects.com/en/3.0.x/api/#sessions)
 - [OWASP OAuth Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/OAuth_Cheat_Sheet.html)
 
 ---
 
 ## 12. Changelog
+
+### v1.1 (16.01.2026)
+- ✅ Dodat PKCE (Proof Key for Code Exchange) - SHA256 metod
+- ✅ Dodat nonce parametar za replay protection
+- ✅ Konfigurisani session cookie security flags:
+  - HttpOnly (sprečava XSS krađu)
+  - SameSite=Lax (CSRF zaštita)
+  - Secure (samo HTTPS u produkciji)
+- ✅ Postavljen PERMANENT_SESSION_LIFETIME = 1 sat
+- Ažurirana dokumentacija
 
 ### v1.0 (16.01.2026)
 - Inicijalna implementacija Google OAuth

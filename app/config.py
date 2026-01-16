@@ -19,6 +19,11 @@ class Config:
     # Flask core
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 
+    # Session Cookie Security
+    SESSION_COOKIE_HTTPONLY = True  # JavaScript ne može pristupiti cookie-u
+    SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF zaštita za cookies
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=1)  # OAuth sesija ističe nakon 1 sat
+
     # Database
     SQLALCHEMY_DATABASE_URI = os.getenv(
         'DATABASE_URL',
@@ -102,6 +107,9 @@ class ProductionConfig(Config):
 
     # U produkciji SECRET_KEY MORA biti postavljen - koristi iz env ili baci gresku
     SECRET_KEY = os.getenv('SECRET_KEY') or Config.SECRET_KEY
+
+    # Session Cookie Security - HTTPS only u produkciji
+    SESSION_COOKIE_SECURE = True  # Cookie se šalje samo preko HTTPS
 
     # Stroza engine podesavanja za produkciju
     SQLALCHEMY_ENGINE_OPTIONS = {

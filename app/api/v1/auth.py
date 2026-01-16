@@ -549,6 +549,8 @@ def google_login():
     """
     import os
     import secrets
+    import hashlib
+    import base64
     from urllib.parse import urlencode
     from flask import session
 
@@ -566,7 +568,20 @@ def google_login():
     state = secrets.token_urlsafe(32)
     session['oauth_state'] = state
 
-    # Google OAuth URL sa state parametrom
+    # PKCE (Proof Key for Code Exchange) - zaštita od presretanja authorization code-a
+    # Generiši code_verifier (43-128 karaktera, URL-safe)
+    code_verifier = secrets.token_urlsafe(64)  # 64 bajta = 86 karaktera nakon encoding-a
+    session['oauth_code_verifier'] = code_verifier
+
+    # Kreiraj code_challenge = BASE64URL(SHA256(code_verifier))
+    code_challenge_bytes = hashlib.sha256(code_verifier.encode('ascii')).digest()
+    code_challenge = base64.urlsafe_b64encode(code_challenge_bytes).rstrip(b'=').decode('ascii')
+
+    # Nonce za dodatnu zaštitu od replay napada (OpenID Connect)
+    nonce = secrets.token_urlsafe(32)
+    session['oauth_nonce'] = nonce
+
+    # Google OAuth URL sa state, PKCE i nonce parametrima
     params = {
         'client_id': client_id,
         'redirect_uri': redirect_uri,
@@ -574,7 +589,10 @@ def google_login():
         'scope': 'openid email profile',
         'access_type': 'offline',
         'prompt': 'select_account',
-        'state': state  # CSRF zaštita
+        'state': state,  # CSRF zaštita
+        'code_challenge': code_challenge,  # PKCE
+        'code_challenge_method': 'S256',  # SHA256 metod
+        'nonce': nonce  # Replay protection
     }
 
     google_auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
@@ -682,6 +700,15 @@ def google_callback():
     if not state or not stored_state or state != stored_state:
         return redirect(f'/login?error=csrf_invalid')
 
+    # PKCE: Preuzmi code_verifier iz sesije
+    code_verifier = session.pop('oauth_code_verifier', None)
+    if not code_verifier:
+        # Ako nema code_verifier, neko pokušava replay napad
+        return redirect(f'/login?error=pkce_invalid')
+
+    # Preuzmi i nonce (za kasniju verifikaciju ako je potrebna)
+    stored_nonce = session.pop('oauth_nonce', None)
+
     client_id = os.environ.get('GOOGLE_CLIENT_ID')
     client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
     redirect_uri = os.environ.get('GOOGLE_REDIRECT_URI',
@@ -690,7 +717,7 @@ def google_callback():
     if not client_id or not client_secret:
         return redirect(f'/login?error=config')
 
-    # Razmeni code za token
+    # Razmeni code za token sa PKCE code_verifier
     try:
         token_response = http_requests.post(
             'https://oauth2.googleapis.com/token',
@@ -699,7 +726,8 @@ def google_callback():
                 'client_id': client_id,
                 'client_secret': client_secret,
                 'redirect_uri': redirect_uri,
-                'grant_type': 'authorization_code'
+                'grant_type': 'authorization_code',
+                'code_verifier': code_verifier  # PKCE verifikacija
             },
             timeout=10
         )
