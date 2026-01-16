@@ -84,50 +84,60 @@ def upgrade():
     # 3. TENANT_MESSAGE TABLE - Create new table
     # ============================================
 
-    # Create MessageType enum
-    message_type_enum = postgresql.ENUM('SYSTEM', 'ADMIN', 'TENANT', 'SUPPLIER', name='messagetype', create_type=False)
-    message_type_enum.create(op.get_bind(), checkfirst=True)
+    # Create enums only if they don't exist
+    conn = op.get_bind()
 
-    # Create MessagePriority enum
-    message_priority_enum = postgresql.ENUM('LOW', 'NORMAL', 'HIGH', 'URGENT', name='messagepriority', create_type=False)
-    message_priority_enum.create(op.get_bind(), checkfirst=True)
+    # Check and create MessageType enum
+    result = conn.execute(sa.text("SELECT 1 FROM pg_type WHERE typname = 'messagetype'"))
+    if not result.fetchone():
+        op.execute("CREATE TYPE messagetype AS ENUM ('SYSTEM', 'ADMIN', 'TENANT', 'SUPPLIER')")
 
-    # Create MessageCategory enum
-    message_category_enum = postgresql.ENUM('BILLING', 'PACKAGE_CHANGE', 'SYSTEM', 'SUPPORT', 'ANNOUNCEMENT', 'OTHER', name='messagecategory', create_type=False)
-    message_category_enum.create(op.get_bind(), checkfirst=True)
+    # Check and create MessagePriority enum
+    result = conn.execute(sa.text("SELECT 1 FROM pg_type WHERE typname = 'messagepriority'"))
+    if not result.fetchone():
+        op.execute("CREATE TYPE messagepriority AS ENUM ('LOW', 'NORMAL', 'HIGH', 'URGENT')")
 
-    op.create_table('tenant_message',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('tenant_id', sa.Integer(), nullable=False),
-        sa.Column('message_type', sa.Enum('SYSTEM', 'ADMIN', 'TENANT', 'SUPPLIER', name='messagetype'), nullable=False),
-        sa.Column('sender_admin_id', sa.Integer(), nullable=True),
-        sa.Column('sender_tenant_id', sa.Integer(), nullable=True),
-        sa.Column('subject', sa.String(200), nullable=False),
-        sa.Column('body', sa.Text(), nullable=False),
-        sa.Column('action_url', sa.String(500), nullable=True),
-        sa.Column('action_label', sa.String(100), nullable=True),
-        sa.Column('priority', sa.Enum('LOW', 'NORMAL', 'HIGH', 'URGENT', name='messagepriority'), nullable=False, server_default='NORMAL'),
-        sa.Column('category', sa.Enum('BILLING', 'PACKAGE_CHANGE', 'SYSTEM', 'SUPPORT', 'ANNOUNCEMENT', 'OTHER', name='messagecategory'), nullable=False, server_default='SYSTEM'),
-        sa.Column('is_read', sa.Boolean(), nullable=False, server_default='false'),
-        sa.Column('read_at', sa.DateTime(), nullable=True),
-        sa.Column('read_by_user_id', sa.Integer(), nullable=True),
-        sa.Column('related_payment_id', sa.BigInteger(), nullable=True),
-        sa.Column('is_deleted', sa.Boolean(), nullable=False, server_default='false'),
-        sa.Column('deleted_at', sa.DateTime(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
-        sa.PrimaryKeyConstraint('id'),
-        sa.ForeignKeyConstraint(['tenant_id'], ['tenant.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['sender_admin_id'], ['platform_admin.id'], ondelete='SET NULL'),
-        sa.ForeignKeyConstraint(['sender_tenant_id'], ['tenant.id'], ondelete='SET NULL'),
-        sa.ForeignKeyConstraint(['read_by_user_id'], ['tenant_user.id'], ondelete='SET NULL'),
-        sa.ForeignKeyConstraint(['related_payment_id'], ['subscription_payment.id'], ondelete='SET NULL'),
-    )
+    # Check and create MessageCategory enum
+    result = conn.execute(sa.text("SELECT 1 FROM pg_type WHERE typname = 'messagecategory'"))
+    if not result.fetchone():
+        op.execute("CREATE TYPE messagecategory AS ENUM ('BILLING', 'PACKAGE_CHANGE', 'SYSTEM', 'SUPPORT', 'ANNOUNCEMENT', 'OTHER')")
 
-    op.create_index('ix_tenant_message_tenant_id', 'tenant_message', ['tenant_id'])
-    op.create_index('ix_tenant_message_is_read', 'tenant_message', ['is_read'])
-    op.create_index('ix_tenant_message_category', 'tenant_message', ['category'])
-    op.create_index('ix_tenant_message_created_at', 'tenant_message', ['created_at'])
-    op.create_index('ix_tenant_message_unread', 'tenant_message', ['tenant_id', 'is_read', 'is_deleted'])
+    # Check if table already exists
+    result = conn.execute(sa.text("SELECT 1 FROM information_schema.tables WHERE table_name = 'tenant_message'"))
+    if not result.fetchone():
+        op.create_table('tenant_message',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('tenant_id', sa.Integer(), nullable=False),
+            sa.Column('message_type', sa.Enum('SYSTEM', 'ADMIN', 'TENANT', 'SUPPLIER', name='messagetype', create_type=False), nullable=False),
+            sa.Column('sender_admin_id', sa.Integer(), nullable=True),
+            sa.Column('sender_tenant_id', sa.Integer(), nullable=True),
+            sa.Column('subject', sa.String(200), nullable=False),
+            sa.Column('body', sa.Text(), nullable=False),
+            sa.Column('action_url', sa.String(500), nullable=True),
+            sa.Column('action_label', sa.String(100), nullable=True),
+            sa.Column('priority', sa.Enum('LOW', 'NORMAL', 'HIGH', 'URGENT', name='messagepriority', create_type=False), nullable=False, server_default='NORMAL'),
+            sa.Column('category', sa.Enum('BILLING', 'PACKAGE_CHANGE', 'SYSTEM', 'SUPPORT', 'ANNOUNCEMENT', 'OTHER', name='messagecategory', create_type=False), nullable=False, server_default='SYSTEM'),
+            sa.Column('is_read', sa.Boolean(), nullable=False, server_default='false'),
+            sa.Column('read_at', sa.DateTime(), nullable=True),
+            sa.Column('read_by_user_id', sa.Integer(), nullable=True),
+            sa.Column('related_payment_id', sa.BigInteger(), nullable=True),
+            sa.Column('is_deleted', sa.Boolean(), nullable=False, server_default='false'),
+            sa.Column('deleted_at', sa.DateTime(), nullable=True),
+            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
+            sa.PrimaryKeyConstraint('id'),
+            sa.ForeignKeyConstraint(['tenant_id'], ['tenant.id'], ondelete='CASCADE'),
+            sa.ForeignKeyConstraint(['sender_admin_id'], ['platform_admin.id'], ondelete='SET NULL'),
+            sa.ForeignKeyConstraint(['sender_tenant_id'], ['tenant.id'], ondelete='SET NULL'),
+            sa.ForeignKeyConstraint(['read_by_user_id'], ['tenant_user.id'], ondelete='SET NULL'),
+            sa.ForeignKeyConstraint(['related_payment_id'], ['subscription_payment.id'], ondelete='SET NULL'),
+        )
+
+        # Create indexes only if table was just created
+        op.create_index('ix_tenant_message_tenant_id', 'tenant_message', ['tenant_id'])
+        op.create_index('ix_tenant_message_is_read', 'tenant_message', ['is_read'])
+        op.create_index('ix_tenant_message_category', 'tenant_message', ['category'])
+        op.create_index('ix_tenant_message_created_at', 'tenant_message', ['created_at'])
+        op.create_index('ix_tenant_message_unread', 'tenant_message', ['tenant_id', 'is_read', 'is_deleted'])
 
     # ============================================
     # 4. ADMIN_ACTION_TYPE ENUM - Add new values
