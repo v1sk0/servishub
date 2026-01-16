@@ -140,6 +140,7 @@
                     <div>
                         <label for="company_phone" class="block text-sm font-medium text-gray-700">Telefon firme *</label>
                         <input type="tel" id="company_phone" x-model="form.company_phone"
+                               @input="syncOwnerPhone(); syncLocationPhone()"
                                placeholder="+381..."
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     </div>
@@ -252,24 +253,18 @@
                      x-transition:leave="transition ease-in duration-200"
                      x-transition:leave-start="opacity-100"
                      x-transition:leave-end="opacity-0"
-                     class="rounded-lg border p-4"
-                     :class="checkingEmailVerification ? 'bg-blue-50 border-blue-200' : 'bg-yellow-50 border-yellow-200'">
+                     class="rounded-lg border p-4 bg-yellow-50 border-yellow-200">
                     <div class="flex items-start">
                         <div class="flex-shrink-0">
-                            <svg x-show="checkingEmailVerification" class="animate-spin h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <svg x-show="!checkingEmailVerification" class="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                         </div>
                         <div class="ml-3 flex-1">
-                            <p class="text-sm font-medium" :class="checkingEmailVerification ? 'text-blue-800' : 'text-yellow-800'">
-                                <span x-show="checkingEmailVerification">Proveravam verifikaciju...</span>
-                                <span x-show="!checkingEmailVerification">Verifikacioni email je poslat!</span>
+                            <p class="text-sm font-medium text-yellow-800">
+                                Verifikacioni email je poslat!
                             </p>
-                            <p class="mt-1 text-sm" :class="checkingEmailVerification ? 'text-blue-700' : 'text-yellow-700'">
+                            <p class="mt-1 text-sm text-yellow-700">
                                 Otvorite email i kliknite na link za verifikaciju. Ova strana će se automatski ažurirati.
                             </p>
                             <p class="mt-1 text-xs text-yellow-600 font-medium">
@@ -277,7 +272,6 @@
                             </p>
                             <!-- Resend button -->
                             <button type="button" @click="sendVerificationEmail()"
-                                    x-show="!checkingEmailVerification"
                                     :disabled="sendingVerificationEmail || emailVerificationCooldown > 0"
                                     class="mt-2 text-sm font-medium text-yellow-800 hover:text-yellow-900 underline disabled:opacity-50 disabled:no-underline">
                                 <span x-text="emailVerificationCooldown > 0 ? 'Pošalji ponovo za ' + emailVerificationCooldown + 's' : 'Pošalji ponovo'"></span>
@@ -308,8 +302,12 @@
                 <div>
                     <label for="owner_phone" class="block text-sm font-medium text-gray-700">Mobilni telefon *</label>
                     <input type="tel" id="owner_phone" x-model="form.owner_phone"
+                           @input="onOwnerPhoneChange()"
                            placeholder="+381 64..."
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    <p x-show="!ownerPhoneManuallyChanged && form.company_phone" class="mt-1 text-xs text-green-600">
+                        Automatski kopirano sa telefona firme
+                    </p>
                 </div>
                 <div x-show="!isOAuth">
                     <label for="password" class="block text-sm font-medium text-gray-700">Lozinka *</label>
@@ -368,7 +366,11 @@
                 <div>
                     <label for="location_phone" class="block text-sm font-medium text-gray-700">Telefon lokacije</label>
                     <input type="tel" id="location_phone" x-model="form.location_phone"
+                           @input="onLocationPhoneChange()"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    <p x-show="!locationPhoneManuallyChanged && form.company_phone" class="mt-1 text-xs text-green-600">
+                        Automatski kopirano sa telefona firme
+                    </p>
                 </div>
             </div>
 
@@ -543,7 +545,6 @@ window.registerPage = function() {
         emailVerified: false,
         emailVerificationSent: false,
         sendingVerificationEmail: false,
-        checkingEmailVerification: false,
         emailVerificationCooldown: 0,
         emailPollingInterval: null,
 
@@ -562,6 +563,10 @@ window.registerPage = function() {
         // Address sync tracking
         locationAddressManuallyChanged: false,
         previousCompanyAddress: '',
+
+        // Phone sync tracking
+        ownerPhoneManuallyChanged: false,
+        locationPhoneManuallyChanged: false,
 
         // APR (automatsko popunjavanje iz registra)
         loadingApr: false,
@@ -672,6 +677,38 @@ window.registerPage = function() {
             // Ako se razlikuje od adrese firme, oznaci kao rucno promenjeno
             if (this.form.location_address !== this.form.adresa_sedista) {
                 this.locationAddressManuallyChanged = true;
+            }
+        },
+
+        // Sinhronizacija telefona firme sa telefonom vlasnika
+        syncOwnerPhone() {
+            // Ako korisnik nije rucno menjao owner_phone, kopiraj iz company_phone
+            if (!this.ownerPhoneManuallyChanged) {
+                this.form.owner_phone = this.form.company_phone;
+            }
+        },
+
+        // Kada korisnik rucno menja telefon vlasnika
+        onOwnerPhoneChange() {
+            // Ako se razlikuje od telefona firme, oznaci kao rucno promenjeno
+            if (this.form.owner_phone !== this.form.company_phone) {
+                this.ownerPhoneManuallyChanged = true;
+            }
+        },
+
+        // Sinhronizacija telefona firme sa telefonom lokacije
+        syncLocationPhone() {
+            // Ako korisnik nije rucno menjao location_phone, kopiraj iz company_phone
+            if (!this.locationPhoneManuallyChanged) {
+                this.form.location_phone = this.form.company_phone;
+            }
+        },
+
+        // Kada korisnik rucno menja telefon lokacije
+        onLocationPhoneChange() {
+            // Ako se razlikuje od telefona firme, oznaci kao rucno promenjeno
+            if (this.form.location_phone !== this.form.company_phone) {
+                this.locationPhoneManuallyChanged = true;
             }
         },
 
@@ -908,7 +945,8 @@ window.registerPage = function() {
                 return;
             }
 
-            this.checkingEmailVerification = true;
+            // NE postavljamo checkingEmailVerification = true ovde
+            // jer to uzrokuje flickering UI-a. Polling radi tiho u pozadini.
 
             try {
                 const response = await fetch('/api/v1/auth/check-email-verified', {
@@ -931,9 +969,8 @@ window.registerPage = function() {
                 }
             } catch (e) {
                 console.error('Check email verification error:', e);
-            } finally {
-                this.checkingEmailVerification = false;
             }
+            // Nema finally bloka koji resetuje checkingEmailVerification
         },
 
         stopEmailPolling() {
