@@ -57,6 +57,9 @@ class Config:
     # Cloudinary (za slike LK i attachments)
     CLOUDINARY_URL = os.getenv('CLOUDINARY_URL', '')
 
+    # Google Maps API (za Places Autocomplete)
+    GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
+
     # Pagination defaults
     DEFAULT_PAGE_SIZE = 20
     MAX_PAGE_SIZE = 100

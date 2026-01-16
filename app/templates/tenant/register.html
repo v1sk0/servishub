@@ -1105,6 +1105,134 @@ window.registerPage = function() {
 var registerPage = window.registerPage;
 console.log('registerPage defined globally:', typeof registerPage);
 
+// Google Maps Places Autocomplete initialization
+let companyAddressAutocomplete = null;
+let locationAddressAutocomplete = null;
+
+function initGooglePlacesAutocomplete() {
+    console.log('[Google Places] Initializing autocomplete...');
+
+    // Autocomplete za adresu firme (Step 1)
+    const companyAddressInput = document.getElementById('adresa_sedista');
+    if (companyAddressInput && google && google.maps && google.maps.places) {
+        companyAddressAutocomplete = new google.maps.places.Autocomplete(companyAddressInput, {
+            types: ['address'],
+            componentRestrictions: { country: 'rs' },  // Ogranici na Srbiju
+            fields: ['address_components', 'formatted_address', 'geometry']
+        });
+
+        companyAddressAutocomplete.addListener('place_changed', function() {
+            const place = companyAddressAutocomplete.getPlace();
+            console.log('[Google Places] Company address selected:', place);
+
+            if (place.address_components) {
+                fillAddressFields(place.address_components, 'company');
+            }
+        });
+        console.log('[Google Places] Company address autocomplete initialized');
+    }
+
+    // Autocomplete za adresu lokacije (Step 3)
+    const locationAddressInput = document.getElementById('location_address');
+    if (locationAddressInput && google && google.maps && google.maps.places) {
+        locationAddressAutocomplete = new google.maps.places.Autocomplete(locationAddressInput, {
+            types: ['address'],
+            componentRestrictions: { country: 'rs' },  // Ogranici na Srbiju
+            fields: ['address_components', 'formatted_address', 'geometry']
+        });
+
+        locationAddressAutocomplete.addListener('place_changed', function() {
+            const place = locationAddressAutocomplete.getPlace();
+            console.log('[Google Places] Location address selected:', place);
+
+            if (place.address_components) {
+                fillAddressFields(place.address_components, 'location');
+            }
+        });
+        console.log('[Google Places] Location address autocomplete initialized');
+    }
+}
+
+function fillAddressFields(addressComponents, prefix) {
+    let city = '';
+    let postalCode = '';
+    let streetNumber = '';
+    let route = '';
+
+    for (const component of addressComponents) {
+        const type = component.types[0];
+
+        switch (type) {
+            case 'locality':
+                city = component.long_name;
+                break;
+            case 'administrative_area_level_2':
+                // Fallback za grad ako locality nije dostupan
+                if (!city) city = component.long_name;
+                break;
+            case 'postal_code':
+                postalCode = component.long_name;
+                break;
+            case 'street_number':
+                streetNumber = component.long_name;
+                break;
+            case 'route':
+                route = component.long_name;
+                break;
+        }
+    }
+
+    console.log('[Google Places] Parsed address:', { city, postalCode, streetNumber, route });
+
+    // Azuriraj Alpine.js model putem dispatchEvent
+    if (prefix === 'company') {
+        const cityInput = document.getElementById('company_city');
+        const postalInput = document.getElementById('company_postal_code');
+
+        if (cityInput && city) {
+            cityInput.value = city;
+            cityInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        if (postalInput && postalCode) {
+            postalInput.value = postalCode;
+            postalInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    } else if (prefix === 'location') {
+        const cityInput = document.getElementById('location_city');
+        const postalInput = document.getElementById('location_postal');
+
+        if (cityInput && city) {
+            cityInput.value = city;
+            cityInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        if (postalInput && postalCode) {
+            postalInput.value = postalCode;
+            postalInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    }
+}
+
+// Inicijalizuj kad se stranica ucita
+document.addEventListener('DOMContentLoaded', function() {
+    // Cekamo malo da se Alpine ucita, pa onda inicijalizuj Google Places
+    setTimeout(function() {
+        if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+            initGooglePlacesAutocomplete();
+        } else {
+            console.log('[Google Places] Waiting for Google Maps API to load...');
+        }
+    }, 500);
+});
+
+// Callback funkcija koju poziva Google Maps API kad se ucita
+function onGoogleMapsLoaded() {
+    console.log('[Google Places] Google Maps API loaded');
+    initGooglePlacesAutocomplete();
+}
+
 {% endraw %}
 </script>
+
+<!-- Google Maps Places API -->
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config.get('GOOGLE_MAPS_API_KEY', '') }}&libraries=places&callback=onGoogleMapsLoaded" async defer></script>
 {% endblock %}
