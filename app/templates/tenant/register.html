@@ -146,6 +146,7 @@
                     <div>
                         <label for="company_email" class="block text-sm font-medium text-gray-700">Email firme *</label>
                         <input type="email" id="company_email" x-model="form.company_email"
+                               @input="syncOwnerEmail()"
                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                     </div>
                 </div>
@@ -220,9 +221,13 @@
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700">Email (za prijavu) *</label>
                     <input type="email" id="email" x-model="form.owner_email"
+                           @input="onOwnerEmailChange()"
                            :readonly="isOAuth || emailVerified"
                            :class="(isOAuth || emailVerified) ? 'bg-gray-100' : ''"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    <p x-show="!ownerEmailManuallyChanged && form.company_email && !isOAuth" class="mt-1 text-xs text-green-600">
+                        Automatski kopirano sa email-a firme
+                    </p>
                 </div>
 
                 <!-- Verify Email Button - shown when not verified and not OAuth -->
@@ -332,7 +337,11 @@
                 <div>
                     <label for="location_address" class="block text-sm font-medium text-gray-700">Adresa *</label>
                     <input type="text" id="location_address" x-model="form.location_address"
+                           @input="onLocationAddressChange()"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    <p x-show="!locationAddressManuallyChanged && form.adresa_sedista" class="mt-1 text-xs text-green-600">
+                        Automatski kopirano sa adrese sedišta firme
+                    </p>
                     <!-- Mapa za prikaz adrese lokacije -->
                     <div id="location_map_container" class="mt-2 hidden">
                         <div id="location_map" class="w-full h-48 rounded-lg border border-gray-300"></div>
@@ -546,6 +555,14 @@ window.registerPage = function() {
         phoneVerified: false,
         resendCooldown: 0,
 
+        // Email sync tracking
+        ownerEmailManuallyChanged: false,
+        previousCompanyEmail: '',
+
+        // Address sync tracking
+        locationAddressManuallyChanged: false,
+        previousCompanyAddress: '',
+
         // APR (automatsko popunjavanje iz registra)
         loadingApr: false,
         aprCompanyFound: false,
@@ -600,12 +617,61 @@ window.registerPage = function() {
             console.log('=== Alpine init() called, step:', this.step);
             console.log('Form object exists:', !!this.form);
 
-            // Izloži form globalno za pristup iz Google Maps callback-a
+            // Izloži form i celu instancu globalno za pristup iz Google Maps callback-a
             window.registerForm = this.form;
+            window.registerPageInstance = this;
 
             // Load OAuth data from session if available
             if (this.isOAuth) {
                 this.loadOAuthData();
+            }
+        },
+
+        // Sinhronizacija email-a firme sa email-om za login
+        syncOwnerEmail() {
+            // Ako je OAuth, ne diraj owner_email
+            if (this.isOAuth) return;
+
+            // Ako korisnik nije rucno menjao owner_email, kopiraj iz company_email
+            if (!this.ownerEmailManuallyChanged) {
+                this.form.owner_email = this.form.company_email;
+                // Reset email verifikacije kad se email promeni
+                this.emailVerified = false;
+                this.emailVerificationSent = false;
+            }
+            this.previousCompanyEmail = this.form.company_email;
+        },
+
+        // Kada korisnik rucno menja owner_email
+        onOwnerEmailChange() {
+            // Ako se razlikuje od company_email, oznaci kao rucno promenjeno
+            if (this.form.owner_email !== this.form.company_email) {
+                this.ownerEmailManuallyChanged = true;
+            }
+            // Reset email verifikacije
+            this.emailVerified = false;
+            this.emailVerificationSent = false;
+        },
+
+        // Sinhronizacija adrese firme sa adresom lokacije
+        syncLocationAddress() {
+            // Ako korisnik nije rucno menjao adresu lokacije, kopiraj iz adrese firme
+            if (!this.locationAddressManuallyChanged) {
+                this.form.location_address = this.form.adresa_sedista;
+                this.form.location_city = this.form.company_city;
+                this.form.location_postal_code = this.form.company_postal_code;
+                // Kopiraj i koordinate
+                this.form.location_latitude = this.form.company_latitude;
+                this.form.location_longitude = this.form.company_longitude;
+            }
+            this.previousCompanyAddress = this.form.adresa_sedista;
+        },
+
+        // Kada korisnik rucno menja adresu lokacije
+        onLocationAddressChange() {
+            // Ako se razlikuje od adrese firme, oznaci kao rucno promenjeno
+            if (this.form.location_address !== this.form.adresa_sedista) {
+                this.locationAddressManuallyChanged = true;
             }
         },
 
@@ -1220,6 +1286,12 @@ function showMapWithMarker(prefix, location, address) {
             window.registerForm.company_latitude = lat;
             window.registerForm.company_longitude = lng;
             console.log('[Google Maps] Saved company coordinates:', lat, lng);
+
+            // Sinhronizuj adresu lokacije sa adresom firme (ako nije rucno menjana)
+            if (window.registerPageInstance) {
+                window.registerPageInstance.syncLocationAddress();
+                console.log('[Google Maps] Synced location address with company address');
+            }
         } else if (prefix === 'location') {
             window.registerForm.location_latitude = lat;
             window.registerForm.location_longitude = lng;
@@ -1339,6 +1411,14 @@ function fillAddressFields(addressComponents, prefix) {
             postalInput.value = postalCode;
             postalInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
+
+        // Sinhronizuj adresu lokacije sa adresom firme
+        // (poziva se i u showMapWithMarker, ali ovo je backup ako mapa ne uspe)
+        setTimeout(() => {
+            if (window.registerPageInstance) {
+                window.registerPageInstance.syncLocationAddress();
+            }
+        }, 100);
     } else if (prefix === 'location') {
         const cityInput = document.getElementById('location_city');
         const postalInput = document.getElementById('location_postal');
