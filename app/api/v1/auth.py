@@ -42,6 +42,8 @@ def register():
         - pib: PIB (9 cifara)
         - maticni_broj: Maticni broj (opciono, 8 cifara)
         - adresa_sedista: Adresa sedista
+        - company_city: Grad firme
+        - company_postal_code: Postanski broj firme
         - company_email: Email preduzeca
         - company_phone: Telefon preduzeca
         - bank_account: Bankovni racun (XXX-XXXXXXXXX-XX)
@@ -109,6 +111,8 @@ def register():
             pib=data.pib,
             maticni_broj=data.maticni_broj,
             adresa_sedista=data.adresa_sedista,
+            company_city=data.company_city,
+            company_postal_code=data.company_postal_code,
             bank_account=data.bank_account,
             # Podaci lokacije
             location_name=data.location_name,
@@ -566,6 +570,36 @@ def google_login():
 
     return jsonify({
         'auth_url': google_auth_url
+    }), 200
+
+
+@bp.route('/google/session', methods=['GET'])
+def google_session():
+    """
+    Vraca Google OAuth podatke iz sesije.
+
+    Koristi se od strane frontenda nakon sto se korisnik vrati
+    sa Google OAuth callback-a.
+
+    Returns:
+        200: Google user podaci
+        404: Nema Google podataka u sesiji
+    """
+    from flask import session
+
+    google_user = session.get('google_user')
+
+    if not google_user:
+        return jsonify({
+            'error': 'No Session Data',
+            'message': 'Nema Google podataka u sesiji'
+        }), 404
+
+    return jsonify({
+        'google_id': google_user.get('google_id'),
+        'email': google_user.get('email'),
+        'ime': google_user.get('ime'),
+        'prezime': google_user.get('prezime')
     }), 200
 
 

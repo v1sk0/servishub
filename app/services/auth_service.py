@@ -52,6 +52,8 @@ class AuthService:
         pib: str,
         maticni_broj: Optional[str] = None,
         adresa_sedista: Optional[str] = None,
+        company_city: Optional[str] = None,
+        company_postal_code: Optional[str] = None,
         bank_account: Optional[str] = None,
         # Podaci lokacije
         location_name: str = None,
@@ -117,6 +119,8 @@ class AuthService:
                 pib=pib,
                 maticni_broj=maticni_broj,
                 adresa_sedista=adresa_sedista,
+                grad=company_city,
+                postanski_broj=company_postal_code,
                 bank_account=bank_account,
                 status=TenantStatus.DEMO,
                 settings_json={

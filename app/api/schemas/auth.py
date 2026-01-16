@@ -29,6 +29,8 @@ class RegisterRequest(BaseModel):
     pib: str = Field(..., min_length=9, max_length=9, description="PIB (9 cifara)")
     maticni_broj: Optional[str] = Field(None, max_length=8, description="Maticni broj (8 cifara)")
     adresa_sedista: str = Field(..., max_length=300, description="Adresa sedista")
+    company_city: str = Field(..., min_length=2, max_length=100, description="Grad firme")
+    company_postal_code: str = Field(..., min_length=4, max_length=10, description="Postanski broj firme")
     company_email: EmailStr = Field(..., description="Email preduzeca")
     company_phone: str = Field(..., max_length=30, description="Telefon preduzeca")
     bank_account: Optional[str] = Field(None, max_length=50, description="Bankovni racun (XXX-XXXXXXXXX-XX)")

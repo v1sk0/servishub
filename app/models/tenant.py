@@ -51,6 +51,8 @@ class Tenant(db.Model):
     pib = db.Column(db.String(20), unique=True)       # Poreski identifikacioni broj
     maticni_broj = db.Column(db.String(20))           # Maticni broj preduzeca
     adresa_sedista = db.Column(db.String(300))        # Adresa sedista (pravna)
+    grad = db.Column(db.String(100))                  # Grad sedista
+    postanski_broj = db.Column(db.String(10))         # Postanski broj
     email = db.Column(db.String(100), nullable=False) # Kontakt email
     telefon = db.Column(db.String(30))                # Kontakt telefon
     bank_account = db.Column(db.String(50))           # Bankovni racun (XXX-XXXXXXXXX-XX)

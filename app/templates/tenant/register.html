@@ -62,8 +62,8 @@
             </ol>
             <div class="mt-2 text-center text-sm text-gray-500">
                 <span x-show="step === 1">Podaci o firmi</span>
-                <span x-show="step === 2">Lokacija servisa</span>
-                <span x-show="step === 3">Admin nalog</span>
+                <span x-show="step === 2">Admin nalog</span>
+                <span x-show="step === 3">Lokacija servisa</span>
                 <span x-show="step === 4">KYC Verifikacija</span>
             </div>
         </nav>
@@ -95,7 +95,22 @@
                 <div>
                     <label for="adresa_sedista" class="block text-sm font-medium text-gray-700">Adresa sedišta *</label>
                     <input type="text" id="adresa_sedista" x-model="form.adresa_sedista"
+                           placeholder="Ulica i broj"
                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="company_city" class="block text-sm font-medium text-gray-700">Grad *</label>
+                        <input type="text" id="company_city" x-model="form.company_city"
+                               placeholder="npr. Beograd"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="company_postal_code" class="block text-sm font-medium text-gray-700">Poštanski broj *</label>
+                        <input type="text" id="company_postal_code" x-model="form.company_postal_code" maxlength="5"
+                               placeholder="11000"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -120,42 +135,8 @@
                 </div>
             </div>
 
-            <!-- Step 2: Location -->
+            <!-- Step 2: Admin Account -->
             <div x-show="step === 2" class="space-y-4">
-                <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Prva lokacija servisa</h3>
-
-                <div>
-                    <label for="location_name" class="block text-sm font-medium text-gray-700">Naziv lokacije *</label>
-                    <input type="text" id="location_name" x-model="form.location_name"
-                           placeholder="npr. Glavni servis"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="location_address" class="block text-sm font-medium text-gray-700">Adresa *</label>
-                    <input type="text" id="location_address" x-model="form.location_address"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="location_city" class="block text-sm font-medium text-gray-700">Grad *</label>
-                        <input type="text" id="location_city" x-model="form.location_city"
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                    </div>
-                    <div>
-                        <label for="location_postal" class="block text-sm font-medium text-gray-700">Poštanski broj</label>
-                        <input type="text" id="location_postal" x-model="form.location_postal_code"
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                    </div>
-                </div>
-                <div>
-                    <label for="location_phone" class="block text-sm font-medium text-gray-700">Telefon lokacije</label>
-                    <input type="tel" id="location_phone" x-model="form.location_phone"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                </div>
-            </div>
-
-            <!-- Step 3: Admin Account -->
-            <div x-show="step === 3" class="space-y-4">
                 <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Vaš admin nalog</h3>
 
                 <div class="grid grid-cols-2 gap-4">
@@ -276,6 +257,40 @@
                 </div>
             </div>
 
+            <!-- Step 3: Location -->
+            <div x-show="step === 3" class="space-y-4">
+                <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Prva lokacija servisa</h3>
+
+                <div>
+                    <label for="location_name" class="block text-sm font-medium text-gray-700">Naziv lokacije *</label>
+                    <input type="text" id="location_name" x-model="form.location_name"
+                           placeholder="npr. Glavni servis"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="location_address" class="block text-sm font-medium text-gray-700">Adresa *</label>
+                    <input type="text" id="location_address" x-model="form.location_address"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="location_city" class="block text-sm font-medium text-gray-700">Grad *</label>
+                        <input type="text" id="location_city" x-model="form.location_city"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="location_postal" class="block text-sm font-medium text-gray-700">Poštanski broj</label>
+                        <input type="text" id="location_postal" x-model="form.location_postal_code"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label for="location_phone" class="block text-sm font-medium text-gray-700">Telefon lokacije</label>
+                    <input type="tel" id="location_phone" x-model="form.location_phone"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                </div>
+            </div>
+
             <!-- Step 4: KYC Verification (opciono) -->
             <div x-show="step === 4" class="space-y-4">
                 <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Dodatni podaci</h3>
@@ -285,7 +300,7 @@
 
                 <div class="bg-blue-50 rounded-lg p-4 mb-4">
                     <p class="text-sm text-blue-700">
-                        <strong>Napomena:</strong> KYC verifikacija i SMS potvrda nisu obavezni za registraciju.
+                        <strong>Napomena:</strong> KYC podaci nisu obavezni za registraciju.
                         Možete ih dodati kasnije ako želite da koristite marketplace za prodaju krajnjim kupcima.
                     </p>
                 </div>
@@ -352,47 +367,6 @@
                     </div>
                 </div>
 
-                <!-- SMS Verification (opciono) -->
-                <div class="border rounded-lg p-4 bg-gray-50">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">SMS Verifikacija (opciono)</label>
-                    <p class="text-xs text-gray-500 mb-3">Broj telefona: <span x-text="form.owner_phone" class="font-medium"></span></p>
-
-                    <div x-show="!otpSent">
-                        <button type="button" @click="sendOtp()" :disabled="sendingOtp"
-                                class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50">
-                            <svg x-show="sendingOtp" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Pošalji SMS kod
-                        </button>
-                    </div>
-
-                    <div x-show="otpSent && !phoneVerified">
-                        <div class="flex space-x-2 mb-3">
-                            <input type="text" x-model="otpCode" maxlength="6" placeholder="______"
-                                   class="flex-1 text-center text-2xl tracking-widest px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
-                            <button type="button" @click="verifyOtp()" :disabled="verifyingOtp || otpCode.length !== 6"
-                                    class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50">
-                                Potvrdi
-                            </button>
-                        </div>
-                        <p class="text-xs text-gray-500">
-                            Nije stigao kod?
-                            <button type="button" @click="sendOtp()" :disabled="resendCooldown > 0" class="text-primary-600 hover:text-primary-500">
-                                Pošalji ponovo <span x-show="resendCooldown > 0">(<span x-text="resendCooldown"></span>s)</span>
-                            </button>
-                        </p>
-                    </div>
-
-                    <div x-show="phoneVerified" class="flex items-center text-green-600">
-                        <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Telefon verifikovan!
-                    </div>
-                </div>
-
                 <!-- Terms -->
                 <div class="flex items-start">
                     <input type="checkbox" id="terms" x-model="acceptTerms"
@@ -426,9 +400,9 @@
                 </button>
                 <div x-show="step === 1"></div>
 
-                <!-- Dalje button - hidden on step 3 until email verified (unless OAuth) -->
+                <!-- Dalje button - hidden on step 2 until email verified (unless OAuth) -->
                 <button type="submit"
-                        x-show="step !== 3 || emailVerified || isOAuth"
+                        x-show="step !== 2 || emailVerified || isOAuth"
                         :disabled="loading || (step === 4 && !canSubmit)"
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50">
                     <svg x-show="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -506,22 +480,24 @@ window.registerPage = function() {
             pib: '',
             maticni_broj: '',
             adresa_sedista: '',
+            company_city: '',
+            company_postal_code: '',
             company_phone: '',
             company_email: '',
             bank_account: '',
-            // Location (Step 2)
-            location_name: '',
-            location_address: '',
-            location_city: '',
-            location_postal_code: '',
-            location_phone: '',
-            // Admin (Step 3)
+            // Admin (Step 2)
             owner_email: '',
             owner_password: '',
             password_confirm: '',
             owner_ime: '',
             owner_prezime: '',
             owner_phone: '',
+            // Location (Step 3)
+            location_name: '',
+            location_address: '',
+            location_city: '',
+            location_postal_code: '',
+            location_phone: '',
             // KYC (Step 4)
             kyc_jmbg: '',
             kyc_broj_licne: '',
@@ -548,9 +524,34 @@ window.registerPage = function() {
         },
 
         async loadOAuthData() {
-            // In a real app, this would come from session/cookie
-            // For now, we'll just mark as OAuth
-            console.log('OAuth registration flow');
+            // Fetch Google user data from session
+            console.log('Loading OAuth data from session...');
+            try {
+                const response = await fetch('/api/v1/auth/google/session');
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Google OAuth data:', data);
+
+                    // Populate form fields with Google data
+                    this.form.google_id = data.google_id || '';
+                    this.form.owner_email = data.email || '';
+                    this.form.owner_ime = data.ime || '';
+                    this.form.owner_prezime = data.prezime || '';
+
+                    // Mark email as verified (Google already verified it)
+                    this.emailVerified = true;
+
+                    // No password needed for OAuth
+                    this.form.owner_password = '';
+                    this.form.password_confirm = '';
+
+                    console.log('Form populated with Google data');
+                } else {
+                    console.log('No Google session data found');
+                }
+            } catch (error) {
+                console.error('Error loading OAuth data:', error);
+            }
         },
 
         googleLogin() {
@@ -836,16 +837,11 @@ window.registerPage = function() {
             console.log('form data:', JSON.stringify(this.form));
             this.error = '';
 
-            // Validate Step 1
+            // Validate Step 1 - Business Info
             if (this.step === 1) {
                 console.log('Validating Step 1...');
-                console.log('company_name:', this.form.company_name);
-                console.log('pib:', this.form.pib);
-                console.log('adresa_sedista:', this.form.adresa_sedista);
-                console.log('company_phone:', this.form.company_phone);
-                console.log('company_email:', this.form.company_email);
-
                 if (!this.form.company_name || !this.form.pib || !this.form.adresa_sedista ||
+                    !this.form.company_city || !this.form.company_postal_code ||
                     !this.form.company_phone || !this.form.company_email) {
                     this.error = 'Popunite sva obavezna polja';
                     console.log('Validation failed: missing required fields');
@@ -867,18 +863,8 @@ window.registerPage = function() {
                 return;
             }
 
-            // Validate Step 2
+            // Validate Step 2 - Admin Account
             if (this.step === 2) {
-                if (!this.form.location_name || !this.form.location_address || !this.form.location_city) {
-                    this.error = 'Popunite sva obavezna polja';
-                    return;
-                }
-                this.step = 3;
-                return;
-            }
-
-            // Validate Step 3
-            if (this.step === 3) {
                 if (!this.form.owner_ime || !this.form.owner_prezime || !this.form.owner_email || !this.form.owner_phone) {
                     this.error = 'Popunite sva obavezna polja';
                     return;
@@ -904,6 +890,16 @@ window.registerPage = function() {
                         return;
                     }
                 }
+                this.step = 3;
+                return;
+            }
+
+            // Validate Step 3 - Location
+            if (this.step === 3) {
+                if (!this.form.location_name || !this.form.location_address || !this.form.location_city) {
+                    this.error = 'Popunite sva obavezna polja';
+                    return;
+                }
                 this.step = 4;
                 return;
             }
@@ -914,8 +910,6 @@ window.registerPage = function() {
                 this.error = 'JMBG mora imati tačno 13 cifara';
                 return;
             }
-
-            // SMS verifikacija je opciona
 
             if (!this.acceptTerms) {
                 this.error = 'Morate prihvatiti uslove korišćenja';
