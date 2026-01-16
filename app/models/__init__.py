@@ -11,6 +11,7 @@ from .user import TenantUser, UserLocation, UserRole
 User = TenantUser
 from .admin import PlatformAdmin, AdminRole
 from .audit import AuditLog, AuditAction, calculate_changes
+from .admin_activity import AdminActivityLog, AdminActionType
 from .ticket import ServiceTicket, TicketStatus, TicketPriority, TicketNotificationLog, get_next_ticket_number
 from .inventory import PhoneListing, SparePart, PhoneCondition, PartVisibility, PartCategory
 from .supplier import Supplier, SupplierListing, SupplierUser, SupplierStatus
@@ -34,6 +35,9 @@ __all__ = [
     'AuditLog',
     'AuditAction',
     'calculate_changes',
+    # Admin Activity modeli
+    'AdminActivityLog',
+    'AdminActionType',
     # Ticket modeli
     'ServiceTicket',
     'TicketStatus',

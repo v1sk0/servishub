@@ -1,0 +1,350 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Aktivnosti - ServisHub Admin{% endblock %}
+
+{% block head %}
+{% include "admin/_admin_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div x-cloak
+     :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
+     x-data="activityListPage()" x-init="loadActivities()">
+    <div class="admin-wrapper min-h-screen bg-gray-100">
+        {% set active_page = 'activity' %}
+        {% include "admin/_sidebar.html" %}
+
+        <!-- Main content -->
+        <div class="ml-64">
+            <div class="admin-topbar bg-white shadow-sm h-16 flex items-center justify-between px-8">
+                <h1 class="text-xl font-semibold text-gray-900">Aktivnosti admina</h1>
+                <div class="flex items-center space-x-2">
+                    <button @click="setTheme('light')" :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'light'}" class="theme-btn p-2 rounded-lg bg-white border border-gray-200 hover:border-gray-300" title="Svetla tema">
+                        <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z"/></svg>
+                    </button>
+                    <button @click="setTheme('glass')" :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'glass'}" class="theme-btn p-2 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600 hover:border-gray-500" title="Glassmorphism tema">
+                        <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-8">
+                <!-- Stats kartica -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <!-- Ukupno aktivnosti -->
+                    <div class="admin-card bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Ukupno aktivnosti</p>
+                                <p class="text-2xl font-bold text-gray-900" x-text="stats.total || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Danas -->
+                    <div class="admin-card bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Danas</p>
+                                <p class="text-2xl font-bold text-gray-900" x-text="stats.today || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ove nedelje -->
+                    <div class="admin-card bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Ove nedelje</p>
+                                <p class="text-2xl font-bold text-gray-900" x-text="stats.this_week || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filteri -->
+                <div class="admin-card bg-white rounded-lg shadow mb-6 p-4">
+                    <div class="flex flex-wrap gap-4 items-center">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tip akcije</label>
+                            <select x-model="filterActionType" @change="loadActivities()" class="block w-48 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm">
+                                <option value="">Sve akcije</option>
+                                <option value="ACTIVATE_TRIAL">Aktiviranje TRIAL-a</option>
+                                <option value="ACTIVATE_SUBSCRIPTION">Aktiviranje pretplate</option>
+                                <option value="SUSPEND_TENANT">Suspendovanje</option>
+                                <option value="UNSUSPEND_TENANT">Ukidanje suspenzije</option>
+                                <option value="EXTEND_TRIAL">Produzenje TRIAL-a</option>
+                                <option value="KYC_VERIFY">KYC verifikacija</option>
+                                <option value="KYC_REJECT">KYC odbijanje</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tip entiteta</label>
+                            <select x-model="filterTargetType" @change="loadActivities()" class="block w-48 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm">
+                                <option value="">Svi entiteti</option>
+                                <option value="tenant">Servisi</option>
+                                <option value="representative">Predstavnici</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Od datuma</label>
+                            <input type="date" x-model="filterFromDate" @change="loadActivities()" class="block w-40 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Do datuma</label>
+                            <input type="date" x-model="filterToDate" @change="loadActivities()" class="block w-40 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm">
+                        </div>
+                        <div class="ml-auto">
+                            <button @click="resetFilters()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                                Reset filtera
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading -->
+                <div x-show="loading" class="flex justify-center py-12">
+                    <svg class="animate-spin h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                </div>
+
+                <!-- Tabela -->
+                <div x-show="!loading" class="admin-card bg-white shadow rounded-lg overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vreme</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Admin</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Akcija</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entitet</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Promena statusa</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Detalji</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="activity in activities" :key="activity.id">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(activity.created_at)"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <p class="text-sm font-medium text-gray-900" x-text="activity.admin_email || 'Sistem'"></p>
+                                        <p class="text-xs text-gray-500" x-text="activity.ip_address"></p>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full"
+                                              :class="getActionBadgeClass(activity.action_type)"
+                                              x-text="activity.action_label"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <p class="text-sm font-medium text-gray-900" x-text="activity.target_name"></p>
+                                        <p class="text-xs text-gray-500" x-text="activity.target_type + ' #' + activity.target_id"></p>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <template x-if="activity.old_status || activity.new_status">
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-sm text-gray-500" x-text="activity.old_status || '-'"></span>
+                                                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                                </svg>
+                                                <span class="text-sm font-medium" :class="getStatusClass(activity.new_status)" x-text="activity.new_status || '-'"></span>
+                                            </div>
+                                        </template>
+                                        <template x-if="!activity.old_status && !activity.new_status">
+                                            <span class="text-sm text-gray-400">-</span>
+                                        </template>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <template x-if="activity.details && Object.keys(activity.details).length > 0">
+                                            <button @click="showDetails(activity)" class="text-red-600 hover:text-red-900 text-sm font-medium">
+                                                Detalji
+                                            </button>
+                                        </template>
+                                        <template x-if="!activity.details || Object.keys(activity.details).length === 0">
+                                            <span class="text-sm text-gray-400">-</span>
+                                        </template>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                    <div x-show="activities.length === 0" class="text-center py-12 text-gray-500">Nema aktivnosti</div>
+
+                    <!-- Paginacija -->
+                    <div x-show="pagination.pages > 1" class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                        <div class="text-sm text-gray-500">
+                            Stranica <span x-text="pagination.page"></span> od <span x-text="pagination.pages"></span>
+                            (<span x-text="pagination.total"></span> ukupno)
+                        </div>
+                        <div class="flex space-x-2">
+                            <button @click="goToPage(pagination.page - 1)" :disabled="!pagination.has_prev"
+                                    :class="pagination.has_prev ? 'bg-white hover:bg-gray-50' : 'bg-gray-100 cursor-not-allowed'"
+                                    class="px-3 py-1 text-sm border border-gray-300 rounded-md">
+                                Prethodna
+                            </button>
+                            <button @click="goToPage(pagination.page + 1)" :disabled="!pagination.has_next"
+                                    :class="pagination.has_next ? 'bg-white hover:bg-gray-50' : 'bg-gray-100 cursor-not-allowed'"
+                                    class="px-3 py-1 text-sm border border-gray-300 rounded-md">
+                                Sledeca
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div x-show="showDetailsModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/50" @click="showDetailsModal = false"></div>
+            <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Detalji aktivnosti</h3>
+                <div class="space-y-3">
+                    <template x-for="(value, key) in selectedActivity?.details || {}" :key="key">
+                        <div class="flex justify-between py-2 border-b border-gray-100">
+                            <span class="text-sm font-medium text-gray-500" x-text="key"></span>
+                            <span class="text-sm text-gray-900" x-text="value"></span>
+                        </div>
+                    </template>
+                </div>
+                <div class="mt-6">
+                    <button @click="showDetailsModal = false" class="w-full px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
+                        Zatvori
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function activityListPage() {
+    return {
+        loading: true,
+        activities: [],
+        stats: {},
+        pagination: { page: 1, pages: 1, total: 0, has_next: false, has_prev: false },
+        theme: localStorage.getItem('admin-theme') || 'light',
+        filterActionType: '',
+        filterTargetType: '',
+        filterFromDate: '',
+        filterToDate: '',
+        showDetailsModal: false,
+        selectedActivity: null,
+
+        setTheme(newTheme) {
+            this.theme = newTheme;
+            localStorage.setItem('admin-theme', newTheme);
+            document.documentElement.setAttribute('data-admin-theme', newTheme);
+        },
+
+        async loadActivities(page = 1) {
+            const token = localStorage.getItem('admin_access_token');
+            if (!token) { window.location.href = '/admin/login'; return; }
+
+            this.loading = true;
+
+            try {
+                // Build query params
+                const params = new URLSearchParams({ page: page, per_page: 50 });
+                if (this.filterActionType) params.append('action_type', this.filterActionType);
+                if (this.filterTargetType) params.append('target_type', this.filterTargetType);
+                if (this.filterFromDate) params.append('from_date', this.filterFromDate);
+                if (this.filterToDate) params.append('to_date', this.filterToDate);
+
+                // Load activities
+                const response = await fetch('/api/admin/activity?' + params.toString(), {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    this.activities = data.activities || [];
+                    this.pagination = data.pagination || { page: 1, pages: 1, total: 0 };
+                } else if (response.status === 401) {
+                    window.location.href = '/admin/login';
+                }
+
+                // Load stats
+                const statsResponse = await fetch('/api/admin/activity/stats', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (statsResponse.ok) {
+                    this.stats = await statsResponse.json();
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        goToPage(page) {
+            if (page >= 1 && page <= this.pagination.pages) {
+                this.loadActivities(page);
+            }
+        },
+
+        resetFilters() {
+            this.filterActionType = '';
+            this.filterTargetType = '';
+            this.filterFromDate = '';
+            this.filterToDate = '';
+            this.loadActivities(1);
+        },
+
+        showDetails(activity) {
+            this.selectedActivity = activity;
+            this.showDetailsModal = true;
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('sr-RS') + ' ' + d.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' });
+        },
+
+        getActionBadgeClass(actionType) {
+            const classes = {
+                'ACTIVATE_TRIAL': 'bg-blue-100 text-blue-800',
+                'ACTIVATE_SUBSCRIPTION': 'bg-green-100 text-green-800',
+                'SUSPEND_TENANT': 'bg-red-100 text-red-800',
+                'UNSUSPEND_TENANT': 'bg-green-100 text-green-800',
+                'EXTEND_TRIAL': 'bg-blue-100 text-blue-800',
+                'KYC_VERIFY': 'bg-green-100 text-green-800',
+                'KYC_REJECT': 'bg-red-100 text-red-800',
+                'KYC_REQUEST_RESUBMIT': 'bg-yellow-100 text-yellow-800'
+            };
+            return classes[actionType] || 'bg-gray-100 text-gray-800';
+        },
+
+        getStatusClass(status) {
+            const classes = {
+                'TRIAL': 'text-blue-600',
+                'ACTIVE': 'text-green-600',
+                'SUSPENDED': 'text-red-600',
+                'VERIFIED': 'text-green-600',
+                'REJECTED': 'text-red-600',
+                'PENDING': 'text-yellow-600'
+            };
+            return classes[status] || 'text-gray-600';
+        }
+    }
+}
+</script>
+{% endblock %}

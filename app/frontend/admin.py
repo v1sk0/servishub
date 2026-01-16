@@ -75,6 +75,14 @@ def admin_payments_list():
     return render_template('admin/payments/list.html')
 
 
+# ============== Activity Log ==============
+
+@bp.route('/admin/activity')
+def admin_activity_list():
+    """Log aktivnosti admina."""
+    return render_template('admin/activity/list.html')
+
+
 # ============== Settings ==============
 
 @bp.route('/admin/settings')

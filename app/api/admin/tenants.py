@@ -12,6 +12,7 @@ from sqlalchemy import func, and_
 from app.extensions import db
 from app.models import Tenant, User, ServiceTicket, SubscriptionPayment
 from app.models.representative import ServiceRepresentative, RepresentativeStatus
+from app.models.admin_activity import AdminActivityLog, AdminActionType
 from app.api.middleware.auth import platform_admin_required
 
 bp = Blueprint('admin_tenants', __name__, url_prefix='/tenants')
@@ -249,6 +250,20 @@ def activate_trial(tenant_id):
         primary_rep.verified_at = datetime.utcnow()
         primary_rep.verified_by_id = g.current_admin.id
 
+    # Audit log
+    AdminActivityLog.log(
+        action_type=AdminActionType.ACTIVATE_TRIAL,
+        target_type='tenant',
+        target_id=tenant.id,
+        target_name=tenant.name,
+        old_status='DEMO',
+        new_status='TRIAL',
+        details={
+            'trial_ends_at': tenant.trial_ends_at.isoformat(),
+            'representative_verified': primary_rep.id if primary_rep else None
+        }
+    )
+
     db.session.commit()
 
     return jsonify({
@@ -269,12 +284,28 @@ def activate_tenant(tenant_id):
     """
     tenant = Tenant.query.get_or_404(tenant_id)
 
+    # Sacuvaj stari status za audit
+    old_status = tenant.status.value if tenant.status else None
+
     # Postavi status
     from app.models.tenant import TenantStatus
     tenant.status = TenantStatus.ACTIVE
 
     # Postavi subscription period (1 mesec od sada)
     tenant.subscription_ends_at = datetime.utcnow() + timedelta(days=30)
+
+    # Audit log
+    AdminActivityLog.log(
+        action_type=AdminActionType.ACTIVATE_SUBSCRIPTION,
+        target_type='tenant',
+        target_id=tenant.id,
+        target_name=tenant.name,
+        old_status=old_status,
+        new_status='ACTIVE',
+        details={
+            'subscription_ends_at': tenant.subscription_ends_at.isoformat()
+        }
+    )
 
     db.session.commit()
 
@@ -296,6 +327,9 @@ def suspend_tenant(tenant_id):
     data = request.get_json() or {}
     reason = data.get('reason', 'Suspendovano od strane administratora')
 
+    # Sacuvaj stari status za audit
+    old_status = tenant.status.value if tenant.status else None
+
     from app.models.tenant import TenantStatus
     tenant.status = TenantStatus.SUSPENDED
 
@@ -305,6 +339,19 @@ def suspend_tenant(tenant_id):
     tenant.settings['suspension_reason'] = reason
     tenant.settings['suspended_at'] = datetime.utcnow().isoformat()
     tenant.settings['suspended_by'] = g.current_admin.id
+
+    # Audit log
+    AdminActivityLog.log(
+        action_type=AdminActionType.SUSPEND_TENANT,
+        target_type='tenant',
+        target_id=tenant.id,
+        target_name=tenant.name,
+        old_status=old_status,
+        new_status='SUSPENDED',
+        details={
+            'reason': reason
+        }
+    )
 
     db.session.commit()
 
@@ -327,15 +374,28 @@ def unsuspend_tenant(tenant_id):
 
     # Vrati na ACTIVE ili TRIAL zavisno od stanja
     if tenant.trial_ends_at and tenant.trial_ends_at > datetime.utcnow():
-        tenant.status = TenantStatus.TRIAL
+        new_status = TenantStatus.TRIAL
     else:
-        tenant.status = TenantStatus.ACTIVE
+        new_status = TenantStatus.ACTIVE
+
+    tenant.status = new_status
 
     # Ukloni suspension info
     if tenant.settings:
         tenant.settings.pop('suspension_reason', None)
         tenant.settings.pop('suspended_at', None)
         tenant.settings.pop('suspended_by', None)
+
+    # Audit log
+    AdminActivityLog.log(
+        action_type=AdminActionType.UNSUSPEND_TENANT,
+        target_type='tenant',
+        target_id=tenant.id,
+        target_name=tenant.name,
+        old_status='SUSPENDED',
+        new_status=new_status.value,
+        details={}
+    )
 
     db.session.commit()
 
@@ -356,6 +416,10 @@ def extend_trial(tenant_id):
     data = request.get_json() or {}
     days = data.get('days', 30)
 
+    # Sacuvaj stari status za audit
+    old_status = tenant.status.value if tenant.status else None
+    old_trial_ends = tenant.trial_ends_at.isoformat() if tenant.trial_ends_at else None
+
     if tenant.trial_ends_at:
         # Produzenje od trenutnog datuma isteka
         tenant.trial_ends_at = tenant.trial_ends_at + timedelta(days=days)
@@ -365,6 +429,21 @@ def extend_trial(tenant_id):
 
     from app.models.tenant import TenantStatus
     tenant.status = TenantStatus.TRIAL
+
+    # Audit log
+    AdminActivityLog.log(
+        action_type=AdminActionType.EXTEND_TRIAL,
+        target_type='tenant',
+        target_id=tenant.id,
+        target_name=tenant.name,
+        old_status=old_status,
+        new_status='TRIAL',
+        details={
+            'days_extended': days,
+            'old_trial_ends_at': old_trial_ends,
+            'new_trial_ends_at': tenant.trial_ends_at.isoformat()
+        }
+    )
 
     db.session.commit()
 

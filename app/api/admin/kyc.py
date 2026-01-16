@@ -11,6 +11,7 @@ from flask import Blueprint, request, jsonify, g
 from app.extensions import db
 from app.models import Tenant
 from app.models.representative import ServiceRepresentative, RepresentativeStatus
+from app.models.admin_activity import AdminActivityLog, AdminActionType
 from app.api.middleware.auth import platform_admin_required
 
 bp = Blueprint('admin_kyc', __name__, url_prefix='/kyc')
@@ -137,14 +138,30 @@ def verify_representative(rep_id):
     Alias za /approve endpoint, koristi frontend template.
     """
     rep = ServiceRepresentative.query.get_or_404(rep_id)
+    tenant = Tenant.query.get(rep.tenant_id)
 
     if rep.status == RepresentativeStatus.VERIFIED:
         return jsonify({'error': 'Reprezentativ je vec verifikovan.'}), 400
 
+    old_status = rep.status.value if rep.status else None
     rep.status = RepresentativeStatus.VERIFIED
     rep.verified_at = datetime.utcnow()
     rep.verified_by_id = g.current_admin.id
     rep.rejection_reason = None
+
+    # Audit log
+    AdminActivityLog.log(
+        action_type=AdminActionType.KYC_VERIFY,
+        target_type='representative',
+        target_id=rep.id,
+        target_name=f'{rep.full_name} ({tenant.name if tenant else "?"})',
+        old_status=old_status,
+        new_status='VERIFIED',
+        details={
+            'tenant_id': rep.tenant_id,
+            'tenant_name': tenant.name if tenant else None
+        }
+    )
 
     db.session.commit()
 
@@ -193,16 +210,33 @@ def reject_representative(rep_id):
     Prihvata i POST i PUT metode.
     """
     rep = ServiceRepresentative.query.get_or_404(rep_id)
+    tenant = Tenant.query.get(rep.tenant_id)
     data = request.get_json() or {}
 
     reason = data.get('reason')
     if not reason:
         return jsonify({'error': 'Razlog odbijanja je obavezan.'}), 400
 
+    old_status = rep.status.value if rep.status else None
     rep.status = RepresentativeStatus.REJECTED
     rep.rejection_reason = reason
     rep.verified_at = None
     rep.verified_by_id = None
+
+    # Audit log
+    AdminActivityLog.log(
+        action_type=AdminActionType.KYC_REJECT,
+        target_type='representative',
+        target_id=rep.id,
+        target_name=f'{rep.full_name} ({tenant.name if tenant else "?"})',
+        old_status=old_status,
+        new_status='REJECTED',
+        details={
+            'tenant_id': rep.tenant_id,
+            'tenant_name': tenant.name if tenant else None,
+            'reason': reason
+        }
+    )
 
     db.session.commit()
 
@@ -224,15 +258,32 @@ def request_resubmit(rep_id):
     Koristi se kada su slike nejasne ili nepotpune.
     """
     rep = ServiceRepresentative.query.get_or_404(rep_id)
+    tenant = Tenant.query.get(rep.tenant_id)
     data = request.get_json() or {}
 
     reason = data.get('reason', 'Molimo vas da ponovo pošaljete jasnije slike ličnih dokumenata.')
 
+    old_status = rep.status.value if rep.status else None
     rep.status = RepresentativeStatus.PENDING
     rep.rejection_reason = reason
     # Brisemo stare slike da bi morali ponovo da uploaduju
     rep.lk_front_url = None
     rep.lk_back_url = None
+
+    # Audit log
+    AdminActivityLog.log(
+        action_type=AdminActionType.KYC_REQUEST_RESUBMIT,
+        target_type='representative',
+        target_id=rep.id,
+        target_name=f'{rep.full_name} ({tenant.name if tenant else "?"})',
+        old_status=old_status,
+        new_status='PENDING',
+        details={
+            'tenant_id': rep.tenant_id,
+            'tenant_name': tenant.name if tenant else None,
+            'reason': reason
+        }
+    )
 
     db.session.commit()
 
