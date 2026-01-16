@@ -85,8 +85,8 @@ def _get_csp_policy() -> str:
         # 'self' - samo sa naseg domena
         # 'unsafe-inline' - inline scripts (potrebno za Alpine.js x-data)
         # 'unsafe-eval' - eval() (potrebno za neke libs)
-        # Eksterni: Google API (OAuth, reCAPTCHA), Cloudinary
-        "script-src": "'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.google.com https://www.gstatic.com https://cdnjs.cloudflare.com",
+        # Eksterni: Google API (OAuth, reCAPTCHA), Tailwind CDN, Alpine.js CDN
+        "script-src": "'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.google.com https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net",
 
         # style-src: CSS izvori
         # 'unsafe-inline' - inline styles (Tailwind utilities)
