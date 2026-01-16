@@ -210,30 +210,36 @@ Ovaj email je automatski generisan, molimo ne odgovarajte na njega.
 
         # Posalji email preko SendGrid API
         try:
+            payload = {
+                "personalizations": [
+                    {
+                        "to": [{"email": email}],
+                        "subject": "ServisHub - Potvrdite vasu email adresu"
+                    }
+                ],
+                "from": {
+                    "email": self.from_email,
+                    "name": self.from_name
+                },
+                "content": [
+                    {
+                        "type": "text/plain",
+                        "value": text_content
+                    },
+                    {
+                        "type": "text/html",
+                        "value": html_content
+                    }
+                ]
+            }
+
+            print(f"[EMAIL] Sending to: {email}")
+            print(f"[EMAIL] From: {self.from_email} ({self.from_name})")
+            print(f"[EMAIL] Verification URL: {verification_url}")
+
             response = requests.post(
                 self.API_URL,
-                json={
-                    "personalizations": [
-                        {
-                            "to": [{"email": email}],
-                            "subject": "ServisHub - Potvrdite vasu email adresu"
-                        }
-                    ],
-                    "from": {
-                        "email": self.from_email,
-                        "name": self.from_name
-                    },
-                    "content": [
-                        {
-                            "type": "text/plain",
-                            "value": text_content
-                        },
-                        {
-                            "type": "text/html",
-                            "value": html_content
-                        }
-                    ]
-                },
+                json=payload,
                 headers={
                     "Authorization": f"Bearer {self.api_key}",
                     "Content-Type": "application/json"
@@ -241,20 +247,27 @@ Ovaj email je automatski generisan, molimo ne odgovarajte na njega.
                 timeout=10
             )
 
+            print(f"[EMAIL] SendGrid response status: {response.status_code}")
+            print(f"[EMAIL] SendGrid response body: {response.text}")
+
             # SendGrid vraca 202 Accepted za uspesno slanje
             if response.status_code in [200, 201, 202]:
+                print(f"[EMAIL] Successfully sent to {email}")
                 return True, "Verifikacioni email uspesno poslat", None
             else:
                 error_msg = "Nepoznata greska"
                 try:
                     error_data = response.json()
+                    print(f"[EMAIL] Error data: {error_data}")
                     if 'errors' in error_data:
                         error_msg = error_data['errors'][0].get('message', error_msg)
                 except:
                     pass
+                print(f"[EMAIL] Failed to send: {error_msg}")
                 raise EmailError(f"Slanje emaila nije uspelo: {error_msg}", 500)
 
         except requests.RequestException as e:
+            print(f"[EMAIL] Request exception: {str(e)}")
             raise EmailError(f"Greska pri slanju emaila: {str(e)}", 500)
 
     def verify_email_token(self, token: str) -> Tuple[bool, str]:
