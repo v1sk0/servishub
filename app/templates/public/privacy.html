@@ -1,0 +1,158 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Politika privatnosti - ServisHub{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-white">
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center">
+                        <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
+                        <span class="ml-3 text-xl font-bold text-gray-900">ServisHub</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/login" class="text-gray-600 hover:text-gray-900 font-medium">Prijava</a>
+                    <a href="/register" class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium">
+                        Besplatna registracija
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Politika privatnosti</h1>
+
+        <div class="prose prose-lg max-w-none text-gray-600">
+            <p class="mb-6">
+                <strong>Poslednja izmena:</strong> 16. januar 2026.
+            </p>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">1. Uvod</h2>
+            <p class="mb-4">
+                ServisHub ("mi", "nas", "naš") poštuje vašu privatnost i posvećen je zaštiti vaših ličnih podataka.
+                Ova politika privatnosti objašnjava kako prikupljamo, koristimo i štitimo vaše podatke kada koristite
+                našu platformu za upravljanje servisima.
+            </p>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">2. Podaci koje prikupljamo</h2>
+            <p class="mb-4">Prikupljamo sledeće vrste podataka:</p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li><strong>Podaci o nalogu:</strong> Ime, prezime, email adresa, broj telefona</li>
+                <li><strong>Podaci o preduzeću:</strong> Naziv firme, PIB, matični broj, adresa, bankovni račun</li>
+                <li><strong>KYC podaci:</strong> JMBG, broj lične karte, fotografije lične karte (za verifikaciju)</li>
+                <li><strong>Podaci o korišćenju:</strong> Log aktivnosti, IP adrese, informacije o uređaju</li>
+                <li><strong>Servisni podaci:</strong> Podaci o servisnim nalozima, kupcima, inventaru</li>
+            </ul>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">3. Kako koristimo vaše podatke</h2>
+            <p class="mb-4">Vaše podatke koristimo za:</p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>Pružanje i održavanje naše platforme</li>
+                <li>Verifikaciju identiteta i sprečavanje prevara</li>
+                <li>Komunikaciju sa vama u vezi sa vašim nalogom</li>
+                <li>Poboljšanje naših usluga</li>
+                <li>Ispunjavanje zakonskih obaveza</li>
+            </ul>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">4. Deljenje podataka</h2>
+            <p class="mb-4">
+                Ne prodajemo vaše lične podatke trećim stranama. Podatke možemo deliti sa:
+            </p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>Pružaocima usluga koji nam pomažu u radu platforme (hosting, email)</li>
+                <li>Državnim organima kada je to zakonski obavezno</li>
+                <li>Drugim korisnicima platforme u okviru marketplace funkcionalnosti (samo javni podaci)</li>
+            </ul>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">5. Sigurnost podataka</h2>
+            <p class="mb-4">
+                Primenjujemo tehničke i organizacione mere za zaštitu vaših podataka, uključujući:
+            </p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>SSL/TLS enkripciju za sve komunikacije</li>
+                <li>Hashovanje lozinki</li>
+                <li>Redovne sigurnosne provere</li>
+                <li>Ograničen pristup podacima samo ovlašćenim zaposlenima</li>
+            </ul>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">6. Vaša prava</h2>
+            <p class="mb-4">Imate pravo da:</p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>Pristupite svojim podacima</li>
+                <li>Ispravite netačne podatke</li>
+                <li>Zatražite brisanje podataka (uz određena ograničenja)</li>
+                <li>Povučete saglasnost za obradu podataka</li>
+                <li>Podnesete prigovor nadležnom organu</li>
+            </ul>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">7. Kolačići (Cookies)</h2>
+            <p class="mb-4">
+                Koristimo kolačiće za održavanje sesije i poboljšanje korisničkog iskustva.
+                Neophodni kolačići su potrebni za funkcionisanje platforme.
+            </p>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">8. Čuvanje podataka</h2>
+            <p class="mb-4">
+                Vaše podatke čuvamo dok je vaš nalog aktivan ili dok je to potrebno za pružanje usluga.
+                Nakon zatvaranja naloga, podaci se čuvaju u skladu sa zakonskim obavezama (obično 5-10 godina za poslovnu dokumentaciju).
+            </p>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">9. Izmene politike</h2>
+            <p class="mb-4">
+                Možemo povremeno ažurirati ovu politiku privatnosti. O značajnim izmenama ćemo vas obavestiti
+                putem emaila ili obaveštenja na platformi.
+            </p>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">10. Kontakt</h2>
+            <p class="mb-4">
+                Za sva pitanja u vezi sa vašim podacima ili ovom politikom, kontaktirajte nas na:
+            </p>
+            <p class="mb-4">
+                <strong>Email:</strong> privacy@servishub.rs<br>
+                <strong>Adresa:</strong> Beograd, Srbija
+            </p>
+        </div>
+
+        <div class="mt-12 pt-8 border-t border-gray-200">
+            <a href="/" class="text-primary-600 hover:text-primary-800 font-medium">
+                &larr; Nazad na početnu
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </div>
+                    <span class="ml-3 text-xl font-bold text-white">ServisHub</span>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="/privacy" class="text-gray-400 hover:text-white text-sm">Politika privatnosti</a>
+                    <a href="/terms" class="text-gray-400 hover:text-white text-sm">Uslovi korišćenja</a>
+                </div>
+            </div>
+            <p class="mt-4 text-gray-400 text-sm text-center">
+                &copy; 2026 ServisHub. Sva prava zadržana.
+            </p>
+        </div>
+    </footer>
+</div>
+{% endblock %}

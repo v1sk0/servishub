@@ -30,3 +30,17 @@ def track_ticket(token):
 def public_parts():
     """Javna pretraga delova."""
     return render_template('public/marketplace.html')
+
+
+# ============== Legal Pages ==============
+
+@bp.route('/privacy')
+def privacy_policy():
+    """Politika privatnosti."""
+    return render_template('public/privacy.html')
+
+
+@bp.route('/terms')
+def terms_of_service():
+    """Uslovi koriscenja."""
+    return render_template('public/terms.html')

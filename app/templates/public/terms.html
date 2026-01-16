@@ -1,0 +1,190 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Uslovi korišćenja - ServisHub{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-white">
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center">
+                        <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
+                        <span class="ml-3 text-xl font-bold text-gray-900">ServisHub</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/login" class="text-gray-600 hover:text-gray-900 font-medium">Prijava</a>
+                    <a href="/register" class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium">
+                        Besplatna registracija
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Uslovi korišćenja</h1>
+
+        <div class="prose prose-lg max-w-none text-gray-600">
+            <p class="mb-6">
+                <strong>Poslednja izmena:</strong> 16. januar 2026.
+            </p>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">1. Prihvatanje uslova</h2>
+            <p class="mb-4">
+                Korišćenjem ServisHub platforme ("Platforma") prihvatate ove Uslove korišćenja.
+                Ako se ne slažete sa bilo kojim delom ovih uslova, molimo vas da ne koristite Platformu.
+            </p>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">2. Opis usluge</h2>
+            <p class="mb-4">
+                ServisHub je SaaS platforma za upravljanje servisima mobilnih telefona i računara koja omogućava:
+            </p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>Vođenje servisnih naloga sa praćenjem garancija</li>
+                <li>Upravljanje inventarom telefona i rezervnih delova</li>
+                <li>Pristup marketplace-u za nabavku delova</li>
+                <li>Upravljanje više lokacija servisa</li>
+                <li>Izveštavanje i statistiku poslovanja</li>
+            </ul>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">3. Registracija i nalog</h2>
+            <p class="mb-4">
+                Da biste koristili Platformu, morate se registrovati i kreirati nalog. Obavezujete se da:
+            </p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>Pružite tačne i potpune informacije prilikom registracije</li>
+                <li>Održavate sigurnost vašeg naloga i lozinke</li>
+                <li>Obavestite nas odmah o bilo kakvom neovlašćenom korišćenju</li>
+                <li>Preuzimate odgovornost za sve aktivnosti na vašem nalogu</li>
+            </ul>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">4. KYC verifikacija</h2>
+            <p class="mb-4">
+                Za određene funkcionalnosti (B2C marketplace, prodaja krajnjim kupcima), potrebna je KYC verifikacija
+                koja uključuje dostavljanje ličnih dokumenata. Ovi podaci se koriste isključivo za verifikaciju
+                identiteta i sprečavanje prevara.
+            </p>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">5. Pretplata i plaćanje</h2>
+            <p class="mb-4">
+                ServisHub nudi sledeći model pretplate:
+            </p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li><strong>Probni period:</strong> 7 dana besplatno (DEMO status)</li>
+                <li><strong>Trial period:</strong> 60 dana besplatno nakon aktivacije od strane admina</li>
+                <li><strong>Bazni paket:</strong> 3.600 RSD mesečno (1 lokacija)</li>
+                <li><strong>Dodatna lokacija:</strong> 1.800 RSD mesečno po lokaciji</li>
+            </ul>
+            <p class="mb-4">
+                Neplaćanje pretplate rezultira suspenzijom naloga. Suspendovani nalog zadržava podatke 90 dana,
+                nakon čega se podaci mogu obrisati.
+            </p>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">6. Dozvoljena upotreba</h2>
+            <p class="mb-4">
+                Saglasni ste da ćete Platformu koristiti samo za zakonite poslovne svrhe. Zabranjeno je:
+            </p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>Korišćenje Platforme za bilo kakve nezakonite aktivnosti</li>
+                <li>Pokušaji neovlašćenog pristupa sistemima ili podacima drugih korisnika</li>
+                <li>Unošenje virusa, malvera ili drugog štetnog koda</li>
+                <li>Deljenje pristupnih podataka sa neovlašćenim licima</li>
+                <li>Korišćenje automatizovanih sistema za pristup Platformi bez dozvole</li>
+            </ul>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">7. Intelektualna svojina</h2>
+            <p class="mb-4">
+                ServisHub platforma, uključujući softver, dizajn, logotipe i sadržaj, predstavlja intelektualnu
+                svojinu ServisHub-a. Dobijate ograničenu, neekskluzivnu licencu za korišćenje Platforme
+                u skladu sa ovim uslovima.
+            </p>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">8. Podaci korisnika</h2>
+            <p class="mb-4">
+                Vi zadržavate vlasništvo nad svim podacima koje unosite u Platformu. Dajete nam pravo da
+                te podatke obrađujemo u cilju pružanja usluge. Obavezujemo se da ćemo vaše podatke čuvati
+                u skladu sa našom Politikom privatnosti.
+            </p>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">9. Ograničenje odgovornosti</h2>
+            <p class="mb-4">
+                ServisHub se pruža "kakav jeste". Ne garantujemo da će Platforma uvek biti dostupna,
+                bez grešaka ili sigurna. U maksimalnoj meri dozvoljenoj zakonom, nećemo biti odgovorni za:
+            </p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>Indirektne, slučajne ili posledične štete</li>
+                <li>Gubitak podataka usled tehničkih problema</li>
+                <li>Prekide u radu Platforme</li>
+                <li>Radnje trećih strana</li>
+            </ul>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">10. Raskid</h2>
+            <p class="mb-4">
+                Možete zatvoriti nalog u bilo kom trenutku kontaktiranjem podrške. Zadržavamo pravo da
+                suspendujemo ili zatvorimo nalog koji krši ove uslove. Po raskidu, prestaje vaše pravo
+                korišćenja Platforme, ali podaci se čuvaju u skladu sa zakonskim obavezama.
+            </p>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">11. Izmene uslova</h2>
+            <p class="mb-4">
+                Možemo izmeniti ove uslove u bilo kom trenutku. O značajnim izmenama ćemo vas obavestiti
+                unapred. Nastavak korišćenja Platforme nakon izmena smatra se prihvatanjem novih uslova.
+            </p>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">12. Merodavno pravo</h2>
+            <p class="mb-4">
+                Ovi uslovi se tumače u skladu sa zakonima Republike Srbije. Za sve sporove nadležan je
+                sud u Beogradu.
+            </p>
+
+            <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">13. Kontakt</h2>
+            <p class="mb-4">
+                Za sva pitanja u vezi sa ovim uslovima, kontaktirajte nas na:
+            </p>
+            <p class="mb-4">
+                <strong>Email:</strong> support@servishub.rs<br>
+                <strong>Adresa:</strong> Beograd, Srbija
+            </p>
+        </div>
+
+        <div class="mt-12 pt-8 border-t border-gray-200">
+            <a href="/" class="text-primary-600 hover:text-primary-800 font-medium">
+                &larr; Nazad na početnu
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </div>
+                    <span class="ml-3 text-xl font-bold text-white">ServisHub</span>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="/privacy" class="text-gray-400 hover:text-white text-sm">Politika privatnosti</a>
+                    <a href="/terms" class="text-gray-400 hover:text-white text-sm">Uslovi korišćenja</a>
+                </div>
+            </div>
+            <p class="mt-4 text-gray-400 text-sm text-center">
+                &copy; 2026 ServisHub. Sva prava zadržana.
+            </p>
+        </div>
+    </footer>
+</div>
+{% endblock %}
