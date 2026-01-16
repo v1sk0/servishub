@@ -36,6 +36,22 @@ class AdminActionType(enum.Enum):
     UPDATE_LOCATIONS = 'UPDATE_LOCATIONS'       # Promena broja lokacija
     UPDATE_SETTINGS = 'UPDATE_SETTINGS'         # Promena platform podesavanja
 
+    # Billing akcije
+    GENERATE_INVOICE = 'GENERATE_INVOICE'       # Generisanje fakture
+    VERIFY_PAYMENT = 'VERIFY_PAYMENT'           # Verifikacija uplate
+    REJECT_PAYMENT = 'REJECT_PAYMENT'           # Odbijanje uplate
+    BLOCK_TENANT = 'BLOCK_TENANT'               # Blokada zbog neplacanja
+    UNBLOCK_TENANT = 'UNBLOCK_TENANT'           # Deblokada nakon placanja
+    UPDATE_PRICING = 'UPDATE_PRICING'           # Promena cene paketa za servis
+
+    # Trust score akcije
+    TRUST_ACTIVATE = 'TRUST_ACTIVATE'           # Servis aktivirao "na rec"
+    TRUST_EXPIRED = 'TRUST_EXPIRED'             # Isteklo 48h bez uplate
+    UPDATE_TRUST_SCORE = 'UPDATE_TRUST_SCORE'   # Promena trust score-a
+
+    # Messaging akcije
+    SEND_MESSAGE = 'SEND_MESSAGE'               # Poslata poruka servisu
+
 
 class AdminActivityLog(db.Model):
     """
@@ -187,5 +203,18 @@ class AdminActivityLog(db.Model):
             AdminActionType.DELETE_TENANT: 'Obrisao servis',
             AdminActionType.UPDATE_LOCATIONS: 'Promenio broj lokacija',
             AdminActionType.UPDATE_SETTINGS: 'Promenio podesavanja platforme',
+            # Billing
+            AdminActionType.GENERATE_INVOICE: 'Generisao fakturu',
+            AdminActionType.VERIFY_PAYMENT: 'Verifikovao uplatu',
+            AdminActionType.REJECT_PAYMENT: 'Odbio uplatu',
+            AdminActionType.BLOCK_TENANT: 'Blokirao servis',
+            AdminActionType.UNBLOCK_TENANT: 'Deblokirao servis',
+            AdminActionType.UPDATE_PRICING: 'Promenio cenu paketa',
+            # Trust
+            AdminActionType.TRUST_ACTIVATE: 'Servis aktivirao "na rec"',
+            AdminActionType.TRUST_EXPIRED: 'Istekao "na rec" period',
+            AdminActionType.UPDATE_TRUST_SCORE: 'Promenio trust score',
+            # Messaging
+            AdminActionType.SEND_MESSAGE: 'Poslao poruku servisu',
         }
         return labels.get(self.action_type, self.action_type.value)

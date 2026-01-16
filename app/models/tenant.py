@@ -70,6 +70,36 @@ class Tenant(db.Model):
     trial_ends_at = db.Column(db.DateTime)           # Kada istice trial period (60 dana)
     subscription_ends_at = db.Column(db.DateTime)    # Kada istice pretplata
 
+    # ============================================
+    # BILLING - Dugovanje i placanje
+    # ============================================
+    current_debt = db.Column(db.Numeric(10, 2), default=0)  # Trenutno dugovanje u RSD
+    last_payment_at = db.Column(db.DateTime)                 # Poslednja uspesna uplata
+    days_overdue = db.Column(db.Integer, default=0)          # Broj dana kasnjenja
+
+    # ============================================
+    # BLOKADA
+    # ============================================
+    blocked_at = db.Column(db.DateTime)              # Kada je blokiran
+    block_reason = db.Column(db.String(200))         # Razlog blokade
+
+    # ============================================
+    # TRUST SCORE - Sistem poverenja
+    # ============================================
+    trust_score = db.Column(db.Integer, default=100)           # 0-100, visi = bolji
+    trust_activated_at = db.Column(db.DateTime)                # Kada je aktivirao "na rec"
+    trust_activation_count = db.Column(db.Integer, default=0)  # Ukupan broj aktivacija
+    last_trust_activation_period = db.Column(db.String(7))     # "2026-01" - mesec poslednje aktivacije
+    consecutive_on_time_payments = db.Column(db.Integer, default=0)  # Uzastopne uplate na vreme
+
+    # ============================================
+    # CUSTOM CENE - Popusti po servisu
+    # ============================================
+    custom_base_price = db.Column(db.Numeric(10, 2))           # NULL = koristi platformsku cenu
+    custom_location_price = db.Column(db.Numeric(10, 2))       # NULL = koristi platformsku cenu
+    custom_price_reason = db.Column(db.String(200))            # Razlog za custom cenu
+    custom_price_valid_from = db.Column(db.Date)               # Od kad vazi custom cena
+
     # Podesavanja (JSON) - warranty defaults, currency, itd.
     # Primer: {"warranty_defaults": {"phone_repair": 45}, "currency": "RSD"}
     settings_json = db.Column(db.JSON, default=dict)
@@ -156,6 +186,140 @@ class Tenant(db.Model):
             delta = self.subscription_ends_at - now
             return max(0, delta.days)
         return None
+
+    # ============================================
+    # BILLING PROPERTIES I METODE
+    # ============================================
+
+    @property
+    def has_debt(self):
+        """Da li ima dugovanje."""
+        return self.current_debt and float(self.current_debt) > 0
+
+    @property
+    def is_blocked(self):
+        """Da li je blokiran (SUSPENDED sa dugom)."""
+        return self.status == TenantStatus.SUSPENDED and self.has_debt
+
+    @property
+    def trust_level(self):
+        """Vraca nivo poverenja kao string."""
+        if self.trust_score >= 80:
+            return 'EXCELLENT'
+        elif self.trust_score >= 60:
+            return 'GOOD'
+        elif self.trust_score >= 40:
+            return 'WARNING'
+        elif self.trust_score >= 20:
+            return 'RISKY'
+        else:
+            return 'CRITICAL'
+
+    @property
+    def can_activate_trust(self):
+        """Da li moze da aktivira 'na rec' (samo iz SUSPENDED, 1x mesecno)."""
+        if self.status != TenantStatus.SUSPENDED:
+            return False
+
+        # Proveri da li je vec koristio ovaj mesec
+        current_period = datetime.utcnow().strftime('%Y-%m')
+        if self.last_trust_activation_period == current_period:
+            return False
+
+        return True
+
+    @property
+    def is_trust_active(self):
+        """Da li je trenutno aktivan 'na rec' period (48h)."""
+        if not self.trust_activated_at:
+            return False
+        elapsed = datetime.utcnow() - self.trust_activated_at
+        return elapsed.total_seconds() < 48 * 3600  # 48 sati
+
+    @property
+    def trust_hours_remaining(self):
+        """Preostalo sati za 'na rec' period."""
+        if not self.is_trust_active:
+            return 0
+        elapsed = datetime.utcnow() - self.trust_activated_at
+        remaining_seconds = (48 * 3600) - elapsed.total_seconds()
+        return max(0, int(remaining_seconds / 3600))
+
+    def activate_trust(self):
+        """
+        Aktivira 'ukljucenje na rec' za 48h.
+        NAPOMENA: Pozivalac mora proveriti can_activate_trust pre poziva!
+        """
+        self.trust_activated_at = datetime.utcnow()
+        self.trust_activation_count = (self.trust_activation_count or 0) + 1
+        self.last_trust_activation_period = datetime.utcnow().strftime('%Y-%m')
+        # Status ostaje SUSPENDED, ali is_trust_active postaje True
+
+    def update_trust_score(self, change, reason=None):
+        """
+        Azurira trust score sa ogranicenjem 0-100.
+
+        Args:
+            change: Promena (+10, -30, itd.)
+            reason: Razlog promene (za log)
+        """
+        new_score = (self.trust_score or 100) + change
+        self.trust_score = max(0, min(100, new_score))
+
+    def block(self, reason):
+        """Blokira servis zbog neplacanja."""
+        self.status = TenantStatus.SUSPENDED
+        self.blocked_at = datetime.utcnow()
+        self.block_reason = reason
+
+    def unblock(self):
+        """Deblokira servis (obicno nakon placanja)."""
+        self.status = TenantStatus.ACTIVE
+        self.blocked_at = None
+        self.block_reason = None
+        self.trust_activated_at = None
+        self.days_overdue = 0
+
+    def get_subscription_info(self):
+        """Vraca kompletan info o pretplati za API/UI."""
+        return {
+            'status': self.status.value,
+            'days_remaining': self.days_remaining,
+            'current_debt': float(self.current_debt) if self.current_debt else 0,
+            'days_overdue': self.days_overdue or 0,
+            'has_debt': self.has_debt,
+            'is_blocked': self.is_blocked,
+            'blocked_at': self.blocked_at.isoformat() if self.blocked_at else None,
+            'block_reason': self.block_reason,
+            'trust_score': self.trust_score or 100,
+            'trust_level': self.trust_level,
+            'can_activate_trust': self.can_activate_trust,
+            'is_trust_active': self.is_trust_active,
+            'trust_hours_remaining': self.trust_hours_remaining,
+            'expires_at': self._get_expiry_date(),
+            'custom_pricing': self._get_custom_pricing()
+        }
+
+    def _get_expiry_date(self):
+        """Vraca datum isteka za trenutni status."""
+        if self.status == TenantStatus.DEMO and self.demo_ends_at:
+            return self.demo_ends_at.isoformat()
+        elif self.status == TenantStatus.TRIAL and self.trial_ends_at:
+            return self.trial_ends_at.isoformat()
+        elif self.status == TenantStatus.ACTIVE and self.subscription_ends_at:
+            return self.subscription_ends_at.isoformat()
+        return None
+
+    def _get_custom_pricing(self):
+        """Vraca custom cene ako postoje."""
+        if not self.custom_base_price and not self.custom_location_price:
+            return None
+        return {
+            'base_price': float(self.custom_base_price) if self.custom_base_price else None,
+            'location_price': float(self.custom_location_price) if self.custom_location_price else None,
+            'reason': self.custom_price_reason,
+            'valid_from': self.custom_price_valid_from.isoformat() if self.custom_price_valid_from else None
+        }
 
 
 class ServiceLocation(db.Model):

@@ -16,10 +16,11 @@ from .ticket import ServiceTicket, TicketStatus, TicketPriority, TicketNotificat
 from .inventory import PhoneListing, SparePart, PhoneCondition, PartVisibility, PartCategory
 from .supplier import Supplier, SupplierListing, SupplierUser, SupplierStatus
 from .order import PartOrder, PartOrderItem, PartOrderMessage, OrderStatus, SellerType, generate_order_number
-from .representative import ServiceRepresentative, RepresentativeStatus, SubscriptionPayment
+from .representative import ServiceRepresentative, RepresentativeStatus, SubscriptionPayment, PaymentStatus
 from .email_verification import PendingEmailVerification
 from .security_event import SecurityEvent, SecurityEventType, SecurityEventSeverity
 from .platform_settings import PlatformSettings
+from .tenant_message import TenantMessage, MessageType, MessagePriority, MessageCategory
 
 __all__ = [
     # Tenant modeli
@@ -69,6 +70,7 @@ __all__ = [
     'ServiceRepresentative',
     'RepresentativeStatus',
     'SubscriptionPayment',
+    'PaymentStatus',
     # Email Verification modeli
     'PendingEmailVerification',
     # Security Event modeli
@@ -77,4 +79,9 @@ __all__ = [
     'SecurityEventSeverity',
     # Platform Settings
     'PlatformSettings',
+    # Tenant Message modeli
+    'TenantMessage',
+    'MessageType',
+    'MessagePriority',
+    'MessageCategory',
 ]

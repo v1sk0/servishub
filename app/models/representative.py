@@ -137,9 +137,21 @@ class ServiceRepresentative(db.Model):
         return data
 
 
+class PaymentStatus(enum.Enum):
+    """Status fakture/uplate."""
+    PENDING = 'PENDING'       # Ocekuje uplatu
+    PAID = 'PAID'             # Placeno i verifikovano
+    OVERDUE = 'OVERDUE'       # Kasni sa uplatom
+    CANCELLED = 'CANCELLED'   # Otkazano
+    REFUNDED = 'REFUNDED'     # Refundirano
+
+
 class SubscriptionPayment(db.Model):
     """
-    Uplata pretplate - pracenje uplata servisa.
+    Faktura/uplata za pretplatu servisa.
+
+    Svaka faktura pokriva jedan obracunski period (mesec) i sadrzi
+    stavke za bazni paket i dodatne lokacije.
     """
     __tablename__ = 'subscription_payment'
 
@@ -154,28 +166,33 @@ class SubscriptionPayment(db.Model):
         index=True
     )
 
-    # Period
-    period_start = db.Column(db.DateTime, nullable=False)
-    period_end = db.Column(db.DateTime, nullable=False)
+    # Broj fakture (jedinstven, format: SH-YYYY-NNNNNN)
+    invoice_number = db.Column(db.String(50), unique=True, index=True)
 
-    # Stavke (JSON)
-    # [{"type": "BASE", "description": "Bazni paket", "amount": 3600}, ...]
-    items_json = db.Column(db.JSON)
+    # Period koji pokriva ova faktura
+    period_start = db.Column(db.Date)
+    period_end = db.Column(db.Date)
+
+    # Stavke fakture (JSON array)
+    items_json = db.Column(db.JSON, default=list)
 
     # Iznosi
     subtotal = db.Column(db.Numeric(10, 2), nullable=False)
     discount_amount = db.Column(db.Numeric(10, 2), default=0)
+    discount_reason = db.Column(db.String(200))
     total_amount = db.Column(db.Numeric(10, 2), nullable=False)
     currency = db.Column(db.String(3), default='RSD')
 
-    # Status
+    # Status i rokovi
     status = db.Column(db.String(20), default='PENDING', nullable=False, index=True)
-    # PENDING, PAID, FAILED, REFUNDED
+    due_date = db.Column(db.Date)  # Rok za placanje
 
-    # Dokaz uplate
+    # Podaci o uplati
+    paid_at = db.Column(db.DateTime)
     payment_method = db.Column(db.String(20))  # BANK_TRANSFER, CARD, CASH
     payment_reference = db.Column(db.String(100))
     payment_proof_url = db.Column(db.String(500))
+    payment_notes = db.Column(db.Text)
 
     # Verifikacija
     verified_by_id = db.Column(
@@ -186,33 +203,93 @@ class SubscriptionPayment(db.Model):
     verified_at = db.Column(db.DateTime)
     verification_notes = db.Column(db.Text)
 
-    # Invoice
-    invoice_number = db.Column(db.String(50))
+    # Da li je generisana automatski
+    is_auto_generated = db.Column(db.Boolean, default=True)
+
+    # URL generisane PDF fakture
     invoice_url = db.Column(db.String(500))
 
     # Timestampovi
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relacije
-    tenant = db.relationship('Tenant', backref='payments')
+    tenant = db.relationship('Tenant', backref=db.backref('subscription_payments', lazy='dynamic'))
     verified_by = db.relationship('PlatformAdmin', backref='verified_payments')
 
-    def __repr__(self):
-        return f'<SubscriptionPayment {self.id}: {self.total_amount} {self.currency}>'
+    # Indeksi
+    __table_args__ = (
+        db.Index('ix_subscription_payment_tenant_status', 'tenant_id', 'status'),
+    )
 
-    def to_dict(self):
-        return {
+    def __repr__(self):
+        return f'<SubscriptionPayment {self.invoice_number}: {self.total_amount} {self.currency} ({self.status})>'
+
+    @property
+    def is_overdue(self):
+        """Da li je faktura prekoracila rok za placanje."""
+        if self.status == 'PAID':
+            return False
+        if not self.due_date:
+            return False
+        from datetime import date
+        return self.due_date < date.today()
+
+    @property
+    def days_overdue(self):
+        """Broj dana kasnjenja."""
+        if not self.is_overdue:
+            return 0
+        from datetime import date
+        return (date.today() - self.due_date).days
+
+    def to_dict(self, include_items=True):
+        """Pretvara u dict za API response."""
+        result = {
             'id': self.id,
             'tenant_id': self.tenant_id,
-            'period_start': self.period_start.isoformat(),
-            'period_end': self.period_end.isoformat(),
-            'items': self.items_json,
-            'subtotal': float(self.subtotal),
+            'invoice_number': self.invoice_number,
+            'period_start': self.period_start.isoformat() if self.period_start else None,
+            'period_end': self.period_end.isoformat() if self.period_end else None,
+            'subtotal': float(self.subtotal) if self.subtotal else 0,
             'discount_amount': float(self.discount_amount) if self.discount_amount else 0,
-            'total_amount': float(self.total_amount),
+            'discount_reason': self.discount_reason,
+            'total_amount': float(self.total_amount) if self.total_amount else 0,
             'currency': self.currency,
             'status': self.status,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'is_overdue': self.is_overdue,
+            'days_overdue': self.days_overdue,
+            'paid_at': self.paid_at.isoformat() if self.paid_at else None,
             'payment_method': self.payment_method,
+            'payment_reference': self.payment_reference,
+            'payment_proof_url': self.payment_proof_url,
             'verified_at': self.verified_at.isoformat() if self.verified_at else None,
-            'created_at': self.created_at.isoformat(),
+            'verified_by_id': self.verified_by_id,
+            'is_auto_generated': self.is_auto_generated,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
         }
+        if include_items:
+            result['items'] = self.items_json or []
+        return result
+
+    @classmethod
+    def generate_invoice_number(cls):
+        """Generise jedinstven broj fakture."""
+        from datetime import date
+        year = date.today().year
+
+        last = cls.query.filter(
+            cls.invoice_number.like(f'SH-{year}-%')
+        ).order_by(cls.id.desc()).first()
+
+        if last and last.invoice_number:
+            try:
+                last_num = int(last.invoice_number.split('-')[-1])
+                next_num = last_num + 1
+            except (ValueError, IndexError):
+                next_num = 1
+        else:
+            next_num = 1
+
+        return f'SH-{year}-{next_num:06d}'
