@@ -139,16 +139,9 @@ function loginForm() {
         error: null,
 
         init() {
-            // Proveri da li ima token u URL-u (nakon Google OAuth)
+            // Proveri da li ima grešku u URL-u (npr. nakon neuspešnog Google OAuth)
             const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
             const error = urlParams.get('error');
-
-            if (token) {
-                // Token dobijen od Google OAuth
-                localStorage.setItem('access_token', token);
-                window.location.href = '/dashboard';
-            }
 
             if (error) {
                 switch(error) {
@@ -160,6 +153,9 @@ function loginForm() {
                         break;
                     case 'config':
                         this.error = 'Google prijava nije konfigurisana.';
+                        break;
+                    case 'csrf_invalid':
+                        this.error = 'Sesija je istekla. Pokušajte ponovo.';
                         break;
                     case 'token_exchange':
                     case 'userinfo':

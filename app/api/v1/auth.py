@@ -548,7 +548,9 @@ def google_login():
         302: Redirect na Google OAuth
     """
     import os
+    import secrets
     from urllib.parse import urlencode
+    from flask import session
 
     client_id = os.environ.get('GOOGLE_CLIENT_ID')
     redirect_uri = os.environ.get('GOOGLE_REDIRECT_URI',
@@ -560,14 +562,19 @@ def google_login():
             'message': 'Google OAuth nije konfigurisan'
         }), 500
 
-    # Google OAuth URL
+    # Generiši CSRF state token i sačuvaj u sesiju
+    state = secrets.token_urlsafe(32)
+    session['oauth_state'] = state
+
+    # Google OAuth URL sa state parametrom
     params = {
         'client_id': client_id,
         'redirect_uri': redirect_uri,
         'response_type': 'code',
         'scope': 'openid email profile',
         'access_type': 'offline',
-        'prompt': 'select_account'
+        'prompt': 'select_account',
+        'state': state  # CSRF zaštita
     }
 
     google_auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
@@ -607,6 +614,36 @@ def google_session():
     }), 200
 
 
+@bp.route('/google/tokens', methods=['GET'])
+def google_tokens():
+    """
+    Sigurno preuzima OAuth tokene iz sesije.
+
+    Tokeni se čuvaju u HTTP-only sesiji umesto u URL-u
+    za bolju sigurnost. Ovaj endpoint se poziva samo jednom
+    i briše tokene iz sesije nakon čitanja (one-time use).
+
+    Returns:
+        200: Tokeni (access_token, refresh_token)
+        404: Nema tokena u sesiji
+    """
+    from flask import session
+
+    # Preuzmi i obriši tokene (one-time use)
+    tokens = session.pop('oauth_tokens', None)
+
+    if not tokens:
+        return jsonify({
+            'error': 'No Tokens',
+            'message': 'Nema OAuth tokena u sesiji'
+        }), 404
+
+    return jsonify({
+        'access_token': tokens.get('access_token'),
+        'refresh_token': tokens.get('refresh_token')
+    }), 200
+
+
 @bp.route('/google/callback', methods=['GET'])
 def google_callback():
     """
@@ -619,6 +656,7 @@ def google_callback():
 
     Query params:
         - code: Authorization code od Google-a
+        - state: CSRF state token (mora da se poklapa sa sesijom)
         - error: Greska (ako je korisnik odbio)
 
     Returns:
@@ -636,6 +674,13 @@ def google_callback():
     code = request.args.get('code')
     if not code:
         return redirect(f'/login?error=no_code')
+
+    # CSRF zaštita: Verifikuj state parametar
+    state = request.args.get('state')
+    stored_state = session.pop('oauth_state', None)  # Ukloni iz sesije nakon korišćenja
+
+    if not state or not stored_state or state != stored_state:
+        return redirect(f'/login?error=csrf_invalid')
 
     client_id = os.environ.get('GOOGLE_CLIENT_ID')
     client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
@@ -704,8 +749,14 @@ def google_callback():
             # Generiši tokene
             tokens = auth_service.generate_tokens(existing_user)
 
-            # Redirect na dashboard sa tokenom
-            return redirect(f'/dashboard?token={tokens["access_token"]}')
+            # Sačuvaj token u sesiju umesto URL-a (sigurnije)
+            session['oauth_tokens'] = {
+                'access_token': tokens['access_token'],
+                'refresh_token': tokens['refresh_token']
+            }
+
+            # Redirect na dashboard sa oznakom da preuzme token iz sesije
+            return redirect(f'/dashboard?auth=oauth')
 
         else:
             # Novi korisnik - prosledi podatke kroz URL parametre

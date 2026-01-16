@@ -109,13 +109,24 @@ function tenantApp() {
         sidebarOpen: false,
 
         async init() {
-            // Proveri da li ima token u URL-u (nakon Google OAuth)
+            // Proveri da li dolazi sa OAuth-a
             const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
+            const authMethod = urlParams.get('auth');
 
-            if (token) {
-                // Sačuvaj token u localStorage
-                localStorage.setItem('access_token', token);
+            if (authMethod === 'oauth') {
+                // Preuzmi tokene sigurno iz sesije (ne iz URL-a)
+                try {
+                    const response = await fetch('/api/v1/auth/google/tokens');
+                    if (response.ok) {
+                        const data = await response.json();
+                        localStorage.setItem('access_token', data.access_token);
+                        if (data.refresh_token) {
+                            localStorage.setItem('refresh_token', data.refresh_token);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch OAuth tokens:', e);
+                }
                 // Očisti URL parametre
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
