@@ -169,43 +169,275 @@ def update_settings():
 @bp.route('/subscription', methods=['GET'])
 @jwt_required
 def get_subscription():
-    """Get subscription status"""
+    """
+    Get complete subscription status with billing info.
+
+    Returns:
+        - status: DEMO/TRIAL/ACTIVE/EXPIRED/SUSPENDED
+        - pricing: mesečna cena sa lokacijama
+        - billing: dugovanje, dani kašnjenja
+        - trust: trust score i "na reč" info
+        - dates: svi relevantni datumi
+    """
+    from app.models import PlatformSettings
+
     tenant = Tenant.query.get(g.tenant_id)
     if not tenant:
         return {'error': 'Tenant not found'}, 404
 
-    # Count locations for pricing
+    # Dobavi platformska podešavanja
+    settings = PlatformSettings.get_settings()
+
+    # Broj lokacija
     locations_count = ServiceLocation.query.filter_by(
         tenant_id=tenant.id, is_active=True
     ).count()
 
-    # Calculate monthly cost
-    base_price = 3600  # RSD
-    location_price = 1800  # RSD per additional location
+    # Cene (custom ili platformske)
+    base_price = float(tenant.custom_base_price) if tenant.custom_base_price else float(settings.base_price)
+    location_price = float(tenant.custom_location_price) if tenant.custom_location_price else float(settings.location_price)
+
+    # Kalkulacija mesečne cene
     additional_locations = max(0, locations_count - 1)
     monthly_total = base_price + (additional_locations * location_price)
 
-    # Check if in trial
+    # Status info
+    is_demo = tenant.status.value == 'DEMO'
     is_trial = tenant.status.value == 'TRIAL'
-    trial_days_left = 0
-    if is_trial and tenant.trial_ends_at:
-        delta = tenant.trial_ends_at - datetime.utcnow()
-        trial_days_left = max(0, delta.days)
+    is_active = tenant.status.value == 'ACTIVE'
+    is_expired = tenant.status.value == 'EXPIRED'
+    is_suspended = tenant.status.value == 'SUSPENDED'
+
+    # Preostali dani
+    days_remaining = tenant.days_remaining
+
+    # Custom pricing info
+    custom_pricing = None
+    if tenant.custom_base_price or tenant.custom_location_price:
+        custom_pricing = {
+            'base_price': float(tenant.custom_base_price) if tenant.custom_base_price else None,
+            'location_price': float(tenant.custom_location_price) if tenant.custom_location_price else None,
+            'reason': tenant.custom_price_reason,
+            'valid_from': tenant.custom_price_valid_from.isoformat() if tenant.custom_price_valid_from else None
+        }
 
     return {
+        # Status
         'status': tenant.status.value,
+        'is_demo': is_demo,
         'is_trial': is_trial,
-        'trial_days_left': trial_days_left,
+        'is_active': is_active,
+        'is_expired': is_expired,
+        'is_suspended': is_suspended,
+        'days_remaining': days_remaining,
+
+        # Datumi
+        'demo_ends_at': tenant.demo_ends_at.isoformat() if tenant.demo_ends_at else None,
         'trial_ends_at': tenant.trial_ends_at.isoformat() if tenant.trial_ends_at else None,
         'subscription_ends_at': tenant.subscription_ends_at.isoformat() if tenant.subscription_ends_at else None,
+
+        # Cenovnik
         'pricing': {
             'base_price': base_price,
             'location_price': location_price,
+            'platform_base_price': float(settings.base_price),
+            'platform_location_price': float(settings.location_price),
             'locations_count': locations_count,
             'additional_locations': additional_locations,
             'monthly_total': monthly_total,
-            'currency': 'RSD'
+            'currency': settings.currency or 'RSD',
+            'has_custom_pricing': custom_pricing is not None,
+            'custom_pricing': custom_pricing
+        },
+
+        # Billing
+        'billing': {
+            'current_debt': float(tenant.current_debt) if tenant.current_debt else 0,
+            'has_debt': tenant.has_debt,
+            'days_overdue': tenant.days_overdue or 0,
+            'last_payment_at': tenant.last_payment_at.isoformat() if tenant.last_payment_at else None,
+            'is_blocked': tenant.is_blocked,
+            'blocked_at': tenant.blocked_at.isoformat() if tenant.blocked_at else None,
+            'block_reason': tenant.block_reason
+        },
+
+        # Trust Score
+        'trust': {
+            'score': tenant.trust_score or 100,
+            'level': tenant.trust_level,
+            'can_activate_trust': tenant.can_activate_trust,
+            'is_trust_active': tenant.is_trust_active,
+            'trust_hours_remaining': tenant.trust_hours_remaining,
+            'trust_activated_at': tenant.trust_activated_at.isoformat() if tenant.trust_activated_at else None,
+            'trust_activation_count': tenant.trust_activation_count or 0,
+            'consecutive_on_time_payments': tenant.consecutive_on_time_payments or 0
         }
+    }
+
+
+@bp.route('/subscription/payments', methods=['GET'])
+@jwt_required
+def get_subscription_payments():
+    """
+    Lista svih faktura za tenant.
+
+    Query params:
+        - status: filter po statusu (PENDING, PAID, OVERDUE)
+        - limit: broj rezultata (default 20)
+        - offset: offset za paginaciju
+    """
+    from app.models import SubscriptionPayment
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    status = request.args.get('status')
+    limit = min(request.args.get('limit', 20, type=int), 100)
+    offset = request.args.get('offset', 0, type=int)
+
+    # Base query
+    query = SubscriptionPayment.query.filter_by(tenant_id=tenant.id)
+
+    # Filter by status
+    if status:
+        query = query.filter(SubscriptionPayment.status == status)
+
+    # Order by created_at desc
+    query = query.order_by(SubscriptionPayment.created_at.desc())
+
+    # Total count
+    total = query.count()
+
+    # Paginate
+    payments = query.offset(offset).limit(limit).all()
+
+    return {
+        'payments': [p.to_dict() for p in payments],
+        'total': total,
+        'limit': limit,
+        'offset': offset
+    }
+
+
+@bp.route('/subscription/payments/<int:payment_id>/notify', methods=['POST'])
+@jwt_required
+def notify_payment(payment_id):
+    """
+    Prijava uplate od strane servisa.
+
+    Servis upload-uje sliku uplatnice i unosi referencu plaćanja.
+    Admin kasnije verifikuje uplatu.
+
+    Body JSON:
+        - payment_method: BANK_TRANSFER/CARD/CASH
+        - payment_reference: poziv na broj
+        - payment_proof_url: URL slike uplatnice (Cloudinary)
+        - payment_notes: napomena (opciono)
+    """
+    from app.models import SubscriptionPayment, TenantMessage, MessageCategory, MessagePriority
+    from pydantic import BaseModel, Field
+    from typing import Optional
+
+    class PaymentNotification(BaseModel):
+        payment_method: str = Field(..., pattern='^(BANK_TRANSFER|CARD|CASH)$')
+        payment_reference: Optional[str] = Field(None, max_length=100)
+        payment_proof_url: Optional[str] = Field(None, max_length=500)
+        payment_notes: Optional[str] = None
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    # Find payment
+    payment = SubscriptionPayment.query.filter_by(
+        id=payment_id,
+        tenant_id=tenant.id
+    ).first()
+
+    if not payment:
+        return {'error': 'Payment not found'}, 404
+
+    if payment.status == 'PAID':
+        return {'error': 'Payment already verified'}, 400
+
+    # Validate input
+    try:
+        data = PaymentNotification(**request.json)
+    except Exception as e:
+        return {'error': str(e)}, 400
+
+    # Update payment
+    payment.payment_method = data.payment_method
+    payment.payment_reference = data.payment_reference
+    payment.payment_proof_url = data.payment_proof_url
+    payment.payment_notes = data.payment_notes
+    payment.paid_at = datetime.utcnow()  # Označi kada je servis prijavio
+
+    db.session.commit()
+
+    return {
+        'message': 'Uplata prijavljena. Čeka verifikaciju admina.',
+        'payment': payment.to_dict()
+    }
+
+
+@bp.route('/subscription/trust-activate', methods=['POST'])
+@jwt_required
+def activate_trust():
+    """
+    Aktivira "Uključenje na reč" za blokirani servis.
+
+    Omogućava servisu da nastavi rad za 48 sati uz obećanje plaćanja.
+    Može se koristiti samo 1x mesečno i samo iz SUSPENDED statusa.
+    """
+    from app.models import TenantMessage, MessageCategory, MessagePriority
+    from app.models.tenant import TenantStatus
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    # Proveri da li može aktivirati
+    if not tenant.can_activate_trust:
+        if tenant.status != TenantStatus.SUSPENDED:
+            return {'error': 'Trust aktivacija je moguća samo iz SUSPENDED statusa'}, 400
+
+        current_period = datetime.utcnow().strftime('%Y-%m')
+        if tenant.last_trust_activation_period == current_period:
+            return {'error': 'Već ste koristili "Na reč" ovog meseca'}, 400
+
+        return {'error': 'Ne možete aktivirati "Na reč"'}, 400
+
+    # Aktiviraj trust
+    tenant.activate_trust()
+
+    # Kreiraj sistemsku poruku
+    TenantMessage.create_system_message(
+        tenant_id=tenant.id,
+        subject='Aktivirali ste "Uključenje na reč"',
+        body=f'''Uspešno ste aktivirali "Uključenje na reč".
+
+Imate 48 sati da izvršite uplatu ili pošaljete dokaz o uplati.
+
+Ako ne platite u roku od 48 sati, nalog će ponovo biti blokiran,
+a vaš Trust Score će biti umanjen za 30 poena.
+
+Trenutni Trust Score: {tenant.trust_score}
+Preostalo vreme: 48 sati''',
+        category=MessageCategory.BILLING,
+        priority=MessagePriority.URGENT,
+        action_url='/settings/subscription',
+        action_label='Pogledaj pretplatu'
+    )
+
+    db.session.commit()
+
+    return {
+        'message': 'Uključenje na reč aktivirano. Imate 48 sati da platite.',
+        'trust_activated_at': tenant.trust_activated_at.isoformat(),
+        'trust_hours_remaining': tenant.trust_hours_remaining,
+        'trust_score': tenant.trust_score
     }
 
 
