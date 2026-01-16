@@ -323,52 +323,26 @@
                     </div>
                 </div>
 
-                <form @submit.prevent="saveSettings" class="space-y-6">
-                    <div class="admin-card bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Cenovnik</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Packages Link -->
+                <div class="admin-card bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <svg class="w-8 h-8 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Bazni paket (RSD/mesec)</label>
-                                <input type="number" x-model="form.base_price" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Dodatna lokacija (RSD/mesec)</label>
-                                <input type="number" x-model="form.location_price" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="admin-card bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Trial i pretplate</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Trial period (dani)</label>
-                                <input type="number" x-model="form.trial_days" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Grace period (dani)</label>
-                                <input type="number" x-model="form.grace_period_days" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                                <h3 class="text-lg font-medium text-gray-900">Paketi usluga i cenovnik</h3>
+                                <p class="text-sm text-gray-500">Upravljanje cenama, trial periodima i provizijama</p>
                             </div>
                         </div>
+                        <a href="/admin/paketi" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Otvori
+                            <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </a>
                     </div>
-
-                    <div class="admin-card bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Dobavljaci</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Default provizija (%)</label>
-                                <input type="number" x-model="form.default_commission" step="0.1" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end">
-                        <button type="submit" :disabled="saving" class="btn-primary px-6 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-500 disabled:opacity-50 transition-colors">
-                            <span x-show="!saving">Sacuvaj podesavanja</span>
-                            <span x-show="saving">Cuvanje...</span>
-                        </button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
@@ -377,16 +351,8 @@
 <script>
 function settingsPage() {
     return {
-        loading: true,
-        saving: false,
+        loading: false,
         theme: localStorage.getItem('admin-theme') || 'light',
-        form: {
-            base_price: 3600,
-            location_price: 1800,
-            trial_days: 90,
-            grace_period_days: 7,
-            default_commission: 5
-        },
 
         // 2FA State
         twoFA: {
@@ -406,8 +372,15 @@ function settingsPage() {
         showDisable2FAModal: false,
 
         init() {
-            this.loadSettings();
+            this.checkAuth();
             this.load2FAStatus();
+        },
+
+        checkAuth() {
+            const token = localStorage.getItem('admin_access_token');
+            if (!token) {
+                window.location.href = '/admin/login';
+            }
         },
 
         setTheme(newTheme) {
@@ -420,50 +393,6 @@ function settingsPage() {
             localStorage.removeItem('admin_access_token');
             localStorage.removeItem('admin_refresh_token');
             window.location.href = '/admin/login';
-        },
-
-        async loadSettings() {
-            const token = localStorage.getItem('admin_access_token');
-            if (!token) {
-                window.location.href = '/admin/login';
-                return;
-            }
-            try {
-                const r = await fetch('/api/admin/settings', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                if (r.ok) {
-                    const data = await r.json();
-                    Object.assign(this.form, data);
-                } else if (r.status === 401) {
-                    window.location.href = '/admin/login';
-                }
-            } catch (e) {
-                console.error(e);
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        async saveSettings() {
-            this.saving = true;
-            const token = localStorage.getItem('admin_access_token');
-            try {
-                await fetch('/api/admin/settings', {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(this.form)
-                });
-                alert('Podesavanja sacuvana!');
-            } catch (e) {
-                console.error(e);
-                alert('Greska pri cuvanju');
-            } finally {
-                this.saving = false;
-            }
         },
 
         // =====================

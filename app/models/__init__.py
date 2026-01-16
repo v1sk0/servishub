@@ -19,6 +19,7 @@ from .order import PartOrder, PartOrderItem, PartOrderMessage, OrderStatus, Sell
 from .representative import ServiceRepresentative, RepresentativeStatus, SubscriptionPayment
 from .email_verification import PendingEmailVerification
 from .security_event import SecurityEvent, SecurityEventType, SecurityEventSeverity
+from .platform_settings import PlatformSettings
 
 __all__ = [
     # Tenant modeli
@@ -74,4 +75,6 @@ __all__ = [
     'SecurityEvent',
     'SecurityEventType',
     'SecurityEventSeverity',
+    # Platform Settings
+    'PlatformSettings',
 ]

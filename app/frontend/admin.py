@@ -91,6 +91,14 @@ def admin_security_events():
     return render_template('admin/security/events.html')
 
 
+# ============== Packages ==============
+
+@bp.route('/admin/paketi')
+def admin_packages():
+    """Paketi usluga i cenovnik."""
+    return render_template('admin/packages/index.html')
+
+
 # ============== Settings ==============
 
 @bp.route('/admin/settings')

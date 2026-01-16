@@ -34,6 +34,7 @@ class AdminActionType(enum.Enum):
     UPDATE_TENANT = 'UPDATE_TENANT'             # Azuriranje podataka tenanta
     DELETE_TENANT = 'DELETE_TENANT'             # Brisanje tenanta
     UPDATE_LOCATIONS = 'UPDATE_LOCATIONS'       # Promena broja lokacija
+    UPDATE_SETTINGS = 'UPDATE_SETTINGS'         # Promena platform podesavanja
 
 
 class AdminActivityLog(db.Model):
@@ -185,5 +186,6 @@ class AdminActivityLog(db.Model):
             AdminActionType.UPDATE_TENANT: 'Azurirao podatke servisa',
             AdminActionType.DELETE_TENANT: 'Obrisao servis',
             AdminActionType.UPDATE_LOCATIONS: 'Promenio broj lokacija',
+            AdminActionType.UPDATE_SETTINGS: 'Promenio podesavanja platforme',
         }
         return labels.get(self.action_type, self.action_type.value)

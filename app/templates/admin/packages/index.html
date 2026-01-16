@@ -1,0 +1,305 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Paketi Usluga - ServisHub Admin{% endblock %}
+
+{% block head %}
+{% include "admin/_admin_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div x-cloak
+     :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
+     x-data="packagesPage()" x-init="init()">
+    <div class="admin-wrapper min-h-screen bg-gray-100">
+        {% set active_page = 'paketi' %}
+        {% include "admin/_sidebar.html" %}
+
+        <!-- Main content -->
+        <div class="ml-64">
+            <div class="admin-topbar bg-white shadow-sm h-16 flex items-center justify-between px-8">
+                <h1 class="text-xl font-semibold text-gray-900">Paketi usluga i cenovnik</h1>
+                <div class="flex items-center space-x-4">
+                    <!-- Theme Toggle -->
+                    <div class="flex items-center space-x-2">
+                        <button @click="setTheme('light')"
+                                :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'light'}"
+                                class="theme-btn p-2 rounded-lg bg-white border border-gray-200 hover:border-gray-300"
+                                title="Svetla tema">
+                            <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z"/>
+                            </svg>
+                        </button>
+                        <button @click="setTheme('glass')"
+                                :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'glass'}"
+                                class="theme-btn p-2 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600 hover:border-gray-500"
+                                title="Glassmorphism tema">
+                            <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-8">
+                <!-- Loading State -->
+                <div x-show="loading" class="flex justify-center py-12">
+                    <svg class="animate-spin h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+
+                <form x-show="!loading" @submit.prevent="savePackages" class="space-y-6">
+                    <!-- Info Alert -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex">
+                            <svg class="w-5 h-5 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                            </svg>
+                            <div class="ml-3">
+                                <h4 class="text-sm font-medium text-blue-800">Kako funkcionisu paketi</h4>
+                                <p class="text-sm text-blue-700 mt-1">
+                                    Svaki servis placa bazni paket koji ukljucuje 1 lokaciju.
+                                    Za svaku dodatnu lokaciju placa se dodatna cena.
+                                    Servisi prvo prolaze kroz DEMO period (<span x-text="form.demo_days"></span> dana),
+                                    pa onda TRIAL period (<span x-text="form.trial_days"></span> dana) pre prelaska na pretplatu.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cenovnik -->
+                    <div class="admin-card bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center mb-4">
+                            <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <h3 class="text-lg font-medium text-gray-900">Cenovnik</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Bazni paket (RSD/mesec)</label>
+                                <div class="relative">
+                                    <input type="number" x-model="form.base_price" step="100" min="0"
+                                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm pl-3 pr-16">
+                                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 text-sm">RSD</span>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Ukljucuje 1 lokaciju</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Dodatna lokacija (RSD/mesec)</label>
+                                <div class="relative">
+                                    <input type="number" x-model="form.location_price" step="100" min="0"
+                                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm pl-3 pr-16">
+                                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 text-sm">RSD</span>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Za svaku lokaciju preko prve</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Valuta</label>
+                                <select x-model="form.currency"
+                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                                    <option value="RSD">RSD - Srpski dinar</option>
+                                    <option value="EUR">EUR - Euro</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Primer kalkulacije -->
+                    <div class="admin-card bg-gray-50 rounded-lg p-6 border border-gray-200">
+                        <h4 class="text-sm font-medium text-gray-900 mb-3">Primer kalkulacije mesecne cene:</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div class="bg-white rounded-lg p-4 border">
+                                <div class="text-gray-500 mb-1">1 lokacija</div>
+                                <div class="text-2xl font-bold text-gray-900" x-text="formatPrice(form.base_price)"></div>
+                            </div>
+                            <div class="bg-white rounded-lg p-4 border">
+                                <div class="text-gray-500 mb-1">3 lokacije</div>
+                                <div class="text-2xl font-bold text-gray-900" x-text="formatPrice(Number(form.base_price) + Number(form.location_price) * 2)"></div>
+                                <div class="text-xs text-gray-400">Bazni + 2 dodatne</div>
+                            </div>
+                            <div class="bg-white rounded-lg p-4 border">
+                                <div class="text-gray-500 mb-1">5 lokacija</div>
+                                <div class="text-2xl font-bold text-gray-900" x-text="formatPrice(Number(form.base_price) + Number(form.location_price) * 4)"></div>
+                                <div class="text-xs text-gray-400">Bazni + 4 dodatne</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trial i pretplate -->
+                    <div class="admin-card bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center mb-4">
+                            <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <h3 class="text-lg font-medium text-gray-900">Periodi koriscenja</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Demo period (dana)</label>
+                                <input type="number" x-model="form.demo_days" min="1" max="30"
+                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                                <p class="mt-1 text-xs text-gray-500">Automatski posle registracije</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Trial period (dana)</label>
+                                <input type="number" x-model="form.trial_days" min="1" max="365"
+                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                                <p class="mt-1 text-xs text-gray-500">Aktivira admin posle KYC verifikacije</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Grace period (dana)</label>
+                                <input type="number" x-model="form.grace_period_days" min="0" max="30"
+                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                                <p class="mt-1 text-xs text-gray-500">Pre automatske suspenzije</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dobavljaci -->
+                    <div class="admin-card bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center mb-4">
+                            <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            <h3 class="text-lg font-medium text-gray-900">Dobavljaci</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Default provizija (%)</label>
+                                <div class="relative">
+                                    <input type="number" x-model="form.default_commission" step="0.5" min="0" max="50"
+                                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm pl-3 pr-10">
+                                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 text-sm">%</span>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Na svaku prodaju preko platforme</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Success/Error Message -->
+                    <div x-show="message" x-transition
+                         :class="messageType === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'"
+                         class="rounded-lg border p-4">
+                        <p class="text-sm font-medium" x-text="message"></p>
+                    </div>
+
+                    <!-- Save Button -->
+                    <div class="flex justify-end">
+                        <button type="submit" :disabled="saving"
+                                class="btn-primary px-6 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-500 disabled:opacity-50 transition-colors inline-flex items-center">
+                            <svg x-show="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span x-show="!saving">Sacuvaj promene</span>
+                            <span x-show="saving">Cuvanje...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function packagesPage() {
+    return {
+        loading: true,
+        saving: false,
+        theme: localStorage.getItem('admin-theme') || 'light',
+        message: '',
+        messageType: 'success',
+        form: {
+            base_price: 3600,
+            location_price: 1800,
+            currency: 'RSD',
+            trial_days: 90,
+            demo_days: 7,
+            grace_period_days: 7,
+            default_commission: 5
+        },
+
+        init() {
+            this.loadPackages();
+        },
+
+        setTheme(newTheme) {
+            this.theme = newTheme;
+            localStorage.setItem('admin-theme', newTheme);
+            document.documentElement.setAttribute('data-admin-theme', newTheme);
+        },
+
+        formatPrice(value) {
+            return new Intl.NumberFormat('sr-RS').format(value) + ' ' + this.form.currency;
+        },
+
+        async loadPackages() {
+            const token = localStorage.getItem('admin_access_token');
+            if (!token) {
+                window.location.href = '/admin/login';
+                return;
+            }
+            try {
+                const r = await fetch('/api/admin/settings/packages', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (r.ok) {
+                    const data = await r.json();
+                    // Azuriraj samo polja koja postoje u response-u
+                    if (data.base_price !== undefined) this.form.base_price = data.base_price;
+                    if (data.location_price !== undefined) this.form.location_price = data.location_price;
+                    if (data.currency !== undefined) this.form.currency = data.currency;
+                    if (data.trial_days !== undefined) this.form.trial_days = data.trial_days;
+                    if (data.demo_days !== undefined) this.form.demo_days = data.demo_days;
+                    if (data.grace_period_days !== undefined) this.form.grace_period_days = data.grace_period_days;
+                    if (data.default_commission !== undefined) this.form.default_commission = data.default_commission;
+                } else if (r.status === 401) {
+                    window.location.href = '/admin/login';
+                }
+            } catch (e) {
+                console.error('Error loading packages:', e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async savePackages() {
+            this.saving = true;
+            this.message = '';
+            const token = localStorage.getItem('admin_access_token');
+
+            try {
+                const r = await fetch('/api/admin/settings/packages', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(this.form)
+                });
+
+                if (r.ok) {
+                    this.message = 'Podesavanja paketa su uspesno sacuvana!';
+                    this.messageType = 'success';
+                    // Auto-hide message after 3 seconds
+                    setTimeout(() => { this.message = ''; }, 3000);
+                } else {
+                    const err = await r.json();
+                    this.message = err.message || 'Greska pri cuvanju podesavanja';
+                    this.messageType = 'error';
+                }
+            } catch (e) {
+                console.error('Error saving packages:', e);
+                this.message = 'Greska pri povezivanju sa serverom';
+                this.messageType = 'error';
+            } finally {
+                this.saving = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}
