@@ -21,7 +21,8 @@
             </p>
         </div>
 
-        <form @submit.prevent="submit()" class="mt-8 space-y-6">
+        <!-- Step 1: Email & Password -->
+        <form x-show="!requires2FA" @submit.prevent="submit()" class="mt-8 space-y-6">
             <div class="space-y-4">
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-300">Email</label>
@@ -48,6 +49,57 @@
                 Prijavi se
             </button>
         </form>
+
+        <!-- Step 2: 2FA Code -->
+        <form x-show="requires2FA" @submit.prevent="submit2FA()" class="mt-8 space-y-6">
+            <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                <div class="flex items-center mb-3">
+                    <svg class="w-6 h-6 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                    <span class="text-white font-medium">Dvofaktorska autentifikacija</span>
+                </div>
+                <p class="text-sm text-gray-400">
+                    Unesite 6-cifreni kod iz vase autentifikator aplikacije.
+                </p>
+            </div>
+
+            <div>
+                <label for="code" class="block text-sm font-medium text-gray-300 mb-2">Verifikacioni kod</label>
+                <input id="code" type="text" x-model="twoFACode"
+                       maxlength="6" pattern="[0-9]*" inputmode="numeric"
+                       placeholder="000000" autofocus
+                       class="appearance-none relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-500 text-white bg-gray-800 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500 text-center text-2xl font-mono tracking-widest">
+            </div>
+
+            <div class="flex items-center">
+                <input id="use_backup" type="checkbox" x-model="useBackupCode"
+                       class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-600 rounded bg-gray-700">
+                <label for="use_backup" class="ml-2 block text-sm text-gray-400">
+                    Koristi backup kod
+                </label>
+            </div>
+
+            <div x-show="error" class="rounded-md bg-red-900/50 p-4">
+                <p class="text-sm font-medium text-red-400" x-text="error"></p>
+            </div>
+
+            <div class="space-y-3">
+                <button type="submit" :disabled="loading || twoFACode.length !== 6"
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50">
+                    <svg x-show="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Verifikuj
+                </button>
+
+                <button type="button" @click="backToLogin()"
+                        class="w-full text-center text-sm text-gray-400 hover:text-white">
+                    ← Nazad na prijavu
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -57,6 +109,9 @@ function adminLogin() {
         form: { email: '', password: '' },
         loading: false,
         error: '',
+        requires2FA: false,
+        twoFACode: '',
+        useBackupCode: false,
 
         async submit() {
             this.loading = true;
@@ -72,9 +127,16 @@ function adminLogin() {
                 const data = await response.json();
 
                 if (response.ok) {
-                    localStorage.setItem('admin_access_token', data.tokens.access_token);
-                    localStorage.setItem('admin_refresh_token', data.tokens.refresh_token);
-                    window.location.href = '/admin/dashboard';
+                    // Check if 2FA is required
+                    if (data.requires_2fa) {
+                        this.requires2FA = true;
+                        this.error = '';
+                    } else {
+                        // No 2FA, login directly
+                        localStorage.setItem('admin_access_token', data.tokens.access_token);
+                        localStorage.setItem('admin_refresh_token', data.tokens.refresh_token);
+                        window.location.href = '/admin/dashboard';
+                    }
                 } else {
                     this.error = data.message || 'Pogrešan email ili lozinka';
                 }
@@ -83,6 +145,45 @@ function adminLogin() {
             } finally {
                 this.loading = false;
             }
+        },
+
+        async submit2FA() {
+            this.loading = true;
+            this.error = '';
+
+            try {
+                const response = await fetch('/api/admin/auth/login/2fa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: this.form.email,
+                        code: this.twoFACode,
+                        use_backup: this.useBackupCode
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('admin_access_token', data.tokens.access_token);
+                    localStorage.setItem('admin_refresh_token', data.tokens.refresh_token);
+                    window.location.href = '/admin/dashboard';
+                } else {
+                    this.error = data.message || 'Neispravan kod';
+                    this.twoFACode = '';
+                }
+            } catch (e) {
+                this.error = 'Greška pri povezivanju sa serverom';
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        backToLogin() {
+            this.requires2FA = false;
+            this.twoFACode = '';
+            this.useBackupCode = false;
+            this.error = '';
         }
     }
 }
