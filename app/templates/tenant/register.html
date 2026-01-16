@@ -1255,6 +1255,12 @@ function showMapWithMarker(prefix, location, address) {
             animation: google.maps.Animation.DROP
         });
 
+        // Resize mape nakon sto je container vidljiv
+        setTimeout(() => {
+            google.maps.event.trigger(companyMap, 'resize');
+            companyMap.setCenter(location);
+        }, 100);
+
     } else if (prefix === 'location') {
         if (!locationMap) {
             locationMap = new google.maps.Map(mapElement, mapOptions);
@@ -1274,6 +1280,12 @@ function showMapWithMarker(prefix, location, address) {
             title: address,
             animation: google.maps.Animation.DROP
         });
+
+        // Resize mape nakon sto je container vidljiv
+        setTimeout(() => {
+            google.maps.event.trigger(locationMap, 'resize');
+            locationMap.setCenter(location);
+        }, 100);
     }
 
     console.log('[Google Maps] Map and marker displayed for', prefix);
