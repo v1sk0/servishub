@@ -544,7 +544,7 @@ def google_login():
 
     client_id = os.environ.get('GOOGLE_CLIENT_ID')
     redirect_uri = os.environ.get('GOOGLE_REDIRECT_URI',
-        'https://servicehubdolce-4c283dce32e9.herokuapp.com/api/v1/auth/google/callback')
+        'https://servishub.rs/api/v1/auth/google/callback')
 
     if not client_id:
         return jsonify({
@@ -602,7 +602,7 @@ def google_callback():
     client_id = os.environ.get('GOOGLE_CLIENT_ID')
     client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
     redirect_uri = os.environ.get('GOOGLE_REDIRECT_URI',
-        'https://servicehubdolce-4c283dce32e9.herokuapp.com/api/v1/auth/google/callback')
+        'https://servishub.rs/api/v1/auth/google/callback')
 
     if not client_id or not client_secret:
         return redirect(f'/login?error=config')

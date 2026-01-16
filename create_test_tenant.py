@@ -42,6 +42,6 @@ with app.app_context():
 
     print('')
     print('=== LOGIN PODACI ===')
-    print('URL: https://servicehubdolce-4c283dce32e9.herokuapp.com/login')
+    print('URL: https://servishub.rs/login')
     print('Email: tritel@tritel.rs')
     print('Password: tritel123')
