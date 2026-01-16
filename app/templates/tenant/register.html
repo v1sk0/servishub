@@ -599,6 +599,10 @@ window.registerPage = function() {
         init() {
             console.log('=== Alpine init() called, step:', this.step);
             console.log('Form object exists:', !!this.form);
+
+            // Izloži form globalno za pristup iz Google Maps callback-a
+            window.registerForm = this.form;
+
             // Load OAuth data from session if available
             if (this.isOAuth) {
                 this.loadOAuthData();
@@ -1210,19 +1214,19 @@ function showMapWithMarker(prefix, location, address) {
     // Prikazi container
     mapContainer.classList.remove('hidden');
 
-    // Sacuvaj koordinate u Alpine.js form (preko Alpine.$data)
-    const alpineRoot = document.querySelector('[x-data]');
-    if (alpineRoot && alpineRoot._x_dataStack) {
-        const alpineData = alpineRoot._x_dataStack[0];
+    // Sacuvaj koordinate u Alpine.js form (preko globalne reference)
+    if (window.registerForm) {
         if (prefix === 'company') {
-            alpineData.form.company_latitude = lat;
-            alpineData.form.company_longitude = lng;
+            window.registerForm.company_latitude = lat;
+            window.registerForm.company_longitude = lng;
             console.log('[Google Maps] Saved company coordinates:', lat, lng);
         } else if (prefix === 'location') {
-            alpineData.form.location_latitude = lat;
-            alpineData.form.location_longitude = lng;
+            window.registerForm.location_latitude = lat;
+            window.registerForm.location_longitude = lng;
             console.log('[Google Maps] Saved location coordinates:', lat, lng);
         }
+    } else {
+        console.warn('[Google Maps] registerForm not available yet');
     }
 
     // Kreiraj ili azuriraj mapu
