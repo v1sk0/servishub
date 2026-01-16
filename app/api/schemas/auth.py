@@ -50,7 +50,7 @@ class RegisterRequest(BaseModel):
 
     # Podaci vlasnika (Korak 3)
     owner_email: EmailStr = Field(..., description="Email vlasnika za login")
-    owner_password: Optional[str] = Field(None, min_length=8, max_length=100, description="Lozinka (opciono za OAuth)")
+    owner_password: Optional[str] = Field(None, max_length=100, description="Lozinka (opciono za OAuth)")
     owner_ime: str = Field(..., min_length=2, max_length=50, description="Ime vlasnika")
     owner_prezime: str = Field(..., min_length=2, max_length=50, description="Prezime vlasnika")
     owner_phone: str = Field(..., max_length=30, description="Mobilni telefon vlasnika")
@@ -65,13 +65,16 @@ class RegisterRequest(BaseModel):
     google_id: Optional[str] = Field(None, description="Google OAuth ID ako je OAuth registracija")
     phone_verified: bool = Field(False, description="Da li je telefon verifikovan SMS-om")
 
-    @field_validator('owner_password')
+    @field_validator('owner_password', mode='before')
     @classmethod
     def validate_password(cls, v, info):
         """Lozinka mora imati bar jedno slovo i jedan broj (osim za OAuth)."""
-        # Ako je OAuth registracija, lozinka nije obavezna
-        if v is None:
-            return v
+        # Ako je OAuth registracija ili prazna lozinka, vrati None
+        if v is None or v == '':
+            return None
+        # Proveri minimalnu duzinu
+        if len(v) < 8:
+            raise ValueError('Lozinka mora imati najmanje 8 karaktera')
         if not re.search(r'[A-Za-z]', v):
             raise ValueError('Lozinka mora sadrzati bar jedno slovo')
         if not re.search(r'\d', v):
