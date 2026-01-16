@@ -42,3 +42,8 @@ flask-cors==4.0.0
 
 # Logging
 structlog==23.2.0
+
+# 2FA (TOTP)
+pyotp==2.9.0
+qrcode==7.4.2
+pillow==10.1.0

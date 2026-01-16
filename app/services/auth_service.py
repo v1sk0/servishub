@@ -464,6 +464,25 @@ class AuthService:
 
         return admin, tokens
 
+    def generate_admin_tokens(self, admin: PlatformAdmin) -> dict:
+        """
+        Generise tokene za admina (koristi se nakon 2FA verifikacije).
+
+        Args:
+            admin: PlatformAdmin objekat
+
+        Returns:
+            Dict sa tokenima
+        """
+        access_token = create_admin_access_token(admin.id, admin.role.value)
+        refresh_token = create_admin_refresh_token(admin.id)
+
+        return {
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'expires_in': int(current_app.config['JWT_ACCESS_TOKEN_EXPIRES'].total_seconds())
+        }
+
     def change_password(self, user: TenantUser, current_password: str, new_password: str):
         """
         Menja lozinku korisnika.

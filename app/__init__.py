@@ -57,6 +57,10 @@ def _init_extensions(app):
     # CORS - dozvoli cross-origin zahteve
     cors.init_app(app, origins=app.config['CORS_ORIGINS'])
 
+    # Security Headers - dodaje sigurnosne HTTP headere na sve responses
+    from .middleware import init_security_headers
+    init_security_headers(app)
+
 
 def _register_blueprints(app):
     """
