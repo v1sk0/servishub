@@ -109,6 +109,17 @@ function tenantApp() {
         sidebarOpen: false,
 
         async init() {
+            // Proveri da li ima token u URL-u (nakon Google OAuth)
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            if (token) {
+                // Sačuvaj token u localStorage
+                localStorage.setItem('access_token', token);
+                // Očisti URL parametre
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
             await this.loadUser();
         },
 
