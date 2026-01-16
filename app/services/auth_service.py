@@ -147,6 +147,8 @@ class AuthService:
             db.session.flush()
 
             # Kreiraj owner korisnika
+            # Prazan string za google_id tretiramo kao None
+            actual_google_id = google_id if google_id else None
             owner = TenantUser(
                 tenant_id=tenant.id,
                 email=owner_email,
@@ -155,8 +157,8 @@ class AuthService:
                 phone=owner_phone,
                 role=UserRole.OWNER,
                 is_active=True,
-                google_id=google_id,
-                auth_provider='google' if google_id else 'email',
+                google_id=actual_google_id,
+                auth_provider='google' if actual_google_id else 'email',
                 phone_verified=phone_verified
             )
             # Postavi lozinku samo ako nije OAuth
