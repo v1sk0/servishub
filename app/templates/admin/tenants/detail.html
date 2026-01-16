@@ -90,6 +90,25 @@
                                         class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
                                     Reaktiviraj
                                 </button>
+
+                                <div class="border-l border-gray-300 mx-2"></div>
+
+                                <!-- Edit -->
+                                <button @click="openEditModal()"
+                                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 border border-gray-300">
+                                    <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                    Izmeni
+                                </button>
+                                <!-- Delete -->
+                                <button @click="openDeleteModal()"
+                                        class="px-4 py-2 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 border border-red-200">
+                                    <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Obriši
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -339,6 +358,120 @@
             </div>
         </div>
     </div>
+
+    <!-- Edit Modal -->
+    <div x-show="showEditModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="fixed inset-0 bg-black bg-opacity-50" @click="showEditModal = false"></div>
+            <div class="relative admin-card bg-white rounded-lg shadow-xl max-w-lg w-full">
+                <form @submit.prevent="saveTenant()">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">Izmeni podatke servisa</h3>
+                    </div>
+                    <div class="px-6 py-4 space-y-4 max-h-96 overflow-y-auto">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Naziv preduzeća</label>
+                            <input type="text" x-model="editForm.name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Email</label>
+                            <input type="email" x-model="editForm.email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Telefon</label>
+                            <input type="text" x-model="editForm.telefon" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Adresa sedišta</label>
+                            <input type="text" x-model="editForm.adresa_sedista" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">PIB</label>
+                                <input type="text" x-model="editForm.pib" maxlength="9" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Matični broj</label>
+                                <input type="text" x-model="editForm.maticni_broj" maxlength="8" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Bankovni račun</label>
+                            <input type="text" x-model="editForm.bank_account" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="XXX-XXXXXXXXXXX-XX">
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                        <button type="button" @click="showEditModal = false" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 border border-gray-300">Otkaži</button>
+                        <button type="submit" :disabled="editLoading" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-500 disabled:opacity-50">
+                            <span x-show="!editLoading">Sačuvaj</span>
+                            <span x-show="editLoading">Čuvam...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div x-show="showDeleteModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="fixed inset-0 bg-black bg-opacity-50" @click="showDeleteModal = false"></div>
+            <div class="relative admin-card bg-white rounded-lg shadow-xl max-w-md w-full">
+                <form @submit.prevent="deleteTenant()">
+                    <div class="px-6 py-4 border-b border-red-200 bg-red-50">
+                        <h3 class="text-lg font-medium text-red-800 flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            Brisanje servisa
+                        </h3>
+                    </div>
+                    <div class="px-6 py-4 space-y-4">
+                        <!-- Warning -->
+                        <div class="bg-red-100 border border-red-300 rounded-lg p-4 text-sm text-red-800">
+                            <p class="font-semibold mb-2">UPOZORENJE: Ova akcija je nepovratna!</p>
+                            <p>Brisanjem servisa <strong x-text="tenant?.name"></strong> obrisaćete:</p>
+                            <ul class="list-disc ml-5 mt-2 space-y-1">
+                                <li>Sve korisničke naloge (<span x-text="tenant?.users_count || 0"></span>)</li>
+                                <li>Sve servisne naloge (<span x-text="tenant?.stats?.tickets_total || 0"></span>)</li>
+                                <li>Sve lokacije (<span x-text="tenant?.locations_count || 0"></span>)</li>
+                                <li>Sve KYC podatke i slike lične karte</li>
+                                <li>Svu istoriju transakcija</li>
+                            </ul>
+                        </div>
+
+                        <!-- Backup checkbox -->
+                        <div class="flex items-start">
+                            <input type="checkbox" id="createBackup" x-model="deleteBackup" class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="createBackup" class="ml-2 block text-sm text-gray-700">
+                                <span class="font-medium">Kreiraj enkriptovani backup</span><br>
+                                <span class="text-gray-500">Backup će biti poslat na backup@servishub.rs pre brisanja</span>
+                            </label>
+                        </div>
+
+                        <!-- Confirmation input -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Za potvrdu upišite <strong class="text-red-600">obrisi</strong>
+                            </label>
+                            <input type="text" x-model="deleteConfirmation" placeholder="obrisi"
+                                   class="block w-full rounded-md border-red-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+                                   autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                        <button type="button" @click="closeDeleteModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 border border-gray-300">Otkaži</button>
+                        <button type="submit"
+                                :disabled="deleteConfirmation.toLowerCase() !== 'obrisi' || deleteLoading"
+                                class="px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span x-show="!deleteLoading">Trajno obriši</span>
+                            <span x-show="deleteLoading">Brišem...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -352,8 +485,27 @@ function tenantDetailPage(tenantId) {
         // Modals
         showExtendModal: false,
         showSuspendModal: false,
+        showEditModal: false,
+        showDeleteModal: false,
         extendDays: 30,
         suspendReason: '',
+
+        // Edit form
+        editForm: {
+            name: '',
+            email: '',
+            telefon: '',
+            adresa_sedista: '',
+            pib: '',
+            maticni_broj: '',
+            bank_account: ''
+        },
+        editLoading: false,
+
+        // Delete
+        deleteConfirmation: '',
+        deleteBackup: true,
+        deleteLoading: false,
 
         statusLabels: {
             'DEMO': 'Demo',
@@ -529,6 +681,97 @@ function tenantDetailPage(tenantId) {
                 }
             } catch (e) {
                 showToast('Greška', 'error');
+            }
+        },
+
+        // ========== EDIT ==========
+        openEditModal() {
+            // Popuni formu sa trenutnim podacima
+            this.editForm = {
+                name: this.tenant.name || '',
+                email: this.tenant.email || '',
+                telefon: this.tenant.telefon || this.tenant.phone || '',
+                adresa_sedista: this.tenant.adresa_sedista || this.tenant.address || '',
+                pib: this.tenant.pib || '',
+                maticni_broj: this.tenant.maticni_broj || '',
+                bank_account: this.tenant.bank_account || ''
+            };
+            this.showEditModal = true;
+        },
+
+        async saveTenant() {
+            this.editLoading = true;
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                const response = await fetch('/api/admin/tenants/' + this.tenantId, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(this.editForm)
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showToast(data.message || 'Podaci uspešno sačuvani', 'success');
+                    this.showEditModal = false;
+                    await this.loadTenant();
+                } else {
+                    showToast(data.error || 'Greška pri čuvanju', 'error');
+                }
+            } catch (e) {
+                showToast('Greška', 'error');
+            } finally {
+                this.editLoading = false;
+            }
+        },
+
+        // ========== DELETE ==========
+        openDeleteModal() {
+            this.deleteConfirmation = '';
+            this.deleteBackup = true;
+            this.showDeleteModal = true;
+        },
+
+        closeDeleteModal() {
+            this.deleteConfirmation = '';
+            this.showDeleteModal = false;
+        },
+
+        async deleteTenant() {
+            if (this.deleteConfirmation.toLowerCase() !== 'obrisi') {
+                showToast('Morate uneti "obrisi" za potvrdu', 'error');
+                return;
+            }
+
+            this.deleteLoading = true;
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                const response = await fetch('/api/admin/tenants/' + this.tenantId, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        confirmation: this.deleteConfirmation,
+                        create_backup: this.deleteBackup
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showToast(data.message || 'Servis uspešno obrisan', 'success');
+                    // Redirect na listu servisa
+                    setTimeout(() => {
+                        window.location.href = '/admin/tenants';
+                    }, 2000);
+                } else {
+                    showToast(data.error || data.message || 'Greška pri brisanju', 'error');
+                }
+            } catch (e) {
+                showToast('Greška pri brisanju', 'error');
+            } finally {
+                this.deleteLoading = false;
             }
         },
 

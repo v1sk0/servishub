@@ -34,6 +34,9 @@ python-dateutil==2.8.2
 python-slugify==8.0.1
 requests==2.31.0
 
+# Cryptography (for backup encryption)
+cryptography==41.0.7
+
 # API
 flask-cors==4.0.0
 

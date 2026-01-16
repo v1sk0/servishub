@@ -479,3 +479,166 @@ def update_locations_count(tenant_id):
         'tenant_id': tenant.id,
         'locations_count': tenant.locations_count
     }), 200
+
+
+# ============================================================================
+# AZURIRANJE PODATAKA TENANTA (EDIT)
+# ============================================================================
+
+@bp.route('/<int:tenant_id>', methods=['PUT'])
+@platform_admin_required
+def update_tenant(tenant_id):
+    """
+    Azurira osnovne podatke tenanta.
+
+    Body JSON:
+        - name: Novi naziv preduzeca
+        - email: Nova email adresa
+        - telefon: Novi telefon
+        - adresa_sedista: Nova adresa
+        - pib: Novi PIB (ako se menja)
+        - maticni_broj: Novi maticni broj
+        - bank_account: Novi bankovni racun
+    """
+    tenant = Tenant.query.get_or_404(tenant_id)
+    data = request.get_json() or {}
+
+    # Sacuvaj stare vrednosti za audit
+    old_values = {
+        'name': tenant.name,
+        'email': tenant.email,
+        'telefon': tenant.telefon,
+        'adresa_sedista': tenant.adresa_sedista,
+        'pib': tenant.pib,
+        'maticni_broj': tenant.maticni_broj,
+        'bank_account': tenant.bank_account,
+    }
+
+    # Azuriraj polja koja su prosledjena
+    changes = {}
+
+    if 'name' in data and data['name'] != tenant.name:
+        tenant.name = data['name']
+        changes['name'] = {'old': old_values['name'], 'new': data['name']}
+
+    if 'email' in data and data['email'] != tenant.email:
+        tenant.email = data['email']
+        changes['email'] = {'old': old_values['email'], 'new': data['email']}
+
+    if 'telefon' in data and data['telefon'] != tenant.telefon:
+        tenant.telefon = data['telefon']
+        changes['telefon'] = {'old': old_values['telefon'], 'new': data['telefon']}
+
+    if 'adresa_sedista' in data and data['adresa_sedista'] != tenant.adresa_sedista:
+        tenant.adresa_sedista = data['adresa_sedista']
+        changes['adresa_sedista'] = {'old': old_values['adresa_sedista'], 'new': data['adresa_sedista']}
+
+    if 'pib' in data and data['pib'] != tenant.pib:
+        # Proveri da PIB nije vec zauzet
+        existing = Tenant.query.filter(Tenant.pib == data['pib'], Tenant.id != tenant_id).first()
+        if existing:
+            return jsonify({'error': f'PIB {data["pib"]} je vec zauzet od strane drugog servisa.'}), 400
+        tenant.pib = data['pib']
+        changes['pib'] = {'old': old_values['pib'], 'new': data['pib']}
+
+    if 'maticni_broj' in data and data['maticni_broj'] != tenant.maticni_broj:
+        tenant.maticni_broj = data['maticni_broj']
+        changes['maticni_broj'] = {'old': old_values['maticni_broj'], 'new': data['maticni_broj']}
+
+    if 'bank_account' in data and data['bank_account'] != tenant.bank_account:
+        tenant.bank_account = data['bank_account']
+        changes['bank_account'] = {'old': old_values['bank_account'], 'new': data['bank_account']}
+
+    # Ako nema promena
+    if not changes:
+        return jsonify({'message': 'Nema promena za sacuvati.'}), 200
+
+    # Audit log
+    AdminActivityLog.log(
+        action_type=AdminActionType.UPDATE_TENANT,
+        target_type='tenant',
+        target_id=tenant.id,
+        target_name=tenant.name,
+        details={'changes': changes}
+    )
+
+    tenant.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    return jsonify({
+        'message': f'Podaci za "{tenant.name}" uspesno azurirani.',
+        'tenant_id': tenant.id,
+        'changes': changes
+    }), 200
+
+
+# ============================================================================
+# BRISANJE TENANTA SA OPCIONALNIM BACKUP-OM
+# ============================================================================
+
+@bp.route('/<int:tenant_id>', methods=['DELETE'])
+@platform_admin_required
+def delete_tenant(tenant_id):
+    """
+    Brise tenanta i sve njegove podatke.
+
+    Zahteva potvrdu unosom reci "obrisi" u request body.
+    Opciono kreira enkriptovani backup pre brisanja.
+
+    Body JSON:
+        - confirmation: Mora biti "obrisi" za potvrdu
+        - create_backup: Boolean - da li kreirati backup (default: True)
+    """
+    tenant = Tenant.query.get_or_404(tenant_id)
+    data = request.get_json() or {}
+
+    # Proveri potvrdu
+    confirmation = data.get('confirmation', '').lower().strip()
+    if confirmation != 'obrisi':
+        return jsonify({
+            'error': 'Morate uneti "obrisi" za potvrdu brisanja.',
+            'message': 'Brisanje otkazano - netacna potvrda.'
+        }), 400
+
+    # Da li radimo backup?
+    create_backup = data.get('create_backup', True)
+
+    # Sacuvaj podatke za audit pre brisanja
+    tenant_name = tenant.name
+    tenant_email = tenant.email
+    tenant_pib = tenant.pib
+
+    # Izvrsi brisanje (sa ili bez backup-a)
+    from app.services.tenant_backup_service import tenant_backup_service
+    success, message = tenant_backup_service.backup_and_delete_tenant(
+        tenant_id=tenant_id,
+        admin_email=g.current_admin.email,
+        create_backup=create_backup
+    )
+
+    if not success:
+        return jsonify({
+            'error': 'Greska pri brisanju',
+            'message': message
+        }), 500
+
+    # Audit log - nakon uspesnog brisanja
+    # Napomena: tenant vise ne postoji, tako da ne mozemo referencirati tenant.id
+    AdminActivityLog.log(
+        action_type=AdminActionType.DELETE_TENANT,
+        target_type='tenant',
+        target_id=tenant_id,  # ID tenanta koji je obrisan
+        target_name=tenant_name,
+        details={
+            'tenant_email': tenant_email,
+            'tenant_pib': tenant_pib,
+            'backup_created': create_backup
+        }
+    )
+
+    return jsonify({
+        'message': message,
+        'deleted_tenant_id': tenant_id,
+        'deleted_tenant_name': tenant_name,
+        'backup_created': create_backup
+    }), 200
