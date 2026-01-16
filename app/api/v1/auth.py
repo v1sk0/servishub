@@ -963,3 +963,47 @@ def resend_verification_email():
             'error': 'Email Error',
             'message': e.message
         }), e.code
+
+
+# =============================================================================
+# APR Pretraga (Agencija za privredne registre)
+# =============================================================================
+
+@bp.route('/apr/company/<pib>', methods=['GET'])
+def get_company_by_pib(pib):
+    """
+    Preuzima podatke o firmi iz APR-a na osnovu PIB-a.
+
+    Koristi se tokom registracije za automatsko popunjavanje
+    podataka o firmi.
+
+    Args:
+        pib: Poreski identifikacioni broj (9 cifara)
+
+    Returns:
+        JSON sa podacima o firmi ili error
+    """
+    from ...services.apr_service import apr_service
+
+    # Validiraj PIB
+    pib = pib.strip()
+    if not pib.isdigit() or len(pib) != 9:
+        return jsonify({
+            'error': 'Invalid PIB',
+            'message': 'PIB mora imati tačno 9 cifara.'
+        }), 400
+
+    # Preuzmi podatke
+    company = apr_service.get_company_by_pib(pib)
+
+    if not company:
+        return jsonify({
+            'error': 'Not Found',
+            'message': 'Firma sa ovim PIB-om nije pronađena u APR registru.',
+            'pib': pib
+        }), 404
+
+    return jsonify({
+        'success': True,
+        'company': company.to_dict()
+    }), 200
