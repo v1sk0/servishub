@@ -106,6 +106,7 @@
                 <div>
                     <label for="adresa_sedista" class="block text-sm font-medium text-gray-700">Adresa sedišta *</label>
                     <input type="text" id="adresa_sedista" x-model="form.adresa_sedista"
+                           @input="syncLocationAddress()"
                            placeholder="Ulica i broj"
                            :class="aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300'"
                            class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
@@ -124,6 +125,7 @@
                     <div>
                         <label for="company_city" class="block text-sm font-medium text-gray-700">Grad *</label>
                         <input type="text" id="company_city" x-model="form.company_city"
+                               @input="syncLocationAddress()"
                                placeholder="npr. Beograd"
                                :class="aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300'"
                                class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
@@ -131,6 +133,7 @@
                     <div>
                         <label for="company_postal_code" class="block text-sm font-medium text-gray-700">Poštanski broj *</label>
                         <input type="text" id="company_postal_code" x-model="form.company_postal_code" maxlength="5"
+                               @input="syncLocationAddress()"
                                placeholder="11000"
                                :class="aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300'"
                                class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
