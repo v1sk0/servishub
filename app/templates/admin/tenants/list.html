@@ -162,11 +162,11 @@
                                                 <a :href="'/admin/tenants/' + tenant.id" class="text-red-600 hover:text-red-900">Detalji</a>
                                                 <!-- DEMO -> TRIAL aktivacija -->
                                                 <template x-if="tenant.status === 'DEMO'">
-                                                    <button @click="activateTrial(tenant)" class="text-purple-600 hover:text-purple-900 font-medium">Aktiviraj TRIAL</button>
+                                                    <button @click="activateTrial(tenant)" class="px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700">Aktiviraj TRIAL</button>
                                                 </template>
                                                 <!-- TRIAL/EXPIRED -> ACTIVE aktivacija -->
                                                 <template x-if="tenant.status === 'TRIAL' || tenant.status === 'EXPIRED'">
-                                                    <button @click="activateTenant(tenant)" class="text-green-600 hover:text-green-900">Aktiviraj</button>
+                                                    <button @click="activateTenant(tenant)" class="px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700">Aktiviraj</button>
                                                 </template>
                                                 <template x-if="tenant.status === 'TRIAL'">
                                                     <button @click="openExtendModal(tenant)" class="text-blue-600 hover:text-blue-900">Produzi</button>
@@ -175,7 +175,7 @@
                                                     <button @click="openSuspendModal(tenant)" class="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700">Suspenduj</button>
                                                 </template>
                                                 <template x-if="tenant.status === 'SUSPENDED'">
-                                                    <button @click="unsuspendTenant(tenant)" class="text-yellow-600 hover:text-yellow-900">Aktiviraj</button>
+                                                    <button @click="unsuspendTenant(tenant)" class="px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700">Reaktiviraj</button>
                                                 </template>
                                             </div>
                                         </td>

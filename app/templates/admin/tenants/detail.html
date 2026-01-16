@@ -67,12 +67,12 @@
                             <div class="flex gap-2 flex-wrap">
                                 <!-- DEMO -> TRIAL -->
                                 <button x-show="tenant.status === 'DEMO'" @click="activateTrial()"
-                                        class="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-500">
+                                        class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
                                     🎯 Aktiviraj TRIAL (60 dana)
                                 </button>
                                 <!-- TRIAL -> ACTIVE -->
                                 <button x-show="tenant.status === 'TRIAL'" @click="changeStatus('ACTIVE')"
-                                        class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-500">
+                                        class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
                                     Aktiviraj pretplatu
                                 </button>
                                 <!-- Extend Trial -->
@@ -87,7 +87,7 @@
                                 </button>
                                 <!-- Unsuspend -->
                                 <button x-show="tenant.status === 'SUSPENDED'" @click="unsuspend()"
-                                        class="px-4 py-2 text-sm font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100">
+                                        class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
                                     Reaktiviraj
                                 </button>
                             </div>
