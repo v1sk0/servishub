@@ -681,6 +681,10 @@ def google_callback():
 
         # Proveri da li korisnik vec postoji
         from ...models import TenantUser
+        from urllib.parse import urlencode, quote
+        import base64
+        import json
+
         existing_user = TenantUser.query.filter(
             (TenantUser.google_id == google_id) | (TenantUser.email == email)
         ).first()
@@ -700,16 +704,21 @@ def google_callback():
             return redirect(f'/dashboard?token={tokens["access_token"]}')
 
         else:
-            # Novi korisnik - sacuvaj podatke u session i redirect na registraciju
-            session['google_user'] = {
+            # Novi korisnik - prosledi podatke kroz URL parametre
+            # Enkodiramo u base64 da izbegnemo probleme sa specijalnim karakterima
+            google_data = {
                 'google_id': google_id,
                 'email': email,
                 'ime': given_name,
                 'prezime': family_name
             }
+            encoded_data = base64.urlsafe_b64encode(json.dumps(google_data).encode()).decode()
 
-            # Redirect na registraciju sa pre-popunjenim podacima
-            return redirect('/register?oauth=google')
+            # Takodje sacuvaj u session kao fallback
+            session['google_user'] = google_data
+
+            # Redirect na registraciju sa enkodiranim podacima u URL-u
+            return redirect(f'/register?oauth=google&gdata={encoded_data}')
 
     except http_requests.RequestException:
         return redirect(f'/login?error=network')
