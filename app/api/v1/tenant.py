@@ -8,7 +8,7 @@ from app.models import Tenant, ServiceLocation, TenantUser, ServiceRepresentativ
 from app.api.middleware.auth import jwt_required
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 
 bp = Blueprint('tenant', __name__, url_prefix='/tenant')
 

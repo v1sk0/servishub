@@ -15,7 +15,12 @@ def jwt_required(f):
     Dekorator koji zahteva validan JWT access token.
 
     Proverava Authorization header, dekodira token i postavlja
-    g.current_user_id i g.token_payload za dalje koriscenje.
+    sledece vrednosti u Flask g objekt:
+    - g.current_user_id: ID korisnika (sub claim)
+    - g.user_id: Alias za current_user_id (za tenant API-je)
+    - g.tenant_id: ID tenanta iz tokena
+    - g.token_payload: Kompletan JWT payload
+    - g.is_admin: Boolean da li je platform admin
 
     Koristi se na svim zastitenim endpointima.
 
@@ -23,7 +28,8 @@ def jwt_required(f):
         @bp.route('/protected')
         @jwt_required
         def protected_route():
-            user_id = g.current_user_id
+            user_id = g.user_id
+            tenant_id = g.tenant_id
             ...
     """
     @wraps(f)
@@ -58,6 +64,10 @@ def jwt_required(f):
         g.current_user_id = payload.get('sub')
         g.token_payload = payload
         g.is_admin = payload.get('is_admin', False)
+
+        # Tenant API endpoint-i koriste g.user_id i g.tenant_id
+        g.user_id = payload.get('sub')
+        g.tenant_id = payload.get('tenant_id')
 
         return f(*args, **kwargs)
 
