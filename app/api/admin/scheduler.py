@@ -4,14 +4,14 @@ Admin API - Scheduler kontrola.
 Endpointi za monitoring i manuelno pokretanje scheduler jobova.
 """
 
-from flask import jsonify, request
+from flask import jsonify, request, g
 from . import bp
-from ..middleware.admin_auth import admin_required
+from app.api.middleware.auth import platform_admin_required
 
 
 @bp.route('/scheduler/status', methods=['GET'])
-@admin_required()
-def get_scheduler_status(admin):
+@platform_admin_required
+def get_scheduler_status():
     """
     Vraca status schedulera i svih jobova.
 
@@ -29,17 +29,17 @@ def get_scheduler_status(admin):
             ]
         }
     """
-    from ...services.scheduler_service import get_scheduler_status
-    return jsonify(get_scheduler_status())
+    from ...services.scheduler_service import get_scheduler_status as get_status
+    return jsonify(get_status())
 
 
 @bp.route('/scheduler/run/<job_id>', methods=['POST'])
-@admin_required(roles=['SUPER_ADMIN'])
-def run_job_manually(admin, job_id):
+@platform_admin_required
+def run_job_manually(job_id):
     """
     Pokrece job manuelno (van rasporeda).
 
-    Samo SUPER_ADMIN moze pokretati jobove manuelno.
+    Samo admini mogu pokretati jobove manuelno.
 
     Args:
         job_id: ID joba (billing_daily, generate_invoices, send_reminders)
