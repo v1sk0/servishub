@@ -7,8 +7,9 @@
 {% endblock %}
 
 {% block content %}
-<div x-data="activityListPage()" x-init="loadActivities()">
-    <div class="admin-wrapper min-h-screen">
+<div :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
+     x-data="activityListPage()" x-init="loadActivities()">
+    <div class="admin-wrapper min-h-screen bg-gray-100">
         {% set active_page = 'activity' %}
         {% include "admin/_sidebar.html" %}
 
@@ -246,7 +247,11 @@ function activityListPage() {
         showDetailsModal: false,
         selectedActivity: null,
 
-        setTheme(t) { this.theme = t; setAdminTheme(t); },
+        setTheme(newTheme) {
+            this.theme = newTheme;
+            localStorage.setItem('admin-theme', newTheme);
+            document.documentElement.setAttribute('data-admin-theme', newTheme);
+        },
 
         async loadActivities(page = 1) {
             const token = localStorage.getItem('admin_access_token');

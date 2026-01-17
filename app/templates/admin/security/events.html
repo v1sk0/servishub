@@ -7,8 +7,9 @@
 {% endblock %}
 
 {% block content %}
-<div x-data="securityEventsPage()" x-init="loadEvents()">
-    <div class="admin-wrapper min-h-screen">
+<div :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
+     x-data="securityEventsPage()" x-init="loadEvents()">
+    <div class="admin-wrapper min-h-screen bg-gray-100">
         {% set active_page = 'security' %}
         {% include "admin/_sidebar.html" %}
 
@@ -306,7 +307,11 @@ function securityEventsPage() {
         showDetailsModal: false,
         selectedEvent: null,
 
-        setTheme(t) { this.theme = t; setAdminTheme(t); },
+        setTheme(newTheme) {
+            this.theme = newTheme;
+            localStorage.setItem('admin-theme', newTheme);
+            document.documentElement.setAttribute('data-admin-theme', newTheme);
+        },
 
         async loadEvents(page = 1) {
             const token = localStorage.getItem('admin_access_token');

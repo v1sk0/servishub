@@ -7,8 +7,9 @@
 {% endblock %}
 
 {% block content %}
-<div x-data="paymentsPage()" x-init="loadPayments()">
-    <div class="admin-wrapper min-h-screen">
+<div :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
+     x-data="paymentsPage()" x-init="loadPayments()">
+    <div class="admin-wrapper min-h-screen bg-gray-100">
         {% set active_page = 'payments' %}
         {% include "admin/_sidebar.html" %}
 
@@ -142,7 +143,11 @@ function paymentsPage() {
             'FAILED': 'Neuspesno'
         },
 
-        setTheme(t) { this.theme = t; setAdminTheme(t); },
+        setTheme(newTheme) {
+            this.theme = newTheme;
+            localStorage.setItem('admin-theme', newTheme);
+            document.documentElement.setAttribute('data-admin-theme', newTheme);
+        },
 
         logout() {
             localStorage.removeItem('admin_access_token');
