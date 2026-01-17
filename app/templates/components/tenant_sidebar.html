@@ -118,19 +118,23 @@
             <!-- Subscription Widget -->
             <li class="mt-auto -mx-2">
                 <a href="/settings?tab=subscription" class="block">
-                    <div class="subscription-widget rounded-xl p-4 transition-all hover:scale-[1.02]"
+                    <div class="subscription-widget rounded-xl p-4 transition-all hover:scale-[1.02] relative overflow-hidden"
                          :class="getWidgetClass()">
+                        <!-- Shimmer effect -->
+                        <div class="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+
                         <!-- Header -->
-                        <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center justify-between mb-3 relative">
                             <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                <div class="w-9 h-9 rounded-lg flex items-center justify-center"
                                      :class="getIconBgClass()">
-                                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                    <!-- Key icon -->
+                                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/>
                                     </svg>
                                 </div>
                                 <div>
-                                    <p class="text-xs font-medium opacity-70" x-text="getPlanLabel()"></p>
+                                    <p class="text-xs font-bold opacity-90" x-text="getPlanLabel()"></p>
                                     <p class="text-sm font-bold" x-text="getPlanName()"></p>
                                 </div>
                             </div>
@@ -140,8 +144,8 @@
                         </div>
 
                         <!-- Progress bar -->
-                        <div x-show="totalDays > 0" class="mb-2">
-                            <div class="h-1.5 rounded-full bg-white/20 overflow-hidden">
+                        <div x-show="totalDays > 0" class="mb-2 relative">
+                            <div class="h-3 rounded-full bg-white/20 overflow-hidden">
                                 <div class="h-full rounded-full transition-all duration-500"
                                      :class="getProgressBarClass()"
                                      :style="'width: ' + getProgressPercent() + '%'"></div>
