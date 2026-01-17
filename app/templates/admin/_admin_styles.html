@@ -6,8 +6,8 @@
     var t = localStorage.getItem('admin-theme') || 'light';
     var d = document.documentElement;
     d.setAttribute('data-admin-theme', t);
-    // Dodaj klasu direktno na body za instant stilove
-    d.className = (d.className || '') + ' theme-' + t;
+    // Dodaj istu klasu koju koristi Alpine za instant stilove
+    d.classList.add(t === 'glass' ? 'admin-glass' : 'admin-light');
 })();
 </script>
 
