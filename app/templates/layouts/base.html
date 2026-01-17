@@ -65,10 +65,20 @@
             width: 50%;
         }
 
-        /* Postmark-style border for subscription widget */
+        /* Postage stamp scalloped/perforated border effect */
         .postmark-border {
-            border: 2px dashed rgba(255, 255, 255, 0.3);
-            border-radius: 0.75rem;
+            --r: 6px; /* radius of scallops */
+            --s: 12px; /* size of one scallop */
+            -webkit-mask:
+                radial-gradient(var(--r) at var(--r) 50%, #000 98%, #0000) calc(-1 * var(--r)) 0 / 100% var(--s),
+                radial-gradient(var(--r) at calc(100% - var(--r)) 50%, #000 98%, #0000) var(--r) calc(var(--s) / 2) / 100% var(--s),
+                radial-gradient(var(--r) at 50% var(--r), #000 98%, #0000) 0 calc(-1 * var(--r)) / var(--s) 100%,
+                radial-gradient(var(--r) at 50% calc(100% - var(--r)), #000 98%, #0000) calc(var(--s) / 2) var(--r) / var(--s) 100%;
+            mask:
+                radial-gradient(var(--r) at var(--r) 50%, #000 98%, #0000) calc(-1 * var(--r)) 0 / 100% var(--s),
+                radial-gradient(var(--r) at calc(100% - var(--r)) 50%, #000 98%, #0000) var(--r) calc(var(--s) / 2) / 100% var(--s),
+                radial-gradient(var(--r) at 50% var(--r), #000 98%, #0000) 0 calc(-1 * var(--r)) / var(--s) 100%,
+                radial-gradient(var(--r) at 50% calc(100% - var(--r)), #000 98%, #0000) calc(var(--s) / 2) var(--r) / var(--s) 100%;
         }
 
         /* ==================== GLASSMORPHISM THEME ==================== */
