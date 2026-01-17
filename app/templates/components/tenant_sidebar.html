@@ -252,15 +252,20 @@ function sidebarData() {
         },
 
         getIconBgClass() {
-            return 'bg-white/20';
+            // Yellow background for key icon
+            return 'bg-amber-400';
         },
 
         getStatusPillClass() {
             if (this.subscriptionStatus === 'ACTIVE' || this.subscriptionStatus === 'TRIAL' || this.subscriptionStatus === 'DEMO') {
-                return 'bg-white/20 text-white';
+                // Green button for active status
+                return 'bg-emerald-500 text-white';
             }
             if (this.subscriptionStatus === 'GRACE') {
-                return 'bg-amber-900/50 text-amber-100';
+                return 'bg-amber-500 text-white';
+            }
+            if (this.subscriptionStatus === 'SUSPENDED') {
+                return 'bg-red-500 text-white';
             }
             return 'bg-white/10 text-white/70';
         },
