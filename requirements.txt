@@ -47,3 +47,4 @@ structlog==23.2.0
 pyotp==2.9.0
 qrcode==7.4.2
 pillow==10.1.0
+APScheduler==3.10.4

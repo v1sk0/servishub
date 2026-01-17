@@ -16,7 +16,7 @@ def register_routes():
     Registruje sve sub-blueprinte za admin API.
     Poziva se iz app factory-ja.
     """
-    from . import auth, tenants, kyc, dashboard, activity, security, settings, payments
+    from . import auth, tenants, kyc, dashboard, activity, security, settings, payments, scheduler
 
     bp.register_blueprint(auth.bp)
     bp.register_blueprint(tenants.bp)
@@ -26,5 +26,6 @@ def register_routes():
     bp.register_blueprint(security.bp)
     bp.register_blueprint(settings.bp)
     bp.register_blueprint(payments.bp)
+    # scheduler rute su direktno na bp, nije sub-blueprint
 
     # TODO: Dodati suppliers management, orders management, support tickets

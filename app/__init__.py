@@ -61,6 +61,17 @@ def _init_extensions(app):
     from .middleware import init_security_headers
     init_security_headers(app)
 
+    # Background Scheduler - pokrece billing taskove automatski
+    # Samo u produkciji i ne tokom CLI komandi
+    import os
+    import sys
+    is_main_process = os.environ.get('WERKZEUG_RUN_MAIN') != 'true' or not app.debug
+    is_cli_command = 'flask' in sys.argv[0] or any(cmd in sys.argv for cmd in ['db', 'shell', 'routes'])
+
+    if not is_cli_command and app.config.get('SCHEDULER_ENABLED', True):
+        from .services.scheduler_service import init_scheduler
+        init_scheduler(app)
+
 
 def _register_blueprints(app):
     """
