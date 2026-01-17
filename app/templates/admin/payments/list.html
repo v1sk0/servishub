@@ -91,7 +91,7 @@
                     </svg>
                 </div>
 
-                <div x-show="!loading" class="admin-card bg-white shadow rounded-lg overflow-hidden">
+                <div x-show="!loading" x-cloak class="admin-card bg-white shadow rounded-lg overflow-hidden">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -116,13 +116,13 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(p.created_at)"></td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
-                                        <button x-show="p.status === 'PENDING'" @click="verify(p.id)" class="text-green-600 hover:text-green-900 text-sm font-medium mr-2">Verifikuj</button>
+                                        <button x-show="p.status === 'PENDING'" x-cloak @click="verify(p.id)" class="text-green-600 hover:text-green-900 text-sm font-medium mr-2">Verifikuj</button>
                                     </td>
                                 </tr>
                             </template>
                         </tbody>
                     </table>
-                    <div x-show="payments.length === 0" class="text-center py-12 text-gray-500">Nema uplata</div>
+                    <div x-show="payments.length === 0" x-cloak class="text-center py-12 text-gray-500">Nema uplata</div>
                 </div>
             </div>
         </div>

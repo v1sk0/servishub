@@ -136,7 +136,7 @@
                                           x-text="tenant.status"></span>
                                 </div>
                             </template>
-                            <div x-show="recentTenants.length === 0" class="px-6 py-8 text-center text-gray-500">
+                            <div x-show="recentTenants.length === 0" x-cloak class="px-6 py-8 text-center text-gray-500">
                                 Nema novih servisa
                             </div>
                         </div>
@@ -162,7 +162,7 @@
                                     </div>
                                 </div>
                             </template>
-                            <div x-show="pendingKyc.length === 0" class="px-6 py-8 text-center text-gray-500">
+                            <div x-show="pendingKyc.length === 0" x-cloak class="px-6 py-8 text-center text-gray-500">
                                 Nema zahteva za verifikaciju
                             </div>
                         </div>

@@ -125,7 +125,7 @@
                 </div>
 
                 <!-- Tabela -->
-                <div x-show="!loading" class="admin-card bg-white shadow rounded-lg overflow-hidden">
+                <div x-show="!loading" x-cloak class="admin-card bg-white shadow rounded-lg overflow-hidden">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -182,10 +182,10 @@
                             </template>
                         </tbody>
                     </table>
-                    <div x-show="activities.length === 0" class="text-center py-12 text-gray-500">Nema aktivnosti</div>
+                    <div x-show="activities.length === 0" x-cloak class="text-center py-12 text-gray-500">Nema aktivnosti</div>
 
                     <!-- Paginacija -->
-                    <div x-show="pagination.pages > 1" class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                    <div x-show="pagination.pages > 1" x-cloak class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
                         <div class="text-sm text-gray-500">
                             Stranica <span x-text="pagination.page"></span> od <span x-text="pagination.pages"></span>
                             (<span x-text="pagination.total"></span> ukupno)

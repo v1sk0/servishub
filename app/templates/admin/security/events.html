@@ -92,7 +92,7 @@
                 </div>
 
                 <!-- Top IPs kartica -->
-                <div x-show="topIps.length > 0" class="admin-card bg-white rounded-lg shadow mb-6 p-4">
+                <div x-show="topIps.length > 0" x-cloak class="admin-card bg-white rounded-lg shadow mb-6 p-4">
                     <h3 class="text-sm font-medium text-gray-700 mb-3">Top IP adrese (24h)</h3>
                     <div class="flex flex-wrap gap-2">
                         <template x-for="ip in topIps" :key="ip.ip">
@@ -178,7 +178,7 @@
                 </div>
 
                 <!-- Tabela -->
-                <div x-show="!loading" class="admin-card bg-white shadow rounded-lg overflow-hidden">
+                <div x-show="!loading" x-cloak class="admin-card bg-white shadow rounded-lg overflow-hidden">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -224,10 +224,10 @@
                             </template>
                         </tbody>
                     </table>
-                    <div x-show="events.length === 0" class="text-center py-12 text-gray-500">Nema security eventova za izabrani period</div>
+                    <div x-show="events.length === 0" x-cloak class="text-center py-12 text-gray-500">Nema security eventova za izabrani period</div>
 
                     <!-- Paginacija -->
-                    <div x-show="pagination.pages > 1" class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                    <div x-show="pagination.pages > 1" x-cloak class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
                         <div class="text-sm text-gray-500">
                             Stranica <span x-text="pagination.page"></span> od <span x-text="pagination.pages"></span>
                             (<span x-text="pagination.total"></span> ukupno)

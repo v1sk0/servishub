@@ -233,7 +233,7 @@
                     </svg>
                 </div>
 
-                <div x-show="!loading" class="space-y-8">
+                <div x-show="!loading" x-cloak class="space-y-8">
 
                     <!-- Lifecycle Flow Visual -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -520,7 +520,7 @@
                         </div>
 
                         <!-- Success/Error Message -->
-                        <div x-show="message" x-transition
+                        <div x-show="message" x-cloak x-transition
                              :class="messageType === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'"
                              class="rounded-xl border p-4">
                             <div class="flex items-center gap-3">
@@ -542,7 +542,7 @@
                         <div class="flex justify-end">
                             <button type="submit" :disabled="saving"
                                     class="px-8 py-3 text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-red-500 rounded-xl hover:from-red-500 hover:to-red-400 disabled:opacity-50 transition-all shadow-lg shadow-red-500/25 inline-flex items-center gap-2">
-                                <svg x-show="saving" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <svg x-show="saving" x-cloak class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
@@ -550,7 +550,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                 </svg>
                                 <span x-show="!saving">Sacuvaj Podesavanja</span>
-                                <span x-show="saving">Cuvanje...</span>
+                                <span x-show="saving" x-cloak>Cuvanje...</span>
                             </button>
                         </div>
                     </form>

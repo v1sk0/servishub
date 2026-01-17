@@ -49,7 +49,7 @@
                     </svg>
                 </div>
 
-                <div x-show="!loading" class="admin-card bg-white shadow rounded-lg overflow-hidden">
+                <div x-show="!loading" x-cloak class="admin-card bg-white shadow rounded-lg overflow-hidden">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -81,7 +81,7 @@
                             </template>
                         </tbody>
                     </table>
-                    <div x-show="filteredKyc.length === 0" class="text-center py-12 text-gray-500">Nema zahteva za verifikaciju</div>
+                    <div x-show="filteredKyc.length === 0" x-cloak class="text-center py-12 text-gray-500">Nema zahteva za verifikaciju</div>
                 </div>
             </div>
         </div>

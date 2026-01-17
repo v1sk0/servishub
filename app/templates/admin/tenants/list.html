@@ -182,7 +182,7 @@
                                 </template>
 
                                 <!-- Empty -->
-                                <tr x-show="!loading && tenants.length === 0">
+                                <tr x-show="!loading && tenants.length === 0" x-cloak>
                                     <td colspan="6" class="px-6 py-12 text-center text-gray-500">
                                         Nema servisa koji odgovaraju filterima
                                     </td>
@@ -202,7 +202,7 @@
                     </div>
 
                     <!-- Pagination -->
-                    <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between" x-show="pagination.pages > 1">
+                    <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between" x-show="pagination.pages > 1" x-cloak>
                         <p class="text-sm text-gray-500">
                             <span x-text="((pagination.page - 1) * pagination.per_page) + 1"></span> -
                             <span x-text="Math.min(pagination.page * pagination.per_page, pagination.total)"></span> od
