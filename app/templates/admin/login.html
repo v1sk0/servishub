@@ -3,7 +3,10 @@
 {% block title %}Admin Login - ServisHub{% endblock %}
 
 {% block head %}
-<style>body { background: #111827 !important; }</style>
+<style>
+body { background: #111827 !important; }
+[x-cloak] { display: none !important; }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -55,7 +58,7 @@
         </form>
 
         <!-- Step 2: 2FA Code -->
-        <form x-show="requires2FA" @submit.prevent="submit2FA()" class="mt-8 space-y-6">
+        <form x-show="requires2FA" x-cloak @submit.prevent="submit2FA()" class="mt-8 space-y-6">
             <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
                 <div class="flex items-center mb-3">
                     <svg class="w-6 h-6 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
