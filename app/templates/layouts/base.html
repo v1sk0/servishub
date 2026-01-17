@@ -54,13 +54,20 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Shimmer/shine effect for widgets */
+        /* Shimmer/shine effect for widgets - 45 degree angle */
         @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+            0% { transform: translateX(-100%) skewX(-25deg); }
+            100% { transform: translateX(200%) skewX(-25deg); }
         }
         .animate-shimmer {
             animation: shimmer 3s infinite;
+            width: 50%;
+        }
+
+        /* Postmark-style border for subscription widget */
+        .postmark-border {
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 0.75rem;
         }
 
         /* ==================== GLASSMORPHISM THEME ==================== */
