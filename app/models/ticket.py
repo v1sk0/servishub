@@ -335,6 +335,18 @@ class ServiceTicket(db.Model):
         self.paid_at = datetime.utcnow()
         self.payment_method = payment_method
 
+    def _parse_problem_areas(self):
+        """Parse problem_areas - handles both JSON and comma-separated formats."""
+        if not self.problem_areas:
+            return None
+        import json
+        try:
+            # Try JSON first
+            return json.loads(self.problem_areas)
+        except (json.JSONDecodeError, TypeError):
+            # Fall back to comma-separated string
+            return self.problem_areas
+
     def to_dict(self, include_sensitive=False):
         """Konvertuje nalog u dict za API response."""
         import json
@@ -356,7 +368,7 @@ class ServiceTicket(db.Model):
             'device_condition_grade': self.device_condition_grade,
             'device_condition_notes': self.device_condition_notes,
             'device_not_working': self.device_not_working,
-            'problem_areas': json.loads(self.problem_areas) if self.problem_areas else None,
+            'problem_areas': self._parse_problem_areas(),
             'problem_description': self.problem_description,
             'diagnosis': self.diagnosis,
             'resolution': self.resolution,
