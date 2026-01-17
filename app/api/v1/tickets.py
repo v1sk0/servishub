@@ -216,6 +216,7 @@ def create_ticket():
     ticket.generate_access_token()
 
     db.session.add(ticket)
+    db.session.flush()  # Get ticket.id before audit log
 
     # Audit log
     AuditLog.log_create(
