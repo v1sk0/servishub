@@ -7,9 +7,8 @@
 {% endblock %}
 
 {% block content %}
-<div :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
-     x-data="tenantDetailPage({{ tenant_id }})" x-init="loadTenant()">
-    <div class="admin-wrapper min-h-screen bg-gray-100">
+<div x-data="tenantDetailPage({{ tenant_id }})" x-init="loadTenant()">
+    <div class="admin-wrapper min-h-screen">
         {% set active_page = 'tenants' %}
         {% include "admin/_sidebar.html" %}
 
@@ -636,11 +635,7 @@ function tenantDetailPage(tenantId) {
             'REJECTED': 'Odbijen'
         },
 
-        setTheme(newTheme) {
-            this.theme = newTheme;
-            localStorage.setItem('admin-theme', newTheme);
-            document.documentElement.setAttribute('data-admin-theme', newTheme);
-        },
+        setTheme(t) { this.theme = t; setAdminTheme(t); },
 
         logout() {
             localStorage.removeItem('admin_access_token');

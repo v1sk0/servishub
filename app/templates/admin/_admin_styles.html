@@ -1,616 +1,181 @@
-{# Admin Panel - Glassmorphism i Light Theme Stilovi #}
+{# Admin Panel Theme System - JEDAN sistem, NULA flicker-a #}
 
-{# INSTANT tema - primeni PRE bilo kakvog renderovanja #}
 <script>
-(function() {
+// Globalna funkcija za promenu teme - poziva se iz Alpine komponenti
+function setAdminTheme(t) {
+    document.documentElement.classList.remove('admin-glass', 'admin-light');
+    document.documentElement.classList.add(t === 'glass' ? 'admin-glass' : 'admin-light');
+    localStorage.setItem('admin-theme', t);
+}
+// INSTANT: Primeni temu pre renderovanja
+!function(){
     var t = localStorage.getItem('admin-theme') || 'light';
-    var d = document.documentElement;
-    d.setAttribute('data-admin-theme', t);
-    // Dodaj klasu direktno na body za instant stilove
-    d.className = (d.className || '') + ' theme-' + t;
-})();
+    document.documentElement.classList.add(t === 'glass' ? 'admin-glass' : 'admin-light');
+}();
 </script>
 
 <style>
-    /* Samo x-cloak elementi se sakrivaju (forme sa x-show) */
-    [x-cloak] { display: none !important; }
-
-    /* ==================== PRE-ALPINE STILOVI (data atribut) ==================== */
-
-    /* LIGHT THEME - Pre-Alpine */
-    html[data-admin-theme="light"] body {
-        background: #f3f4f6 !important;
-    }
-    html[data-admin-theme="light"] .admin-wrapper {
-        background: #f3f4f6 !important;
-    }
-    html[data-admin-theme="light"] .admin-sidebar {
-        background: #111827 !important;
-    }
-    html[data-admin-theme="light"] .admin-topbar,
-    html[data-admin-theme="light"] .admin-card,
-    html[data-admin-theme="light"] .bg-white {
-        background: white !important;
-    }
-
-    /* GLASS/DARK THEME - Pre-Alpine */
-    html[data-admin-theme="glass"] body {
-        background: #0f0f23 !important;
-    }
-    html[data-admin-theme="glass"] .admin-wrapper {
-        background: linear-gradient(145deg, #0f0f23 0%, #1a1a3e 50%, #0d1b2a 100%) !important;
-        background-attachment: fixed !important;
-    }
-    html[data-admin-theme="glass"] .admin-sidebar,
-    html[data-admin-theme="glass"] .admin-topbar,
-    html[data-admin-theme="glass"] .admin-card,
-    html[data-admin-theme="glass"] .bg-white {
-        background: rgba(20, 20, 45, 0.9) !important;
-    }
-    html[data-admin-theme="glass"] .text-gray-900,
-    html[data-admin-theme="glass"] .text-gray-800 {
-        color: #e2e8f0 !important;
-    }
-    html[data-admin-theme="glass"] .text-gray-700,
-    html[data-admin-theme="glass"] .text-gray-600,
-    html[data-admin-theme="glass"] .text-gray-500 {
-        color: #8b92a5 !important;
-    }
-    /* Pre-Alpine colored backgrounds */
-    html[data-admin-theme="glass"] .bg-yellow-50,
-    html[data-admin-theme="glass"] .bg-red-50,
-    html[data-admin-theme="glass"] .bg-green-50,
-    html[data-admin-theme="glass"] .bg-blue-50 {
-        background: rgba(30, 30, 60, 0.8) !important;
-    }
-    html[data-admin-theme="glass"] .text-yellow-700,
-    html[data-admin-theme="glass"] .text-yellow-800 {
-        color: #fde047 !important;
-    }
-    html[data-admin-theme="glass"] .text-red-700 {
-        color: #fca5a5 !important;
-    }
-    html[data-admin-theme="glass"] .text-green-700 {
-        color: #86efac !important;
-    }
-    html[data-admin-theme="glass"] .text-blue-700 {
-        color: #93c5fd !important;
-    }
-    html[data-admin-theme="glass"] label {
-        color: #8b92a5 !important;
-    }
-
-    /* ==================== LIGHT THEME (Alpine klasa) ==================== */
-    .admin-light {
-        --light-bg: #f3f4f6;
-        --light-card: #ffffff;
-        --light-border: #e5e7eb;
-        --light-text: #111827;
-        --light-text-muted: #6b7280;
-        --light-accent: #ef4444;
-    }
-
-    .admin-light .admin-wrapper {
-        background: var(--light-bg) !important;
-        min-height: 100vh;
-    }
-
-    /* Sidebar ostaje tamna u obe teme */
-    .admin-light .admin-sidebar {
-        background: #111827 !important;
-    }
-
-    .admin-light .admin-sidebar-header {
-        background: #1f2937 !important;
-        border-bottom: 1px solid rgba(255,255,255,0.1) !important;
-    }
-
-    .admin-light .admin-sidebar nav a {
-        color: #9ca3af !important;
-    }
-
-    .admin-light .admin-sidebar nav a:hover {
-        background: rgba(239, 68, 68, 0.15) !important;
-        color: #f3f4f6 !important;
-    }
-
-    .admin-light .admin-sidebar nav a.active {
-        background: rgba(239, 68, 68, 0.25) !important;
-        color: white !important;
-        border-left: 3px solid #ef4444 !important;
-    }
-
-    /* Top bar - svetla */
-    .admin-light .admin-topbar {
-        background: var(--light-card) !important;
-        border-bottom: 1px solid var(--light-border) !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .admin-light .admin-topbar h1 {
-        color: var(--light-text) !important;
-    }
-
-    /* Cards - svetle */
-    .admin-light .admin-card,
-    .admin-light .bg-white {
-        background: var(--light-card) !important;
-        border: 1px solid var(--light-border) !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .admin-light .admin-card h3,
-    .admin-light h3 {
-        color: var(--light-text) !important;
-    }
-
-    /* Text colors - tamni na svetloj pozadini */
-    .admin-light .text-gray-900 {
-        color: #111827 !important;
-    }
-    .admin-light .text-gray-800 {
-        color: #1f2937 !important;
-    }
-    .admin-light .text-gray-700 {
-        color: #374151 !important;
-    }
-    .admin-light .text-gray-600 {
-        color: #4b5563 !important;
-    }
-    .admin-light .text-gray-500 {
-        color: #6b7280 !important;
-    }
-    .admin-light .text-gray-400 {
-        color: #9ca3af !important;
-    }
-
-    /* Input fields - svetli */
-    .admin-light input,
-    .admin-light select,
-    .admin-light textarea {
-        background: white !important;
-        border-color: var(--light-border) !important;
-        color: var(--light-text) !important;
-    }
-
-    .admin-light input::placeholder,
-    .admin-light textarea::placeholder {
-        color: #9ca3af !important;
-    }
-
-    .admin-light input:focus,
-    .admin-light select:focus,
-    .admin-light textarea:focus {
-        border-color: var(--light-accent) !important;
-        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
-    }
-
-    /* Labels */
-    .admin-light label {
-        color: #374151 !important;
-    }
-
-    /* Tables - svetle */
-    .admin-light table {
-        background: white !important;
-    }
-
-    .admin-light thead {
-        background: #f9fafb !important;
-    }
-
-    .admin-light thead th {
-        color: #6b7280 !important;
-        border-color: var(--light-border) !important;
-    }
-
-    .admin-light tbody tr {
-        border-color: var(--light-border) !important;
-    }
-
-    .admin-light tbody tr:hover {
-        background: #f9fafb !important;
-    }
-
-    .admin-light tbody td {
-        color: var(--light-text) !important;
-        border-color: var(--light-border) !important;
-    }
-
-    /* Inner cards - svetle nijanse */
-    .admin-light .bg-gray-50 {
-        background: #f9fafb !important;
-        border: 1px solid #e5e7eb !important;
-    }
-
-    .admin-light .bg-gray-100 {
-        background: #f3f4f6 !important;
-    }
-
-    .admin-light .bg-purple-50 {
-        background: #faf5ff !important;
-        border: 1px solid #e9d5ff !important;
-    }
-
-    .admin-light .border-purple-300 {
-        border-color: #d8b4fe !important;
-    }
-
-    .admin-light .border-gray-200 {
-        border-color: var(--light-border) !important;
-    }
-
-    /* Secondary buttons - svetli */
-    .admin-light .btn-secondary,
-    .admin-light .border-gray-300 {
-        border-color: var(--light-border) !important;
-        background: white !important;
-        color: var(--light-text) !important;
-    }
-
-    .admin-light .btn-secondary:hover,
-    .admin-light .border-gray-300:hover {
-        background: #f9fafb !important;
-    }
-
-    /* Stat card colors for light theme */
-    .admin-light .stat-card.blue { border-left: 4px solid #3b82f6; }
-    .admin-light .stat-card.green { border-left: 4px solid #10b981; }
-    .admin-light .stat-card.yellow { border-left: 4px solid #f59e0b; }
-    .admin-light .stat-card.red { border-left: 4px solid #ef4444; }
-    .admin-light .stat-card.purple { border-left: 4px solid #8b5cf6; }
-
-    /* ==================== GLASS/DARK THEME (Alpine klasa) ==================== */
-    .admin-glass {
-        --glass-bg: rgba(15, 15, 35, 0.98);
-        --glass-card: rgba(20, 20, 45, 0.9);
-        --glass-border: rgba(255, 255, 255, 0.08);
-        --glass-text: #e2e8f0;
-        --glass-text-muted: #8b92a5;
-        --glass-accent: #ef4444;
-        --glass-accent-hover: #dc2626;
-    }
-
-    /* Body pozadina za tamnu temu */
-    .admin-glass,
-    .admin-glass body {
-        background: #0f0f23 !important;
-    }
-
-    .admin-glass .admin-wrapper,
-    .admin-glass .admin-wrapper.bg-gray-100 {
-        background: linear-gradient(145deg, #0f0f23 0%, #1a1a3e 50%, #0d1b2a 100%) !important;
-        background-attachment: fixed !important;
-        min-height: 100vh;
-    }
-
-    /* Sidebar */
-    .admin-glass .admin-sidebar {
-        background: var(--glass-card) !important;
-        backdrop-filter: blur(20px) !important;
-        border-right: 1px solid var(--glass-border) !important;
-    }
-
-    .admin-glass .admin-sidebar-header {
-        background: rgba(10, 10, 25, 0.8) !important;
-        border-bottom: 1px solid var(--glass-border) !important;
-    }
-
-    .admin-glass .admin-sidebar nav a {
-        color: var(--glass-text-muted) !important;
-    }
-
-    .admin-glass .admin-sidebar nav a:hover {
-        background: rgba(239, 68, 68, 0.15) !important;
-        color: var(--glass-text) !important;
-    }
-
-    .admin-glass .admin-sidebar nav a.active {
-        background: rgba(239, 68, 68, 0.25) !important;
-        color: white !important;
-        border-left: 3px solid var(--glass-accent) !important;
-    }
-
-    /* Top bar */
-    .admin-glass .admin-topbar {
-        background: var(--glass-card) !important;
-        backdrop-filter: blur(20px) !important;
-        border-bottom: 1px solid var(--glass-border) !important;
-    }
-
-    .admin-glass .admin-topbar h1 {
-        color: var(--glass-text) !important;
-    }
-
-    /* Cards */
-    .admin-glass .admin-card,
-    .admin-glass .bg-white {
-        background: var(--glass-card) !important;
-        backdrop-filter: blur(10px) !important;
-        border: 1px solid var(--glass-border) !important;
-    }
-
-    .admin-glass .admin-card h3,
-    .admin-glass h3 {
-        color: var(--glass-text) !important;
-    }
-
-    /* Stat cards */
-    .admin-glass .stat-card {
-        background: var(--glass-card) !important;
-        backdrop-filter: blur(10px) !important;
-    }
-
-    /* Text colors */
-    .admin-glass .text-gray-900,
-    .admin-glass .text-gray-800 {
-        color: var(--glass-text) !important;
-    }
-
-    .admin-glass .text-gray-700,
-    .admin-glass .text-gray-600,
-    .admin-glass .text-gray-500,
-    .admin-glass .text-gray-400 {
-        color: var(--glass-text-muted) !important;
-    }
-
-    /* Input fields */
-    .admin-glass input,
-    .admin-glass select,
-    .admin-glass textarea {
-        background: rgba(10, 10, 28, 0.8) !important;
-        border-color: var(--glass-border) !important;
-        color: var(--glass-text) !important;
-    }
-
-    .admin-glass input::placeholder,
-    .admin-glass textarea::placeholder {
-        color: var(--glass-text-muted) !important;
-    }
-
-    .admin-glass input:focus,
-    .admin-glass select:focus,
-    .admin-glass textarea:focus {
-        border-color: var(--glass-accent) !important;
-        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
-    }
-
-    /* Labels */
-    .admin-glass label {
-        color: var(--glass-text-muted) !important;
-    }
-
-    /* Tables */
-    .admin-glass table {
-        background: transparent !important;
-    }
-
-    .admin-glass thead {
-        background: rgba(12, 12, 30, 0.8) !important;
-    }
-
-    .admin-glass thead th {
-        color: var(--glass-text-muted) !important;
-        border-color: var(--glass-border) !important;
-    }
-
-    .admin-glass tbody tr {
-        border-color: var(--glass-border) !important;
-    }
-
-    .admin-glass tbody tr:hover {
-        background: rgba(239, 68, 68, 0.1) !important;
-    }
-
-    .admin-glass tbody td {
-        color: var(--glass-text) !important;
-        border-color: var(--glass-border) !important;
-    }
-
-    /* Inner card backgrounds */
-    .admin-glass .bg-gray-50 {
-        background: rgba(15, 15, 38, 0.85) !important;
-        backdrop-filter: blur(8px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.06) !important;
-    }
-
-    .admin-glass .bg-gray-100 {
-        background: rgba(18, 18, 42, 0.8) !important;
-        backdrop-filter: blur(6px) !important;
-    }
-
-    /* KYC representative card backgrounds */
-    .admin-glass .bg-purple-50 {
-        background: rgba(88, 28, 135, 0.35) !important;
-        backdrop-filter: blur(8px) !important;
-        border: 1px solid rgba(139, 92, 246, 0.25) !important;
-    }
-
-    .admin-glass .border-purple-300 {
-        border-color: rgba(139, 92, 246, 0.4) !important;
-    }
-
-    .admin-glass .border-gray-200 {
-        border-color: var(--glass-border) !important;
-    }
-
-    /* Status badges */
-    .admin-glass .badge {
-        backdrop-filter: blur(4px);
-    }
-
-    /* Primary button */
-    .admin-glass .btn-primary {
-        background: var(--glass-accent) !important;
-    }
-
-    .admin-glass .btn-primary:hover {
-        background: var(--glass-accent-hover) !important;
-    }
-
-    /* Secondary buttons */
-    .admin-glass .btn-secondary,
-    .admin-glass .border-gray-300 {
-        border-color: var(--glass-border) !important;
-        background: rgba(25, 25, 55, 0.7) !important;
-        color: var(--glass-text) !important;
-    }
-
-    .admin-glass .btn-secondary:hover,
-    .admin-glass .border-gray-300:hover {
-        background: rgba(35, 35, 70, 0.8) !important;
-    }
-
-    /* Dividers */
-    .admin-glass .border-gray-200,
-    .admin-glass .divide-gray-200 > * {
-        border-color: var(--glass-border) !important;
-    }
-
-    /* Dropdown menus */
-    .admin-glass .dropdown-menu {
-        background: var(--glass-card) !important;
-        backdrop-filter: blur(20px) !important;
-        border: 1px solid var(--glass-border) !important;
-    }
-
-    /* Search input */
-    .admin-glass #search-field {
-        background: transparent !important;
-    }
-
-    /* Stat card colors for glass theme */
-    .admin-glass .stat-card.blue { border-left: 4px solid #3b82f6; }
-    .admin-glass .stat-card.green { border-left: 4px solid #10b981; }
-    .admin-glass .stat-card.yellow { border-left: 4px solid #f59e0b; }
-    .admin-glass .stat-card.red { border-left: 4px solid #ef4444; }
-    .admin-glass .stat-card.purple { border-left: 4px solid #8b5cf6; }
-
-    /* Status badges za glass temu - vidljivije boje */
-    .admin-glass .bg-purple-100 {
-        background: rgba(139, 92, 246, 0.3) !important;
-    }
-    .admin-glass .text-purple-800,
-    .admin-glass .text-purple-600 {
-        color: #c4b5fd !important;
-    }
-    .admin-glass .bg-orange-100 {
-        background: rgba(251, 146, 60, 0.3) !important;
-    }
-    .admin-glass .text-orange-800,
-    .admin-glass .text-orange-600 {
-        color: #fed7aa !important;
-    }
-    .admin-glass .bg-blue-100 {
-        background: rgba(59, 130, 246, 0.3) !important;
-    }
-    .admin-glass .text-blue-800,
-    .admin-glass .text-blue-600 {
-        color: #93c5fd !important;
-    }
-    .admin-glass .bg-green-100 {
-        background: rgba(34, 197, 94, 0.3) !important;
-    }
-    .admin-glass .text-green-800,
-    .admin-glass .text-green-600 {
-        color: #86efac !important;
-    }
-    .admin-glass .bg-yellow-100 {
-        background: rgba(234, 179, 8, 0.3) !important;
-    }
-    .admin-glass .text-yellow-800,
-    .admin-glass .text-yellow-600 {
-        color: #fde047 !important;
-    }
-    .admin-glass .bg-red-100 {
-        background: rgba(239, 68, 68, 0.3) !important;
-    }
-    .admin-glass .text-red-800,
-    .admin-glass .text-red-600 {
-        color: #fca5a5 !important;
-    }
-
-    /* Light colored backgrounds (-50 variants) za glass temu */
-    .admin-glass .bg-red-50 {
-        background: rgba(239, 68, 68, 0.15) !important;
-        border: 1px solid rgba(239, 68, 68, 0.25) !important;
-    }
-    .admin-glass .bg-yellow-50 {
-        background: rgba(234, 179, 8, 0.15) !important;
-        border: 1px solid rgba(234, 179, 8, 0.25) !important;
-    }
-    .admin-glass .bg-green-50 {
-        background: rgba(34, 197, 94, 0.15) !important;
-        border: 1px solid rgba(34, 197, 94, 0.25) !important;
-    }
-    .admin-glass .bg-blue-50 {
-        background: rgba(59, 130, 246, 0.15) !important;
-        border: 1px solid rgba(59, 130, 246, 0.25) !important;
-    }
-    .admin-glass .bg-orange-50 {
-        background: rgba(251, 146, 60, 0.15) !important;
-        border: 1px solid rgba(251, 146, 60, 0.25) !important;
-    }
-    .admin-glass .bg-indigo-50 {
-        background: rgba(99, 102, 241, 0.15) !important;
-        border: 1px solid rgba(99, 102, 241, 0.25) !important;
-    }
-    .admin-glass .bg-emerald-50 {
-        background: rgba(16, 185, 129, 0.15) !important;
-        border: 1px solid rgba(16, 185, 129, 0.25) !important;
-    }
-    .admin-glass .bg-amber-50 {
-        background: rgba(245, 158, 11, 0.15) !important;
-        border: 1px solid rgba(245, 158, 11, 0.25) !important;
-    }
-
-    /* Light text colors (-700 variants) za info boxove */
-    .admin-glass .text-red-700 {
-        color: #fca5a5 !important;
-    }
-    .admin-glass .text-yellow-700 {
-        color: #fde047 !important;
-    }
-    .admin-glass .text-green-700 {
-        color: #86efac !important;
-    }
-    .admin-glass .text-blue-700 {
-        color: #93c5fd !important;
-    }
-    .admin-glass .text-orange-700 {
-        color: #fed7aa !important;
-    }
-    .admin-glass .text-indigo-700 {
-        color: #a5b4fc !important;
-    }
-    .admin-glass .text-emerald-700,
-    .admin-glass .text-emerald-800 {
-        color: #6ee7b7 !important;
-    }
-    .admin-glass .text-amber-700,
-    .admin-glass .text-amber-800 {
-        color: #fcd34d !important;
-    }
-
-    /* Border colors za info boxove */
-    .admin-glass .border-red-200 {
-        border-color: rgba(239, 68, 68, 0.35) !important;
-    }
-    .admin-glass .border-yellow-200 {
-        border-color: rgba(234, 179, 8, 0.35) !important;
-    }
-    .admin-glass .border-green-200 {
-        border-color: rgba(34, 197, 94, 0.35) !important;
-    }
-    .admin-glass .border-blue-200 {
-        border-color: rgba(59, 130, 246, 0.35) !important;
-    }
-    .admin-glass .border-orange-200 {
-        border-color: rgba(251, 146, 60, 0.35) !important;
-    }
-
-    /* ==================== SHARED STYLES ==================== */
-    .theme-btn {
-        transition: all 0.2s ease;
-    }
+/* ========== OSNOVA - instant background ========== */
+html.admin-glass, html.admin-glass body { background: #0f0f23 !important; }
+html.admin-light, html.admin-light body { background: #f3f4f6 !important; }
+
+/* Alpine x-cloak - samo za elemente sa x-show */
+[x-cloak] { display: none !important; }
+
+/* ========== CSS VARIJABLE ========== */
+.admin-light {
+    --bg: #f3f4f6;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --text: #111827;
+    --text-muted: #6b7280;
+    --accent: #ef4444;
+}
+.admin-glass {
+    --bg: #0f0f23;
+    --card: rgba(20, 20, 45, 0.9);
+    --border: rgba(255, 255, 255, 0.08);
+    --text: #e2e8f0;
+    --text-muted: #8b92a5;
+    --accent: #ef4444;
+}
+
+/* ========== LAYOUT ========== */
+.admin-light .admin-wrapper { background: var(--bg) !important; min-height: 100vh; }
+.admin-glass .admin-wrapper {
+    background: linear-gradient(145deg, #0f0f23 0%, #1a1a3e 50%, #0d1b2a 100%) !important;
+    background-attachment: fixed !important;
+    min-height: 100vh;
+}
+
+/* Sidebar - uvek tamna */
+.admin-light .admin-sidebar,
+.admin-glass .admin-sidebar {
+    background: #111827 !important;
+}
+.admin-glass .admin-sidebar {
+    background: var(--card) !important;
+    backdrop-filter: blur(20px) !important;
+    border-right: 1px solid var(--border) !important;
+}
+.admin-sidebar-header { background: #1f2937 !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; }
+.admin-glass .admin-sidebar-header { background: rgba(10, 10, 25, 0.8) !important; }
+
+/* Sidebar nav */
+.admin-sidebar nav a { color: #9ca3af !important; }
+.admin-sidebar nav a:hover { background: rgba(239, 68, 68, 0.15) !important; color: #f3f4f6 !important; }
+.admin-sidebar nav a.active { background: rgba(239, 68, 68, 0.25) !important; color: white !important; border-left: 3px solid #ef4444 !important; }
+
+/* Top bar */
+.admin-light .admin-topbar { background: var(--card) !important; border-bottom: 1px solid var(--border) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.admin-glass .admin-topbar { background: var(--card) !important; backdrop-filter: blur(20px) !important; border-bottom: 1px solid var(--border) !important; }
+.admin-light .admin-topbar h1 { color: var(--text) !important; }
+.admin-glass .admin-topbar h1 { color: var(--text) !important; }
+
+/* ========== CARDS ========== */
+.admin-light .admin-card, .admin-light .bg-white { background: var(--card) !important; border: 1px solid var(--border) !important; }
+.admin-glass .admin-card, .admin-glass .bg-white { background: var(--card) !important; backdrop-filter: blur(10px) !important; border: 1px solid var(--border) !important; }
+.admin-light h3, .admin-glass h3 { color: var(--text) !important; }
+
+/* Stat cards */
+.admin-glass .stat-card { background: var(--card) !important; backdrop-filter: blur(10px) !important; }
+.stat-card.blue { border-left: 4px solid #3b82f6; }
+.stat-card.green { border-left: 4px solid #10b981; }
+.stat-card.yellow { border-left: 4px solid #f59e0b; }
+.stat-card.red { border-left: 4px solid #ef4444; }
+.stat-card.purple { border-left: 4px solid #8b5cf6; }
+
+/* ========== TEXT COLORS ========== */
+.admin-light .text-gray-900 { color: #111827 !important; }
+.admin-light .text-gray-800 { color: #1f2937 !important; }
+.admin-light .text-gray-700 { color: #374151 !important; }
+.admin-light .text-gray-600 { color: #4b5563 !important; }
+.admin-light .text-gray-500 { color: #6b7280 !important; }
+.admin-light .text-gray-400 { color: #9ca3af !important; }
+
+.admin-glass .text-gray-900, .admin-glass .text-gray-800 { color: var(--text) !important; }
+.admin-glass .text-gray-700, .admin-glass .text-gray-600, .admin-glass .text-gray-500, .admin-glass .text-gray-400 { color: var(--text-muted) !important; }
+
+/* ========== FORMS ========== */
+.admin-light input, .admin-light select, .admin-light textarea { background: white !important; border-color: var(--border) !important; color: var(--text) !important; }
+.admin-glass input, .admin-glass select, .admin-glass textarea { background: rgba(10, 10, 28, 0.8) !important; border-color: var(--border) !important; color: var(--text) !important; }
+.admin-light input::placeholder, .admin-light textarea::placeholder { color: #9ca3af !important; }
+.admin-glass input::placeholder, .admin-glass textarea::placeholder { color: var(--text-muted) !important; }
+input:focus, select:focus, textarea:focus { border-color: var(--accent) !important; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important; }
+.admin-light label { color: #374151 !important; }
+.admin-glass label { color: var(--text-muted) !important; }
+
+/* ========== TABLES ========== */
+.admin-light table { background: white !important; }
+.admin-glass table { background: transparent !important; }
+.admin-light thead { background: #f9fafb !important; }
+.admin-glass thead { background: rgba(12, 12, 30, 0.8) !important; }
+.admin-light thead th { color: #6b7280 !important; }
+.admin-glass thead th { color: var(--text-muted) !important; }
+tbody tr { border-color: var(--border) !important; }
+.admin-light tbody tr:hover { background: #f9fafb !important; }
+.admin-glass tbody tr:hover { background: rgba(239, 68, 68, 0.1) !important; }
+.admin-light tbody td { color: var(--text) !important; }
+.admin-glass tbody td { color: var(--text) !important; }
+
+/* ========== INNER CARDS ========== */
+.admin-light .bg-gray-50 { background: #f9fafb !important; }
+.admin-light .bg-gray-100 { background: #f3f4f6 !important; }
+.admin-glass .bg-gray-50 { background: rgba(15, 15, 38, 0.85) !important; backdrop-filter: blur(8px) !important; }
+.admin-glass .bg-gray-100 { background: rgba(18, 18, 42, 0.8) !important; }
+
+/* ========== BUTTONS ========== */
+.admin-light .border-gray-300 { border-color: var(--border) !important; background: white !important; color: var(--text) !important; }
+.admin-light .border-gray-300:hover { background: #f9fafb !important; }
+.admin-glass .border-gray-300 { border-color: var(--border) !important; background: rgba(25, 25, 55, 0.7) !important; color: var(--text) !important; }
+.admin-glass .border-gray-300:hover { background: rgba(35, 35, 70, 0.8) !important; }
+
+/* ========== BORDERS ========== */
+.admin-light .border-gray-200 { border-color: var(--border) !important; }
+.admin-glass .border-gray-200 { border-color: var(--border) !important; }
+
+/* ========== STATUS BADGES - GLASS TEMA ========== */
+.admin-glass .bg-purple-100 { background: rgba(139, 92, 246, 0.3) !important; }
+.admin-glass .bg-purple-50 { background: rgba(88, 28, 135, 0.35) !important; border: 1px solid rgba(139, 92, 246, 0.25) !important; }
+.admin-glass .text-purple-800, .admin-glass .text-purple-600 { color: #c4b5fd !important; }
+.admin-glass .border-purple-300 { border-color: rgba(139, 92, 246, 0.4) !important; }
+
+.admin-glass .bg-orange-100 { background: rgba(251, 146, 60, 0.3) !important; }
+.admin-glass .bg-orange-50 { background: rgba(251, 146, 60, 0.15) !important; border: 1px solid rgba(251, 146, 60, 0.25) !important; }
+.admin-glass .text-orange-800, .admin-glass .text-orange-700, .admin-glass .text-orange-600 { color: #fed7aa !important; }
+.admin-glass .border-orange-200 { border-color: rgba(251, 146, 60, 0.35) !important; }
+
+.admin-glass .bg-blue-100 { background: rgba(59, 130, 246, 0.3) !important; }
+.admin-glass .bg-blue-50 { background: rgba(59, 130, 246, 0.15) !important; border: 1px solid rgba(59, 130, 246, 0.25) !important; }
+.admin-glass .text-blue-800, .admin-glass .text-blue-700, .admin-glass .text-blue-600 { color: #93c5fd !important; }
+.admin-glass .border-blue-200 { border-color: rgba(59, 130, 246, 0.35) !important; }
+
+.admin-glass .bg-green-100 { background: rgba(34, 197, 94, 0.3) !important; }
+.admin-glass .bg-green-50 { background: rgba(34, 197, 94, 0.15) !important; border: 1px solid rgba(34, 197, 94, 0.25) !important; }
+.admin-glass .text-green-800, .admin-glass .text-green-700, .admin-glass .text-green-600 { color: #86efac !important; }
+.admin-glass .border-green-200 { border-color: rgba(34, 197, 94, 0.35) !important; }
+
+.admin-glass .bg-yellow-100 { background: rgba(234, 179, 8, 0.3) !important; }
+.admin-glass .bg-yellow-50 { background: rgba(234, 179, 8, 0.15) !important; border: 1px solid rgba(234, 179, 8, 0.25) !important; }
+.admin-glass .text-yellow-800, .admin-glass .text-yellow-700, .admin-glass .text-yellow-600 { color: #fde047 !important; }
+.admin-glass .border-yellow-200 { border-color: rgba(234, 179, 8, 0.35) !important; }
+
+.admin-glass .bg-red-100 { background: rgba(239, 68, 68, 0.3) !important; }
+.admin-glass .bg-red-50 { background: rgba(239, 68, 68, 0.15) !important; border: 1px solid rgba(239, 68, 68, 0.25) !important; }
+.admin-glass .text-red-800, .admin-glass .text-red-700, .admin-glass .text-red-600 { color: #fca5a5 !important; }
+.admin-glass .border-red-200 { border-color: rgba(239, 68, 68, 0.35) !important; }
+
+.admin-glass .bg-indigo-50 { background: rgba(99, 102, 241, 0.15) !important; border: 1px solid rgba(99, 102, 241, 0.25) !important; }
+.admin-glass .text-indigo-700 { color: #a5b4fc !important; }
+
+.admin-glass .bg-emerald-50 { background: rgba(16, 185, 129, 0.15) !important; border: 1px solid rgba(16, 185, 129, 0.25) !important; }
+.admin-glass .text-emerald-700, .admin-glass .text-emerald-800 { color: #6ee7b7 !important; }
+
+.admin-glass .bg-amber-50 { background: rgba(245, 158, 11, 0.15) !important; border: 1px solid rgba(245, 158, 11, 0.25) !important; }
+.admin-glass .text-amber-700, .admin-glass .text-amber-800 { color: #fcd34d !important; }
+
+/* ========== MISC ========== */
+.theme-btn { transition: all 0.2s ease; }
+.admin-glass .dropdown-menu { background: var(--card) !important; backdrop-filter: blur(20px) !important; border: 1px solid var(--border) !important; }
+.admin-glass #search-field { background: transparent !important; }
 </style>
