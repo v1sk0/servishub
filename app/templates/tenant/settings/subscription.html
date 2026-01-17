@@ -235,6 +235,129 @@
             </div>
         </div>
 
+        <!-- Pay Subscription -->
+        <div class="bg-white shadow rounded-lg overflow-hidden border-l-4 border-green-500">
+            <div class="px-6 py-4 border-b border-gray-200 bg-green-50">
+                <h3 class="text-lg font-medium text-green-800">Plati pretplatu</h3>
+                <p class="text-sm text-green-600 mt-1">Izaberite period i generišite uplatnicu</p>
+            </div>
+            <div class="p-6">
+                <!-- Period Selection -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Trajanje pretplate</label>
+                    <div class="grid grid-cols-4 gap-3">
+                        <template x-for="m in [1, 3, 6, 12]" :key="m">
+                            <button type="button"
+                                    @click="selectedMonths = m"
+                                    :class="selectedMonths === m ? 'ring-2 ring-green-500 bg-green-50 border-green-500' : 'border-gray-300 hover:bg-gray-50'"
+                                    class="px-4 py-3 border rounded-lg text-center transition-all">
+                                <span class="block text-lg font-bold text-gray-900" x-text="m"></span>
+                                <span class="block text-xs text-gray-500">mesec/i</span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Price Summary -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Bazni paket:</span>
+                            <span class="font-medium" x-text="formatPrice(data.pricing?.base_price) + ' RSD/mes'"></span>
+                        </div>
+                        <div class="flex justify-between" x-show="data.pricing?.additional_locations > 0">
+                            <span class="text-gray-500">Dodatne lokacije (<span x-text="data.pricing?.additional_locations"></span>):</span>
+                            <span class="font-medium" x-text="formatPrice(data.pricing?.additional_locations * data.pricing?.location_price) + ' RSD/mes'"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Mesečna cena:</span>
+                            <span class="font-medium" x-text="formatPrice(data.pricing?.monthly_total) + ' RSD'"></span>
+                        </div>
+                        <div class="border-t border-gray-300 pt-2 mt-2 flex justify-between">
+                            <span class="text-gray-700 font-medium">Ukupno za <span x-text="selectedMonths"></span> mesec/i:</span>
+                            <span class="text-xl font-bold text-green-600" x-text="formatPrice(data.pricing?.monthly_total * selectedMonths) + ' RSD'"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generate Invoice Button -->
+                <button @click="createInvoice()"
+                        :disabled="invoiceLoading || hasPendingInvoice"
+                        class="w-full flex justify-center items-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg x-show="invoiceLoading" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <span x-show="!hasPendingInvoice">Generiši uplatnicu</span>
+                    <span x-show="hasPendingInvoice">Već imate fakturu na čekanju</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Pending Invoice / Payment Info -->
+        <div x-show="pendingInvoice" class="bg-white shadow rounded-lg overflow-hidden border-l-4 border-blue-500">
+            <div class="px-6 py-4 border-b border-gray-200 bg-blue-50">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-blue-800">Uplatnica na čekanju</h3>
+                    <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+                        Rok: <span x-text="formatDate(pendingInvoice?.due_date)"></span>
+                    </span>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Invoice Details -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">Detalji fakture</h4>
+                        <dl class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Broj fakture:</dt>
+                                <dd class="font-medium text-gray-900" x-text="pendingInvoice?.invoice_number"></dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Period:</dt>
+                                <dd class="font-medium text-gray-900" x-text="formatDate(pendingInvoice?.period_start) + ' - ' + formatDate(pendingInvoice?.period_end)"></dd>
+                            </div>
+                            <div class="flex justify-between border-t pt-2">
+                                <dt class="text-gray-700 font-medium">Iznos za uplatu:</dt>
+                                <dd class="text-lg font-bold text-green-600" x-text="formatPrice(pendingInvoice?.total_amount) + ' RSD'"></dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <!-- Bank Details -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">Podaci za uplatu</h4>
+                        <dl class="space-y-2 text-sm">
+                            <div>
+                                <dt class="text-gray-500">Primalac:</dt>
+                                <dd class="font-medium text-gray-900">ServisHub DOO Beograd</dd>
+                            </div>
+                            <div>
+                                <dt class="text-gray-500">Broj računa:</dt>
+                                <dd class="font-mono font-bold text-gray-900">265-1234567-89</dd>
+                            </div>
+                            <div>
+                                <dt class="text-gray-500">Poziv na broj:</dt>
+                                <dd class="font-mono font-bold text-blue-600" x-text="pendingInvoice?.payment_reference"></dd>
+                            </div>
+                            <div>
+                                <dt class="text-gray-500">Svrha uplate:</dt>
+                                <dd class="font-medium text-gray-900" x-text="'Pretplata ServisHub - ' + pendingInvoice?.invoice_number"></dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <p class="text-sm text-yellow-800">
+                        <strong>Napomena:</strong> Nakon što izvršite uplatu, pretplata će biti automatski aktivirana u roku od 24h.
+                        Za hitnu aktivaciju kontaktirajte podršku.
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <!-- Payment History -->
         <div class="bg-white shadow rounded-lg overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200">
@@ -280,6 +403,9 @@ function subscriptionPage() {
     return {
         loading: true,
         trustLoading: false,
+        invoiceLoading: false,
+        selectedMonths: 1,
+        pendingInvoice: null,
         data: {
             status: 'TRIAL',
             is_demo: false,
@@ -293,6 +419,10 @@ function subscriptionPage() {
             trust: {}
         },
         payments: [],
+
+        get hasPendingInvoice() {
+            return this.pendingInvoice !== null;
+        },
 
         statusLabels: {
             'DEMO': 'Demo period',
@@ -324,11 +454,41 @@ function subscriptionPage() {
                 if (payRes.ok) {
                     const payData = await payRes.json();
                     this.payments = payData.payments || [];
+                    // Pronađi PENDING fakturu
+                    this.pendingInvoice = this.payments.find(p => p.status === 'PENDING') || null;
                 }
             } catch (e) {
                 console.error('Failed to load subscription:', e);
             } finally {
                 this.loading = false;
+            }
+        },
+
+        async createInvoice() {
+            this.invoiceLoading = true;
+            try {
+                const res = await api('/api/v1/tenant/subscription/create-invoice', {
+                    method: 'POST',
+                    body: JSON.stringify({ months: this.selectedMonths })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    showNotification('success', data.message);
+                    // Postavi pending invoice iz response-a
+                    this.pendingInvoice = {
+                        ...data.invoice,
+                        payment_reference: data.payment_info.payment_reference
+                    };
+                    // Reload payments
+                    await this.loadSubscription();
+                } else {
+                    showNotification('error', data.error || 'Greška pri kreiranju fakture');
+                }
+            } catch (e) {
+                showNotification('error', 'Greška pri kreiranju fakture');
+            } finally {
+                this.invoiceLoading = false;
             }
         },
 

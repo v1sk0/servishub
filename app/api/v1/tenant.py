@@ -441,6 +441,140 @@ Preostalo vreme: 48 sati''',
     }
 
 
+@bp.route('/subscription/create-invoice', methods=['POST'])
+@jwt_required
+def create_subscription_invoice():
+    """
+    Kreira uplatnicu/fakturu za pretplatu koju tenant sam bira.
+
+    Request body:
+        - months: Broj meseci (1, 3, 6, 12)
+
+    Returns:
+        - invoice: Detalji fakture
+        - payment_info: Bankovni podaci za uplatu
+    """
+    from app.models import PlatformSettings, SubscriptionPayment
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    data = request.get_json() or {}
+    months = data.get('months', 1)
+
+    # Validacija
+    if months not in [1, 3, 6, 12]:
+        return {'error': 'Broj meseci mora biti 1, 3, 6 ili 12'}, 400
+
+    # Proveri da li već postoji PENDING faktura
+    existing_pending = SubscriptionPayment.query.filter_by(
+        tenant_id=tenant.id,
+        status='PENDING'
+    ).first()
+
+    if existing_pending:
+        return {'error': 'Već imate fakturu na čekanju. Platite je ili sačekajte da istekne.'}, 400
+
+    # Učitaj cene
+    settings = PlatformSettings.get_settings()
+    base_price = float(tenant.custom_base_price) if tenant.custom_base_price else float(settings.base_price)
+    location_price = float(tenant.custom_location_price) if tenant.custom_location_price else float(settings.location_price)
+
+    # Broj lokacija
+    locations_count = ServiceLocation.query.filter_by(
+        tenant_id=tenant.id, is_active=True
+    ).count()
+    locations_count = max(1, locations_count)
+
+    # Kalkulacija cene
+    additional_locations = max(0, locations_count - 1)
+    monthly_price = base_price + (additional_locations * location_price)
+    total_amount = monthly_price * months
+
+    # Period
+    period_start = datetime.utcnow().date()
+    period_end = period_start + timedelta(days=30 * months)
+
+    # Generiši broj fakture
+    year = datetime.utcnow().year
+    last_payment = SubscriptionPayment.query.filter(
+        SubscriptionPayment.invoice_number.like(f'SH-{year}-%')
+    ).order_by(SubscriptionPayment.id.desc()).first()
+
+    if last_payment and last_payment.invoice_number:
+        last_num = int(last_payment.invoice_number.split('-')[-1])
+        next_num = last_num + 1
+    else:
+        next_num = 1
+    invoice_number = f'SH-{year}-{next_num:06d}'
+
+    # Poziv na broj (tenant ID + period start MMYY)
+    payment_reference = f'{tenant.id:06d}{period_start.strftime("%m%y")}'
+
+    # Stavke fakture
+    items = [
+        {
+            'description': 'Bazni paket ServisHub',
+            'quantity': months,
+            'unit_price': base_price,
+            'total': base_price * months
+        }
+    ]
+    if additional_locations > 0:
+        items.append({
+            'description': f'Dodatne lokacije ({additional_locations} x {location_price} RSD)',
+            'quantity': months,
+            'unit_price': location_price * additional_locations,
+            'total': location_price * additional_locations * months
+        })
+
+    # Rok za plaćanje (7 dana)
+    due_date = datetime.utcnow().date() + timedelta(days=7)
+
+    # Kreiraj fakturu
+    payment = SubscriptionPayment(
+        tenant_id=tenant.id,
+        invoice_number=invoice_number,
+        period_start=period_start,
+        period_end=period_end,
+        items_json=items,
+        subtotal=total_amount,
+        total_amount=total_amount,
+        currency='RSD',
+        status='PENDING',
+        due_date=due_date,
+        payment_reference=payment_reference,
+        is_auto_generated=False
+    )
+    db.session.add(payment)
+    db.session.commit()
+
+    return {
+        'message': f'Faktura kreirana za {months} mesec(i)',
+        'invoice': {
+            'id': payment.id,
+            'invoice_number': invoice_number,
+            'period_start': period_start.isoformat(),
+            'period_end': period_end.isoformat(),
+            'months': months,
+            'items': items,
+            'total_amount': total_amount,
+            'currency': 'RSD',
+            'due_date': due_date.isoformat(),
+            'status': 'PENDING'
+        },
+        'payment_info': {
+            'bank_name': 'AIK Banka',
+            'account_number': '265-1234567-89',
+            'recipient': 'ServisHub DOO Beograd',
+            'payment_reference': payment_reference,
+            'amount': total_amount,
+            'purpose': f'Pretplata ServisHub {months} mes - {invoice_number}'
+        }
+    }
+
+
 @bp.route('/kyc', methods=['GET'])
 @jwt_required
 def get_kyc_status():
