@@ -131,7 +131,7 @@
                                 </div>
                                 <div>
                                     <p class="text-xs font-medium opacity-70" x-text="getPlanLabel()"></p>
-                                    <p class="text-sm font-bold" x-text="getStatusLabel(subscriptionStatus)"></p>
+                                    <p class="text-sm font-bold" x-text="getPlanName()"></p>
                                 </div>
                             </div>
                             <span class="text-xs px-2 py-0.5 rounded-full font-medium"
@@ -185,6 +185,7 @@ function sidebarData() {
         daysRemaining: null,
         totalDays: 30,
         hasDebt: false,
+        locationCount: 1,
 
         async loadSubscriptionStatus() {
             try {
@@ -194,6 +195,7 @@ function sidebarData() {
                     this.subscriptionStatus = data.status;
                     this.daysRemaining = data.days_remaining;
                     this.hasDebt = data.billing?.has_debt || false;
+                    this.locationCount = data.pricing?.location_count || 1;
                     // Calculate total days based on plan type
                     if (data.status === 'DEMO') this.totalDays = 7;
                     else if (data.status === 'TRIAL') this.totalDays = 14;
@@ -204,23 +206,23 @@ function sidebarData() {
             }
         },
 
-        getStatusLabel(status) {
-            const labels = {
+        getPlanName() {
+            const names = {
                 'DEMO': 'Demo',
                 'TRIAL': 'Promo',
-                'ACTIVE': 'Mesecna',
+                'ACTIVE': 'Standard',
                 'EXPIRED': 'Istekla',
                 'SUSPENDED': 'Blokiran',
                 'CANCELLED': 'Otkazan'
             };
-            return labels[status] || status;
+            return names[this.subscriptionStatus] || this.subscriptionStatus;
         },
 
         getPlanLabel() {
             if (this.subscriptionStatus === 'EXPIRED' || this.subscriptionStatus === 'SUSPENDED' || this.subscriptionStatus === 'CANCELLED') {
                 return 'Licenca';
             }
-            return 'Aktivna licenca';
+            return this.locationCount + ' lokacija' + (this.locationCount > 1 ? 'e' : '');
         },
 
         getWidgetClass() {
