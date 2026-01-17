@@ -368,8 +368,7 @@ class RateLimits:
     """Predefinisani limiti za razlicite operacije."""
 
     # Auth - strozi limiti
-    # TEMP: block_seconds smanjen sa 300 na 1 za debugging
-    LOGIN = {'max_requests': 5, 'window_seconds': 60, 'block_seconds': 1}
+    LOGIN = {'max_requests': 5, 'window_seconds': 60, 'block_seconds': 300}
     OAUTH = {'max_requests': 10, 'window_seconds': 60, 'block_seconds': 180}
     REGISTER = {'max_requests': 3, 'window_seconds': 3600, 'block_seconds': 3600}
     PASSWORD_RESET = {'max_requests': 3, 'window_seconds': 3600, 'block_seconds': 3600}
