@@ -8,13 +8,9 @@
        DOLCE VITA STYLE - GOOGLE INSPIRED DARK THEME
        ============================================ */
 
-    /* Page container - dark glassmorphic background */
+    /* Page container - inherits dark theme from tenant-app */
     .tickets-container {
-        padding: 24px;
-        min-height: 100vh;
-        background: radial-gradient(circle at top, #1f2937 0%, #020617 45%, #000 100%);
-        margin: -1.5rem;
-        margin-top: -1rem;
+        /* No background or negative margins - use global tenant-app theme */
     }
 
     /* Page Header */
@@ -145,9 +141,27 @@
         left: 12px;
         top: 50%;
         transform: translateY(-50%);
-        color: #5f6368;
+        color: #64748b;
         width: 16px;
         height: 16px;
+    }
+
+    /* Location select dropdown - dark theme */
+    .location-select {
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        font-size: 14px;
+        background: rgba(255, 255, 255, 0.05);
+        color: #f1f5f9;
+    }
+    .location-select:focus {
+        border-color: rgba(96, 165, 250, 0.5);
+        outline: none;
+    }
+    .location-select option {
+        background: #1e293b;
+        color: #f1f5f9;
     }
 
     .search-box input {
@@ -196,6 +210,10 @@
         font-size: 14px;
         font-weight: 500;
     }
+    .table-section-header.section-pending {
+        background: linear-gradient(135deg, rgba(217, 119, 6, 0.3), rgba(180, 83, 9, 0.3));
+        border-left: 4px solid #f59e0b;
+    }
 
     /* Tickets Table */
     .tickets-table {
@@ -234,6 +252,25 @@
     .customer-name {
         font-weight: 700;
         color: #f1f5f9;
+    }
+
+    .ticket-link {
+        cursor: pointer;
+        color: #60a5fa;
+        transition: color 0.2s;
+    }
+    .ticket-link:hover {
+        color: #93c5fd;
+    }
+
+    .text-slate-400 {
+        color: #94a3b8;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 48px;
+        color: #64748b;
     }
 
     /* Duration Progress Bar - Animated stripes */
@@ -959,8 +996,7 @@
                    placeholder="Pretrazi po broju, kupcu, IMEI...">
         </div>
         <div class="filter-chips">
-            <select x-model="filters.location_id" @change="loadAllTickets()"
-                    style="padding: 6px 12px; border-radius: 8px; border: 1px solid #dadce0; font-size: 14px; background: white;">
+            <select x-model="filters.location_id" @change="loadAllTickets()" class="location-select">
                 <option value="">Sve lokacije</option>
                 <template x-for="loc in locations" :key="loc.id">
                     <option :value="loc.id" x-text="loc.name"></option>
@@ -997,7 +1033,7 @@
                     <tr :class="{'strobe-alert': getDaysOpen(ticket) > 20}">
                         <!-- Broj naloga -->
                         <td>
-                            <strong style="cursor: pointer; color: #1a73e8;" @click="viewTicket(ticket)"
+                            <strong class="ticket-link" @click="viewTicket(ticket)"
                                     x-text="'#' + ticket.ticket_number_formatted"></strong>
                         </td>
 
@@ -1007,13 +1043,13 @@
                         <!-- Klijent -->
                         <td>
                             <div class="customer-name" x-text="ticket.customer_name"></div>
-                            <small style="color: #5f6368" x-text="ticket.customer_phone || '-'"></small>
+                            <small class="text-slate-400" x-text="ticket.customer_phone || '-'"></small>
                         </td>
 
                         <!-- Uredjaj -->
                         <td>
                             <div><span x-text="ticket.brand"></span> <span x-text="ticket.model"></span></div>
-                            <small style="color: #5f6368" x-text="ticket.service_section || ticket.device_type || '-'"></small>
+                            <small class="text-slate-400" x-text="ticket.service_section || ticket.device_type || '-'"></small>
                         </td>
 
                         <!-- Opis -->
@@ -1075,14 +1111,14 @@
                 </template>
             </tbody>
         </table>
-        <div x-show="!loading && openTickets.length === 0" style="text-align: center; padding: 48px; color: #5f6368;">
+        <div x-show="!loading && openTickets.length === 0" class="empty-state">
             Nema otvorenih naloga
         </div>
     </div>
 
     <!-- TABLE 2: Ceka naplatu -->
     <div class="table-container">
-        <div class="table-section-header" style="background: linear-gradient(135deg, #78350f 0%, #451a03 100%); color: white;">
+        <div class="table-section-header section-pending">
             <span>Ceka naplatu (<span x-text="pendingTickets.length"></span>)</span>
         </div>
         <table class="tickets-table">
@@ -1102,7 +1138,7 @@
                 <template x-for="ticket in pendingTickets" :key="ticket.id">
                     <tr :class="{'strobe-alert': !ticket.is_written_off && ticket.notification_count >= 3}">
                         <td>
-                            <strong style="cursor: pointer; color: #1a73e8;" @click="viewTicket(ticket)"
+                            <strong class="ticket-link" @click="viewTicket(ticket)"
                                     x-text="'#' + ticket.ticket_number_formatted"></strong>
                         </td>
                         <td x-text="formatDate(ticket.created_at)"></td>
@@ -1156,7 +1192,7 @@
                 </template>
             </tbody>
         </table>
-        <div x-show="!loading && pendingTickets.length === 0" style="text-align: center; padding: 48px; color: #5f6368;">
+        <div x-show="!loading && pendingTickets.length === 0" class="empty-state">
             Nema naloga koji čekaju naplatu
         </div>
     </div>
