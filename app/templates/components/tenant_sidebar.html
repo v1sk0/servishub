@@ -227,16 +227,8 @@ function sidebarData() {
         },
 
         getPlanLabel() {
-            if (this.subscriptionStatus === 'GRACE') {
-                return 'Neplacen racun';
-            }
-            if (this.subscriptionStatus === 'SUSPENDED') {
-                return 'Samo pregled';
-            }
-            if (this.subscriptionStatus === 'CANCELLED') {
-                return 'Licenca';
-            }
-            return this.locationCount + ' lokacija' + (this.locationCount > 1 ? 'e' : '');
+            // Always show "Pretplata" as label
+            return 'Pretplata';
         },
 
         getWidgetClass() {
