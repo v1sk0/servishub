@@ -67,6 +67,123 @@
         align-items: center;
         justify-content: center;
     }
+
+    /* ===== Dark/Glass Theme Overrides ===== */
+    .admin-glass .pricing-card {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+    }
+    .admin-glass .pricing-card:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.25);
+    }
+    .admin-glass .pricing-card h4 {
+        color: #f1f5f9 !important;
+    }
+    .admin-glass .pricing-card p {
+        color: rgba(203, 213, 225, 0.85) !important;
+    }
+    .admin-glass .pricing-card input,
+    .admin-glass .pricing-card select {
+        background: rgba(15, 23, 42, 0.6) !important;
+        border-color: rgba(148, 163, 184, 0.3) !important;
+        color: #f8fafc !important;
+    }
+    .admin-glass .pricing-card input:focus,
+    .admin-glass .pricing-card select:focus {
+        border-color: rgba(239, 68, 68, 0.6) !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+    }
+    .admin-glass .pricing-card .input-suffix {
+        color: rgba(203, 213, 225, 0.7) !important;
+    }
+
+    /* Calculator card dark theme */
+    .admin-glass .calc-card {
+        background: rgba(127, 29, 29, 0.2);
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+    .admin-glass .calc-card h4 {
+        color: #fca5a5 !important;
+    }
+    .admin-glass .calc-card .bg-white {
+        background: rgba(15, 23, 42, 0.5) !important;
+        border-color: rgba(239, 68, 68, 0.25) !important;
+    }
+    .admin-glass .calc-card .text-gray-500 {
+        color: rgba(203, 213, 225, 0.7) !important;
+    }
+    .admin-glass .calc-card .text-gray-900 {
+        color: #f1f5f9 !important;
+    }
+
+    /* Section headers dark theme */
+    .admin-glass .section-header {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+    }
+    .admin-glass .section-header h3 {
+        color: #f1f5f9 !important;
+    }
+    .admin-glass .section-header p {
+        color: rgba(203, 213, 225, 0.7) !important;
+    }
+
+    /* Main content cards dark theme */
+    .admin-glass .bg-white.rounded-xl {
+        background: rgba(30, 41, 59, 0.7) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(10px);
+    }
+
+    /* Lifecycle section dark theme */
+    .admin-glass .lifecycle-step span.text-gray-900 {
+        color: #f1f5f9 !important;
+    }
+    .admin-glass .lifecycle-step span.text-gray-500 {
+        color: rgba(203, 213, 225, 0.7) !important;
+    }
+    .admin-glass .bg-emerald-50 {
+        background: rgba(16, 185, 129, 0.15) !important;
+        border-color: rgba(16, 185, 129, 0.3) !important;
+    }
+    .admin-glass .bg-emerald-50 p {
+        color: #a7f3d0 !important;
+    }
+    .admin-glass .bg-emerald-50 strong {
+        color: #6ee7b7 !important;
+    }
+
+    /* Period cards dark theme */
+    .admin-glass .bg-emerald-50.rounded-xl {
+        background: rgba(16, 185, 129, 0.12) !important;
+    }
+    .admin-glass .bg-amber-50.rounded-xl {
+        background: rgba(245, 158, 11, 0.12) !important;
+        border-color: rgba(245, 158, 11, 0.25) !important;
+    }
+    .admin-glass .bg-purple-50.rounded-xl {
+        background: rgba(139, 92, 246, 0.12) !important;
+        border-color: rgba(139, 92, 246, 0.25) !important;
+    }
+
+    /* Topbar dark theme */
+    .admin-glass .admin-topbar {
+        background: rgba(30, 41, 59, 0.8) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+    .admin-glass .admin-topbar h1 {
+        color: #f1f5f9 !important;
+    }
+    .admin-glass .admin-topbar p {
+        color: rgba(203, 213, 225, 0.7) !important;
+    }
+
+    /* Background wrapper dark theme */
+    .admin-glass .admin-wrapper {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%) !important;
+    }
 </style>
 {% endblock %}
 
