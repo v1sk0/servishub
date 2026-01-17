@@ -4,9 +4,11 @@
 
 {% block page_content %}
 <style>
-    /* Dashboard Dark Glassmorphic Theme */
+    /* ========================================
+       LIGHT THEME DASHBOARD
+       ======================================== */
     .dash-header h2 {
-        color: #f1f5f9;
+        color: #1e293b;
     }
     .dash-header p {
         color: #64748b;
@@ -29,15 +31,15 @@
         box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
     }
 
-    /* Glassmorphic stat cards */
+    /* Light theme stat cards */
     .stat-card {
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
         border-radius: 12px;
         padding: 1.5rem;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
     .stat-card::before {
         content: '';
@@ -60,43 +62,43 @@
         align-items: center;
         justify-content: center;
     }
-    .stat-icon.blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
-    .stat-icon.green { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
-    .stat-icon.purple { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
-    .stat-icon.yellow { background: rgba(234, 179, 8, 0.2); color: #facc15; }
+    .stat-icon.blue { background: #dbeafe; color: #2563eb; }
+    .stat-icon.green { background: #dcfce7; color: #16a34a; }
+    .stat-icon.purple { background: #f3e8ff; color: #7c3aed; }
+    .stat-icon.yellow { background: #fef3c7; color: #d97706; }
 
     .stat-label {
-        color: #94a3b8;
+        color: #64748b;
         font-size: 0.875rem;
     }
     .stat-value {
-        color: #f1f5f9;
+        color: #1e293b;
         font-size: 1.875rem;
         font-weight: 700;
     }
     .stat-link {
-        color: #60a5fa;
+        color: #3b82f6;
         font-size: 0.875rem;
         transition: color 0.2s;
     }
     .stat-link:hover {
-        color: #93c5fd;
+        color: #2563eb;
     }
 
-    /* Glassmorphic table container */
+    /* Light theme table container */
     .glass-table-container {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
         border-radius: 12px;
         overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
     .glass-table-header {
         padding: 1rem 1.5rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid #e2e8f0;
     }
     .glass-table-header h3 {
-        color: #f1f5f9;
+        color: #1e293b;
         font-size: 1.125rem;
         font-weight: 600;
     }
@@ -104,7 +106,7 @@
         width: 100%;
     }
     .glass-table thead {
-        background: rgba(255, 255, 255, 0.03);
+        background: #f8fafc;
     }
     .glass-table th {
         padding: 0.75rem 1.5rem;
@@ -116,43 +118,43 @@
         letter-spacing: 0.05em;
     }
     .glass-table tbody tr {
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid #f1f5f9;
         transition: background 0.2s;
     }
     .glass-table tbody tr:hover {
-        background: rgba(255, 255, 255, 0.05);
+        background: #f8fafc;
     }
     .glass-table td {
         padding: 1rem 1.5rem;
         font-size: 0.875rem;
     }
     .glass-table .cell-primary {
-        color: #f1f5f9;
+        color: #1e293b;
         font-weight: 500;
     }
     .glass-table .cell-secondary {
-        color: #94a3b8;
+        color: #64748b;
     }
     .glass-table .cell-link {
-        color: #60a5fa;
+        color: #3b82f6;
     }
     .glass-table .cell-link:hover {
-        color: #93c5fd;
+        color: #2563eb;
     }
 
-    /* Status badges for dark theme */
+    /* Light theme status badges */
     .status-badge {
         padding: 0.25rem 0.75rem;
         border-radius: 9999px;
         font-size: 0.75rem;
         font-weight: 600;
     }
-    .status-received { background: rgba(234, 179, 8, 0.2); color: #facc15; }
-    .status-in-progress { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
-    .status-waiting { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
-    .status-ready { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
-    .status-delivered { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
-    .status-cancelled { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .status-received { background: #fef3c7; color: #92400e; }
+    .status-in-progress { background: #dbeafe; color: #1e40af; }
+    .status-waiting { background: #f3e8ff; color: #6b21a8; }
+    .status-ready { background: #dcfce7; color: #166534; }
+    .status-delivered { background: #f3f4f6; color: #374151; }
+    .status-cancelled { background: #fee2e2; color: #991b1b; }
 
     .empty-state {
         padding: 3rem;
@@ -160,10 +162,99 @@
         color: #64748b;
     }
     .empty-state a {
-        color: #60a5fa;
+        color: #3b82f6;
     }
     .empty-state a:hover {
         text-decoration: underline;
+    }
+
+    /* ========================================
+       GLASSMORPHIC DARK THEME DASHBOARD
+       ======================================== */
+    .glass-theme .dash-header h2 {
+        color: #f1f5f9;
+    }
+    .glass-theme .dash-header p {
+        color: #64748b;
+    }
+
+    /* Glass theme stat cards */
+    .glass-theme .stat-card {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: none;
+    }
+
+    .glass-theme .stat-icon.blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .glass-theme .stat-icon.green { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .glass-theme .stat-icon.purple { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+    .glass-theme .stat-icon.yellow { background: rgba(234, 179, 8, 0.2); color: #facc15; }
+
+    .glass-theme .stat-label {
+        color: #94a3b8;
+    }
+    .glass-theme .stat-value {
+        color: #f1f5f9;
+    }
+    .glass-theme .stat-link {
+        color: #60a5fa;
+    }
+    .glass-theme .stat-link:hover {
+        color: #93c5fd;
+    }
+
+    /* Glass theme table container */
+    .glass-theme .glass-table-container {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: none;
+    }
+    .glass-theme .glass-table-header {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .glass-theme .glass-table-header h3 {
+        color: #f1f5f9;
+    }
+    .glass-theme .glass-table thead {
+        background: rgba(255, 255, 255, 0.03);
+    }
+    .glass-theme .glass-table th {
+        color: #64748b;
+    }
+    .glass-theme .glass-table tbody tr {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .glass-theme .glass-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .glass-theme .glass-table .cell-primary {
+        color: #f1f5f9;
+    }
+    .glass-theme .glass-table .cell-secondary {
+        color: #94a3b8;
+    }
+    .glass-theme .glass-table .cell-link {
+        color: #60a5fa;
+    }
+    .glass-theme .glass-table .cell-link:hover {
+        color: #93c5fd;
+    }
+
+    /* Glass theme status badges */
+    .glass-theme .status-received { background: rgba(234, 179, 8, 0.2); color: #facc15; }
+    .glass-theme .status-in-progress { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .glass-theme .status-waiting { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+    .glass-theme .status-ready { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .glass-theme .status-delivered { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+    .glass-theme .status-cancelled { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+    .glass-theme .empty-state {
+        color: #64748b;
+    }
+    .glass-theme .empty-state a {
+        color: #60a5fa;
     }
 </style>
 

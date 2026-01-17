@@ -2,87 +2,90 @@
 
 {% block head %}
 <style>
-    /* Dark Glassmorphic Theme */
+    /* ========================================
+       LIGHT THEME (Default)
+       Clean, professional light theme
+       ======================================== */
     .tenant-app {
         min-height: 100vh;
-        background: radial-gradient(circle at top, #1f2937 0%, #020617 45%, #000 100%);
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     }
 
-    /* Glassmorphic Sidebar */
+    /* Light Sidebar */
     .sidebar-glass {
-        background: rgba(15, 23, 42, 0.95);
-        backdrop-filter: blur(20px);
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        background: #ffffff;
+        border-right: 1px solid #e2e8f0;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
     }
 
     .sidebar-glass .sidebar-logo {
-        color: #f1f5f9;
+        color: #1e293b;
     }
 
     .sidebar-glass .nav-item {
-        color: #94a3b8;
+        color: #64748b;
         transition: all 0.2s ease;
     }
 
     .sidebar-glass .nav-item:hover {
-        color: #f1f5f9;
-        background: rgba(255, 255, 255, 0.1);
+        color: #1e293b;
+        background: #f1f5f9;
     }
 
     .sidebar-glass .nav-item.active {
-        color: #60a5fa;
-        background: rgba(96, 165, 250, 0.15);
+        color: #3b82f6;
+        background: #eff6ff;
     }
 
     .sidebar-glass .nav-section-title {
-        color: #64748b;
+        color: #94a3b8;
     }
 
     .sidebar-glass .nav-submenu a {
-        color: #94a3b8;
-    }
-
-    .sidebar-glass .nav-submenu a:hover {
-        color: #f1f5f9;
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    /* Glassmorphic Topbar */
-    .topbar-glass {
-        background: rgba(15, 23, 42, 0.9);
-        backdrop-filter: blur(20px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .topbar-glass .menu-btn {
-        color: #94a3b8;
-    }
-
-    .topbar-glass .menu-btn:hover {
-        color: #f1f5f9;
-    }
-
-    .topbar-glass .search-input {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: #f1f5f9;
-    }
-
-    .topbar-glass .search-input::placeholder {
         color: #64748b;
     }
 
-    .topbar-glass .search-input:focus {
-        border-color: rgba(96, 165, 250, 0.5);
-        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+    .sidebar-glass .nav-submenu a:hover {
+        color: #1e293b;
+        background: #f8fafc;
     }
 
-    .topbar-glass .notification-btn {
+    /* Light Topbar */
+    .topbar-glass {
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .topbar-glass .menu-btn {
+        color: #64748b;
+    }
+
+    .topbar-glass .menu-btn:hover {
+        color: #1e293b;
+    }
+
+    .topbar-glass .search-input {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        color: #1e293b;
+    }
+
+    .topbar-glass .search-input::placeholder {
         color: #94a3b8;
     }
 
+    .topbar-glass .search-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .topbar-glass .notification-btn {
+        color: #64748b;
+    }
+
     .topbar-glass .notification-btn:hover {
-        color: #f1f5f9;
+        color: #1e293b;
     }
 
     .topbar-glass .user-avatar {
@@ -90,223 +93,355 @@
     }
 
     .topbar-glass .user-name {
-        color: #f1f5f9;
+        color: #1e293b;
     }
 
     .topbar-glass .user-dropdown {
-        background: rgba(15, 23, 42, 0.98);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
 
     .topbar-glass .user-dropdown a {
-        color: #94a3b8;
+        color: #64748b;
     }
 
     .topbar-glass .user-dropdown a:hover {
-        color: #f1f5f9;
-        background: rgba(255, 255, 255, 0.1);
+        color: #1e293b;
+        background: #f1f5f9;
     }
 
     /* Mobile sidebar backdrop */
     .sidebar-backdrop {
-        background: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(4px);
+        background: rgba(0, 0, 0, 0.5);
     }
 
     /* Main content area */
     .main-content {
+        color: #1e293b;
+    }
+
+    /* Subscription badge colors for light theme */
+    .sub-badge-demo { background: #f3e8ff; color: #7c3aed; }
+    .sub-badge-trial { background: #dbeafe; color: #2563eb; }
+    .sub-badge-active { background: #dcfce7; color: #16a34a; }
+    .sub-badge-expired { background: #fef3c7; color: #d97706; }
+    .sub-badge-suspended { background: #fee2e2; color: #dc2626; }
+    .sub-badge-cancelled { background: #f3f4f6; color: #6b7280; }
+
+    /* ========================================
+       GLASSMORPHIC DARK THEME
+       Applied when .glass-theme class is on html
+       ======================================== */
+    .glass-theme .tenant-app {
+        background: radial-gradient(circle at top, #1f2937 0%, #020617 45%, #000 100%);
+    }
+
+    /* Glassmorphic Sidebar */
+    .glass-theme .sidebar-glass {
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: none;
+    }
+
+    .glass-theme .sidebar-glass .sidebar-logo {
+        color: #f1f5f9;
+    }
+
+    .glass-theme .sidebar-glass .nav-item {
+        color: #94a3b8;
+    }
+
+    .glass-theme .sidebar-glass .nav-item:hover {
+        color: #f1f5f9;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .glass-theme .sidebar-glass .nav-item.active {
+        color: #60a5fa;
+        background: rgba(96, 165, 250, 0.15);
+    }
+
+    .glass-theme .sidebar-glass .nav-section-title {
+        color: #64748b;
+    }
+
+    .glass-theme .sidebar-glass .nav-submenu a {
+        color: #94a3b8;
+    }
+
+    .glass-theme .sidebar-glass .nav-submenu a:hover {
+        color: #f1f5f9;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Glassmorphic Topbar */
+    .glass-theme .topbar-glass {
+        background: rgba(15, 23, 42, 0.9);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: none;
+    }
+
+    .glass-theme .topbar-glass .menu-btn {
+        color: #94a3b8;
+    }
+
+    .glass-theme .topbar-glass .menu-btn:hover {
+        color: #f1f5f9;
+    }
+
+    .glass-theme .topbar-glass .search-input {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #f1f5f9;
+    }
+
+    .glass-theme .topbar-glass .search-input::placeholder {
+        color: #64748b;
+    }
+
+    .glass-theme .topbar-glass .search-input:focus {
+        border-color: rgba(96, 165, 250, 0.5);
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+    }
+
+    .glass-theme .topbar-glass .notification-btn {
+        color: #94a3b8;
+    }
+
+    .glass-theme .topbar-glass .notification-btn:hover {
+        color: #f1f5f9;
+    }
+
+    .glass-theme .topbar-glass .user-name {
+        color: #f1f5f9;
+    }
+
+    .glass-theme .topbar-glass .user-dropdown {
+        background: rgba(15, 23, 42, 0.98);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .glass-theme .topbar-glass .user-dropdown a {
+        color: #94a3b8;
+    }
+
+    .glass-theme .topbar-glass .user-dropdown a:hover {
+        color: #f1f5f9;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Mobile sidebar backdrop - glass theme */
+    .glass-theme .sidebar-backdrop {
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(4px);
+    }
+
+    /* Main content area - glass theme */
+    .glass-theme .main-content {
         color: #e2e8f0;
     }
 
     /* Subscription badge colors for dark theme */
-    .sub-badge-demo { background: rgba(147, 51, 234, 0.2); color: #c084fc; }
-    .sub-badge-trial { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
-    .sub-badge-active { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
-    .sub-badge-expired { background: rgba(234, 179, 8, 0.2); color: #facc15; }
-    .sub-badge-suspended { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-    .sub-badge-cancelled { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+    .glass-theme .sub-badge-demo { background: rgba(147, 51, 234, 0.2); color: #c084fc; }
+    .glass-theme .sub-badge-trial { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .glass-theme .sub-badge-active { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .glass-theme .sub-badge-expired { background: rgba(234, 179, 8, 0.2); color: #facc15; }
+    .glass-theme .sub-badge-suspended { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .glass-theme .sub-badge-cancelled { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
 
     /* ========================================
-       GLOBAL DARK THEME STYLES
-       These automatically style common elements
+       GLASS THEME - GLOBAL DARK OVERRIDES
        ======================================== */
 
     /* Override Tailwind bg-white cards */
-    .tenant-app .bg-white,
-    .tenant-app [class*="bg-white"] {
+    .glass-theme .tenant-app .bg-white,
+    .glass-theme .tenant-app [class*="bg-white"] {
         background: rgba(255, 255, 255, 0.08) !important;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     /* Override shadows */
-    .tenant-app .shadow,
-    .tenant-app .shadow-sm,
-    .tenant-app .shadow-md,
-    .tenant-app .shadow-lg {
+    .glass-theme .tenant-app .shadow,
+    .glass-theme .tenant-app .shadow-sm,
+    .glass-theme .tenant-app .shadow-md,
+    .glass-theme .tenant-app .shadow-lg {
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
     }
 
     /* Text colors */
-    .tenant-app .text-gray-900,
-    .tenant-app .text-gray-800 {
+    .glass-theme .tenant-app .text-gray-900,
+    .glass-theme .tenant-app .text-gray-800 {
         color: #f1f5f9 !important;
     }
-    .tenant-app .text-gray-700,
-    .tenant-app .text-gray-600 {
+    .glass-theme .tenant-app .text-gray-700,
+    .glass-theme .tenant-app .text-gray-600 {
         color: #cbd5e1 !important;
     }
-    .tenant-app .text-gray-500,
-    .tenant-app .text-gray-400 {
+    .glass-theme .tenant-app .text-gray-500,
+    .glass-theme .tenant-app .text-gray-400 {
         color: #94a3b8 !important;
     }
 
     /* Form inputs */
-    .tenant-app input[type="text"],
-    .tenant-app input[type="email"],
-    .tenant-app input[type="tel"],
-    .tenant-app input[type="number"],
-    .tenant-app input[type="password"],
-    .tenant-app input[type="search"],
-    .tenant-app textarea,
-    .tenant-app select {
+    .glass-theme .tenant-app input[type="text"],
+    .glass-theme .tenant-app input[type="email"],
+    .glass-theme .tenant-app input[type="tel"],
+    .glass-theme .tenant-app input[type="number"],
+    .glass-theme .tenant-app input[type="password"],
+    .glass-theme .tenant-app input[type="search"],
+    .glass-theme .tenant-app textarea,
+    .glass-theme .tenant-app select {
         background: rgba(255, 255, 255, 0.05) !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         color: #f1f5f9 !important;
     }
-    .tenant-app input::placeholder,
-    .tenant-app textarea::placeholder {
+    .glass-theme .tenant-app input::placeholder,
+    .glass-theme .tenant-app textarea::placeholder {
         color: #64748b !important;
     }
-    .tenant-app input:focus,
-    .tenant-app textarea:focus,
-    .tenant-app select:focus {
+    .glass-theme .tenant-app input:focus,
+    .glass-theme .tenant-app textarea:focus,
+    .glass-theme .tenant-app select:focus {
         border-color: rgba(96, 165, 250, 0.5) !important;
         box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15) !important;
         outline: none !important;
     }
-    .tenant-app select option {
+    .glass-theme .tenant-app select option {
         background: #1e293b;
         color: #f1f5f9;
     }
 
     /* Labels */
-    .tenant-app label {
+    .glass-theme .tenant-app label {
         color: #cbd5e1 !important;
     }
 
     /* Buttons - primary */
-    .tenant-app .bg-primary-600,
-    .tenant-app [class*="bg-primary-"] {
+    .glass-theme .tenant-app .bg-primary-600,
+    .glass-theme .tenant-app [class*="bg-primary-"] {
         background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
         border: none !important;
     }
-    .tenant-app .bg-primary-600:hover,
-    .tenant-app [class*="bg-primary-"]:hover {
+    .glass-theme .tenant-app .bg-primary-600:hover,
+    .glass-theme .tenant-app [class*="bg-primary-"]:hover {
         background: linear-gradient(135deg, #60a5fa, #a78bfa) !important;
     }
 
     /* Buttons - white/secondary */
-    .tenant-app button.bg-white,
-    .tenant-app a.bg-white {
+    .glass-theme .tenant-app button.bg-white,
+    .glass-theme .tenant-app a.bg-white {
         background: rgba(255, 255, 255, 0.1) !important;
         color: #e2e8f0 !important;
     }
-    .tenant-app button.bg-white:hover,
-    .tenant-app a.bg-white:hover {
+    .glass-theme .tenant-app button.bg-white:hover,
+    .glass-theme .tenant-app a.bg-white:hover {
         background: rgba(255, 255, 255, 0.15) !important;
     }
 
     /* Ring colors */
-    .tenant-app .ring-gray-300,
-    .tenant-app [class*="ring-gray-"] {
+    .glass-theme .tenant-app .ring-gray-300,
+    .glass-theme .tenant-app [class*="ring-gray-"] {
         --tw-ring-color: rgba(255, 255, 255, 0.2) !important;
     }
 
     /* Tables */
-    .tenant-app table {
+    .glass-theme .tenant-app table {
         border-collapse: collapse;
     }
-    .tenant-app thead {
+    .glass-theme .tenant-app thead {
         background: rgba(255, 255, 255, 0.03) !important;
     }
-    .tenant-app th {
+    .glass-theme .tenant-app th {
         color: #64748b !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
-    .tenant-app tbody tr {
+    .glass-theme .tenant-app tbody tr {
         border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
-    .tenant-app tbody tr:hover {
+    .glass-theme .tenant-app tbody tr:hover {
         background: rgba(255, 255, 255, 0.05) !important;
     }
-    .tenant-app td {
+    .glass-theme .tenant-app td {
         color: #cbd5e1 !important;
     }
 
     /* Borders */
-    .tenant-app .border-gray-200,
-    .tenant-app .border-gray-300,
-    .tenant-app [class*="border-gray-"] {
+    .glass-theme .tenant-app .border-gray-200,
+    .glass-theme .tenant-app .border-gray-300,
+    .glass-theme .tenant-app [class*="border-gray-"] {
         border-color: rgba(255, 255, 255, 0.1) !important;
     }
-    .tenant-app .divide-gray-200 > * + *,
-    .tenant-app .divide-gray-300 > * + * {
+    .glass-theme .tenant-app .divide-gray-200 > * + *,
+    .glass-theme .tenant-app .divide-gray-300 > * + * {
         border-color: rgba(255, 255, 255, 0.1) !important;
     }
 
     /* Links */
-    .tenant-app .text-primary-600,
-    .tenant-app [class*="text-primary-"] {
+    .glass-theme .tenant-app .text-primary-600,
+    .glass-theme .tenant-app [class*="text-primary-"] {
         color: #60a5fa !important;
     }
-    .tenant-app .text-primary-600:hover,
-    .tenant-app [class*="text-primary-"]:hover {
+    .glass-theme .tenant-app .text-primary-600:hover,
+    .glass-theme .tenant-app [class*="text-primary-"]:hover {
         color: #93c5fd !important;
     }
 
     /* Status badges for dark theme */
-    .tenant-app .bg-yellow-100 { background: rgba(234, 179, 8, 0.2) !important; }
-    .tenant-app .text-yellow-800 { color: #facc15 !important; }
-    .tenant-app .bg-blue-100 { background: rgba(59, 130, 246, 0.2) !important; }
-    .tenant-app .text-blue-800 { color: #60a5fa !important; }
-    .tenant-app .bg-green-100 { background: rgba(34, 197, 94, 0.2) !important; }
-    .tenant-app .text-green-800 { color: #4ade80 !important; }
-    .tenant-app .bg-red-100 { background: rgba(239, 68, 68, 0.2) !important; }
-    .tenant-app .text-red-800 { color: #f87171 !important; }
-    .tenant-app .bg-purple-100 { background: rgba(139, 92, 246, 0.2) !important; }
-    .tenant-app .text-purple-800 { color: #a78bfa !important; }
-    .tenant-app .bg-gray-100 { background: rgba(107, 114, 128, 0.2) !important; }
-    .tenant-app .text-gray-800 { color: #9ca3af !important; }
-    .tenant-app .bg-orange-100 { background: rgba(249, 115, 22, 0.2) !important; }
-    .tenant-app .text-orange-800 { color: #fb923c !important; }
-    .tenant-app .bg-indigo-100 { background: rgba(99, 102, 241, 0.2) !important; }
-    .tenant-app .text-indigo-800 { color: #818cf8 !important; }
+    .glass-theme .tenant-app .bg-yellow-100 { background: rgba(234, 179, 8, 0.2) !important; }
+    .glass-theme .tenant-app .text-yellow-800 { color: #facc15 !important; }
+    .glass-theme .tenant-app .bg-blue-100 { background: rgba(59, 130, 246, 0.2) !important; }
+    .glass-theme .tenant-app .text-blue-800 { color: #60a5fa !important; }
+    .glass-theme .tenant-app .bg-green-100 { background: rgba(34, 197, 94, 0.2) !important; }
+    .glass-theme .tenant-app .text-green-800 { color: #4ade80 !important; }
+    .glass-theme .tenant-app .bg-red-100 { background: rgba(239, 68, 68, 0.2) !important; }
+    .glass-theme .tenant-app .text-red-800 { color: #f87171 !important; }
+    .glass-theme .tenant-app .bg-purple-100 { background: rgba(139, 92, 246, 0.2) !important; }
+    .glass-theme .tenant-app .text-purple-800 { color: #a78bfa !important; }
+    .glass-theme .tenant-app .bg-gray-100 { background: rgba(107, 114, 128, 0.2) !important; }
+    .glass-theme .tenant-app .text-gray-800 { color: #9ca3af !important; }
+    .glass-theme .tenant-app .bg-orange-100 { background: rgba(249, 115, 22, 0.2) !important; }
+    .glass-theme .tenant-app .text-orange-800 { color: #fb923c !important; }
+    .glass-theme .tenant-app .bg-indigo-100 { background: rgba(99, 102, 241, 0.2) !important; }
+    .glass-theme .tenant-app .text-indigo-800 { color: #818cf8 !important; }
 
     /* Alert boxes */
-    .tenant-app .bg-red-50 { background: rgba(239, 68, 68, 0.1) !important; }
-    .tenant-app .bg-orange-50 { background: rgba(249, 115, 22, 0.1) !important; }
-    .tenant-app .bg-yellow-50 { background: rgba(234, 179, 8, 0.1) !important; }
-    .tenant-app .bg-green-50 { background: rgba(34, 197, 94, 0.1) !important; }
-    .tenant-app .bg-blue-50 { background: rgba(59, 130, 246, 0.1) !important; }
+    .glass-theme .tenant-app .bg-red-50 { background: rgba(239, 68, 68, 0.1) !important; }
+    .glass-theme .tenant-app .bg-orange-50 { background: rgba(249, 115, 22, 0.1) !important; }
+    .glass-theme .tenant-app .bg-yellow-50 { background: rgba(234, 179, 8, 0.1) !important; }
+    .glass-theme .tenant-app .bg-green-50 { background: rgba(34, 197, 94, 0.1) !important; }
+    .glass-theme .tenant-app .bg-blue-50 { background: rgba(59, 130, 246, 0.1) !important; }
 
     /* Background gray variants */
-    .tenant-app .bg-gray-50 {
+    .glass-theme .tenant-app .bg-gray-50 {
         background: rgba(255, 255, 255, 0.03) !important;
     }
 
     /* Spinner color */
-    .tenant-app .text-primary-600 svg,
-    .tenant-app .animate-spin {
+    .glass-theme .tenant-app .text-primary-600 svg,
+    .glass-theme .tenant-app .animate-spin {
         color: #60a5fa !important;
     }
 
     /* Hover states */
-    .tenant-app .hover\:bg-gray-50:hover {
+    .glass-theme .tenant-app .hover\:bg-gray-50:hover {
         background: rgba(255, 255, 255, 0.08) !important;
     }
 </style>
+<script>
+    // Apply theme immediately to prevent flash
+    (function() {
+        var theme = localStorage.getItem('servishub-theme');
+        if (theme === 'glass') {
+            document.documentElement.classList.add('glass-theme');
+        }
+    })();
+</script>
 {% endblock %}
 
 {% block body %}
