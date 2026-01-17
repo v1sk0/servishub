@@ -142,3 +142,110 @@ def update_packages():
     """
     # Isti handler kao update_settings
     return update_settings()
+
+
+# =============================================================================
+# COMPANY DATA ENDPOINTS
+# =============================================================================
+
+class UpdateCompanyRequest(BaseModel):
+    """Request za azuriranje podataka o firmi."""
+    company_name: Optional[str] = None
+    company_address: Optional[str] = None
+    company_city: Optional[str] = None
+    company_postal_code: Optional[str] = None
+    company_country: Optional[str] = None
+    company_pib: Optional[str] = None
+    company_mb: Optional[str] = None
+    company_phone: Optional[str] = None
+    company_email: Optional[str] = None
+    company_website: Optional[str] = None
+    company_bank_name: Optional[str] = None
+    company_bank_account: Optional[str] = None
+
+
+@bp.route('/company', methods=['GET'])
+@jwt_required
+@admin_required
+def get_company():
+    """
+    Dohvata podatke o firmi ServisHub.
+
+    Returns:
+        200: Company data
+    """
+    settings = PlatformSettings.get_settings()
+    return jsonify(settings.get_company_data()), 200
+
+
+@bp.route('/company', methods=['PUT'])
+@jwt_required
+@admin_required
+def update_company():
+    """
+    Azurira podatke o firmi ServisHub.
+
+    Request body:
+        - company_name: Naziv firme
+        - company_address: Adresa
+        - company_city: Grad
+        - company_postal_code: Postanski broj
+        - company_country: Drzava
+        - company_pib: PIB
+        - company_mb: Maticni broj
+        - company_phone: Telefon
+        - company_email: Email
+        - company_website: Web sajt
+        - company_bank_name: Naziv banke
+        - company_bank_account: Broj racuna
+
+    Returns:
+        200: Azurirani podaci o firmi
+        400: Validation error
+    """
+    try:
+        data = UpdateCompanyRequest(**request.get_json())
+    except ValidationError as e:
+        return jsonify({
+            'error': 'Validation Error',
+            'details': e.errors()
+        }), 400
+
+    # Dohvati stare vrednosti za audit log
+    old_settings = PlatformSettings.get_settings()
+    old_company = old_settings.get_company_data()
+
+    # Azuriraj settings
+    admin = g.current_admin
+    new_settings = PlatformSettings.update_settings(
+        data.model_dump(exclude_none=True),
+        admin_id=admin.id
+    )
+
+    # Log promena
+    new_company = new_settings.get_company_data()
+    changes = {}
+    for key in old_company:
+        if old_company.get(key) != new_company.get(key):
+            changes[key] = {
+                'old': old_company.get(key),
+                'new': new_company.get(key)
+            }
+
+    if changes:
+        AdminActivityLog.log(
+            action_type=AdminActionType.UPDATE_SETTINGS,
+            target_type='platform_settings',
+            target_id=new_settings.id,
+            target_name='Company Data',
+            details={
+                'changes': changes,
+                'section': 'company'
+            }
+        )
+        db.session.commit()
+
+    return jsonify({
+        'message': 'Podaci o firmi uspesno azurirani',
+        'company': new_company
+    }), 200
