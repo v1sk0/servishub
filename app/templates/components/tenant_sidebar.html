@@ -208,7 +208,7 @@ function sidebarData() {
             const labels = {
                 'DEMO': 'Demo',
                 'TRIAL': 'Promo',
-                'ACTIVE': 'Aktivna',
+                'ACTIVE': 'Mesecna',
                 'EXPIRED': 'Istekla',
                 'SUSPENDED': 'Blokiran',
                 'CANCELLED': 'Otkazan'
@@ -217,15 +217,10 @@ function sidebarData() {
         },
 
         getPlanLabel() {
-            const labels = {
-                'DEMO': 'Demo paket',
-                'TRIAL': 'Promo period',
-                'ACTIVE': 'Pro paket',
-                'EXPIRED': 'Pretplata',
-                'SUSPENDED': 'Pretplata',
-                'CANCELLED': 'Pretplata'
-            };
-            return labels[this.subscriptionStatus] || 'Pretplata';
+            if (this.subscriptionStatus === 'EXPIRED' || this.subscriptionStatus === 'SUSPENDED' || this.subscriptionStatus === 'CANCELLED') {
+                return 'Licenca';
+            }
+            return 'Aktivna licenca';
         },
 
         getWidgetClass() {
