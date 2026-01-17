@@ -605,7 +605,7 @@ function settingsPage() {
         // State
         loading: true,
         saving: false,
-        activeTab: 'settings',
+        activeTab: new URLSearchParams(window.location.search).get('tab') || 'settings',
         currentTheme: localStorage.getItem('servishub-theme') || 'light',
 
         // Modals

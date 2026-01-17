@@ -115,31 +115,64 @@
                 </ul>
             </li>
 
-            <!-- Subscription status -->
-            <li class="mt-auto">
-                <a href="/subscription" class="nav-item group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6">
-                    <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
-                    </svg>
-                    <span class="flex-1">Pretplata</span>
-                    <!-- Status Badge -->
-                    <span x-show="subscriptionStatus"
-                          class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                          :class="getStatusBadgeClass(subscriptionStatus)"
-                          x-text="getStatusLabel(subscriptionStatus)"></span>
+            <!-- Subscription Widget -->
+            <li class="mt-auto -mx-2">
+                <a href="/settings?tab=subscription" class="block">
+                    <div class="subscription-widget rounded-xl p-4 transition-all hover:scale-[1.02]"
+                         :class="getWidgetClass()">
+                        <!-- Header -->
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                     :class="getIconBgClass()">
+                                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-medium opacity-70" x-text="getPlanLabel()"></p>
+                                    <p class="text-sm font-bold" x-text="getStatusLabel(subscriptionStatus)"></p>
+                                </div>
+                            </div>
+                            <span class="text-xs px-2 py-0.5 rounded-full font-medium"
+                                  :class="getStatusPillClass()"
+                                  x-text="subscriptionStatus === 'ACTIVE' || subscriptionStatus === 'TRIAL' || subscriptionStatus === 'DEMO' ? 'Aktivno' : 'Neaktivno'"></span>
+                        </div>
+
+                        <!-- Progress bar -->
+                        <div x-show="totalDays > 0" class="mb-2">
+                            <div class="h-1.5 rounded-full bg-white/20 overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-500"
+                                     :class="getProgressBarClass()"
+                                     :style="'width: ' + getProgressPercent() + '%'"></div>
+                            </div>
+                        </div>
+
+                        <!-- Days info -->
+                        <div class="text-xs">
+                            <template x-if="subscriptionStatus === 'EXPIRED'">
+                                <span class="text-red-200">Isteklo pre <strong x-text="Math.abs(daysRemaining)"></strong> dana</span>
+                            </template>
+                            <template x-if="subscriptionStatus === 'SUSPENDED'">
+                                <span class="text-red-200">Nalog je blokiran</span>
+                            </template>
+                            <template x-if="subscriptionStatus === 'CANCELLED'">
+                                <span class="text-gray-300">Nalog je otkazan</span>
+                            </template>
+                            <template x-if="subscriptionStatus === 'ACTIVE' || subscriptionStatus === 'TRIAL' || subscriptionStatus === 'DEMO'">
+                                <span class="opacity-80">Traje jos <strong x-text="daysRemaining"></strong> dana</span>
+                            </template>
+                        </div>
+
+                        <!-- Debt warning -->
+                        <div x-show="hasDebt" class="mt-2 flex items-center gap-1 text-xs text-amber-200">
+                            <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                            </svg>
+                            <span>Neplacen racun</span>
+                        </div>
+                    </div>
                 </a>
-                <!-- Days remaining warning -->
-                <div x-show="daysRemaining !== null && daysRemaining <= 7 && subscriptionStatus !== 'SUSPENDED'"
-                     class="mx-2 mt-1 text-xs text-amber-400">
-                    <span x-text="'Istice za ' + daysRemaining + ' dana'"></span>
-                </div>
-                <!-- Debt warning -->
-                <div x-show="hasDebt" class="mx-2 mt-1 text-xs text-red-400 flex items-center gap-1">
-                    <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-                    </svg>
-                    <span>Imate neplacen racun</span>
-                </div>
             </li>
         </ul>
     </nav>
@@ -150,6 +183,7 @@ function sidebarData() {
     return {
         subscriptionStatus: null,
         daysRemaining: null,
+        totalDays: 30,
         hasDebt: false,
 
         async loadSubscriptionStatus() {
@@ -160,22 +194,14 @@ function sidebarData() {
                     this.subscriptionStatus = data.status;
                     this.daysRemaining = data.days_remaining;
                     this.hasDebt = data.billing?.has_debt || false;
+                    // Calculate total days based on plan type
+                    if (data.status === 'DEMO') this.totalDays = 7;
+                    else if (data.status === 'TRIAL') this.totalDays = 14;
+                    else this.totalDays = 30;
                 }
             } catch (e) {
                 console.error('Failed to load subscription status:', e);
             }
-        },
-
-        getStatusBadgeClass(status) {
-            const classes = {
-                'DEMO': 'sub-badge-demo',
-                'TRIAL': 'sub-badge-trial',
-                'ACTIVE': 'sub-badge-active',
-                'EXPIRED': 'sub-badge-expired',
-                'SUSPENDED': 'sub-badge-suspended',
-                'CANCELLED': 'sub-badge-cancelled'
-            };
-            return classes[status] || 'sub-badge-cancelled';
         },
 
         getStatusLabel(status) {
@@ -188,6 +214,61 @@ function sidebarData() {
                 'CANCELLED': 'Otkazan'
             };
             return labels[status] || status;
+        },
+
+        getPlanLabel() {
+            const labels = {
+                'DEMO': 'Demo paket',
+                'TRIAL': 'Promo period',
+                'ACTIVE': 'Pro paket',
+                'EXPIRED': 'Pretplata',
+                'SUSPENDED': 'Pretplata',
+                'CANCELLED': 'Pretplata'
+            };
+            return labels[this.subscriptionStatus] || 'Pretplata';
+        },
+
+        getWidgetClass() {
+            const classes = {
+                'DEMO': 'bg-gradient-to-br from-slate-600 to-slate-700 text-white',
+                'TRIAL': 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white',
+                'ACTIVE': 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white',
+                'EXPIRED': 'bg-gradient-to-br from-red-600 to-rose-700 text-white',
+                'SUSPENDED': 'bg-gradient-to-br from-red-700 to-red-800 text-white',
+                'CANCELLED': 'bg-gradient-to-br from-gray-600 to-gray-700 text-white'
+            };
+            return classes[this.subscriptionStatus] || 'bg-gradient-to-br from-gray-600 to-gray-700 text-white';
+        },
+
+        getIconBgClass() {
+            const classes = {
+                'DEMO': 'bg-white/20',
+                'TRIAL': 'bg-white/20',
+                'ACTIVE': 'bg-white/20',
+                'EXPIRED': 'bg-white/20',
+                'SUSPENDED': 'bg-white/20',
+                'CANCELLED': 'bg-white/20'
+            };
+            return classes[this.subscriptionStatus] || 'bg-white/20';
+        },
+
+        getStatusPillClass() {
+            if (this.subscriptionStatus === 'ACTIVE' || this.subscriptionStatus === 'TRIAL' || this.subscriptionStatus === 'DEMO') {
+                return 'bg-white/20 text-white';
+            }
+            return 'bg-white/10 text-white/70';
+        },
+
+        getProgressBarClass() {
+            if (this.daysRemaining <= 3) return 'bg-red-400';
+            if (this.daysRemaining <= 7) return 'bg-amber-400';
+            return 'bg-white/80';
+        },
+
+        getProgressPercent() {
+            if (this.totalDays <= 0) return 0;
+            const percent = (this.daysRemaining / this.totalDays) * 100;
+            return Math.max(0, Math.min(100, percent));
         }
     }
 }
