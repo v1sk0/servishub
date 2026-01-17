@@ -140,7 +140,7 @@
                             </div>
                             <span class="text-xs px-2 py-0.5 rounded-full font-medium"
                                   :class="getStatusPillClass()"
-                                  x-text="subscriptionStatus === 'ACTIVE' || subscriptionStatus === 'TRIAL' || subscriptionStatus === 'DEMO' ? 'Aktivno' : 'Neaktivno'"></span>
+                                  x-text="getStatusPillText()"></span>
                         </div>
 
                         <!-- Progress bar -->
@@ -154,22 +154,25 @@
 
                         <!-- Days info -->
                         <div class="text-xs">
-                            <template x-if="subscriptionStatus === 'EXPIRED'">
-                                <span class="text-red-200">Isteklo pre <strong x-text="Math.abs(daysRemaining)"></strong> dana</span>
+                            <!-- GRACE period - neplacen racun, 15 dana za placanje -->
+                            <template x-if="subscriptionStatus === 'GRACE'">
+                                <span class="opacity-80">Jos <strong x-text="graceDaysRemaining"></strong> dana za placanje</span>
                             </template>
+                            <!-- SUSPENDED - samo pregled -->
                             <template x-if="subscriptionStatus === 'SUSPENDED'">
-                                <span class="text-red-200">Nalog je blokiran</span>
+                                <span class="text-red-200">Samo pregled i zatvaranje naloga</span>
                             </template>
                             <template x-if="subscriptionStatus === 'CANCELLED'">
                                 <span class="text-gray-300">Nalog je otkazan</span>
                             </template>
+                            <!-- Active statuses -->
                             <template x-if="subscriptionStatus === 'ACTIVE' || subscriptionStatus === 'TRIAL' || subscriptionStatus === 'DEMO'">
                                 <span class="opacity-80">Traje jos <strong x-text="daysRemaining"></strong> dana</span>
                             </template>
                         </div>
 
-                        <!-- Debt warning -->
-                        <div x-show="hasDebt" class="mt-2 flex items-center gap-1 text-xs text-amber-200">
+                        <!-- Neplacen racun warning - only for GRACE status -->
+                        <div x-show="subscriptionStatus === 'GRACE'" class="mt-2 flex items-center gap-1 text-xs text-amber-200">
                             <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                             </svg>
@@ -187,8 +190,8 @@ function sidebarData() {
     return {
         subscriptionStatus: null,
         daysRemaining: null,
+        graceDaysRemaining: null,  // Days left in grace period (15 days max)
         totalDays: 30,
-        hasDebt: false,
         locationCount: 1,
 
         async loadSubscriptionStatus() {
@@ -198,11 +201,12 @@ function sidebarData() {
                     const data = await res.json();
                     this.subscriptionStatus = data.status;
                     this.daysRemaining = data.days_remaining;
-                    this.hasDebt = data.billing?.has_debt || false;
+                    this.graceDaysRemaining = data.grace_days_remaining || 0;
                     this.locationCount = data.pricing?.location_count || 1;
                     // Calculate total days based on plan type
                     if (data.status === 'DEMO') this.totalDays = 7;
                     else if (data.status === 'TRIAL') this.totalDays = 14;
+                    else if (data.status === 'GRACE') this.totalDays = 15;
                     else this.totalDays = 30;
                 }
             } catch (e) {
@@ -215,7 +219,7 @@ function sidebarData() {
                 'DEMO': 'Demo',
                 'TRIAL': 'Promo',
                 'ACTIVE': 'Standard',
-                'EXPIRED': 'Istekla',
+                'GRACE': 'Neplacen',
                 'SUSPENDED': 'Blokiran',
                 'CANCELLED': 'Otkazan'
             };
@@ -223,7 +227,13 @@ function sidebarData() {
         },
 
         getPlanLabel() {
-            if (this.subscriptionStatus === 'EXPIRED' || this.subscriptionStatus === 'SUSPENDED' || this.subscriptionStatus === 'CANCELLED') {
+            if (this.subscriptionStatus === 'GRACE') {
+                return 'Neplacen racun';
+            }
+            if (this.subscriptionStatus === 'SUSPENDED') {
+                return 'Samo pregled';
+            }
+            if (this.subscriptionStatus === 'CANCELLED') {
                 return 'Licenca';
             }
             return this.locationCount + ' lokacija' + (this.locationCount > 1 ? 'e' : '');
@@ -234,7 +244,7 @@ function sidebarData() {
                 'DEMO': 'bg-gradient-to-br from-slate-600 to-slate-700 text-white',
                 'TRIAL': 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white',
                 'ACTIVE': 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white',
-                'EXPIRED': 'bg-gradient-to-br from-red-600 to-rose-700 text-white',
+                'GRACE': 'bg-gradient-to-br from-amber-600 to-orange-700 text-white',
                 'SUSPENDED': 'bg-gradient-to-br from-red-700 to-red-800 text-white',
                 'CANCELLED': 'bg-gradient-to-br from-gray-600 to-gray-700 text-white'
             };
@@ -242,31 +252,41 @@ function sidebarData() {
         },
 
         getIconBgClass() {
-            const classes = {
-                'DEMO': 'bg-white/20',
-                'TRIAL': 'bg-white/20',
-                'ACTIVE': 'bg-white/20',
-                'EXPIRED': 'bg-white/20',
-                'SUSPENDED': 'bg-white/20',
-                'CANCELLED': 'bg-white/20'
-            };
-            return classes[this.subscriptionStatus] || 'bg-white/20';
+            return 'bg-white/20';
         },
 
         getStatusPillClass() {
             if (this.subscriptionStatus === 'ACTIVE' || this.subscriptionStatus === 'TRIAL' || this.subscriptionStatus === 'DEMO') {
                 return 'bg-white/20 text-white';
             }
+            if (this.subscriptionStatus === 'GRACE') {
+                return 'bg-amber-900/50 text-amber-100';
+            }
             return 'bg-white/10 text-white/70';
         },
 
+        getStatusPillText() {
+            if (this.subscriptionStatus === 'ACTIVE' || this.subscriptionStatus === 'TRIAL' || this.subscriptionStatus === 'DEMO') {
+                return 'Aktivno';
+            }
+            if (this.subscriptionStatus === 'GRACE') {
+                return 'Neplaceno';
+            }
+            return 'Neaktivno';
+        },
+
         getProgressBarClass() {
+            if (this.subscriptionStatus === 'GRACE') return 'bg-amber-400';
             if (this.daysRemaining <= 3) return 'bg-red-400';
             if (this.daysRemaining <= 7) return 'bg-amber-400';
             return 'bg-white/80';
         },
 
         getProgressPercent() {
+            if (this.subscriptionStatus === 'GRACE') {
+                // For grace period, show how many days left out of 15
+                return Math.max(0, Math.min(100, (this.graceDaysRemaining / 15) * 100));
+            }
             if (this.totalDays <= 0) return 0;
             const percent = (this.daysRemaining / this.totalDays) * 100;
             return Math.max(0, Math.min(100, percent));
