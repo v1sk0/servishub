@@ -281,20 +281,104 @@ def activate_trial(tenant_id):
 @platform_admin_required
 def activate_tenant(tenant_id):
     """
-    Aktivira tenant - postavlja status na ACTIVE.
-    Koristi se nakon uspesne prve uplate.
+    Aktivira tenant - postavlja status na ACTIVE i kreira SubscriptionPayment.
+
+    Request body (JSON):
+        - months: Broj meseci pretplate (1, 3, 6, 12) - default 1
+        - payment_method: BANK_TRANSFER, CASH, CARD - default BANK_TRANSFER
+        - payment_reference: Referenca uplate (opciono)
+        - notes: Napomena (opciono)
     """
     tenant = Tenant.query.get_or_404(tenant_id)
+    data = request.get_json() or {}
+
+    # Parametri iz request body
+    months = data.get('months', 1)
+    payment_method = data.get('payment_method', 'BANK_TRANSFER')
+    payment_reference = data.get('payment_reference', '')
+    notes = data.get('notes', '')
+
+    # Validacija meseci
+    if months not in [1, 3, 6, 12]:
+        return jsonify({'error': 'Broj meseci mora biti 1, 3, 6 ili 12'}), 400
 
     # Sacuvaj stari status za audit
     old_status = tenant.status.value if tenant.status else None
 
-    # Postavi status
-    from app.models.tenant import TenantStatus
-    tenant.status = TenantStatus.ACTIVE
+    # Ucitaj cene iz PlatformSettings
+    from app.models import PlatformSettings
+    settings = PlatformSettings.get_settings()
+    base_price = float(settings.base_price) if settings.base_price else 3600
+    location_price = float(settings.location_price) if settings.location_price else 1800
 
-    # Postavi subscription period (1 mesec od sada)
-    tenant.subscription_ends_at = datetime.utcnow() + timedelta(days=30)
+    # Izracunaj broj lokacija
+    from app.models.tenant import ServiceLocation, TenantStatus
+    locations_count = ServiceLocation.query.filter_by(tenant_id=tenant.id, is_active=True).count()
+    locations_count = max(1, locations_count)  # Minimum 1 lokacija
+
+    # Izracunaj mesecnu cenu
+    additional_locations = max(0, locations_count - 1)
+    monthly_price = base_price + (additional_locations * location_price)
+    total_amount = monthly_price * months
+
+    # Period pretplate
+    period_start = datetime.utcnow().date()
+    period_end = period_start + timedelta(days=30 * months)
+
+    # Generiši broj fakture (SH-YYYY-NNNNNN)
+    year = datetime.utcnow().year
+    last_payment = SubscriptionPayment.query.filter(
+        SubscriptionPayment.invoice_number.like(f'SH-{year}-%')
+    ).order_by(SubscriptionPayment.id.desc()).first()
+
+    if last_payment and last_payment.invoice_number:
+        last_num = int(last_payment.invoice_number.split('-')[-1])
+        next_num = last_num + 1
+    else:
+        next_num = 1
+    invoice_number = f'SH-{year}-{next_num:06d}'
+
+    # Kreiraj stavke fakture
+    items = [
+        {
+            'description': 'Bazni paket ServisHub',
+            'quantity': months,
+            'unit_price': base_price,
+            'total': base_price * months
+        }
+    ]
+    if additional_locations > 0:
+        items.append({
+            'description': f'Dodatne lokacije ({additional_locations})',
+            'quantity': months,
+            'unit_price': location_price * additional_locations,
+            'total': location_price * additional_locations * months
+        })
+
+    # Kreiraj SubscriptionPayment
+    payment = SubscriptionPayment(
+        tenant_id=tenant.id,
+        invoice_number=invoice_number,
+        period_start=period_start,
+        period_end=period_end,
+        items_json=items,
+        subtotal=total_amount,
+        total_amount=total_amount,
+        currency='RSD',
+        status='PAID',  # Direktno PAID jer admin aktivira
+        paid_at=datetime.utcnow(),
+        payment_method=payment_method,
+        payment_reference=payment_reference,
+        payment_notes=notes,
+        verified_by_id=g.current_admin.id,
+        verified_at=datetime.utcnow(),
+        is_auto_generated=False
+    )
+    db.session.add(payment)
+
+    # Postavi status i period pretplate
+    tenant.status = TenantStatus.ACTIVE
+    tenant.subscription_ends_at = datetime.combine(period_end, datetime.min.time())
 
     # Audit log
     AdminActivityLog.log(
@@ -305,17 +389,24 @@ def activate_tenant(tenant_id):
         old_status=old_status,
         new_status='ACTIVE',
         details={
-            'subscription_ends_at': tenant.subscription_ends_at.isoformat()
+            'subscription_ends_at': tenant.subscription_ends_at.isoformat(),
+            'months': months,
+            'total_amount': total_amount,
+            'invoice_number': invoice_number,
+            'payment_method': payment_method,
+            'locations_count': locations_count
         }
     )
 
     db.session.commit()
 
     return jsonify({
-        'message': f'Tenant "{tenant.name}" je aktiviran.',
+        'message': f'Pretplata za "{tenant.name}" aktivirana na {months} mesec(i).',
         'tenant_id': tenant.id,
         'status': tenant.status.value,
-        'subscription_ends_at': tenant.subscription_ends_at.isoformat()
+        'subscription_ends_at': tenant.subscription_ends_at.isoformat(),
+        'invoice_number': invoice_number,
+        'total_amount': total_amount
     }), 200
 
 
