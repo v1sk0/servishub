@@ -1,19 +1,19 @@
 {# Admin Panel - Glassmorphism i Light Theme Stilovi #}
 
-{# Odmah primeni temu pre renderovanja - sprečava flash bele boje #}
+{# INSTANT tema - primeni PRE bilo kakvog renderovanja #}
 <script>
 (function() {
-    var theme = localStorage.getItem('admin-theme') || 'light';
-    document.documentElement.setAttribute('data-admin-theme', theme);
+    var t = localStorage.getItem('admin-theme') || 'light';
+    var d = document.documentElement;
+    d.setAttribute('data-admin-theme', t);
+    // Dodaj klasu direktno na body za instant stilove
+    d.className = (d.className || '') + ' theme-' + t;
 })();
 </script>
 
 <style>
-    /* Sakrij sadržaj dok se ne učita tema i Alpine */
-    html:not([data-admin-theme]) .admin-wrapper,
-    [x-cloak] {
-        display: none !important;
-    }
+    /* Samo x-cloak elementi se sakrivaju (forme sa x-show) */
+    [x-cloak] { display: none !important; }
 
     /* ==================== PRE-ALPINE STILOVI (data atribut) ==================== */
 

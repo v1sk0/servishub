@@ -188,8 +188,7 @@
 {% endblock %}
 
 {% block content %}
-<div x-cloak
-     :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
+<div :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
      x-data="packagesPage()" x-init="init()">
     <div class="admin-wrapper min-h-screen bg-gray-100">
         {% set active_page = 'paketi' %}
