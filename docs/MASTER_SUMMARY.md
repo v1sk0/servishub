@@ -1,6 +1,6 @@
 # ServisHub - Master Summary
 
-> Poslednje ažuriranje: Januar 2026
+> Poslednje ažuriranje: 17. Januar 2026 (v102)
 
 ---
 
@@ -61,6 +61,7 @@ servishub/
 │   │   │   └── ...
 │   │   ├── admin/            # Platform Admin API
 │   │   │   ├── auth.py       # Admin login sa 2FA
+│   │   │   ├── scheduler.py  # Scheduler monitoring i kontrola
 │   │   │   └── ...
 │   │   └── middleware/
 │   │       ├── jwt_utils.py  # JWT kreiranje/verifikacija
@@ -68,7 +69,9 @@ servishub/
 │   │
 │   ├── services/             # Business logic
 │   │   ├── auth_service.py   # AuthService klasa
-│   │   └── security_service.py # Rate limiting
+│   │   ├── security_service.py # Rate limiting
+│   │   ├── billing_tasks.py  # BillingTasksService - scheduled billing operacije
+│   │   └── scheduler_service.py # APScheduler - automatsko pokretanje taskova
 │   │
 │   └── middleware/
 │       └── security_headers.py # CSP, HSTS, X-Frame-Options
@@ -86,12 +89,12 @@ servishub/
 
 ```python
 class TenantStatus(enum.Enum):
-    DEMO = 'DEMO'           # 7 dana automatski nakon registracije
-    TRIAL = 'TRIAL'         # 60 dana FREE, aktivira admin
+    TRIAL = 'TRIAL'         # 60 dana FREE automatski nakon registracije
     ACTIVE = 'ACTIVE'       # Aktivna pretplata
     EXPIRED = 'EXPIRED'     # Istekla (grace period 7 dana)
     SUSPENDED = 'SUSPENDED' # Suspendovan (neplaćanje)
     CANCELLED = 'CANCELLED' # Otkazan nalog
+    # DEMO - UKINUT (v102) - sada se odmah ide na TRIAL
 ```
 
 **Ključna polja Tenant modela:**
@@ -103,9 +106,8 @@ class TenantStatus(enum.Enum):
 | `name` | String(200) | Naziv preduzeća |
 | `pib` | String(20) | PIB (unique) |
 | `email` | String(100) | Kontakt email |
-| `status` | Enum | TenantStatus |
-| `demo_ends_at` | DateTime | Istek DEMO perioda |
-| `trial_ends_at` | DateTime | Istek TRIAL perioda |
+| `status` | Enum | TenantStatus (default: TRIAL) |
+| `trial_ends_at` | DateTime | Istek TRIAL perioda (60 dana od registracije) |
 | `subscription_ends_at` | DateTime | Istek pretplate |
 
 **Billing polja:**
@@ -339,31 +341,31 @@ Sve važne akcije se loguju:
 
 ## 7. Billing Sistem
 
-### 7.1 Lifecycle Tenanta
+### 7.1 Lifecycle Tenanta (v102 - pojednostavljen)
 
 ```
 [REGISTRACIJA]
       |
       v
-   DEMO (7 dana)
+   TRIAL (60 dana FREE) ◄── automatski, bez DEMO faze
       |
-      v (admin aktivira)
-   TRIAL (60 dana FREE)
-      |
-      v (uplata)
+      v (uplata pre isteka)
    ACTIVE
       |
       v (istekla pretplata)
-   EXPIRED (7 dana grace)
+   EXPIRED (7 dana grace period)
       |
       v (neplaćanje)
    SUSPENDED
       |
-      +---> "Na reč" (48h) ---> nazad na SUSPENDED
+      +---> "Na reč" (48h) ---> nazad na SUSPENDED (ako ne plati)
       |
       v (trajna blokada)
    CANCELLED
 ```
+
+> **NAPOMENA (v102):** DEMO status je ukinut. Registracija odmah kreira TRIAL
+> sa 60 dana besplatnog korišćenja. Postojeći DEMO tenanti su migrirani.
 
 ### 7.2 Trust Score Sistem
 
@@ -453,7 +455,7 @@ Admin može postaviti custom cene za određeni tenant:
 
 ```python
 # Properties
-tenant.is_active          # DEMO/TRIAL/ACTIVE
+tenant.is_active          # TRIAL/ACTIVE
 tenant.days_remaining     # Preostalo dana
 tenant.has_debt           # current_debt > 0
 tenant.is_blocked         # SUSPENDED + has_debt
@@ -463,14 +465,16 @@ tenant.is_trust_active    # Da li je u 48h periodu
 tenant.trust_hours_remaining  # Preostalo sati
 
 # Metode
-tenant.set_demo(days=7)
-tenant.activate_trial(days=60)
+tenant.set_trial(trial_days=60)    # Postavlja TRIAL status
 tenant.activate_subscription(months=1)
 tenant.activate_trust()
 tenant.update_trust_score(change, reason)
 tenant.block(reason)
 tenant.unblock()
 tenant.get_subscription_info()  # Dict za API
+
+# DEPRECATED (v102)
+tenant.set_demo()  # -> poziva set_trial() interno
 ```
 
 ---
@@ -499,10 +503,47 @@ tenant.get_subscription_info()  # Dict za API
 9. ✅ Cron job za proveru isteklih pretplata
 10. ✅ Email notifikacije za dugovanja
 
-### 🔧 CLI Komande za Billing (Heroku Scheduler)
+### 🤖 In-App Scheduler (APScheduler) - NOVO v102
+
+Billing taskovi se sada pokreću **automatski** unutar aplikacije pomoću APScheduler-a.
+Nema potrebe za Heroku Scheduler addon-om.
+
+**Scheduler Jobs:**
+
+| Job ID | Raspored | Opis |
+|--------|----------|------|
+| `billing_daily` | Svaki dan u 06:00 UTC | Proverava pretplate, grace periode, dugovanja |
+| `generate_invoices` | 1. u mesecu u 00:00 UTC | Generiše mesečne fakture |
+| `send_reminders` | Svaki dan u 10:00 UTC | Šalje email podsetnice (3, 7, 14 dana) |
+
+**Admin API Endpoints:**
+
+```
+GET  /api/admin/scheduler/status      # Status schedulera i svih jobova
+POST /api/admin/scheduler/run/<job_id> # Manuelno pokretanje joba
+```
+
+**Primer response-a:**
+```json
+{
+  "running": true,
+  "jobs": [
+    {
+      "id": "billing_daily",
+      "name": "Dnevne billing provere",
+      "next_run": "2026-01-18T06:00:00",
+      "trigger": "cron[hour='6', minute='0']"
+    }
+  ]
+}
+```
+
+### 🔧 CLI Komande za Billing (backup/debug)
+
+CLI komande i dalje postoje za manuelno pokretanje i debugging:
 
 ```bash
-# Dnevni task - pokrece sve billing proveree
+# Dnevni task - pokrece sve billing provere
 flask billing-daily
 
 # Individualne komande
@@ -515,6 +556,9 @@ flask update-overdue-days    # Azurira dane kasnjenja
 # Email notifikacije
 flask send-billing-emails --type=reminders  # Podsecanja (3, 7, 14 dana)
 flask send-billing-emails --type=warnings   # Upozorenja o suspenziji
+
+# Migracija starih DEMO tenanta (jednokratno)
+flask migrate-demo-to-trial   # Prebacuje DEMO -> TRIAL (60 dana)
 ```
 
 ### 📧 Billing Email Tipovi
@@ -596,7 +640,7 @@ auth_service.register_tenant(
     location_name="Glavna radnja",
     location_city="Beograd"
 )
-# Rezultat: (tenant, owner) - DEMO status, 7 dana
+# Rezultat: (tenant, owner) - TRIAL status, 60 dana FREE
 ```
 
 ### Login
@@ -621,6 +665,34 @@ if tenant.can_activate_trust:
     db.session.commit()
     # 48 sati pristupa
 ```
+
+---
+
+## 14. Changelog
+
+### v102 (17. Januar 2026)
+
+**Ukinut DEMO status - pojednostavljen lifecycle:**
+- Registracija sada direktno kreira TRIAL status (60 dana FREE)
+- DEMO faza potpuno uklonjena
+- Migrirana 2 postojeća DEMO tenanta (Tritel, TEST SERVIS)
+- Nova CLI komanda: `flask migrate-demo-to-trial`
+
+**In-App Scheduler (APScheduler):**
+- Novi fajl: `app/services/scheduler_service.py`
+- Automatsko pokretanje billing taskova bez Heroku Scheduler-a
+- 3 scheduled joba: billing_daily (06:00), generate_invoices (1. u mesecu), send_reminders (10:00)
+- Admin API za monitoring: `GET /api/admin/scheduler/status`
+- Admin API za manuelno pokretanje: `POST /api/admin/scheduler/run/<job_id>`
+
+**Izmenjeni fajlovi:**
+- `app/models/tenant.py` - default status TRIAL, set_trial() metoda
+- `app/services/auth_service.py` - registracija kreira TRIAL
+- `app/services/billing_tasks.py` - uklonjena DEMO logika
+- `app/__init__.py` - scheduler inicijalizacija, migrate-demo-to-trial CLI
+- `app/api/admin/__init__.py` - dodato scheduler
+- `app/api/admin/scheduler.py` - NOVO: admin endpoints za scheduler
+- `requirements.txt` - dodat APScheduler==3.10.4
 
 ---
 

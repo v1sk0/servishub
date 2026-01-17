@@ -24,9 +24,9 @@ class UpdateSettingsRequest(BaseModel):
     location_price: Optional[float] = None
     currency: Optional[str] = None
     trial_days: Optional[int] = None
-    demo_days: Optional[int] = None
     grace_period_days: Optional[int] = None
     default_commission: Optional[float] = None
+    # demo_days - UKINUT (v102) - koristi se samo trial_days
 
 
 @bp.route('', methods=['GET'])
@@ -54,8 +54,7 @@ def update_settings():
         - base_price: Cena baznog paketa (RSD)
         - location_price: Cena dodatne lokacije (RSD)
         - currency: Valuta
-        - trial_days: Trajanje trial perioda
-        - demo_days: Trajanje demo perioda
+        - trial_days: Trajanje trial perioda (default 60 dana)
         - grace_period_days: Grace period pre suspenzije
         - default_commission: Default provizija dobavljaca (%)
 
@@ -122,8 +121,7 @@ def get_packages():
         'base_price': float(settings.base_price) if settings.base_price else 3600,
         'location_price': float(settings.location_price) if settings.location_price else 1800,
         'currency': settings.currency or 'RSD',
-        'trial_days': settings.trial_days or 90,
-        'demo_days': settings.demo_days or 7,
+        'trial_days': settings.trial_days or 60,  # Default 60 dana trial
         'grace_period_days': settings.grace_period_days or 7,
         'default_commission': float(settings.default_commission) if settings.default_commission else 5.0
     }), 200
