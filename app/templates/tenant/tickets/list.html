@@ -1571,15 +1571,6 @@ function ticketsPage() {
             }
         },
 
-        toggleProblem(problemId) {
-            const idx = this.selectedProblems.indexOf(problemId);
-            if (idx > -1) {
-                this.selectedProblems.splice(idx, 1);
-            } else {
-                this.selectedProblems.push(problemId);
-            }
-        },
-
         getDurationClass(ticket) {
             if (!ticket.duration_display) return 'green';
             const match = ticket.duration_display.match(/(\d+)d/);
