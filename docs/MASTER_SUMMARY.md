@@ -1,6 +1,6 @@
 # ServisHub - Master Summary
 
-> Poslednje ažuriranje: 17. Januar 2026 (v102)
+> Poslednje ažuriranje: 17. Januar 2026 (v103)
 
 ---
 
@@ -669,6 +669,28 @@ if tenant.can_activate_trust:
 ---
 
 ## 14. Changelog
+
+### v103 (17. Januar 2026)
+
+**Admin Paketi stranica - redizajn:**
+- Kompletno redizajnirana `/admin/paketi` stranica
+- Uklonjen DEMO period input i sve reference
+- Dodat vizuelni Lifecycle Flow dijagram (Registracija → TRIAL → ACTIVE → EXPIRED → SUSPENDED)
+- Nove pricing kartice sa hover efektima i ikonama
+- Dodat Price Calculator (automatski računa cene za 1-5 lokacija)
+- Poboljšan Periodi sekcija (samo Trial i Grace period)
+- Marketplace provizija sekcija sa ljubičastim dizajnom
+
+**API izmene:**
+- `GET /api/admin/settings/packages` - uklonjen `demo_days` iz response-a
+- Default `trial_days` promenjen na 60 (umesto 90)
+- `UpdateSettingsRequest` - uklonjen `demo_days` parametar
+
+**Izmenjeni fajlovi:**
+- `app/templates/admin/packages/index.html` - kompletno redizajniran
+- `app/api/admin/settings.py` - uklonjen demo_days
+
+---
 
 ### v102 (17. Januar 2026)
 
