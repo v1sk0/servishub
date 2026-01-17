@@ -167,7 +167,10 @@
                             </template>
                             <!-- Active statuses -->
                             <template x-if="subscriptionStatus === 'ACTIVE' || subscriptionStatus === 'TRIAL' || subscriptionStatus === 'DEMO'">
-                                <span class="opacity-80">Traje jos <strong x-text="daysRemaining"></strong> dana</span>
+                                <span class="opacity-80">
+                                    Traje jos <strong x-text="daysRemaining"></strong> dana
+                                    <span class="opacity-70" x-text="'(do ' + getEndDate() + ')'"></span>
+                                </span>
                             </template>
                         </div>
 
@@ -287,6 +290,13 @@ function sidebarData() {
             if (this.totalDays <= 0) return 0;
             const percent = (this.daysRemaining / this.totalDays) * 100;
             return Math.max(0, Math.min(100, percent));
+        },
+
+        getEndDate() {
+            if (!this.daysRemaining) return '';
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + this.daysRemaining);
+            return endDate.toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
     }
 }
