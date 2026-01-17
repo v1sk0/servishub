@@ -178,11 +178,14 @@ function loginForm() {
             this.error = null;
 
             try {
-                const response = await fetch('/api/v1/auth/google');
+                const response = await fetch('/api/v1/auth/google', {
+                    credentials: 'include'  // Ensure session cookie is set
+                });
                 const data = await response.json();
 
                 if (response.ok && data.auth_url) {
-                    // Redirect na Google OAuth
+                    // Small delay to ensure cookie is processed before redirect
+                    await new Promise(resolve => setTimeout(resolve, 100));
                     window.location.href = data.auth_url;
                 } else {
                     this.error = data.message || 'Greška pri pokretanju Google prijave';
