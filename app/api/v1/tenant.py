@@ -2,6 +2,7 @@
 Tenant Profile and Settings API
 """
 from flask import Blueprint, request, g
+from sqlalchemy.orm.attributes import flag_modified
 from app.extensions import db
 from app.models import Tenant, ServiceLocation, TenantUser, ServiceRepresentative
 from app.api.middleware.auth import jwt_required
@@ -150,8 +151,8 @@ def update_settings():
     if not tenant:
         return {'error': 'Tenant not found'}, 404
 
-    # Get current settings
-    settings = tenant.settings_json or {}
+    # Get current settings (make a copy to trigger mutation detection)
+    settings = dict(tenant.settings_json or {})
 
     # Update with new values
     new_settings = request.json or {}
@@ -160,6 +161,7 @@ def update_settings():
             settings[key] = value
 
     tenant.settings_json = settings
+    flag_modified(tenant, 'settings_json')  # Tell SQLAlchemy JSON was modified
     tenant.updated_at = datetime.utcnow()
     db.session.commit()
 

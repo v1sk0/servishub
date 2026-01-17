@@ -585,6 +585,10 @@ def google_login():
     nonce = secrets.token_urlsafe(32)
     session['oauth_nonce'] = nonce
 
+    # Označi sesiju kao modifikovanu i trajnu da se cookie sigurno sačuva
+    session.modified = True
+    session.permanent = True
+
     # Google OAuth URL sa state, PKCE i nonce parametrima
     params = {
         'client_id': client_id,
