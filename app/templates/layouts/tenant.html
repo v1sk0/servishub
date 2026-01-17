@@ -126,6 +126,186 @@
     .sub-badge-expired { background: rgba(234, 179, 8, 0.2); color: #facc15; }
     .sub-badge-suspended { background: rgba(239, 68, 68, 0.2); color: #f87171; }
     .sub-badge-cancelled { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+
+    /* ========================================
+       GLOBAL DARK THEME STYLES
+       These automatically style common elements
+       ======================================== */
+
+    /* Override Tailwind bg-white cards */
+    .tenant-app .bg-white,
+    .tenant-app [class*="bg-white"] {
+        background: rgba(255, 255, 255, 0.08) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Override shadows */
+    .tenant-app .shadow,
+    .tenant-app .shadow-sm,
+    .tenant-app .shadow-md,
+    .tenant-app .shadow-lg {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Text colors */
+    .tenant-app .text-gray-900,
+    .tenant-app .text-gray-800 {
+        color: #f1f5f9 !important;
+    }
+    .tenant-app .text-gray-700,
+    .tenant-app .text-gray-600 {
+        color: #cbd5e1 !important;
+    }
+    .tenant-app .text-gray-500,
+    .tenant-app .text-gray-400 {
+        color: #94a3b8 !important;
+    }
+
+    /* Form inputs */
+    .tenant-app input[type="text"],
+    .tenant-app input[type="email"],
+    .tenant-app input[type="tel"],
+    .tenant-app input[type="number"],
+    .tenant-app input[type="password"],
+    .tenant-app input[type="search"],
+    .tenant-app textarea,
+    .tenant-app select {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        color: #f1f5f9 !important;
+    }
+    .tenant-app input::placeholder,
+    .tenant-app textarea::placeholder {
+        color: #64748b !important;
+    }
+    .tenant-app input:focus,
+    .tenant-app textarea:focus,
+    .tenant-app select:focus {
+        border-color: rgba(96, 165, 250, 0.5) !important;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15) !important;
+        outline: none !important;
+    }
+    .tenant-app select option {
+        background: #1e293b;
+        color: #f1f5f9;
+    }
+
+    /* Labels */
+    .tenant-app label {
+        color: #cbd5e1 !important;
+    }
+
+    /* Buttons - primary */
+    .tenant-app .bg-primary-600,
+    .tenant-app [class*="bg-primary-"] {
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
+        border: none !important;
+    }
+    .tenant-app .bg-primary-600:hover,
+    .tenant-app [class*="bg-primary-"]:hover {
+        background: linear-gradient(135deg, #60a5fa, #a78bfa) !important;
+    }
+
+    /* Buttons - white/secondary */
+    .tenant-app button.bg-white,
+    .tenant-app a.bg-white {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: #e2e8f0 !important;
+    }
+    .tenant-app button.bg-white:hover,
+    .tenant-app a.bg-white:hover {
+        background: rgba(255, 255, 255, 0.15) !important;
+    }
+
+    /* Ring colors */
+    .tenant-app .ring-gray-300,
+    .tenant-app [class*="ring-gray-"] {
+        --tw-ring-color: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    /* Tables */
+    .tenant-app table {
+        border-collapse: collapse;
+    }
+    .tenant-app thead {
+        background: rgba(255, 255, 255, 0.03) !important;
+    }
+    .tenant-app th {
+        color: #64748b !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+    .tenant-app tbody tr {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    }
+    .tenant-app tbody tr:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+    }
+    .tenant-app td {
+        color: #cbd5e1 !important;
+    }
+
+    /* Borders */
+    .tenant-app .border-gray-200,
+    .tenant-app .border-gray-300,
+    .tenant-app [class*="border-gray-"] {
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    .tenant-app .divide-gray-200 > * + *,
+    .tenant-app .divide-gray-300 > * + * {
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    /* Links */
+    .tenant-app .text-primary-600,
+    .tenant-app [class*="text-primary-"] {
+        color: #60a5fa !important;
+    }
+    .tenant-app .text-primary-600:hover,
+    .tenant-app [class*="text-primary-"]:hover {
+        color: #93c5fd !important;
+    }
+
+    /* Status badges for dark theme */
+    .tenant-app .bg-yellow-100 { background: rgba(234, 179, 8, 0.2) !important; }
+    .tenant-app .text-yellow-800 { color: #facc15 !important; }
+    .tenant-app .bg-blue-100 { background: rgba(59, 130, 246, 0.2) !important; }
+    .tenant-app .text-blue-800 { color: #60a5fa !important; }
+    .tenant-app .bg-green-100 { background: rgba(34, 197, 94, 0.2) !important; }
+    .tenant-app .text-green-800 { color: #4ade80 !important; }
+    .tenant-app .bg-red-100 { background: rgba(239, 68, 68, 0.2) !important; }
+    .tenant-app .text-red-800 { color: #f87171 !important; }
+    .tenant-app .bg-purple-100 { background: rgba(139, 92, 246, 0.2) !important; }
+    .tenant-app .text-purple-800 { color: #a78bfa !important; }
+    .tenant-app .bg-gray-100 { background: rgba(107, 114, 128, 0.2) !important; }
+    .tenant-app .text-gray-800 { color: #9ca3af !important; }
+    .tenant-app .bg-orange-100 { background: rgba(249, 115, 22, 0.2) !important; }
+    .tenant-app .text-orange-800 { color: #fb923c !important; }
+    .tenant-app .bg-indigo-100 { background: rgba(99, 102, 241, 0.2) !important; }
+    .tenant-app .text-indigo-800 { color: #818cf8 !important; }
+
+    /* Alert boxes */
+    .tenant-app .bg-red-50 { background: rgba(239, 68, 68, 0.1) !important; }
+    .tenant-app .bg-orange-50 { background: rgba(249, 115, 22, 0.1) !important; }
+    .tenant-app .bg-yellow-50 { background: rgba(234, 179, 8, 0.1) !important; }
+    .tenant-app .bg-green-50 { background: rgba(34, 197, 94, 0.1) !important; }
+    .tenant-app .bg-blue-50 { background: rgba(59, 130, 246, 0.1) !important; }
+
+    /* Background gray variants */
+    .tenant-app .bg-gray-50 {
+        background: rgba(255, 255, 255, 0.03) !important;
+    }
+
+    /* Spinner color */
+    .tenant-app .text-primary-600 svg,
+    .tenant-app .animate-spin {
+        color: #60a5fa !important;
+    }
+
+    /* Hover states */
+    .tenant-app .hover\:bg-gray-50:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+    }
 </style>
 {% endblock %}
 
