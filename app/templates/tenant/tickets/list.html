@@ -2,958 +2,496 @@
 
 {% block title %}Servisni nalozi - ServisHub{% endblock %}
 
-{% block head %}
+{% block page_content %}
 <style>
-    /* ============================================
-       DOLCE VITA STYLE - GOOGLE INSPIRED DARK THEME
-       ============================================ */
-
-    /* Page container - inherits dark theme from tenant-app */
-    .tickets-container {
-        /* No background or negative margins - use global tenant-app theme */
+    /* Tickets Page - Dark Glassmorphic Theme (matching dashboard) */
+    .page-header h2 {
+        color: #f1f5f9;
     }
-
-    /* Page Header */
-    .page-header {
-        display: flex;
-        justify-content: space-between;
+    .page-header p {
+        color: #64748b;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        display: inline-flex;
         align-items: center;
-        margin-bottom: 24px;
+        gap: 0.5rem;
+        transition: all 0.2s;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        border: none;
+        cursor: pointer;
     }
-
-    .page-title {
-        color: #fff;
-        font-size: 24px;
-        font-weight: 400;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 12px;
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
     }
-
-    .header-actions {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-    }
-
-    .btn-secondary-dv {
+    .btn-secondary {
         background: rgba(255, 255, 255, 0.1);
-        color: #fff;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-size: 14px;
-        text-decoration: none;
-        display: flex;
+        color: #e2e8f0;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 0.5rem;
+        transition: all 0.2s;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        text-decoration: none;
+    }
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+    }
+
+    /* Glassmorphic stat cards */
+    .stat-card {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 1.25rem;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
         transition: all 0.2s;
     }
-
-    .btn-secondary-dv:hover {
-        background: rgba(255, 255, 255, 0.2);
-        color: #fff;
-    }
-
-    .btn-add-ticket {
-        padding: 10px 20px;
-        background: #1a73e8;
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        transition: background 0.2s;
-    }
-
-    .btn-add-ticket:hover {
-        background: #1557b0;
-    }
-
-    /* KPI Cards - Dolce Vita glassmorphic style */
-    .kpi-row {
-        display: flex;
-        gap: 16px;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-    }
-
-    .kpi-card {
-        flex: 1;
-        min-width: 180px;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border-radius: 12px;
-        padding: 16px 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .kpi-card:hover {
+    .stat-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        background: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     }
-
-    .kpi-card.blue { border-left: 4px solid #1a73e8; }
-    .kpi-card.green { border-left: 4px solid #34a853; }
-    .kpi-card.yellow { border-left: 4px solid #fbbc04; }
-    .kpi-card.red { border-left: 4px solid #ea4335; }
-    .kpi-card.purple { border-left: 4px solid #9334e6; }
-
-    .kpi-value {
-        font-size: 28px;
-        font-weight: 300;
-        color: #fff;
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
     }
+    .stat-card.blue::before { background: linear-gradient(180deg, #3b82f6, #60a5fa); }
+    .stat-card.green::before { background: linear-gradient(180deg, #22c55e, #4ade80); }
+    .stat-card.purple::before { background: linear-gradient(180deg, #8b5cf6, #a78bfa); }
+    .stat-card.yellow::before { background: linear-gradient(180deg, #eab308, #facc15); }
+    .stat-card.red::before { background: linear-gradient(180deg, #ef4444, #f87171); }
 
-    .kpi-label {
-        font-size: 12px;
-        color: rgba(255, 255, 255, 0.7);
+    .stat-value {
+        color: #f1f5f9;
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+    .stat-label {
+        color: #94a3b8;
+        font-size: 0.75rem;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-top: 4px;
+        letter-spacing: 0.05em;
+        margin-top: 0.25rem;
     }
 
-    /* Toolbar / Search */
-    .toolbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-
-    .search-box {
+    /* Search and filters */
+    .search-container {
         position: relative;
-        width: 280px;
     }
-
-    .search-box svg {
+    .search-container svg {
         position: absolute;
         left: 12px;
         top: 50%;
         transform: translateY(-50%);
         color: #64748b;
-        width: 16px;
-        height: 16px;
+        width: 18px;
+        height: 18px;
     }
-
-    /* Location select dropdown - dark theme */
-    .location-select {
-        padding: 6px 12px;
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        font-size: 14px;
-        background: rgba(255, 255, 255, 0.05);
-        color: #f1f5f9;
-    }
-    .location-select:focus {
-        border-color: rgba(96, 165, 250, 0.5);
-        outline: none;
-    }
-    .location-select option {
-        background: #1e293b;
-        color: #f1f5f9;
-    }
-
-    .search-box input {
+    .search-input {
         width: 100%;
-        padding: 10px 12px 10px 38px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 8px;
-        font-size: 14px;
-        color: #f1f5f9;
+        padding: 0.625rem 1rem 0.625rem 2.5rem;
         background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 0.5rem;
+        color: #f1f5f9;
+        font-size: 0.875rem;
     }
-
-    .search-box input::placeholder {
+    .search-input::placeholder {
         color: #64748b;
     }
-
-    .search-box input:focus {
+    .search-input:focus {
         outline: none;
         border-color: rgba(96, 165, 250, 0.5);
         box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
     }
 
-    .search-box svg {
-        color: #64748b;
-    }
-
-    /* Table Container - Dark Glassmorphic */
-    .table-container {
-        background: rgba(255, 255, 255, 0.08);
+    /* Glassmorphic table container */
+    .glass-table-container {
+        background: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(10px);
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
         overflow: hidden;
-        margin-bottom: 24px;
+        margin-bottom: 1.5rem;
     }
-
-    .table-section-header {
-        padding: 16px 20px;
+    .glass-table-header {
+        padding: 1rem 1.5rem;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: rgba(255, 255, 255, 0.03);
-        color: #f1f5f9;
-        font-size: 14px;
-        font-weight: 500;
     }
-    .table-section-header.section-pending {
-        background: linear-gradient(135deg, rgba(217, 119, 6, 0.3), rgba(180, 83, 9, 0.3));
+    .glass-table-header h3 {
+        color: #f1f5f9;
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    .glass-table-header.pending {
+        background: linear-gradient(135deg, rgba(217, 119, 6, 0.2), rgba(180, 83, 9, 0.2));
         border-left: 4px solid #f59e0b;
     }
-
-    /* Tickets Table */
-    .tickets-table {
+    .glass-table {
         width: 100%;
-        border-collapse: collapse;
     }
-
-    .tickets-table th {
-        padding: 8px 12px;
-        text-align: left;
-        font-size: 12px;
-        font-weight: 600;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    .glass-table thead {
         background: rgba(255, 255, 255, 0.03);
     }
-
-    .tickets-table td {
-        padding: 8px 12px;
-        font-size: 14px;
-        color: #cbd5e1;
+    .glass-table th {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .glass-table tbody tr {
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        vertical-align: middle;
+        transition: background 0.2s;
     }
-
-    .tickets-table tbody tr:nth-child(even) {
-        background: rgba(255, 255, 255, 0.02);
+    .glass-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.05);
     }
-
-    .tickets-table tbody tr:hover {
-        background: rgba(255, 255, 255, 0.08) !important;
+    .glass-table td {
+        padding: 0.875rem 1rem;
+        font-size: 0.875rem;
+        color: #cbd5e1;
     }
-
-    .customer-name {
-        font-weight: 700;
+    .cell-primary {
         color: #f1f5f9;
+        font-weight: 500;
     }
-
-    .ticket-link {
-        cursor: pointer;
+    .cell-link {
         color: #60a5fa;
+        cursor: pointer;
         transition: color 0.2s;
     }
-    .ticket-link:hover {
+    .cell-link:hover {
         color: #93c5fd;
     }
-
-    .text-slate-400 {
-        color: #94a3b8;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 48px;
+    .cell-muted {
         color: #64748b;
+        font-size: 0.75rem;
     }
 
-    /* Duration Progress Bar - Animated stripes */
-    .duration-cell {
-        min-width: 120px;
+    /* Status badges */
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
     }
+    .status-open { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .status-pending { background: rgba(234, 179, 8, 0.2); color: #facc15; }
+    .status-ready { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .status-closed { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
 
+    /* Grade badge */
+    .grade-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 700;
+    }
+    .grade-A { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
+    .grade-B { background: linear-gradient(135deg, #eab308, #ca8a04); color: #000; }
+    .grade-C { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+
+    /* Duration bar */
     .duration-bar {
         position: relative;
         height: 24px;
         background: rgba(255, 255, 255, 0.1);
         border-radius: 12px;
         overflow: hidden;
-        box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        min-width: 100px;
     }
-
-    @keyframes stripes-move {
-        0% { background-position: 0 0; }
-        100% { background-position: 40px 0; }
-    }
-
     .duration-fill {
         height: 100%;
         border-radius: 12px;
         transition: width 0.3s ease;
-        background-size: 40px 40px;
-        animation: stripes-move 1.5s linear infinite;
     }
-
-    .duration-fill.green {
-        background-color: #34a853;
-        background-image: linear-gradient(135deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
-        box-shadow: 0 0 12px rgba(52, 168, 83, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
-    }
-
-    .duration-fill.yellow {
-        background-color: #f9ab00;
-        background-image: linear-gradient(135deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
-        box-shadow: 0 0 12px rgba(249, 171, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
-    }
-
-    .duration-fill.red {
-        background-color: #ea4335;
-        background-image: linear-gradient(135deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
-        box-shadow: 0 0 12px rgba(234, 67, 53, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
-    }
-
+    .duration-fill.green { background: linear-gradient(90deg, #22c55e, #4ade80); }
+    .duration-fill.yellow { background: linear-gradient(90deg, #eab308, #facc15); }
+    .duration-fill.red { background: linear-gradient(90deg, #ef4444, #f87171); }
     .duration-text {
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        font-size: 12px;
+        font-size: 0.75rem;
         font-weight: 600;
         color: #fff;
-        white-space: nowrap;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
     }
 
-    /* Action Buttons - Dolce Vita ABC style with glow */
-    .table-actions {
-        display: flex;
-        gap: 8px;
-    }
-
+    /* Action buttons */
     .action-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 3px 8px;
-        border-radius: 8px;
-        font-size: 10px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 2px solid transparent;
-        text-decoration: none;
-    }
-
-    .action-btn svg {
-        width: 11px;
-        height: 11px;
-    }
-
-    /* Završi - Green */
-    .action-btn.complete {
-        background: #f0fdf4;
-        color: #16a34a;
-        border-color: #bbf7d0;
-    }
-
-    .action-btn.complete:hover {
-        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-        color: white;
-        border-color: #22c55e;
-        box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
-        transform: translateY(-1px);
-    }
-
-    /* Odbij - Red */
-    .action-btn.reject {
-        background: #fef2f2;
-        color: #dc2626;
-        border-color: #fecaca;
-    }
-
-    .action-btn.reject:hover {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: white;
-        border-color: #ef4444;
-        box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
-        transform: translateY(-1px);
-    }
-
-    /* Štampaj - Blue */
-    .action-btn.print {
-        background: #eff6ff;
-        color: #2563eb;
-        border-color: #bfdbfe;
-    }
-
-    .action-btn.print:hover {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        color: white;
-        border-color: #3b82f6;
-        box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
-        transform: translateY(-1px);
-    }
-
-    /* Naplati - Purple */
-    .action-btn.collect {
-        background: #faf5ff;
-        color: #9333ea;
-        border-color: #e9d5ff;
-    }
-
-    .action-btn.collect:hover {
-        background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
-        color: white;
-        border-color: #a855f7;
-        box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
-        transform: translateY(-1px);
-    }
-
-    /* Obavesti - Orange/Red */
-    .action-btn.notify {
-        background: #fff7ed;
-        color: #ea580c;
-        border-color: #fed7aa;
-    }
-
-    .action-btn.notify:hover {
-        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-        color: white;
-        border-color: #f97316;
-        box-shadow: 0 0 15px rgba(249, 115, 22, 0.4);
-        transform: translateY(-1px);
-    }
-
-    /* Status Badge */
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 11px;
-        font-weight: 500;
-    }
-
-    .status-badge.open {
-        background: rgba(59, 130, 246, 0.2);
-        color: #60a5fa;
-    }
-    .status-badge.pending {
-        background: rgba(234, 179, 8, 0.2);
-        color: #facc15;
-    }
-    .status-badge.closed {
-        background: rgba(34, 197, 94, 0.2);
-        color: #4ade80;
-    }
-
-    /* Grade Badge */
-    .grade-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
+        padding: 0.25rem 0.5rem;
         border-radius: 6px;
-        font-size: 12px;
-        font-weight: 700;
-    }
-
-    .grade-badge.grade-A {
-        background: linear-gradient(135deg, #34a853, #1e8e3e);
-        color: white;
-    }
-    .grade-badge.grade-B {
-        background: linear-gradient(135deg, #f9ab00, #e37400);
-        color: #000;
-    }
-    .grade-badge.grade-C {
-        background: linear-gradient(135deg, #ea4335, #c5221f);
-        color: white;
-    }
-
-    /* Written off badge */
-    .written-off-badge {
-        background: linear-gradient(135deg, #fee2e2, #fecaca);
-        color: #991b1b;
-        padding: 2px 8px;
-        border-radius: 9999px;
-        font-size: 10px;
+        font-size: 0.7rem;
         font-weight: 600;
-        text-transform: uppercase;
-    }
-
-    /* Strobe animation for overdue */
-    @keyframes strobeFlash {
-        0%, 100% {
-            background: rgba(239, 68, 68, 0.15);
-            box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.5);
-        }
-        50% {
-            background: rgba(239, 68, 68, 0.35);
-            box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.9), 0 0 20px rgba(239, 68, 68, 0.4);
-        }
-    }
-
-    .tickets-table tbody tr.strobe-alert {
-        animation: strobeFlash 1.5s ease-in-out infinite;
-    }
-
-    .tickets-table tbody tr.strobe-alert:hover {
-        animation-play-state: paused;
-        background: rgba(239, 68, 68, 0.25) !important;
-    }
-
-    /* Filter chips */
-    .filter-chips {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-
-    .filter-chip {
-        padding: 6px 12px;
-        border-radius: 16px;
-        font-size: 12px;
         cursor: pointer;
         transition: all 0.2s;
-        background: rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .action-btn svg { width: 12px; height: 12px; }
+    .action-btn.complete { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .action-btn.complete:hover { background: #22c55e; color: white; }
+    .action-btn.reject { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .action-btn.reject:hover { background: #ef4444; color: white; }
+    .action-btn.print { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .action-btn.print:hover { background: #3b82f6; color: white; }
+    .action-btn.collect { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+    .action-btn.collect:hover { background: #8b5cf6; color: white; }
+
+    /* Strobe alert for overdue */
+    @keyframes strobeFlash {
+        0%, 100% { background: rgba(239, 68, 68, 0.1); }
+        50% { background: rgba(239, 68, 68, 0.25); }
+    }
+    .strobe-alert { animation: strobeFlash 1.5s ease-in-out infinite; }
+    .strobe-alert:hover { animation-play-state: paused; }
+
+    .empty-state {
+        padding: 3rem;
+        text-align: center;
+        color: #64748b;
     }
 
-    .filter-chip:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-
-    .filter-chip.active {
-        background: #1a73e8;
-        color: white;
-        border-color: #1a73e8;
-    }
-
-    /* ===== MODAL STYLES - DARK GLASSMORPHIC ===== */
-
-    /* Modal container */
-    .ticket-modal .modal-content {
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
-        background: rgba(30, 41, 59, 0.95);
-        backdrop-filter: blur(20px);
-    }
-
-    .ticket-modal .modal-header {
-        padding: 20px 24px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        background: transparent;
-        border-radius: 12px 12px 0 0;
-    }
-
-    .ticket-modal .modal-title {
-        font-size: 18px;
-        font-weight: 500;
-        color: #f1f5f9;
+    /* Modal styles */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 50;
         display: flex;
         align-items: center;
-        gap: 10px;
+        justify-content: center;
     }
-
-    .ticket-modal .modal-title svg {
-        color: #60a5fa;
-    }
-
-    .ticket-modal .modal-body {
-        padding: 24px;
-        max-height: 70vh;
+    .modal-content {
+        background: rgba(30, 41, 59, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
         overflow-y: auto;
-        background: transparent;
     }
-
-    .ticket-modal .modal-footer {
-        padding: 16px 24px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        background: transparent;
-        border-radius: 0 0 12px 12px;
-    }
-
-    /* Form sections */
-    .form-section {
-        margin-bottom: 24px;
-        background: transparent;
-        padding: 0;
-    }
-
-    .form-section-title {
-        font-size: 12px;
-        font-weight: 600;
-        color: #94a3b8;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 16px;
-        padding-bottom: 8px;
+    .modal-header {
+        padding: 1.25rem 1.5rem;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .modal-header h3 {
+        color: #f1f5f9;
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    .modal-close {
+        color: #64748b;
+        cursor: pointer;
+        padding: 0.25rem;
+    }
+    .modal-close:hover { color: #f1f5f9; }
+    .modal-body {
+        padding: 1.5rem;
+    }
+    .modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
     }
 
-    /* Form inputs - Dark theme */
+    /* Form styles */
+    .form-group { margin-bottom: 1rem; }
+    .form-label {
+        display: block;
+        color: #94a3b8;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
     .form-input {
         width: 100%;
-        padding: 10px 12px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 6px;
-        font-size: 14px;
-        color: #f1f5f9;
-        transition: border-color 0.2s, box-shadow 0.2s;
+        padding: 0.625rem 0.875rem;
         background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 0.5rem;
+        color: #f1f5f9;
+        font-size: 0.875rem;
     }
-
+    .form-input::placeholder { color: #64748b; }
     .form-input:focus {
         outline: none;
         border-color: rgba(96, 165, 250, 0.5);
         box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
     }
 
-    .form-input::placeholder {
-        color: #64748b;
-    }
-
-    .form-label {
-        display: block;
-        font-size: 12px;
-        font-weight: 500;
-        color: #94a3b8;
-        margin-bottom: 6px;
-    }
-
     /* Category selector */
-    .category-selector {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
+    .category-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
     }
-
     .category-option {
-        flex: 1;
-        min-width: 70px;
-    }
-
-    .category-option input[type="radio"] {
-        display: none;
-    }
-
-    .category-option label {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 12px 8px;
+        padding: 0.75rem 0.5rem;
+        background: rgba(255, 255, 255, 0.03);
         border: 2px solid rgba(255, 255, 255, 0.1);
         border-radius: 8px;
+        text-align: center;
         cursor: pointer;
         transition: all 0.2s;
-        text-align: center;
-        background: rgba(255, 255, 255, 0.03);
     }
-
-    .category-option label svg {
-        width: 22px;
-        height: 22px;
-        margin-bottom: 4px;
-        color: #94a3b8;
-    }
-
-    .category-option label span {
-        font-size: 11px;
-        color: #94a3b8;
-    }
-
-    .category-option label:hover {
+    .category-option:hover {
         border-color: rgba(96, 165, 250, 0.5);
         background: rgba(96, 165, 250, 0.1);
     }
-
-    .category-option input[type="radio"]:checked + label {
+    .category-option.selected {
         border-color: #60a5fa;
         background: rgba(96, 165, 250, 0.15);
     }
+    .category-option svg { width: 24px; height: 24px; margin: 0 auto 0.25rem; color: #94a3b8; }
+    .category-option.selected svg { color: #60a5fa; }
+    .category-option span { font-size: 0.7rem; color: #94a3b8; display: block; }
+    .category-option.selected span { color: #60a5fa; }
 
-    .category-option input[type="radio"]:checked + label svg,
-    .category-option input[type="radio"]:checked + label span {
-        color: #60a5fa;
+    /* Grade selector */
+    .grade-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
     }
-
-    /* Grade selector - ABC */
-    .grade-selector {
-        display: flex;
-        gap: 12px;
-        justify-content: center;
-    }
-
     .grade-option {
-        flex: 1;
-        max-width: 100px;
-    }
-
-    .grade-option input[type="radio"] {
-        display: none;
-    }
-
-    .grade-option label {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 14px 10px;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: all 0.3s ease;
+        padding: 1rem;
         background: rgba(255, 255, 255, 0.03);
         border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
     }
-
-    .grade-option label:hover {
-        transform: translateY(-2px);
-    }
-
-    .grade-letter {
-        font-size: 26px;
+    .grade-option:hover { transform: translateY(-2px); }
+    .grade-option .grade-letter {
+        font-size: 1.5rem;
         font-weight: 700;
-        line-height: 1;
         color: #f1f5f9;
     }
-
-    .grade-text {
-        font-size: 10px;
-        margin-top: 4px;
-        opacity: 0.7;
-        color: #94a3b8;
+    .grade-option .grade-text {
+        font-size: 0.625rem;
+        color: #64748b;
+        margin-top: 0.25rem;
     }
-
-    /* Grade A - Green */
-    .grade-option.grade-a label:hover {
-        border-color: #34a853;
-        background: rgba(52, 168, 83, 0.1);
+    .grade-option.selected.grade-a {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        border-color: #22c55e;
     }
-
-    .grade-option.grade-a input:checked + label {
-        background: linear-gradient(135deg, #34a853 0%, #1e8e3e 100%);
-        border-color: #34a853;
-        color: white;
-        box-shadow: 0 0 20px rgba(52, 168, 83, 0.4);
-        transform: translateY(-2px);
+    .grade-option.selected.grade-b {
+        background: linear-gradient(135deg, #eab308, #ca8a04);
+        border-color: #eab308;
     }
-
-    .grade-option.grade-a input:checked + label .grade-text {
-        color: white;
-        opacity: 0.9;
+    .grade-option.selected.grade-c {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        border-color: #ef4444;
     }
+    .grade-option.selected .grade-letter,
+    .grade-option.selected .grade-text { color: white; }
+    .grade-option.selected.grade-b .grade-letter,
+    .grade-option.selected.grade-b .grade-text { color: #000; }
 
-    /* Grade B - Yellow */
-    .grade-option.grade-b label:hover {
-        border-color: #f9ab00;
-        background: rgba(249, 171, 0, 0.1);
-    }
-
-    .grade-option.grade-b input:checked + label {
-        background: linear-gradient(135deg, #f9ab00 0%, #e37400 100%);
-        border-color: #f9ab00;
-        color: #000;
-        box-shadow: 0 0 20px rgba(249, 171, 0, 0.4);
-        transform: translateY(-2px);
-    }
-
-    .grade-option.grade-b input:checked + label .grade-text {
-        color: #000;
-        opacity: 0.8;
-    }
-
-    /* Grade C - Red */
-    .grade-option.grade-c label:hover {
-        border-color: #ea4335;
-        background: rgba(234, 67, 53, 0.1);
-    }
-
-    .grade-option.grade-c input:checked + label {
-        background: linear-gradient(135deg, #ea4335 0%, #c5221f 100%);
-        border-color: #ea4335;
-        color: white;
-        box-shadow: 0 0 20px rgba(234, 67, 53, 0.4);
-        transform: translateY(-2px);
-    }
-
-    .grade-option.grade-c input:checked + label .grade-text {
-        color: white;
-        opacity: 0.9;
-    }
-
-    /* Problem buttons */
-    .problem-buttons {
+    /* Problem chips */
+    .problem-chips {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 0.5rem;
     }
-
-    .problem-btn {
-        font-size: 11px;
-        padding: 6px 12px;
-        border-radius: 16px;
-        cursor: pointer;
-        transition: all 0.2s;
-        border: 1px solid rgba(255, 255, 255, 0.15);
+    .problem-chip {
+        padding: 0.375rem 0.75rem;
         background: rgba(255, 255, 255, 0.05);
-        color: #94a3b8;
-    }
-
-    .problem-btn:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.3);
-        color: #f1f5f9;
-    }
-
-    .problem-btn.selected {
-        background: #ea4335;
-        color: white;
-        border-color: #ea4335;
-    }
-
-    /* Not working checkbox */
-    .not-working-selector {
-        display: flex;
-        justify-content: center;
-        margin-top: 12px;
-    }
-
-    .not-working-option {
-        width: 150px;
-    }
-
-    .not-working-option input[type="checkbox"] {
-        display: none;
-    }
-
-    .not-working-option label {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 14px 20px;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background: rgba(255, 255, 255, 0.03);
-        border: 2px solid rgba(255, 255, 255, 0.1);
-        text-align: center;
-    }
-
-    .not-working-option label svg {
-        width: 24px;
-        height: 24px;
-        margin-bottom: 6px;
-        color: #64748b;
-    }
-
-    .not-working-option label .not-working-text {
-        font-size: 14px;
-        font-weight: 700;
-        color: #94a3b8;
-    }
-
-    .not-working-option label .not-working-subtext {
-        font-size: 10px;
-        color: #64748b;
-        margin-top: 2px;
-    }
-
-    .not-working-option label:hover {
-        border-color: #ea4335;
-        background: rgba(234, 67, 53, 0.1);
-    }
-
-    .not-working-option label:hover svg,
-    .not-working-option label:hover .not-working-text {
-        color: #ea4335;
-    }
-
-    .not-working-option input:checked + label {
-        background: linear-gradient(135deg, #ea4335 0%, #c5221f 100%);
-        border-color: #ea4335;
-        color: white;
-        box-shadow: 0 0 25px rgba(234, 67, 53, 0.5);
-        transform: translateY(-2px);
-    }
-
-    .not-working-option input:checked + label svg,
-    .not-working-option input:checked + label .not-working-text,
-    .not-working-option input:checked + label .not-working-subtext {
-        color: white;
-    }
-
-    /* Modal buttons */
-    .btn-cancel {
-        padding: 10px 20px;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-        background: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 9999px;
+        font-size: 0.75rem;
         color: #94a3b8;
-    }
-
-    .btn-cancel:hover {
-        background: rgba(255, 255, 255, 0.15);
-        color: #f1f5f9;
-    }
-
-    .btn-submit {
-        padding: 10px 24px;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 500;
         cursor: pointer;
         transition: all 0.2s;
-        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-        border: none;
+    }
+    .problem-chip:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #f1f5f9;
+    }
+    .problem-chip.selected {
+        background: #ef4444;
+        border-color: #ef4444;
         color: white;
     }
 
-    .btn-submit:hover {
-        background: linear-gradient(135deg, #60a5fa, #a78bfa);
-        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    /* Filter select */
+    .filter-select {
+        padding: 0.5rem 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 0.5rem;
+        color: #f1f5f9;
+        font-size: 0.875rem;
     }
-
-    /* Modal close button */
-    .ticket-modal .btn-close {
-        filter: invert(1) grayscale(100%) brightness(200%);
+    .filter-select option {
+        background: #1e293b;
+        color: #f1f5f9;
     }
 </style>
-{% endblock %}
 
-{% block page_content %}
-<div x-data="ticketsPage()" x-init="init()" class="tickets-container">
-    <!-- Header - Dolce Vita style -->
-    <div class="page-header">
-        <h1 class="page-title">
-            <svg class="w-6 h-6 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Servisni nalozi
-        </h1>
-        <div class="header-actions">
-            <a href="/tickets/warranties" class="btn-secondary-dv">
+<div x-data="ticketsPage()" x-init="init()">
+    <!-- Header -->
+    <div class="page-header flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+            <h2 class="text-2xl font-bold">Servisni nalozi</h2>
+            <p class="mt-1 text-sm">Upravljanje servisnim nalozima</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="/tickets/warranties" class="btn-secondary">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
                 Garancije
             </a>
-            <button @click="showAddModal = true" class="btn-add-ticket">
+            <button @click="showAddModal = true" class="btn-primary">
                 <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
                 </svg>
@@ -962,671 +500,292 @@
         </div>
     </div>
 
-    <!-- KPI Cards - Dolce Vita glassmorphic -->
-    <div class="kpi-row">
-        <div class="kpi-card blue" @click="setFilter('open')">
-            <div class="kpi-value" x-text="stats.open_tickets || 0"></div>
-            <div class="kpi-label">Otvoreni</div>
+    <!-- Stats cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+        <div class="stat-card blue" @click="setFilter('open')">
+            <div class="stat-value" x-text="stats.open_tickets || 0"></div>
+            <div class="stat-label">Otvoreni</div>
         </div>
-        <div class="kpi-card green" @click="setFilter('closed')">
-            <div class="kpi-value" x-text="stats.closed_tickets || 0"></div>
-            <div class="kpi-label">Završeni</div>
+        <div class="stat-card green" @click="setFilter('closed')">
+            <div class="stat-value" x-text="stats.closed_tickets || 0"></div>
+            <div class="stat-label">Završeni</div>
         </div>
-        <div class="kpi-card yellow" @click="setFilter('ready')">
-            <div class="kpi-value" x-text="stats.ready_tickets || 0"></div>
-            <div class="kpi-label">Za naplatu</div>
+        <div class="stat-card yellow" @click="setFilter('ready')">
+            <div class="stat-value" x-text="stats.ready_tickets || 0"></div>
+            <div class="stat-label">Za naplatu</div>
         </div>
-        <div class="kpi-card purple" @click="window.location.href='/tickets/warranties'">
-            <div class="kpi-value" x-text="stats.active_warranties || 0"></div>
-            <div class="kpi-label">Garancije</div>
+        <div class="stat-card purple" @click="window.location.href='/tickets/warranties'">
+            <div class="stat-value" x-text="stats.active_warranties || 0"></div>
+            <div class="stat-label">Garancije</div>
         </div>
-        <div class="kpi-card red" @click="setFilter('today')">
-            <div class="kpi-value" x-text="stats.today_tickets || 0"></div>
-            <div class="kpi-label">Danas</div>
+        <div class="stat-card red" @click="setFilter('today')">
+            <div class="stat-value" x-text="stats.today_tickets || 0"></div>
+            <div class="stat-label">Danas</div>
         </div>
     </div>
 
-    <!-- Toolbar / Search -->
-    <div class="toolbar">
-        <div class="search-box">
+    <!-- Search and filters -->
+    <div class="flex flex-wrap gap-4 mb-6">
+        <div class="search-container flex-1 min-w-[200px] max-w-md">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <input type="text" x-model="filters.search" @input.debounce.300ms="loadAllTickets()"
+            <input type="text" class="search-input" x-model="filters.search" @input.debounce.300ms="loadAllTickets()"
                    placeholder="Pretrazi po broju, kupcu, IMEI...">
         </div>
-        <div class="filter-chips">
-            <select x-model="filters.location_id" @change="loadAllTickets()" class="location-select">
-                <option value="">Sve lokacije</option>
-                <template x-for="loc in locations" :key="loc.id">
-                    <option :value="loc.id" x-text="loc.name"></option>
-                </template>
-            </select>
-            <label class="filter-chip" :class="{'active': showWrittenOff}" style="display: flex; align-items: center; gap: 6px;">
-                <input type="checkbox" x-model="showWrittenOff" @change="loadAllTickets()" style="display: none;">
-                <span>Otpisani</span>
-            </label>
-        </div>
+        <select x-model="filters.location_id" @change="loadAllTickets()" class="filter-select">
+            <option value="">Sve lokacije</option>
+            <template x-for="loc in locations" :key="loc.id">
+                <option :value="loc.id" x-text="loc.name"></option>
+            </template>
+        </select>
     </div>
 
-    <!-- TABLE 1: Otvoreni nalozi -->
-    <div class="table-container">
-        <div class="table-section-header">
-            <span>Otvoreni nalozi (<span x-text="openTickets.length"></span>)</span>
+    <!-- Open tickets table -->
+    <div class="glass-table-container">
+        <div class="glass-table-header">
+            <h3>Otvoreni nalozi (<span x-text="openTickets.length"></span>)</h3>
         </div>
-        <table class="tickets-table">
-            <thead>
-                <tr>
-                    <th>Br.</th>
-                    <th>Datum</th>
-                    <th>Klijent</th>
-                    <th>Uredjaj</th>
-                    <th>Opis</th>
-                    <th>Stanje</th>
-                    <th>Cena</th>
-                    <th>Trajanje</th>
-                    <th>Akcije</th>
-                </tr>
-            </thead>
-            <tbody>
-                <template x-for="ticket in openTickets" :key="ticket.id">
-                    <tr :class="{'strobe-alert': getDaysOpen(ticket) > 20}">
-                        <!-- Broj naloga -->
-                        <td>
-                            <strong class="ticket-link" @click="viewTicket(ticket)"
-                                    x-text="'#' + ticket.ticket_number_formatted"></strong>
-                        </td>
-
-                        <!-- Datum -->
-                        <td x-text="formatDate(ticket.created_at)"></td>
-
-                        <!-- Klijent -->
-                        <td>
-                            <div class="customer-name" x-text="ticket.customer_name"></div>
-                            <small class="text-slate-400" x-text="ticket.customer_phone || '-'"></small>
-                        </td>
-
-                        <!-- Uredjaj -->
-                        <td>
-                            <div><span x-text="ticket.brand"></span> <span x-text="ticket.model"></span></div>
-                            <small class="text-slate-400" x-text="ticket.service_section || ticket.device_type || '-'"></small>
-                        </td>
-
-                        <!-- Opis -->
-                        <td style="max-width: 200px;">
-                            <span x-text="(ticket.problem_description || '-').substring(0, 50) + (ticket.problem_description && ticket.problem_description.length > 50 ? '...' : '')"></span>
-                        </td>
-
-                        <!-- Stanje -->
-                        <td>
-                            <template x-if="ticket.device_condition_grade">
-                                <span class="grade-badge" :class="'grade-' + ticket.device_condition_grade"
-                                      x-text="ticket.device_condition_grade"></span>
-                            </template>
-                            <template x-if="!ticket.device_condition_grade">
-                                <span>-</span>
-                            </template>
-                        </td>
-
-                        <!-- Cena -->
-                        <td>
-                            <strong x-text="formatPrice(ticket.estimated_price)"></strong>
-                            <span x-text="ticket.currency || 'RSD'"></span>
-                        </td>
-
-                        <!-- Trajanje - animated progress bar -->
-                        <td class="duration-cell">
-                            <div class="duration-bar">
-                                <div class="duration-fill"
-                                     :class="getDurationClass(ticket)"
-                                     :style="'width: ' + getDurationPercent(ticket) + '%'"></div>
-                                <span class="duration-text" x-text="getDaysOpen(ticket) + ' dana'"></span>
-                            </div>
-                        </td>
-
-                        <!-- Akcije -->
-                        <td>
-                            <div class="table-actions">
-                                <button @click.stop="finishTicket(ticket)" class="action-btn complete">
-                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    Završi
-                                </button>
-                                <button @click.stop="rejectTicket(ticket)" class="action-btn reject">
-                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                    Odbij
-                                </button>
-                                <button @click.stop="printTicket(ticket)" class="action-btn print">
-                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                    </svg>
-                                    Štampaj
-                                </button>
-                            </div>
-                        </td>
+        <div class="overflow-x-auto">
+            <table class="glass-table">
+                <thead>
+                    <tr>
+                        <th>Br.</th>
+                        <th>Datum</th>
+                        <th>Klijent</th>
+                        <th>Uredjaj</th>
+                        <th>Opis</th>
+                        <th>Stanje</th>
+                        <th>Cena</th>
+                        <th>Trajanje</th>
+                        <th>Akcije</th>
                     </tr>
-                </template>
-            </tbody>
-        </table>
-        <div x-show="!loading && openTickets.length === 0" class="empty-state">
-            Nema otvorenih naloga
+                </thead>
+                <tbody>
+                    <template x-for="ticket in openTickets" :key="ticket.id">
+                        <tr :class="{'strobe-alert': getDaysOpen(ticket) > 20}">
+                            <td>
+                                <span class="cell-link" @click="viewTicket(ticket)" x-text="'#' + ticket.ticket_number_formatted"></span>
+                            </td>
+                            <td x-text="formatDate(ticket.created_at)"></td>
+                            <td>
+                                <div class="cell-primary" x-text="ticket.customer_name"></div>
+                                <div class="cell-muted" x-text="ticket.customer_phone || '-'"></div>
+                            </td>
+                            <td>
+                                <div x-text="ticket.brand + ' ' + ticket.model"></div>
+                                <div class="cell-muted" x-text="ticket.service_section || ticket.device_type || '-'"></div>
+                            </td>
+                            <td style="max-width: 150px;">
+                                <span x-text="(ticket.problem_description || '-').substring(0, 40) + (ticket.problem_description && ticket.problem_description.length > 40 ? '...' : '')"></span>
+                            </td>
+                            <td>
+                                <template x-if="ticket.device_condition_grade">
+                                    <span class="grade-badge" :class="'grade-' + ticket.device_condition_grade" x-text="ticket.device_condition_grade"></span>
+                                </template>
+                                <template x-if="!ticket.device_condition_grade">
+                                    <span>-</span>
+                                </template>
+                            </td>
+                            <td>
+                                <span class="cell-primary" x-text="formatPrice(ticket.estimated_price)"></span>
+                                <span class="cell-muted" x-text="ticket.currency || 'RSD'"></span>
+                            </td>
+                            <td>
+                                <div class="duration-bar">
+                                    <div class="duration-fill" :class="getDurationClass(ticket)" :style="'width: ' + getDurationPercent(ticket) + '%'"></div>
+                                    <span class="duration-text" x-text="getDaysOpen(ticket) + 'd'"></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="flex gap-1">
+                                    <button @click.stop="finishTicket(ticket)" class="action-btn complete">
+                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                        Završi
+                                    </button>
+                                    <button @click.stop="printTicket(ticket)" class="action-btn print">
+                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            <div x-show="!loading && openTickets.length === 0" class="empty-state">
+                Nema otvorenih naloga
+            </div>
         </div>
     </div>
 
-    <!-- TABLE 2: Ceka naplatu -->
-    <div class="table-container">
-        <div class="table-section-header section-pending">
-            <span>Ceka naplatu (<span x-text="pendingTickets.length"></span>)</span>
+    <!-- Pending payment tickets table -->
+    <div class="glass-table-container">
+        <div class="glass-table-header pending">
+            <h3>Čeka naplatu (<span x-text="pendingTickets.length"></span>)</h3>
         </div>
-        <table class="tickets-table">
-            <thead>
-                <tr>
-                    <th>Br.</th>
-                    <th>Datum</th>
-                    <th>Klijent</th>
-                    <th>Uredjaj</th>
-                    <th>Opis</th>
-                    <th>Cena</th>
-                    <th>Na čekanju</th>
-                    <th>Akcije</th>
-                </tr>
-            </thead>
-            <tbody>
-                <template x-for="ticket in pendingTickets" :key="ticket.id">
-                    <tr :class="{'strobe-alert': !ticket.is_written_off && ticket.notification_count >= 3}">
-                        <td>
-                            <strong class="ticket-link" @click="viewTicket(ticket)"
-                                    x-text="'#' + ticket.ticket_number_formatted"></strong>
-                        </td>
-                        <td x-text="formatDate(ticket.created_at)"></td>
-                        <td>
-                            <div class="customer-name" x-text="ticket.customer_name"></div>
-                            <template x-if="ticket.notification_count > 0">
-                                <small style="color: #ea580c; font-weight: 600;">Pozivi: <span x-text="ticket.notification_count"></span></small>
-                            </template>
-                        </td>
-                        <td><span x-text="ticket.brand"></span> <span x-text="ticket.model"></span></td>
-                        <td style="max-width: 200px;" x-text="(ticket.problem_description || '-').substring(0, 50)"></td>
-                        <td><strong x-text="formatPrice(ticket.final_price || ticket.estimated_price)"></strong> <span x-text="ticket.currency || 'RSD'"></span></td>
-                        <td class="duration-cell">
-                            <template x-if="ticket.is_written_off">
-                                <span class="written-off-badge">Otpisano</span>
-                            </template>
-                            <template x-if="!ticket.is_written_off">
-                                <div class="duration-bar">
-                                    <div class="duration-fill" :class="getWaitingClass(ticket)" :style="'width: ' + getWaitingPercent(ticket) + '%'"></div>
-                                    <span class="duration-text" x-text="ticket.waiting_days + ' dana'"></span>
-                                </div>
-                            </template>
-                        </td>
-                        <td>
-                            <div class="table-actions">
-                                <template x-if="!ticket.is_written_off">
-                                    <button @click.stop="openNotifyModal(ticket)" class="action-btn notify">
-                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                        </svg>
-                                        Obavesti
-                                    </button>
-                                </template>
-                                <template x-if="!ticket.is_written_off">
-                                    <button @click.stop="openCollectModal(ticket)" class="action-btn collect">
-                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                                        </svg>
+        <div class="overflow-x-auto">
+            <table class="glass-table">
+                <thead>
+                    <tr>
+                        <th>Br.</th>
+                        <th>Datum</th>
+                        <th>Klijent</th>
+                        <th>Uredjaj</th>
+                        <th>Cena</th>
+                        <th>Akcije</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="ticket in pendingTickets" :key="ticket.id">
+                        <tr>
+                            <td>
+                                <span class="cell-link" @click="viewTicket(ticket)" x-text="'#' + ticket.ticket_number_formatted"></span>
+                            </td>
+                            <td x-text="formatDate(ticket.created_at)"></td>
+                            <td>
+                                <div class="cell-primary" x-text="ticket.customer_name"></div>
+                                <div class="cell-muted" x-text="ticket.customer_phone || '-'"></div>
+                            </td>
+                            <td x-text="ticket.brand + ' ' + ticket.model"></td>
+                            <td>
+                                <span class="cell-primary" x-text="formatPrice(ticket.final_price || ticket.estimated_price)"></span>
+                                <span class="cell-muted" x-text="ticket.currency || 'RSD'"></span>
+                            </td>
+                            <td>
+                                <div class="flex gap-1">
+                                    <button @click.stop="collectTicket(ticket)" class="action-btn collect">
+                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                                         Naplati
                                     </button>
-                                </template>
-                                <button @click.stop="printTicket(ticket)" class="action-btn print">
-                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                    </svg>
-                                    Štampaj
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                </template>
-            </tbody>
-        </table>
-        <div x-show="!loading && pendingTickets.length === 0" class="empty-state">
-            Nema naloga koji čekaju naplatu
-        </div>
-    </div>
-
-    <!-- Loading indicator -->
-    <div x-show="loading" class="fixed inset-0 bg-black/30 flex items-center justify-center z-40">
-        <div class="bg-white rounded-lg p-6 shadow-xl">
-            <svg class="animate-spin mx-auto h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p class="mt-2 text-gray-600">Ucitavanje...</p>
+                                    <button @click.stop="printTicket(ticket)" class="action-btn print">
+                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            <div x-show="!loading && pendingTickets.length === 0" class="empty-state">
+                Nema naloga za naplatu
+            </div>
         </div>
     </div>
 
     <!-- Add Ticket Modal -->
-    <div x-show="showAddModal" x-cloak
-         class="ticket-modal fixed inset-0 z-50 overflow-y-auto"
-         @keydown.escape.window="showAddModal = false">
-        <div class="flex min-h-screen items-start justify-center p-4 pt-16">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="showAddModal = false"></div>
-            <div class="relative modal-content bg-white rounded-lg shadow-xl max-w-2xl w-full">
-                <!-- Header -->
-                <div class="modal-header">
-                    <div class="flex items-center justify-between">
-                        <h3 class="modal-title">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            Novi Servisni Nalog
-                        </h3>
-                        <button @click="showAddModal = false" class="text-gray-400 hover:text-gray-600">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+    <div x-show="showAddModal" x-cloak class="modal-overlay" @click.self="showAddModal = false">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Novi servisni nalog</h3>
+                <button class="modal-close" @click="showAddModal = false">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Customer info -->
+                <div class="form-group">
+                    <label class="form-label">Ime kupca *</label>
+                    <input type="text" class="form-input" x-model="newTicket.customer_name" placeholder="Ime i prezime">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label">Telefon</label>
+                        <input type="text" class="form-input" x-model="newTicket.customer_phone" placeholder="06X...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" x-model="newTicket.customer_email" placeholder="email@primer.com">
                     </div>
                 </div>
 
-                <!-- Form -->
-                <form @submit.prevent="submitNewTicket()" class="modal-body">
-                    <!-- Podaci o korisniku -->
-                    <div class="form-section">
-                        <div class="form-section-title">Podaci o korisniku</div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="form-label">Ime i prezime *</label>
-                                <input type="text" x-model="newTicket.customer_name" required
-                                       class="form-input">
-                            </div>
-                            <div>
-                                <label class="form-label">Kontakt telefon *</label>
-                                <input type="text" x-model="newTicket.customer_phone" required
-                                       class="form-input">
-                            </div>
-                            <div>
-                                <label class="form-label">Email</label>
-                                <input type="email" x-model="newTicket.customer_email"
-                                       class="form-input">
-                            </div>
-                            <div>
-                                <label class="form-label">Ime firme</label>
-                                <input type="text" x-model="newTicket.customer_company_name"
-                                       class="form-input">
-                            </div>
+                <!-- Device info -->
+                <div class="form-group">
+                    <label class="form-label">Kategorija</label>
+                    <div class="category-grid">
+                        <div class="category-option" :class="{'selected': newTicket.device_type === 'phone'}" @click="newTicket.device_type = 'phone'">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            <span>Telefon</span>
+                        </div>
+                        <div class="category-option" :class="{'selected': newTicket.device_type === 'tablet'}" @click="newTicket.device_type = 'tablet'">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            <span>Tablet</span>
+                        </div>
+                        <div class="category-option" :class="{'selected': newTicket.device_type === 'laptop'}" @click="newTicket.device_type = 'laptop'">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <span>Laptop</span>
+                        </div>
+                        <div class="category-option" :class="{'selected': newTicket.device_type === 'other'}" @click="newTicket.device_type = 'other'">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <span>Drugo</span>
                         </div>
                     </div>
-
-                    <!-- Podaci o uredaju -->
-                    <div class="form-section">
-                        <div class="form-section-title">Podaci o uredaju</div>
-
-                        <!-- Kategorija -->
-                        <div class="mb-4">
-                            <label class="form-label">Kategorija *</label>
-                            <div class="category-selector" @change="onCategoryChange()">
-                                <div class="category-option">
-                                    <input type="radio" name="service_section" value="Telefoni" id="cat_tel" x-model="newTicket.service_section" checked>
-                                    <label for="cat_tel">
-                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                        </svg>
-                                        <span>Telefon</span>
-                                    </label>
-                                </div>
-                                <div class="category-option">
-                                    <input type="radio" name="service_section" value="Tableti" id="cat_tab" x-model="newTicket.service_section">
-                                    <label for="cat_tab">
-                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                        </svg>
-                                        <span>Tablet</span>
-                                    </label>
-                                </div>
-                                <div class="category-option">
-                                    <input type="radio" name="service_section" value="Racunari" id="cat_pc" x-model="newTicket.service_section">
-                                    <label for="cat_pc">
-                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                        <span>Racunar</span>
-                                    </label>
-                                </div>
-                                <div class="category-option">
-                                    <input type="radio" name="service_section" value="Konzole" id="cat_con" x-model="newTicket.service_section">
-                                    <label for="cat_con">
-                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span>Konzola</span>
-                                    </label>
-                                </div>
-                                <div class="category-option">
-                                    <input type="radio" name="service_section" value="Ostalo" id="cat_oth" x-model="newTicket.service_section">
-                                    <label for="cat_oth">
-                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                        <span>Ostalo</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="form-label">Brand *</label>
-                                <input type="text" x-model="newTicket.brand" required list="brandList"
-                                       class="form-input">
-                                <datalist id="brandList">
-                                    <option value="Apple">
-                                    <option value="Samsung">
-                                    <option value="Xiaomi">
-                                    <option value="Huawei">
-                                    <option value="OnePlus">
-                                    <option value="Google">
-                                    <option value="Motorola">
-                                    <option value="LG">
-                                    <option value="Sony">
-                                    <option value="Nokia">
-                                    <option value="Lenovo">
-                                    <option value="Asus">
-                                    <option value="HP">
-                                    <option value="Dell">
-                                    <option value="PlayStation">
-                                    <option value="Xbox">
-                                    <option value="Nintendo">
-                                </datalist>
-                            </div>
-                            <div>
-                                <label class="form-label">Model *</label>
-                                <input type="text" x-model="newTicket.model" required
-                                       class="form-input">
-                            </div>
-                        </div>
-
-                        <div class="mt-4">
-                            <label class="form-label">IMEI / Serijski broj</label>
-                            <input type="text" x-model="newTicket.imei"
-                                   class="form-input">
-                        </div>
-                    </div>
-
-                    <!-- Opis problema -->
-                    <div class="form-section">
-                        <div class="form-section-title">Opis problema</div>
-                        <div class="mb-4">
-                            <label class="form-label">Opis kvara <span class="text-gray-400 text-xs">(ili izaberite brzi izbor)</span></label>
-                            <textarea x-model="newTicket.problem_description" rows="2"
-                                      placeholder="Opisi problem..."
-                                      class="form-input"></textarea>
-                        </div>
-
-                        <!-- Brzi izbor problema - Dolce Vita style -->
-                        <div>
-                            <label class="form-label" style="margin-bottom: 8px;">Brzi izbor problema</label>
-                            <div class="problem-buttons">
-                                <template x-for="problem in currentProblems" :key="problem.id">
-                                    <button type="button"
-                                            class="problem-btn"
-                                            :class="{'selected': selectedProblems.includes(problem.id)}"
-                                            @click="toggleProblem(problem.id)">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="problem.icon" />
-                                        </svg>
-                                        <span x-text="problem.label"></span>
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Stanje uredaja -->
-                    <div class="form-section">
-                        <div class="form-section-title">Stanje uredaja pri prijemu</div>
-
-                        <!-- Grade selector -->
-                        <div class="mb-4">
-                            <label class="form-label" style="margin-bottom: 12px; text-align: center;">Vizuelno stanje</label>
-                            <div class="grade-selector">
-                                <div class="grade-option grade-a">
-                                    <input type="radio" name="device_condition_grade" value="A" id="gradeA" x-model="newTicket.device_condition_grade">
-                                    <label for="gradeA">
-                                        <span class="grade-letter">A</span>
-                                        <span class="grade-text">Odlicno</span>
-                                    </label>
-                                </div>
-                                <div class="grade-option grade-b">
-                                    <input type="radio" name="device_condition_grade" value="B" id="gradeB" x-model="newTicket.device_condition_grade">
-                                    <label for="gradeB">
-                                        <span class="grade-letter">B</span>
-                                        <span class="grade-text">Dobro</span>
-                                    </label>
-                                </div>
-                                <div class="grade-option grade-c">
-                                    <input type="radio" name="device_condition_grade" value="C" id="gradeC" x-model="newTicket.device_condition_grade">
-                                    <label for="gradeC">
-                                        <span class="grade-letter">C</span>
-                                        <span class="grade-text">Ostecen</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label">Napomena o stanju</label>
-                            <textarea x-model="newTicket.device_condition_notes" rows="2"
-                                      placeholder="Ogrebotine, ostecenja..."
-                                      class="form-input"></textarea>
-                        </div>
-
-                        <!-- Not working checkbox - centered -->
-                        <div class="not-working-selector">
-                            <div class="not-working-option">
-                                <input type="checkbox" id="notWorkingCheck" x-model="newTicket.device_not_working">
-                                <label for="notWorkingCheck">
-                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                    </svg>
-                                    <span class="not-working-text">NE RADI</span>
-                                    <span class="not-working-subtext">Uredaj se ne pali</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Servisne informacije -->
-                    <div class="form-section">
-                        <div class="form-section-title">Servisne informacije</div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="form-label">Okvirna cena *</label>
-                                <input type="number" x-model="newTicket.estimated_price" required
-                                       class="form-input">
-                            </div>
-                            <div>
-                                <label class="form-label">Valuta</label>
-                                <select x-model="newTicket.currency"
-                                        class="form-input">
-                                    <option value="RSD">RSD</option>
-                                    <option value="EUR">EUR</option>
-                                    <option value="USD">USD</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="form-label">Lokacija *</label>
-                                <select x-model="newTicket.location_id" required
-                                        class="form-input">
-                                    <template x-for="loc in locations" :key="loc.id">
-                                        <option :value="loc.id" x-text="loc.name"></option>
-                                    </template>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="form-label">Prioritet</label>
-                                <select x-model="newTicket.priority"
-                                        class="form-input">
-                                    <option value="normal">Normalan</option>
-                                    <option value="urgent">Hitan</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-
-                <!-- Footer -->
-                <div class="modal-footer flex justify-end gap-3">
-                    <button type="button" @click="showAddModal = false" class="btn-cancel">
-                        Otkazi
-                    </button>
-                    <button type="submit" @click="submitNewTicket()" class="btn-submit">
-                        Sacuvaj nalog
-                    </button>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Collect Modal -->
-    <div x-show="showCollectModal" x-cloak
-         class="fixed inset-0 z-50 overflow-y-auto"
-         @keydown.escape.window="showCollectModal = false">
-        <div class="flex min-h-screen items-center justify-center p-4">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="showCollectModal = false"></div>
-            <div class="relative bg-gradient-to-br from-purple-900 to-purple-950 rounded-lg shadow-xl max-w-md w-full p-6 text-white">
-                <h3 class="text-lg font-bold mb-4">Naplata naloga</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label">Marka *</label>
+                        <input type="text" class="form-input" x-model="newTicket.brand" placeholder="Samsung, Apple...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Model *</label>
+                        <input type="text" class="form-input" x-model="newTicket.model" placeholder="Galaxy S21, iPhone 13...">
+                    </div>
+                </div>
 
-                <template x-if="selectedTicket">
-                    <div>
-                        <div class="bg-white/10 rounded-lg p-3 mb-4">
-                            <div class="text-sm opacity-80">Nalog</div>
-                            <div class="font-bold" x-text="selectedTicket.ticket_number_formatted"></div>
-                            <div class="text-sm mt-1" x-text="selectedTicket.customer_name"></div>
-                            <div class="text-sm opacity-80" x-text="selectedTicket.brand + ' ' + selectedTicket.model"></div>
+                <div class="form-group">
+                    <label class="form-label">IMEI / Serijski broj</label>
+                    <input type="text" class="form-input" x-model="newTicket.imei" placeholder="IMEI ili serijski broj">
+                </div>
+
+                <!-- Condition grade -->
+                <div class="form-group">
+                    <label class="form-label">Stanje uredjaja</label>
+                    <div class="grade-grid">
+                        <div class="grade-option grade-a" :class="{'selected': newTicket.device_condition_grade === 'A'}" @click="newTicket.device_condition_grade = 'A'">
+                            <div class="grade-letter">A</div>
+                            <div class="grade-text">Odlično</div>
                         </div>
-
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-1">Konacna cena</label>
-                            <div class="flex gap-2">
-                                <input type="number" x-model="collectData.final_price"
-                                       class="flex-1 rounded-md bg-white/10 border-white/20 text-white placeholder-white/50">
-                                <select x-model="collectData.currency"
-                                        class="w-24 rounded-md bg-white/10 border-white/20 text-white">
-                                    <option value="RSD">RSD</option>
-                                    <option value="EUR">EUR</option>
-                                    <option value="USD">USD</option>
-                                </select>
-                            </div>
+                        <div class="grade-option grade-b" :class="{'selected': newTicket.device_condition_grade === 'B'}" @click="newTicket.device_condition_grade = 'B'">
+                            <div class="grade-letter">B</div>
+                            <div class="grade-text">Dobro</div>
                         </div>
-
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-1">Nacin placanja</label>
-                            <select x-model="collectData.payment_method"
-                                    class="w-full rounded-md bg-white/10 border-white/20 text-white">
-                                <option value="CASH">Gotovina</option>
-                                <option value="CARD">Kartica</option>
-                                <option value="TRANSFER">Transfer</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-1">Preuzeo</label>
-                            <input type="text" x-model="collectData.owner_collect"
-                                   :placeholder="selectedTicket.customer_name"
-                                   class="w-full rounded-md bg-white/10 border-white/20 text-white placeholder-white/50">
-                        </div>
-
-                        <div class="flex justify-end gap-2 mt-6">
-                            <button @click="showCollectModal = false"
-                                    class="px-4 py-2 rounded-md bg-white/10 hover:bg-white/20">
-                                Otkazi
-                            </button>
-                            <button @click="collectTicket()"
-                                    class="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 font-medium">
-                                Naplati
-                            </button>
+                        <div class="grade-option grade-c" :class="{'selected': newTicket.device_condition_grade === 'C'}" @click="newTicket.device_condition_grade = 'C'">
+                            <div class="grade-letter">C</div>
+                            <div class="grade-text">Loše</div>
                         </div>
                     </div>
-                </template>
-            </div>
-        </div>
-    </div>
+                </div>
 
-    <!-- Notify Modal -->
-    <div x-show="showNotifyModal" x-cloak
-         class="fixed inset-0 z-50 overflow-y-auto"
-         @keydown.escape.window="showNotifyModal = false">
-        <div class="flex min-h-screen items-center justify-center p-4">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="showNotifyModal = false"></div>
-            <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Obavesti kupca</h3>
+                <!-- Problem description -->
+                <div class="form-group">
+                    <label class="form-label">Opis problema *</label>
+                    <textarea class="form-input" rows="3" x-model="newTicket.problem_description" placeholder="Opišite problem..."></textarea>
+                </div>
 
-                <template x-if="selectedTicket">
-                    <div>
-                        <div class="bg-gray-50 rounded-lg p-3 mb-4">
-                            <div class="text-sm text-gray-500">Nalog</div>
-                            <div class="font-bold text-gray-900" x-text="selectedTicket.ticket_number_formatted"></div>
-                            <div class="text-sm text-gray-700" x-text="selectedTicket.customer_name"></div>
-                            <div class="text-sm text-gray-500" x-text="selectedTicket.customer_phone"></div>
-                        </div>
-
-                        <template x-if="selectedTicket.notification_count > 0">
-                            <div class="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
-                                <div class="flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                    </svg>
-                                    <span class="text-sm text-orange-700">
-                                        Vec <span x-text="selectedTicket.notification_count" class="font-bold"></span> pokusaja kontakta
-                                    </span>
-                                </div>
-                                <template x-if="selectedTicket.notification_count >= 4">
-                                    <p class="text-xs text-orange-600 mt-2">
-                                        Moze se otpisati nakon ovog poziva.
-                                    </p>
-                                </template>
-                            </div>
-                        </template>
-
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Napomena o pozivu</label>
-                            <textarea x-model="notifyData.comment" rows="3"
-                                      placeholder="Sta je kupac rekao..."
-                                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"></textarea>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="flex items-center">
-                                <input type="checkbox" x-model="notifyData.contact_successful"
-                                       class="rounded border-gray-300 text-primary-600">
-                                <span class="ml-2 text-sm text-gray-700">Uspesan kontakt</span>
-                            </label>
-                        </div>
-
-                        <div class="flex justify-end gap-2 mt-6">
-                            <button @click="showNotifyModal = false"
-                                    class="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">
-                                Otkazi
-                            </button>
-                            <template x-if="selectedTicket.notification_count >= 4">
-                                <button @click="writeOffTicket()"
-                                        class="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700">
-                                    Otpisi
-                                </button>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label">Procenjena cena</label>
+                        <input type="number" class="form-input" x-model="newTicket.estimated_price" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Lokacija</label>
+                        <select class="form-input" x-model="newTicket.location_id">
+                            <option value="">Izaberi lokaciju</option>
+                            <template x-for="loc in locations" :key="loc.id">
+                                <option :value="loc.id" x-text="loc.name"></option>
                             </template>
-                            <button @click="notifyCustomer()"
-                                    class="px-4 py-2 rounded-md bg-purple-600 text-white hover:bg-purple-700">
-                                Ubelezi poziv
-                            </button>
-                        </div>
+                        </select>
                     </div>
-                </template>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @click="showAddModal = false">Otkaži</button>
+                <button class="btn-primary" @click="saveTicket()" :disabled="saving">
+                    <span x-show="!saving">Sačuvaj nalog</span>
+                    <span x-show="saving">Čuvanje...</span>
+                </button>
             </div>
         </div>
     </div>
@@ -1635,194 +794,42 @@
 <script>
 function ticketsPage() {
     return {
+        loading: true,
+        saving: false,
+        showAddModal: false,
         openTickets: [],
         pendingTickets: [],
-        locations: [],
         stats: {},
-        loading: true,
-        showWrittenOff: false,
-
+        locations: [],
         filters: {
             search: '',
             location_id: ''
         },
-
-        statusLabels: {
-            'RECEIVED': 'Primljeno',
-            'DIAGNOSED': 'Dijagnostifikovano',
-            'IN_PROGRESS': 'U obradi',
-            'WAITING_PARTS': 'Ceka delove',
-            'READY': 'Spremno',
-            'DELIVERED': 'Isporuceno',
-            'CANCELLED': 'Otkazano'
-        },
-
-        // Modals
-        showAddModal: false,
-        showCollectModal: false,
-        showNotifyModal: false,
-        selectedTicket: null,
-
-        // New ticket form
         newTicket: {
             customer_name: '',
             customer_phone: '',
             customer_email: '',
-            customer_company_name: '',
-            service_section: 'Telefoni',
+            device_type: 'phone',
             brand: '',
             model: '',
             imei: '',
-            problem_description: '',
             device_condition_grade: '',
-            device_condition_notes: '',
-            device_not_working: false,
+            problem_description: '',
             estimated_price: '',
-            currency: 'RSD',
-            location_id: '',
-            priority: 'normal'
-        },
-
-        // Category-specific problem options (Dolce Vita style)
-        PROBLEM_CATEGORIES: {
-            Telefoni: [
-                { id: 'zamena_ekrana', label: 'Zamena ekrana', icon: 'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z' },
-                { id: 'zamena_baterije', label: 'Zamena baterije', icon: 'M17 6h-2V5a1 1 0 00-1-1H10a1 1 0 00-1 1v1H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V8a2 2 0 00-2-2z' },
-                { id: 'zamena_punjenja', label: 'Zamena punjenja', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
-                { id: 'zamena_zvucnika', label: 'Zamena zvucnika', icon: 'M15.536 8.464a5 5 0 010 7.072M12 6.5v11M18.364 5.636a9 9 0 010 12.728M9.586 9.586L6.707 6.707A1 1 0 005 7.414V16.586a1 1 0 001.707.707l2.879-2.879' },
-                { id: 'zamena_slusalice', label: 'Zamena slusalice', icon: 'M3 18v-6a9 9 0 0118 0v6M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z' },
-                { id: 'zamena_mikrofona', label: 'Zamena mikrofona', icon: 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z' },
-                { id: 'zamena_kamere_zadnje', label: 'Zadnja kamera', icon: 'M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z' },
-                { id: 'zamena_kamere_prednje', label: 'Prednja kamera', icon: 'M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z' },
-                { id: 'zamena_konektora', label: 'Zamena konektora', icon: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101' },
-                { id: 'zamena_vibro', label: 'Vibro motor', icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' },
-                { id: 'zamena_dugmadi', label: 'Zamena dugmadi', icon: 'M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122' },
-                { id: 'otkljucavanje', label: 'Otkljucavanje', icon: 'M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z' },
-                { id: 'prebacivanje', label: 'Prebacivanje podataka', icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
-                { id: 'prebacivanje_broken', label: 'Iz polomljenog', icon: 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636' },
-                { id: 'ciscenje_vode', label: 'Ciscenje od vode', icon: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z' },
-                { id: 'ciscenje_virusa', label: 'Ciscenje virusa', icon: 'M12 14l9-5-9-5-9 5 9 5zm0 7l9-5-9-5-9 5 9 5z' },
-                { id: 'dijagnostika', label: 'Dijagnostika', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' }
-            ],
-            Tableti: [
-                { id: 'zamena_ekrana', label: 'Zamena ekrana', icon: 'M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z' },
-                { id: 'zamena_baterije', label: 'Zamena baterije', icon: 'M17 6h-2V5a1 1 0 00-1-1H10a1 1 0 00-1 1v1H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V8a2 2 0 00-2-2z' },
-                { id: 'zamena_punjenja', label: 'Zamena punjenja', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
-                { id: 'zamena_zvucnika', label: 'Zamena zvucnika', icon: 'M15.536 8.464a5 5 0 010 7.072M12 6.5v11' },
-                { id: 'otkljucavanje', label: 'Otkljucavanje', icon: 'M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z' },
-                { id: 'prebacivanje', label: 'Prebacivanje podataka', icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
-                { id: 'ciscenje_virusa', label: 'Ciscenje virusa', icon: 'M12 14l9-5-9-5-9 5 9 5zm0 7l9-5-9-5-9 5 9 5z' },
-                { id: 'dijagnostika', label: 'Dijagnostika', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' }
-            ],
-            Racunari: [
-                { id: 'zamena_laptop_ekrana', label: 'Zamena ekrana', icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
-                { id: 'zamena_laptop_baterije', label: 'Zamena baterije', icon: 'M17 6h-2V5a1 1 0 00-1-1H10a1 1 0 00-1 1v1H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V8a2 2 0 00-2-2z' },
-                { id: 'zamena_tastature', label: 'Zamena tastature', icon: 'M4 6h16M4 10h16M4 14h16M4 18h16' },
-                { id: 'zamena_diska', label: 'SSD/HDD', icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4' },
-                { id: 'zamena_rama', label: 'RAM', icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z' },
-                { id: 'zamena_napajanja', label: 'Napajanje', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
-                { id: 'reinstalacija_sistema', label: 'Reinstalacija', icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
-                { id: 'ciscenje_virusa', label: 'Ciscenje virusa', icon: 'M12 14l9-5-9-5-9 5 9 5zm0 7l9-5-9-5-9 5 9 5z' },
-                { id: 'prebacivanje', label: 'Prebacivanje', icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
-                { id: 'dijagnostika', label: 'Dijagnostika', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' }
-            ],
-            Konzole: [
-                { id: 'zamena_lasera', label: 'Zamena lasera', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
-                { id: 'zamena_hdmi', label: 'HDMI port', icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
-                { id: 'zamena_punjenja', label: 'Punjenje', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
-                { id: 'ciscenje', label: 'Ciscenje/Servis', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
-                { id: 'dijagnostika', label: 'Dijagnostika', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' }
-            ],
-            Ostalo: [
-                { id: 'dijagnostika', label: 'Dijagnostika', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-                { id: 'ostalo', label: 'Ostalo', icon: 'M12 6v6m0 0v6m0-6h6m-6 0H6' }
-            ]
-        },
-        selectedProblems: [],
-        lastAutoGeneratedComment: '',
-
-        collectData: {
-            final_price: 0,
-            currency: 'RSD',
-            payment_method: 'CASH',
-            owner_collect: ''
-        },
-
-        notifyData: {
-            comment: '',
-            contact_successful: false
-        },
-
-        // Get problems for current category
-        get currentProblems() {
-            return this.PROBLEM_CATEGORIES[this.newTicket.service_section] || this.PROBLEM_CATEGORIES['Ostalo'];
-        },
-
-        // Toggle problem selection and auto-fill description
-        toggleProblem(problemId) {
-            const idx = this.selectedProblems.indexOf(problemId);
-            if (idx > -1) {
-                this.selectedProblems.splice(idx, 1);
-            } else {
-                this.selectedProblems.push(problemId);
-            }
-            this.updateProblemDescription();
-        },
-
-        // Auto-fill problem description based on selected problems
-        updateProblemDescription() {
-            const selectedLabels = this.selectedProblems.map(id => {
-                const problem = this.currentProblems.find(p => p.id === id);
-                return problem ? problem.label : '';
-            }).filter(Boolean);
-
-            const newAutoComment = selectedLabels.join(', ');
-
-            // Only update if field is empty or contains previous auto-generated text
-            if (this.newTicket.problem_description === '' ||
-                this.newTicket.problem_description === this.lastAutoGeneratedComment) {
-                this.newTicket.problem_description = newAutoComment;
-                this.lastAutoGeneratedComment = newAutoComment;
-            }
-        },
-
-        // Reset problems when category changes
-        onCategoryChange() {
-            this.selectedProblems = [];
-            this.lastAutoGeneratedComment = '';
-            if (this.newTicket.problem_description === this.lastAutoGeneratedComment) {
-                this.newTicket.problem_description = '';
-            }
+            location_id: ''
         },
 
         async init() {
-            await Promise.all([
-                this.loadStats(),
-                this.loadAllTickets(),
-                this.loadLocations()
-            ]);
-        },
-
-        async loadStats() {
-            try {
-                const response = await api('/api/v1/tickets/stats');
-                if (response.ok) {
-                    this.stats = await response.json();
-                }
-            } catch (e) {
-                console.error('Failed to load stats:', e);
-            }
+            await this.loadLocations();
+            await this.loadAllTickets();
         },
 
         async loadLocations() {
             try {
-                const response = await api('/api/v1/auth/me');
-                if (response.ok) {
-                    const data = await response.json();
+                const r = await api('/api/v1/locations');
+                if (r.ok) {
+                    const data = await r.json();
                     this.locations = data.locations || [];
-                    if (this.locations.length > 0 && !this.newTicket.location_id) {
-                        this.newTicket.location_id = this.locations[0].id;
-                    }
                 }
             } catch (e) {
                 console.error('Failed to load locations:', e);
@@ -1832,137 +839,99 @@ function ticketsPage() {
         async loadAllTickets() {
             this.loading = true;
             try {
-                const params = new URLSearchParams({ per_page: 100 });
-                if (this.filters.search) params.append('search', this.filters.search);
-                if (this.filters.location_id) params.append('location_id', this.filters.location_id);
+                let url = '/api/v1/tickets?per_page=100';
+                if (this.filters.search) url += '&search=' + encodeURIComponent(this.filters.search);
+                if (this.filters.location_id) url += '&location_id=' + this.filters.location_id;
 
-                const response = await api('/api/v1/tickets?' + params.toString());
-                if (response.ok) {
-                    const data = await response.json();
-                    let tickets = data.items || [];
+                const r = await api(url);
+                if (r.ok) {
+                    const data = await r.json();
+                    const tickets = data.tickets || [];
 
-                    // Split into two categories
-                    // Open tickets: not READY, not DELIVERED, not CANCELLED, not written off
-                    this.openTickets = tickets.filter(t =>
-                        !['READY', 'DELIVERED', 'CANCELLED'].includes(t.status) &&
-                        !t.is_written_off
-                    );
+                    this.openTickets = tickets.filter(t => t.status === 'RECEIVED' || t.status === 'IN_PROGRESS' || t.status === 'DIAGNOSED');
+                    this.pendingTickets = tickets.filter(t => t.status === 'READY');
 
-                    // Pending payment: READY, not collected, optionally show written off
-                    this.pendingTickets = tickets.filter(t =>
-                        t.status === 'READY' &&
-                        !t.is_paid &&
-                        (this.showWrittenOff || !t.is_written_off)
-                    );
-
-                    // Calculate waiting days for pending tickets
-                    this.pendingTickets.forEach(t => {
-                        if (t.closed_at) {
-                            const closedDate = new Date(t.closed_at);
-                            const now = new Date();
-                            t.waiting_days = Math.floor((now - closedDate) / (1000 * 60 * 60 * 24));
-                        } else {
-                            t.waiting_days = 0;
-                        }
-                    });
+                    this.stats = {
+                        open_tickets: this.openTickets.length,
+                        closed_tickets: tickets.filter(t => t.status === 'DELIVERED').length,
+                        ready_tickets: this.pendingTickets.length,
+                        active_warranties: data.active_warranties || 0,
+                        today_tickets: tickets.filter(t => {
+                            const today = new Date().toDateString();
+                            return new Date(t.created_at).toDateString() === today;
+                        }).length
+                    };
                 }
             } catch (e) {
                 console.error('Failed to load tickets:', e);
-                showToast('Greska pri ucitavanju naloga', 'error');
             } finally {
                 this.loading = false;
             }
         },
 
-        setFilter(type) {
-            // This is for KPI card clicks - can add specific behavior if needed
-            if (type === 'ready') {
-                // Scroll to pending table
-                document.querySelector('.table-section-header[style*="78350f"]')?.scrollIntoView({ behavior: 'smooth' });
-            }
-        },
-
-        getDurationClass(ticket) {
-            if (!ticket.duration_display) return 'green';
-            const match = ticket.duration_display.match(/(\d+)d/);
-            if (match) {
-                const days = parseInt(match[1]);
-                if (days > 7) return 'red';
-                if (days > 3) return 'yellow';
-            }
-            return 'green';
-        },
-
-        getDurationPercent(ticket) {
-            if (!ticket.duration_display) return 10;
-            const match = ticket.duration_display.match(/(\d+)d/);
-            if (match) {
-                const days = parseInt(match[1]);
-                return Math.min(100, days * 10);
-            }
-            return 20;
-        },
-
-        getDaysOpen(ticket) {
-            if (!ticket.duration_display) return 0;
-            const match = ticket.duration_display.match(/(\d+)d/);
-            if (match) {
-                return parseInt(match[1]);
-            }
-            return 0;
-        },
-
-        getWaitingClass(ticket) {
-            const days = ticket.waiting_days || 0;
-            if (days > 15) return 'red';
-            if (days > 7) return 'yellow';
-            return 'green';
-        },
-
-        getWaitingPercent(ticket) {
-            const days = ticket.waiting_days || 0;
-            return Math.min(100, (days / 30) * 100);
-        },
-
-        formatPrice(price) {
-            if (!price) return '-';
-            return new Intl.NumberFormat('sr-RS').format(price);
-        },
-
-        formatDate(dateStr) {
-            if (!dateStr) return '-';
-            return new Date(dateStr).toLocaleDateString('sr-Latn-RS');
+        setFilter(filter) {
+            // Handle filter clicks
+            console.log('Filter:', filter);
         },
 
         viewTicket(ticket) {
-            window.location.href = `/tickets/${ticket.id}`;
+            window.location.href = '/tickets/' + ticket.id;
         },
 
-        async submitNewTicket() {
+        async finishTicket(ticket) {
+            if (!confirm('Završiti nalog #' + ticket.ticket_number_formatted + '?')) return;
             try {
-                const payload = {
-                    ...this.newTicket,
-                    problem_areas: this.selectedProblems.join(',')
-                };
-
-                const response = await api('/api/v1/tickets', {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
+                const r = await api('/api/v1/tickets/' + ticket.id + '/status', {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: 'READY' })
                 });
+                if (r.ok) await this.loadAllTickets();
+            } catch (e) {
+                console.error(e);
+            }
+        },
 
-                if (response.ok) {
-                    showToast('Nalog uspesno kreiran', 'success');
+        async collectTicket(ticket) {
+            if (!confirm('Naplatiti nalog #' + ticket.ticket_number_formatted + '?')) return;
+            try {
+                const r = await api('/api/v1/tickets/' + ticket.id + '/status', {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: 'DELIVERED' })
+                });
+                if (r.ok) await this.loadAllTickets();
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        printTicket(ticket) {
+            window.open('/tickets/' + ticket.id + '/print', '_blank');
+        },
+
+        async saveTicket() {
+            if (!this.newTicket.customer_name || !this.newTicket.brand || !this.newTicket.model || !this.newTicket.problem_description) {
+                alert('Popunite obavezna polja');
+                return;
+            }
+            this.saving = true;
+            try {
+                const r = await api('/api/v1/tickets', {
+                    method: 'POST',
+                    body: JSON.stringify(this.newTicket)
+                });
+                if (r.ok) {
                     this.showAddModal = false;
                     this.resetNewTicket();
-                    this.loadAllTickets();
-                    this.loadStats();
+                    await this.loadAllTickets();
                 } else {
-                    const data = await response.json();
-                    showToast(data.message || 'Greska pri kreiranju naloga', 'error');
+                    const err = await r.json();
+                    alert(err.message || 'Greška pri čuvanju');
                 }
             } catch (e) {
-                console.error('Failed to create ticket:', e);
-                showToast('Greska pri kreiranju naloga', 'error');
+                console.error(e);
+                alert('Greška pri čuvanju');
+            } finally {
+                this.saving = false;
             }
         },
 
@@ -1971,146 +940,44 @@ function ticketsPage() {
                 customer_name: '',
                 customer_phone: '',
                 customer_email: '',
-                customer_company_name: '',
-                service_section: 'Telefoni',
+                device_type: 'phone',
                 brand: '',
                 model: '',
                 imei: '',
-                problem_description: '',
                 device_condition_grade: '',
-                device_condition_notes: '',
-                device_not_working: false,
+                problem_description: '',
                 estimated_price: '',
-                currency: 'RSD',
-                location_id: this.locations.length > 0 ? this.locations[0].id : '',
-                priority: 'normal'
+                location_id: ''
             };
-            this.selectedProblems = [];
         },
 
-        async finishTicket(ticket) {
-            if (!confirm('Zavrsi nalog i oznaci kao SPREMNO?')) return;
-
-            try {
-                const response = await api(`/api/v1/tickets/${ticket.id}/status`, {
-                    method: 'PUT',
-                    body: JSON.stringify({ status: 'READY' })
-                });
-
-                if (response.ok) {
-                    showToast('Nalog oznacen kao spreman', 'success');
-                    this.loadAllTickets();
-                    this.loadStats();
-                }
-            } catch (e) {
-                showToast('Greska pri azuriranju naloga', 'error');
-            }
+        getDaysOpen(ticket) {
+            if (!ticket.created_at) return 0;
+            const created = new Date(ticket.created_at);
+            const now = new Date();
+            return Math.floor((now - created) / (1000 * 60 * 60 * 24));
         },
 
-        async rejectTicket(ticket) {
-            if (!confirm('Da li ste sigurni da zelite da odbijete ovaj nalog?')) return;
-
-            try {
-                const response = await api(`/api/v1/tickets/${ticket.id}/status`, {
-                    method: 'PUT',
-                    body: JSON.stringify({ status: 'CANCELLED' })
-                });
-
-                if (response.ok) {
-                    showToast('Nalog odbijen', 'success');
-                    this.loadAllTickets();
-                    this.loadStats();
-                }
-            } catch (e) {
-                showToast('Greska pri odbijanju naloga', 'error');
-            }
+        getDurationClass(ticket) {
+            const days = this.getDaysOpen(ticket);
+            if (days <= 3) return 'green';
+            if (days <= 7) return 'yellow';
+            return 'red';
         },
 
-        openCollectModal(ticket) {
-            this.selectedTicket = ticket;
-            this.collectData = {
-                final_price: ticket.final_price || ticket.estimated_price || 0,
-                currency: ticket.currency || 'RSD',
-                payment_method: 'CASH',
-                owner_collect: ''
-            };
-            this.showCollectModal = true;
+        getDurationPercent(ticket) {
+            const days = this.getDaysOpen(ticket);
+            return Math.min(100, (days / 14) * 100);
         },
 
-        async collectTicket() {
-            try {
-                const response = await api(`/api/v1/tickets/${this.selectedTicket.id}/collect`, {
-                    method: 'POST',
-                    body: JSON.stringify(this.collectData)
-                });
-
-                if (response.ok) {
-                    showToast('Nalog uspesno naplacen', 'success');
-                    this.showCollectModal = false;
-                    this.loadAllTickets();
-                    this.loadStats();
-                } else {
-                    const data = await response.json();
-                    showToast(data.message || 'Greska', 'error');
-                }
-            } catch (e) {
-                showToast('Greska pri naplati', 'error');
-            }
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleDateString('sr-Latn-RS');
         },
 
-        openNotifyModal(ticket) {
-            this.selectedTicket = ticket;
-            this.notifyData = {
-                comment: '',
-                contact_successful: false
-            };
-            this.showNotifyModal = true;
-        },
-
-        async notifyCustomer() {
-            try {
-                const response = await api(`/api/v1/tickets/${this.selectedTicket.id}/notify`, {
-                    method: 'POST',
-                    body: JSON.stringify(this.notifyData)
-                });
-
-                if (response.ok) {
-                    showToast('Poziv ubelezen', 'success');
-                    this.showNotifyModal = false;
-                    this.loadAllTickets();
-                } else {
-                    const data = await response.json();
-                    showToast(data.message || 'Greska', 'error');
-                }
-            } catch (e) {
-                showToast('Greska pri belezenju poziva', 'error');
-            }
-        },
-
-        async writeOffTicket() {
-            if (!confirm('Da li ste sigurni da zelite da otpisete ovaj nalog?')) return;
-
-            try {
-                const response = await api(`/api/v1/tickets/${this.selectedTicket.id}/write-off`, {
-                    method: 'POST'
-                });
-
-                if (response.ok) {
-                    showToast('Nalog otpisan', 'success');
-                    this.showNotifyModal = false;
-                    this.loadAllTickets();
-                    this.loadStats();
-                } else {
-                    const data = await response.json();
-                    showToast(data.message || 'Greska', 'error');
-                }
-            } catch (e) {
-                showToast('Greska pri otpisu', 'error');
-            }
-        },
-
-        async printTicket(ticket) {
-            window.open(`/tickets/${ticket.id}/print`, '_blank');
+        formatPrice(price) {
+            if (!price) return '0';
+            return new Intl.NumberFormat('sr-RS').format(price);
         }
     }
 }
