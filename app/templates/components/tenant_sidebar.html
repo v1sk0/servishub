@@ -1,5 +1,5 @@
 <!-- Tenant Sidebar -->
-<div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
+<div x-data="sidebarData()" x-init="loadSubscriptionStatus()" class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
     <!-- Logo -->
     <div class="flex h-16 shrink-0 items-center">
         <a href="/dashboard" class="flex items-center">
@@ -84,7 +84,7 @@
                             <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
                             </svg>
-                            Narudžbine
+                            Narudzbine
                         </a>
                     </li>
                 </ul>
@@ -92,7 +92,7 @@
 
             <!-- Settings Section -->
             <li>
-                <div class="text-xs font-semibold leading-6 text-gray-400">Podešavanja</div>
+                <div class="text-xs font-semibold leading-6 text-gray-400">Podesavanja</div>
                 <ul role="list" class="-mx-2 mt-2 space-y-1">
                     <li>
                         <a href="/locations"
@@ -120,7 +120,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
-                            Podešavanja
+                            Podesavanja
                         </a>
                     </li>
                 </ul>
@@ -132,9 +132,74 @@
                     <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
                     </svg>
-                    Pretplata
+                    <span class="flex-1">Pretplata</span>
+                    <!-- Status Badge -->
+                    <span x-show="subscriptionStatus"
+                          class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                          :class="getStatusBadgeClass(subscriptionStatus)"
+                          x-text="getStatusLabel(subscriptionStatus)"></span>
                 </a>
+                <!-- Days remaining warning -->
+                <div x-show="daysRemaining !== null && daysRemaining <= 7 && subscriptionStatus !== 'SUSPENDED'"
+                     class="mx-2 mt-1 text-xs text-amber-600">
+                    <span x-text="'Istice za ' + daysRemaining + ' dana'"></span>
+                </div>
+                <!-- Debt warning -->
+                <div x-show="hasDebt" class="mx-2 mt-1 text-xs text-red-600 flex items-center gap-1">
+                    <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Imate neplacen racun</span>
+                </div>
             </li>
         </ul>
     </nav>
 </div>
+
+<script>
+function sidebarData() {
+    return {
+        subscriptionStatus: null,
+        daysRemaining: null,
+        hasDebt: false,
+
+        async loadSubscriptionStatus() {
+            try {
+                const res = await api('/api/v1/tenant/subscription');
+                if (res.ok) {
+                    const data = await res.json();
+                    this.subscriptionStatus = data.status;
+                    this.daysRemaining = data.days_remaining;
+                    this.hasDebt = data.billing?.has_debt || false;
+                }
+            } catch (e) {
+                console.error('Failed to load subscription status:', e);
+            }
+        },
+
+        getStatusBadgeClass(status) {
+            const classes = {
+                'DEMO': 'bg-purple-100 text-purple-700',
+                'TRIAL': 'bg-blue-100 text-blue-700',
+                'ACTIVE': 'bg-green-100 text-green-700',
+                'EXPIRED': 'bg-yellow-100 text-yellow-700',
+                'SUSPENDED': 'bg-red-100 text-red-700',
+                'CANCELLED': 'bg-gray-100 text-gray-700'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-700';
+        },
+
+        getStatusLabel(status) {
+            const labels = {
+                'DEMO': 'Demo',
+                'TRIAL': 'Promo',
+                'ACTIVE': 'Aktivna',
+                'EXPIRED': 'Istekla',
+                'SUSPENDED': 'Blokiran',
+                'CANCELLED': 'Otkazan'
+            };
+            return labels[status] || status;
+        }
+    }
+}
+</script>

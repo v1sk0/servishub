@@ -218,24 +218,26 @@ def get_tenant(tenant_id):
 @platform_admin_required
 def activate_trial(tenant_id):
     """
-    Aktivira TRIAL za tenant iz DEMO statusa.
+    Produzuje ili resetuje TRIAL period za tenant.
 
-    Ovo radi admin nakon sto kontaktira vlasnika servisa i verifikuje KYC.
-    - Menja status DEMO -> TRIAL
+    Ovo radi admin kada zeli da produzi besplatni period.
+    - Menja status na TRIAL (ako je EXPIRED)
     - Postavlja trial_ends_at na 60 dana od sada
-    - Verifikuje primarnog KYC predstavnika
+    - Verifikuje primarnog KYC predstavnika ako nije vec verifikovan
     """
     tenant = Tenant.query.get_or_404(tenant_id)
 
     from app.models.tenant import TenantStatus
 
-    # Proveri da je tenant u DEMO statusu
-    if tenant.status != TenantStatus.DEMO:
+    old_status = tenant.status.value
+
+    # Dozvoli za TRIAL (produljenje) ili EXPIRED (reaktivacija)
+    if tenant.status not in (TenantStatus.TRIAL, TenantStatus.EXPIRED):
         return jsonify({
-            'error': f'Tenant nije u DEMO statusu. Trenutni status: {tenant.status.value}'
+            'error': f'Tenant mora biti u TRIAL ili EXPIRED statusu. Trenutni status: {tenant.status.value}'
         }), 400
 
-    # Promeni status na TRIAL
+    # Postavi/produzi TRIAL
     tenant.status = TenantStatus.TRIAL
     tenant.trial_ends_at = datetime.utcnow() + timedelta(days=60)
 
@@ -256,7 +258,7 @@ def activate_trial(tenant_id):
         target_type='tenant',
         target_id=tenant.id,
         target_name=tenant.name,
-        old_status='DEMO',
+        old_status=old_status,
         new_status='TRIAL',
         details={
             'trial_ends_at': tenant.trial_ends_at.isoformat(),

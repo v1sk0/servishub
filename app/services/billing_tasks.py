@@ -1,0 +1,403 @@
+"""
+Billing Tasks - Scheduled tasks za billing sistem.
+
+Ove funkcije se pozivaju preko Flask CLI komandi ili Heroku Scheduler-a.
+
+Komande:
+    flask check-subscriptions   # Proverava istekle pretplate
+    flask send-billing-emails   # Salje email podsetnike
+    flask process-trust-expiry  # Procesira istekle "na rec" periode
+"""
+
+from datetime import datetime, timedelta
+from decimal import Decimal
+from flask import current_app
+
+from ..extensions import db
+from ..models import Tenant, TenantMessage, PlatformSettings
+from ..models.tenant import TenantStatus, ServiceLocation
+from ..models.tenant_message import MessageCategory, MessagePriority
+from ..models.representative import SubscriptionPayment
+
+
+class BillingTasksService:
+    """
+    Servis za automatizovane billing taskove.
+    """
+
+    # =========================================================================
+    # CHECK SUBSCRIPTIONS - Proverava i azurira statuse pretplata
+    # =========================================================================
+
+    @staticmethod
+    def check_subscriptions():
+        """
+        Proverava sve pretplate i azurira statuse.
+
+        Workflow:
+        1. TRIAL -> EXPIRED ako je trial_ends_at prosao
+        2. ACTIVE -> EXPIRED ako je subscription_ends_at prosao
+        3. EXPIRED -> SUSPENDED ako je proslo 7 dana grace perioda
+
+        Returns:
+            dict sa statistikama
+        """
+        now = datetime.utcnow()
+        stats = {
+            'trial_expired': 0,
+            'active_expired': 0,
+            'suspended': 0,
+            'errors': []
+        }
+
+        # 1. TRIAL koji je istekao -> EXPIRED
+        trial_expired = Tenant.query.filter(
+            Tenant.status == TenantStatus.TRIAL,
+            Tenant.trial_ends_at < now
+        ).all()
+
+        for tenant in trial_expired:
+            try:
+                tenant.status = TenantStatus.EXPIRED
+                BillingTasksService._send_tenant_message(
+                    tenant_id=tenant.id,
+                    title='Besplatni trial period je istekao',
+                    content='Vas besplatni 60-dnevni trial period je istekao. Imate 7 dana da uplatite pretplatu pre suspenzije naloga.',
+                    category=MessageCategory.BILLING,
+                    priority=MessagePriority.URGENT
+                )
+                stats['trial_expired'] += 1
+            except Exception as e:
+                stats['errors'].append(f'Tenant {tenant.id}: {str(e)}')
+
+        # 2. ACTIVE koji je istekao -> EXPIRED
+        active_expired = Tenant.query.filter(
+            Tenant.status == TenantStatus.ACTIVE,
+            Tenant.subscription_ends_at < now
+        ).all()
+
+        for tenant in active_expired:
+            try:
+                tenant.status = TenantStatus.EXPIRED
+                BillingTasksService._send_tenant_message(
+                    tenant_id=tenant.id,
+                    title='Pretplata je istekla',
+                    content='Vasa pretplata je istekla. Imate 7 dana grace perioda da uplatite. Nakon toga nalog ce biti suspendovan.',
+                    category=MessageCategory.BILLING,
+                    priority=MessagePriority.URGENT
+                )
+                stats['active_expired'] += 1
+            except Exception as e:
+                stats['errors'].append(f'Tenant {tenant.id}: {str(e)}')
+
+        # 3. EXPIRED duze od 7 dana -> SUSPENDED
+        grace_cutoff = now - timedelta(days=7)
+        to_suspend = Tenant.query.filter(
+            Tenant.status == TenantStatus.EXPIRED
+        ).all()
+
+        for tenant in to_suspend:
+            # Proveri kada je istekao (trial ili subscription)
+            expired_at = None
+            if tenant.trial_ends_at and tenant.trial_ends_at < now:
+                expired_at = tenant.trial_ends_at
+            elif tenant.subscription_ends_at and tenant.subscription_ends_at < now:
+                expired_at = tenant.subscription_ends_at
+
+            if expired_at and expired_at < grace_cutoff:
+                try:
+                    tenant.block('Istekao grace period - neplacena pretplata')
+                    BillingTasksService._send_tenant_message(
+                        tenant_id=tenant.id,
+                        title='Nalog je suspendovan',
+                        content='Vas nalog je suspendovan zbog neplacene pretplate. Uplatite dugovanje da biste nastavili sa koriscenjem.',
+                        category=MessageCategory.BILLING,
+                        priority=MessagePriority.URGENT
+                    )
+                    stats['suspended'] += 1
+                except Exception as e:
+                    stats['errors'].append(f'Tenant {tenant.id}: {str(e)}')
+
+        db.session.commit()
+        return stats
+
+    # =========================================================================
+    # PROCESS TRUST EXPIRY - Procesira istekle "na rec" periode
+    # =========================================================================
+
+    @staticmethod
+    def process_trust_expiry():
+        """
+        Proverava istekle "na rec" periode i umanjuje trust score.
+
+        Ako je proslo 48h od aktivacije a nije placeno:
+        - Trust score -= 25 (dodatna kazna)
+        - Ostaje SUSPENDED
+
+        Returns:
+            dict sa statistikama
+        """
+        now = datetime.utcnow()
+        cutoff = now - timedelta(hours=48)
+        stats = {
+            'processed': 0,
+            'errors': []
+        }
+
+        # Pronadji tenante sa isteklim trust periodom
+        tenants = Tenant.query.filter(
+            Tenant.status == TenantStatus.SUSPENDED,
+            Tenant.trust_activated_at.isnot(None),
+            Tenant.trust_activated_at < cutoff,
+            Tenant.has_debt == True  # Nije platio
+        ).all()
+
+        for tenant in tenants:
+            try:
+                # Dodatno umanjenje trust score-a
+                tenant.update_trust_score(-25, 'Nije platio tokom "na rec" perioda')
+                tenant.trust_activated_at = None  # Resetuj
+
+                BillingTasksService._send_tenant_message(
+                    tenant_id=tenant.id,
+                    title='"Na rec" period je istekao',
+                    content='Vas "na rec" period je istekao bez uplate. Trust Score je umanjen za dodatnih 25 poena.',
+                    category=MessageCategory.BILLING,
+                    priority=MessagePriority.URGENT
+                )
+                stats['processed'] += 1
+            except Exception as e:
+                stats['errors'].append(f'Tenant {tenant.id}: {str(e)}')
+
+        db.session.commit()
+        return stats
+
+    # =========================================================================
+    # UPDATE OVERDUE DAYS - Azurira dane kasnjenja
+    # =========================================================================
+
+    @staticmethod
+    def update_overdue_days():
+        """
+        Azurira days_overdue za sve tenante sa dugom.
+
+        Returns:
+            dict sa statistikama
+        """
+        now = datetime.utcnow()
+        stats = {
+            'updated': 0,
+            'errors': []
+        }
+
+        # Pronadji tenante sa dugom
+        tenants = Tenant.query.filter(
+            Tenant.current_debt > 0
+        ).all()
+
+        for tenant in tenants:
+            try:
+                # Izracunaj dane kasnjenja od kada je nastao dug
+                # Koristimo poslednju neplacenu fakturu
+                last_overdue = SubscriptionPayment.query.filter(
+                    SubscriptionPayment.tenant_id == tenant.id,
+                    SubscriptionPayment.status == 'OVERDUE'
+                ).order_by(SubscriptionPayment.due_date.asc()).first()
+
+                if last_overdue and last_overdue.due_date:
+                    days = (now.date() - last_overdue.due_date).days
+                    tenant.days_overdue = max(0, days)
+                    stats['updated'] += 1
+            except Exception as e:
+                stats['errors'].append(f'Tenant {tenant.id}: {str(e)}')
+
+        db.session.commit()
+        return stats
+
+    # =========================================================================
+    # GENERATE MONTHLY INVOICES - Generise mesecne fakture
+    # =========================================================================
+
+    @staticmethod
+    def generate_monthly_invoices():
+        """
+        Generise fakture za sve aktivne tenante.
+        Poziva se 1. u mesecu.
+
+        Returns:
+            dict sa statistikama
+        """
+        now = datetime.utcnow()
+        stats = {
+            'generated': 0,
+            'skipped': 0,
+            'errors': []
+        }
+
+        # Dohvati aktivne tenante
+        active_tenants = Tenant.query.filter(
+            Tenant.status == TenantStatus.ACTIVE
+        ).all()
+
+        # Dohvati platformske cene
+        settings = PlatformSettings.get_settings()
+        base_price = Decimal(str(settings.get('base_price', 2990)))
+        location_price = Decimal(str(settings.get('location_price', 990)))
+
+        for tenant in active_tenants:
+            try:
+                # Proveri da li vec ima fakturu za ovaj mesec
+                period_start = now.replace(day=1).date()
+                existing = SubscriptionPayment.query.filter(
+                    SubscriptionPayment.tenant_id == tenant.id,
+                    SubscriptionPayment.period_start == period_start
+                ).first()
+
+                if existing:
+                    stats['skipped'] += 1
+                    continue
+
+                # Izracunaj cenu
+                actual_base = tenant.custom_base_price or base_price
+                actual_loc = tenant.custom_location_price or location_price
+
+                # Broj lokacija
+                location_count = ServiceLocation.query.filter(
+                    ServiceLocation.tenant_id == tenant.id,
+                    ServiceLocation.is_active == True
+                ).count()
+                additional_locations = max(0, location_count - 1)
+
+                # Stavke
+                items = [
+                    {
+                        'description': 'ServisHub Pro - bazni paket',
+                        'quantity': 1,
+                        'unit_price': float(actual_base),
+                        'total': float(actual_base)
+                    }
+                ]
+
+                if additional_locations > 0:
+                    items.append({
+                        'description': f'Dodatne lokacije x{additional_locations}',
+                        'quantity': additional_locations,
+                        'unit_price': float(actual_loc),
+                        'total': float(actual_loc * additional_locations)
+                    })
+
+                subtotal = actual_base + (actual_loc * additional_locations)
+                total = subtotal  # Bez PDV za sada
+
+                # Period
+                if now.month == 12:
+                    period_end = now.replace(year=now.year + 1, month=1, day=1).date() - timedelta(days=1)
+                else:
+                    period_end = now.replace(month=now.month + 1, day=1).date() - timedelta(days=1)
+
+                # Generisi broj fakture
+                year = now.year
+                count = SubscriptionPayment.query.filter(
+                    SubscriptionPayment.invoice_number.like(f'SH-{year}-%')
+                ).count() + 1
+                invoice_number = f'SH-{year}-{count:05d}'
+
+                # Kreiraj fakturu
+                payment = SubscriptionPayment(
+                    tenant_id=tenant.id,
+                    invoice_number=invoice_number,
+                    period_start=period_start,
+                    period_end=period_end,
+                    items_json=items,
+                    subtotal=subtotal,
+                    total_amount=total,
+                    currency='RSD',
+                    status='PENDING',
+                    due_date=period_start + timedelta(days=15),
+                    notes=f'Mesecna pretplata - {now.strftime("%B %Y")}'
+                )
+                db.session.add(payment)
+
+                # Azuriraj dugovanje tenanta
+                tenant.current_debt = (tenant.current_debt or Decimal('0')) + total
+
+                # Posalji poruku
+                BillingTasksService._send_tenant_message(
+                    tenant_id=tenant.id,
+                    title=f'Nova faktura: {invoice_number}',
+                    content=f'Generisana je faktura za {now.strftime("%B %Y")} u iznosu od {total:,.0f} RSD. Rok placanja: {(period_start + timedelta(days=15)).strftime("%d.%m.%Y")}',
+                    category=MessageCategory.BILLING,
+                    priority=MessagePriority.MEDIUM
+                )
+
+                stats['generated'] += 1
+
+            except Exception as e:
+                stats['errors'].append(f'Tenant {tenant.id}: {str(e)}')
+
+        db.session.commit()
+        return stats
+
+    # =========================================================================
+    # MARK OVERDUE INVOICES - Oznacava prekoracene fakture
+    # =========================================================================
+
+    @staticmethod
+    def mark_overdue_invoices():
+        """
+        Oznacava fakture koje su prekoracile rok placanja.
+
+        Returns:
+            dict sa statistikama
+        """
+        now = datetime.utcnow().date()
+        stats = {
+            'marked': 0,
+            'errors': []
+        }
+
+        pending_invoices = SubscriptionPayment.query.filter(
+            SubscriptionPayment.status == 'PENDING',
+            SubscriptionPayment.due_date < now
+        ).all()
+
+        for invoice in pending_invoices:
+            try:
+                invoice.status = 'OVERDUE'
+
+                # Posalji poruku
+                BillingTasksService._send_tenant_message(
+                    tenant_id=invoice.tenant_id,
+                    title=f'Faktura {invoice.invoice_number} je prekoracena',
+                    content=f'Rok placanja fakture je istekao. Molimo uplatite sto pre da izbegnete suspenziju naloga.',
+                    category=MessageCategory.BILLING,
+                    priority=MessagePriority.URGENT
+                )
+
+                stats['marked'] += 1
+            except Exception as e:
+                stats['errors'].append(f'Invoice {invoice.id}: {str(e)}')
+
+        db.session.commit()
+        return stats
+
+    # =========================================================================
+    # HELPER - Slanje poruke tenantu
+    # =========================================================================
+
+    @staticmethod
+    def _send_tenant_message(tenant_id: int, title: str, content: str,
+                             category: MessageCategory, priority: MessagePriority):
+        """Kreira poruku za tenanta."""
+        message = TenantMessage(
+            tenant_id=tenant_id,
+            title=title,
+            content=content,
+            category=category.value if hasattr(category, 'value') else category,
+            priority=priority.value if hasattr(priority, 'value') else priority
+        )
+        db.session.add(message)
+
+
+# Singleton instanca
+billing_tasks = BillingTasksService()

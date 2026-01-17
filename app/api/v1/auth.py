@@ -19,6 +19,7 @@ from ..schemas.auth import (
 )
 from ..middleware.auth import jwt_required, tenant_required
 from ...services.auth_service import auth_service, AuthError
+from ...services.security_service import rate_limit, RateLimits
 from ...models import ServiceLocation
 from ...extensions import db
 
@@ -27,6 +28,7 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 @bp.route('/register', methods=['POST'])
+@rate_limit(**RateLimits.REGISTER)
 def register():
     """
     Registracija novog servisa (tenanta).
@@ -172,6 +174,7 @@ def register():
 
 
 @bp.route('/login', methods=['POST'])
+@rate_limit(**RateLimits.LOGIN)
 def login():
     """
     Login korisnika.
@@ -394,6 +397,7 @@ def logout():
 # =============================================================================
 
 @bp.route('/send-otp', methods=['POST'])
+@rate_limit(max_requests=3, window_seconds=600, block_seconds=1800, endpoint_name='send_otp')
 def send_otp():
     """
     Salje OTP kod na telefon za verifikaciju.
@@ -812,6 +816,7 @@ def google_callback():
 # =============================================================================
 
 @bp.route('/send-verification-email', methods=['POST'])
+@rate_limit(**RateLimits.SEND_EMAIL)
 def send_verification_email():
     """
     Salje verifikacioni email na zadatu adresu.
@@ -991,6 +996,7 @@ def check_email_verified():
 
 
 @bp.route('/resend-verification-email', methods=['POST'])
+@rate_limit(max_requests=3, window_seconds=300, block_seconds=600, endpoint_name='resend_email')
 def resend_verification_email():
     """
     Ponovo salje verifikacioni email.

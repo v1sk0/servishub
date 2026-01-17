@@ -62,11 +62,11 @@ class Tenant(db.Model):
     # Status i pretplata
     status = db.Column(
         db.Enum(TenantStatus),
-        default=TenantStatus.DEMO,
+        default=TenantStatus.TRIAL,
         nullable=False,
         index=True
     )
-    demo_ends_at = db.Column(db.DateTime)            # Kada istice demo period (7 dana)
+    demo_ends_at = db.Column(db.DateTime)            # DEPRECATED - koristimo trial_ends_at
     trial_ends_at = db.Column(db.DateTime)           # Kada istice trial period (60 dana)
     subscription_ends_at = db.Column(db.DateTime)    # Kada istice pretplata
 
@@ -132,8 +132,8 @@ class Tenant(db.Model):
 
     @property
     def is_active(self):
-        """Da li tenant ima aktivan pristup platformi (DEMO, TRIAL ili ACTIVE)."""
-        return self.status in (TenantStatus.DEMO, TenantStatus.TRIAL, TenantStatus.ACTIVE)
+        """Da li tenant ima aktivan pristup platformi (TRIAL ili ACTIVE)."""
+        return self.status in (TenantStatus.TRIAL, TenantStatus.ACTIVE)
 
     @property
     def default_warranty_days(self):
@@ -142,19 +142,23 @@ class Tenant(db.Model):
         warranty_defaults = settings.get('warranty_defaults', {})
         return warranty_defaults.get('default', 45)
 
+    def set_trial(self, trial_days=60):
+        """
+        Postavlja TRIAL status sa istekom.
+        Poziva se automatski pri registraciji - 60 dana besplatno.
+        """
+        self.status = TenantStatus.TRIAL
+        self.trial_ends_at = datetime.utcnow() + timedelta(days=trial_days)
+
+    # DEPRECATED - koristimo set_trial
     def set_demo(self, demo_days=7):
-        """
-        Postavlja DEMO status sa istekom.
-        Poziva se automatski pri registraciji.
-        """
-        self.status = TenantStatus.DEMO
-        self.demo_ends_at = datetime.utcnow() + timedelta(days=demo_days)
+        """DEPRECATED: Koristi set_trial() umesto toga."""
+        self.set_trial(trial_days=60)
 
     def activate_trial(self, trial_days=60):
         """
-        Aktivira trial period za tenant.
-        Poziva se kada platform admin odobri nakon kontakta.
-        Menja DEMO -> TRIAL.
+        Aktivira/produzuje trial period za tenant.
+        Moze se koristiti i za produljivanje trial-a od strane admina.
         """
         self.status = TenantStatus.TRIAL
         self.trial_ends_at = datetime.utcnow() + timedelta(days=trial_days)
@@ -176,10 +180,7 @@ class Tenant(db.Model):
     def days_remaining(self):
         """Vraca broj preostalih dana za trenutni status."""
         now = datetime.utcnow()
-        if self.status == TenantStatus.DEMO and self.demo_ends_at:
-            delta = self.demo_ends_at - now
-            return max(0, delta.days)
-        elif self.status == TenantStatus.TRIAL and self.trial_ends_at:
+        if self.status == TenantStatus.TRIAL and self.trial_ends_at:
             delta = self.trial_ends_at - now
             return max(0, delta.days)
         elif self.status == TenantStatus.ACTIVE and self.subscription_ends_at:
@@ -302,9 +303,7 @@ class Tenant(db.Model):
 
     def _get_expiry_date(self):
         """Vraca datum isteka za trenutni status."""
-        if self.status == TenantStatus.DEMO and self.demo_ends_at:
-            return self.demo_ends_at.isoformat()
-        elif self.status == TenantStatus.TRIAL and self.trial_ends_at:
+        if self.status == TenantStatus.TRIAL and self.trial_ends_at:
             return self.trial_ends_at.isoformat()
         elif self.status == TenantStatus.ACTIVE and self.subscription_ends_at:
             return self.subscription_ends_at.isoformat()

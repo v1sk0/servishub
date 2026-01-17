@@ -92,7 +92,7 @@ def get_dashboard():
     # Statistike
     total_tenants = Tenant.query.count()
     active_tenants = Tenant.query.filter(
-        Tenant.status.in_([TenantStatus.ACTIVE, TenantStatus.TRIAL, TenantStatus.DEMO])
+        Tenant.status.in_([TenantStatus.ACTIVE, TenantStatus.TRIAL])
     ).count()
 
     # Pending KYC

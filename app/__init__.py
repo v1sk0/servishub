@@ -198,3 +198,268 @@ def _register_cli_commands(app):
         """Popunjava tabelu regiona za Srbiju."""
         # TODO: Implementirati seed regiona
         click.echo('TODO: Implementirati seed-regions komandu')
+
+    @app.cli.command('migrate-demo-to-trial')
+    def migrate_demo_to_trial_command():
+        """
+        Migrira sve postojece DEMO tenante u TRIAL status sa 60 dana.
+        Jednokratna komanda za tranziciju na novi paket sistem.
+        """
+        from .models import Tenant
+        from .models.tenant import TenantStatus
+        from datetime import datetime, timedelta
+
+        click.echo('Trazim DEMO tenante...')
+
+        demo_tenants = Tenant.query.filter(
+            Tenant.status == TenantStatus.DEMO
+        ).all()
+
+        if not demo_tenants:
+            click.echo('Nema DEMO tenanta za migraciju.')
+            return
+
+        click.echo(f'Pronadjeno {len(demo_tenants)} DEMO tenanta.')
+
+        migrated = 0
+        for tenant in demo_tenants:
+            try:
+                tenant.status = TenantStatus.TRIAL
+                tenant.trial_ends_at = datetime.utcnow() + timedelta(days=60)
+                migrated += 1
+                click.echo(f'  Migriran: {tenant.name} (ID: {tenant.id})')
+            except Exception as e:
+                click.echo(f'  Greska za {tenant.id}: {e}')
+
+        db.session.commit()
+        click.echo(f'\\nMigrirano {migrated} tenanta iz DEMO u TRIAL (60 dana).')
+        click.echo('Gotovo!')
+
+    # =========================================================================
+    # BILLING CRON COMMANDS - Za Heroku Scheduler
+    # =========================================================================
+
+    @app.cli.command('check-subscriptions')
+    def check_subscriptions_command():
+        """
+        Proverava istekle pretplate i azurira statuse.
+
+        Preporuka: Pokretati svakih sat vremena.
+        Heroku Scheduler: flask check-subscriptions
+        """
+        from .services.billing_tasks import billing_tasks
+
+        click.echo('Proveravam pretplate...')
+        stats = billing_tasks.check_subscriptions()
+
+        click.echo(f'Trial istekao: {stats["trial_expired"]}')
+        click.echo(f'Active istekao: {stats["active_expired"]}')
+        click.echo(f'Suspendovano: {stats["suspended"]}')
+
+        if stats['errors']:
+            click.echo(f'Greske: {len(stats["errors"])}')
+            for err in stats['errors'][:5]:
+                click.echo(f'  - {err}')
+
+        click.echo('Gotovo!')
+
+    @app.cli.command('process-trust-expiry')
+    def process_trust_expiry_command():
+        """
+        Procesira istekle "na rec" periode.
+
+        Preporuka: Pokretati svakih sat vremena.
+        """
+        from .services.billing_tasks import billing_tasks
+
+        click.echo('Procesiram istekle "na rec" periode...')
+        stats = billing_tasks.process_trust_expiry()
+
+        click.echo(f'Procesirano: {stats["processed"]}')
+        if stats['errors']:
+            click.echo(f'Greske: {len(stats["errors"])}')
+
+        click.echo('Gotovo!')
+
+    @app.cli.command('generate-invoices')
+    def generate_invoices_command():
+        """
+        Generise mesecne fakture za aktivne tenante.
+
+        Preporuka: Pokretati 1. u mesecu.
+        """
+        from .services.billing_tasks import billing_tasks
+
+        click.echo('Generisem fakture...')
+        stats = billing_tasks.generate_monthly_invoices()
+
+        click.echo(f'Generisano: {stats["generated"]}')
+        click.echo(f'Preskoceno (vec postoji): {stats["skipped"]}')
+        if stats['errors']:
+            click.echo(f'Greske: {len(stats["errors"])}')
+
+        click.echo('Gotovo!')
+
+    @app.cli.command('mark-overdue')
+    def mark_overdue_command():
+        """
+        Oznacava fakture koje su prekoracile rok.
+
+        Preporuka: Pokretati svaki dan.
+        """
+        from .services.billing_tasks import billing_tasks
+
+        click.echo('Oznacavam prekoracene fakture...')
+        stats = billing_tasks.mark_overdue_invoices()
+
+        click.echo(f'Oznaceno: {stats["marked"]}')
+        if stats['errors']:
+            click.echo(f'Greske: {len(stats["errors"])}')
+
+        click.echo('Gotovo!')
+
+    @app.cli.command('update-overdue-days')
+    def update_overdue_days_command():
+        """
+        Azurira dane kasnjenja za tenante sa dugom.
+
+        Preporuka: Pokretati svaki dan.
+        """
+        from .services.billing_tasks import billing_tasks
+
+        click.echo('Azuriram dane kasnjenja...')
+        stats = billing_tasks.update_overdue_days()
+
+        click.echo(f'Azurirano: {stats["updated"]}')
+        if stats['errors']:
+            click.echo(f'Greske: {len(stats["errors"])}')
+
+        click.echo('Gotovo!')
+
+    @app.cli.command('billing-daily')
+    def billing_daily_command():
+        """
+        Pokrece sve dnevne billing taskove.
+
+        Kombinuje: check-subscriptions, process-trust-expiry,
+                   mark-overdue, update-overdue-days
+
+        Preporuka: Pokretati jednom dnevno (npr. 06:00).
+        Heroku Scheduler: flask billing-daily
+        """
+        from .services.billing_tasks import billing_tasks
+
+        click.echo('=' * 50)
+        click.echo('BILLING DAILY TASKS')
+        click.echo('=' * 50)
+
+        # 1. Check subscriptions
+        click.echo('\n[1/4] Proveravam pretplate...')
+        stats1 = billing_tasks.check_subscriptions()
+        click.echo(f'  Expired: {stats1["trial_expired"] + stats1["active_expired"]}')
+        click.echo(f'  Suspended: {stats1["suspended"]}')
+
+        # 2. Process trust expiry
+        click.echo('\n[2/4] Procesiram "na rec" periode...')
+        stats2 = billing_tasks.process_trust_expiry()
+        click.echo(f'  Processed: {stats2["processed"]}')
+
+        # 3. Mark overdue
+        click.echo('\n[3/4] Oznacavam prekoracene fakture...')
+        stats3 = billing_tasks.mark_overdue_invoices()
+        click.echo(f'  Marked: {stats3["marked"]}')
+
+        # 4. Update overdue days
+        click.echo('\n[4/4] Azuriram dane kasnjenja...')
+        stats4 = billing_tasks.update_overdue_days()
+        click.echo(f'  Updated: {stats4["updated"]}')
+
+        click.echo('\n' + '=' * 50)
+        click.echo('BILLING DAILY TASKS - ZAVRSENO')
+        click.echo('=' * 50)
+
+    @app.cli.command('send-billing-emails')
+    @click.option('--type', 'email_type', type=click.Choice(['reminders', 'warnings']),
+                  default='reminders', help='Tip emailova za slanje')
+    def send_billing_emails_command(email_type):
+        """
+        Salje billing email notifikacije.
+
+        Tipovi:
+        - reminders: Podsecanje za neplacene fakture (kasnjenje 3, 7, 14 dana)
+        - warnings: Upozorenje o suspenziji (2 dana pre)
+
+        Preporuka: Pokretati svaki dan.
+        """
+        from .models import Tenant
+        from .models.representative import SubscriptionPayment
+        from .services.email_service import email_service
+        from datetime import datetime, timedelta
+
+        click.echo(f'Saljem {email_type} emailove...')
+        sent = 0
+        errors = 0
+
+        if email_type == 'reminders':
+            # Posalji podsetnik za fakture koje kasne 3, 7 i 14 dana
+            reminder_days = [3, 7, 14]
+            today = datetime.utcnow().date()
+
+            for days in reminder_days:
+                target_date = today - timedelta(days=days)
+                overdue_invoices = SubscriptionPayment.query.filter(
+                    SubscriptionPayment.status == 'OVERDUE',
+                    SubscriptionPayment.due_date == target_date
+                ).all()
+
+                for invoice in overdue_invoices:
+                    try:
+                        tenant = Tenant.query.get(invoice.tenant_id)
+                        if tenant:
+                            success = email_service.send_payment_reminder_email(
+                                email=tenant.email,
+                                tenant_name=tenant.name,
+                                invoice_number=invoice.invoice_number,
+                                amount=float(invoice.total_amount),
+                                days_overdue=days
+                            )
+                            if success:
+                                sent += 1
+                            else:
+                                errors += 1
+                    except Exception as e:
+                        click.echo(f'  Greska: {e}')
+                        errors += 1
+
+        elif email_type == 'warnings':
+            # Posalji upozorenje 2 dana pre suspenzije (dan 5 od grace perioda)
+            from .models.tenant import TenantStatus
+            today = datetime.utcnow()
+            warning_cutoff = today - timedelta(days=5)
+
+            expired_tenants = Tenant.query.filter(
+                Tenant.status == TenantStatus.EXPIRED,
+                Tenant.current_debt > 0
+            ).all()
+
+            for tenant in expired_tenants:
+                expired_at = tenant.subscription_ends_at or tenant.trial_ends_at
+                if expired_at and expired_at.date() == warning_cutoff.date():
+                    try:
+                        success = email_service.send_suspension_warning_email(
+                            email=tenant.email,
+                            tenant_name=tenant.name,
+                            amount=float(tenant.current_debt),
+                            days_until_suspension=2
+                        )
+                        if success:
+                            sent += 1
+                        else:
+                            errors += 1
+                    except Exception as e:
+                        click.echo(f'  Greska: {e}')
+                        errors += 1
+
+        click.echo(f'Poslato: {sent}')
+        click.echo(f'Gresaka: {errors}')
+        click.echo('Gotovo!')

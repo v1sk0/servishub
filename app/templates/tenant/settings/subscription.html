@@ -19,44 +19,184 @@
     </div>
 
     <div x-show="!loading" class="space-y-6">
-        <!-- Current Plan -->
-        <div class="bg-white shadow rounded-lg overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Trenutni plan</h3>
-            </div>
-            <div class="p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-2xl font-bold text-gray-900">ServisHub Pro</p>
-                        <p class="text-sm text-gray-500">3.600 RSD / mesecno</p>
-                    </div>
-                    <span class="px-4 py-2 rounded-full text-sm font-medium"
-                          :class="getStatusClass(subscription.status)"
-                          x-text="statusLabels[subscription.status]"></span>
-                </div>
 
-                <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <p class="text-sm text-gray-500">Poceo</p>
-                        <p class="text-lg font-medium text-gray-900" x-text="formatDate(subscription.started_at)"></p>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <p class="text-sm text-gray-500">Istice</p>
-                        <p class="text-lg font-medium text-gray-900" x-text="formatDate(subscription.expires_at)"></p>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <p class="text-sm text-gray-500">Preostalo</p>
-                        <p class="text-lg font-medium" :class="subscription.days_remaining > 7 ? 'text-green-600' : 'text-red-600'"
-                           x-text="subscription.days_remaining + ' dana'"></p>
+        <!-- Alert Banners -->
+        <!-- Suspended Banner -->
+        <div x-show="data.is_suspended" class="rounded-md bg-red-50 p-4 border border-red-200">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">Nalog je suspendovan</h3>
+                    <div class="mt-2 text-sm text-red-700">
+                        <p x-text="data.billing?.block_reason || 'Neplacena pretplata'"></p>
+                        <p class="mt-1">Platite dugovanje da biste nastavili sa koriscenjem servisa.</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Locations -->
+        <!-- Trust Active Banner -->
+        <div x-show="data.trust?.is_trust_active" class="rounded-md bg-amber-50 p-4 border border-amber-200">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-amber-800">"Na rec" - aktivno</h3>
+                    <div class="mt-2 text-sm text-amber-700">
+                        <p>Preostalo vreme: <strong x-text="data.trust?.trust_hours_remaining + ' sati'"></strong></p>
+                        <p class="mt-1">Platite pre isteka da izbegnete dodatno umanjenje Trust Score-a.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expired Banner -->
+        <div x-show="data.is_expired && !data.is_suspended" class="rounded-md bg-yellow-50 p-4 border border-yellow-200">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-yellow-800">Pretplata je istekla</h3>
+                    <div class="mt-2 text-sm text-yellow-700">
+                        <p>Imate 7 dana grace perioda pre suspenzije naloga.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Status + Trust Score Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Current Plan -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Trenutni plan</h3>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-2xl font-bold text-gray-900">ServisHub Pro</p>
+                            <p class="text-sm text-gray-500" x-text="formatPrice(data.pricing?.monthly_total) + ' ' + (data.pricing?.currency || 'RSD') + ' / mesecno'"></p>
+                        </div>
+                        <span class="px-4 py-2 rounded-full text-sm font-medium"
+                              :class="getStatusClass(data.status)"
+                              x-text="statusLabels[data.status]"></span>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-sm text-gray-500">Status od</p>
+                            <p class="text-lg font-medium text-gray-900" x-text="getStatusStartDate()"></p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-sm text-gray-500">Istice</p>
+                            <p class="text-lg font-medium text-gray-900" x-text="getExpirationDate()"></p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-sm text-gray-500">Preostalo</p>
+                            <p class="text-lg font-medium" :class="data.days_remaining > 7 ? 'text-green-600' : 'text-red-600'"
+                               x-text="(data.days_remaining || 0) + ' dana'"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trust Score -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Trust Score</h3>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <p class="text-4xl font-bold" :class="getTrustScoreColor(data.trust?.score)">
+                                <span x-text="data.trust?.score || 100"></span>
+                            </p>
+                            <p class="text-sm mt-1" :class="getTrustLevelColor(data.trust?.level)" x-text="getTrustLevelLabel(data.trust?.level)"></p>
+                        </div>
+                        <div class="w-24 h-24">
+                            <svg viewBox="0 0 100 100" class="transform -rotate-90">
+                                <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="10"/>
+                                <circle cx="50" cy="50" r="40" fill="none" :stroke="getTrustScoreStrokeColor(data.trust?.score)" stroke-width="10"
+                                        :stroke-dasharray="2 * Math.PI * 40"
+                                        :stroke-dashoffset="2 * Math.PI * 40 * (1 - (data.trust?.score || 100) / 100)"
+                                        stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Uzastopne uplate na vreme</span>
+                            <span class="font-medium" x-text="data.trust?.consecutive_on_time_payments || 0"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Ukupno "na rec" aktivacija</span>
+                            <span class="font-medium" x-text="data.trust?.trust_activation_count || 0"></span>
+                        </div>
+                    </div>
+
+                    <!-- Na Rec Button -->
+                    <div x-show="data.trust?.can_activate_trust && data.is_suspended" class="mt-6 pt-4 border-t">
+                        <button @click="activateTrust()"
+                                :disabled="trustLoading"
+                                class="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50">
+                            <svg x-show="trustLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            Ukljuci "Na rec" (48h)
+                        </button>
+                        <p class="mt-2 text-xs text-gray-500 text-center">
+                            Trust Score ce biti umanjen za 15 poena
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Billing Info (if has debt) -->
+        <div x-show="data.billing?.has_debt" class="bg-white shadow rounded-lg overflow-hidden border-l-4 border-red-500">
+            <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+                <h3 class="text-lg font-medium text-red-800">Dugovanje</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-red-50 rounded-lg p-4">
+                        <p class="text-sm text-red-600">Trenutni dug</p>
+                        <p class="text-2xl font-bold text-red-700" x-text="formatPrice(data.billing?.current_debt) + ' RSD'"></p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500">Dana kasnjenja</p>
+                        <p class="text-2xl font-bold text-gray-900" x-text="data.billing?.days_overdue || 0"></p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500">Poslednja uplata</p>
+                        <p class="text-lg font-medium text-gray-900" x-text="formatDate(data.billing?.last_payment_at) || 'Nikad'"></p>
+                    </div>
+                </div>
+                <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">
+                        <strong>Uplatni racun:</strong> 265-1234567-89<br>
+                        <strong>Poziv na broj:</strong> <span x-text="'SH-' + (data.tenant_id || '')"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Locations & Pricing -->
         <div class="bg-white shadow rounded-lg overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Lokacije</h3>
+                <h3 class="text-lg font-medium text-gray-900">Cenovnik</h3>
             </div>
             <div class="p-6">
                 <div class="space-y-4">
@@ -65,20 +205,31 @@
                             <p class="text-sm font-medium text-gray-900">Bazni paket</p>
                             <p class="text-sm text-gray-500">1 lokacija ukljucena</p>
                         </div>
-                        <p class="text-sm font-medium text-gray-900">3.600 RSD</p>
+                        <p class="text-sm font-medium text-gray-900" x-text="formatPrice(data.pricing?.base_price) + ' RSD'"></p>
                     </div>
-                    <template x-for="(loc, i) in subscription.additional_locations" :key="i">
+                    <template x-if="data.pricing?.additional_locations > 0">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm font-medium text-gray-900" x-text="loc.name"></p>
-                                <p class="text-sm text-gray-500">Dodatna lokacija</p>
+                                <p class="text-sm font-medium text-gray-900">Dodatne lokacije</p>
+                                <p class="text-sm text-gray-500" x-text="data.pricing?.additional_locations + ' x ' + formatPrice(data.pricing?.location_price) + ' RSD'"></p>
                             </div>
-                            <p class="text-sm font-medium text-gray-900">1.800 RSD</p>
+                            <p class="text-sm font-medium text-gray-900" x-text="formatPrice(data.pricing?.additional_locations * data.pricing?.location_price) + ' RSD'"></p>
+                        </div>
+                    </template>
+                    <template x-if="data.pricing?.has_custom_pricing">
+                        <div class="flex items-center justify-between text-green-600">
+                            <div>
+                                <p class="text-sm font-medium">Specijalna cena</p>
+                                <p class="text-sm opacity-75" x-text="data.pricing?.custom_pricing?.reason || 'Ugovoreni popust'"></p>
+                            </div>
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                            </svg>
                         </div>
                     </template>
                     <div class="pt-4 border-t flex items-center justify-between">
                         <p class="text-base font-medium text-gray-900">Ukupno mesecno</p>
-                        <p class="text-lg font-bold text-gray-900" x-text="formatPrice(subscription.monthly_total) + ' RSD'"></p>
+                        <p class="text-xl font-bold text-gray-900" x-text="formatPrice(data.pricing?.monthly_total) + ' RSD'"></p>
                     </div>
                 </div>
             </div>
@@ -93,22 +244,24 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datum</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Broj fakture</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Iznos</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rok</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <template x-for="payment in payments" :key="payment.id">
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="formatDate(payment.created_at)"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="payment.invoice_number"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(payment.period_start) + ' - ' + formatDate(payment.period_end)"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="formatPrice(payment.total_amount) + ' RSD'"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(payment.due_date)"></td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="px-2 py-1 text-xs font-medium rounded-full"
-                                          :class="payment.status === 'PAID' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
-                                          x-text="payment.status === 'PAID' ? 'Placeno' : 'Na cekanju'"></span>
+                                          :class="getPaymentStatusClass(payment.status)"
+                                          x-text="paymentStatusLabels[payment.status]"></span>
                                 </td>
                             </tr>
                         </template>
@@ -126,30 +279,51 @@
 function subscriptionPage() {
     return {
         loading: true,
-        subscription: {
+        trustLoading: false,
+        data: {
             status: 'TRIAL',
-            started_at: null,
-            expires_at: null,
+            is_demo: false,
+            is_trial: true,
+            is_active: false,
+            is_expired: false,
+            is_suspended: false,
             days_remaining: 0,
-            additional_locations: [],
-            monthly_total: 3600
+            pricing: {},
+            billing: {},
+            trust: {}
         },
         payments: [],
 
         statusLabels: {
+            'DEMO': 'Demo period',
             'TRIAL': 'Promo period',
             'ACTIVE': 'Aktivna',
             'EXPIRED': 'Istekla',
-            'SUSPENDED': 'Suspendovana'
+            'SUSPENDED': 'Suspendovana',
+            'CANCELLED': 'Otkazana'
+        },
+
+        paymentStatusLabels: {
+            'PENDING': 'Na cekanju',
+            'PAID': 'Placeno',
+            'OVERDUE': 'Kasni',
+            'CANCELLED': 'Stornirano',
+            'REFUNDED': 'Refundirano'
         },
 
         async loadSubscription() {
             try {
-                const response = await api('/api/v1/tenant/subscription');
-                if (response.ok) {
-                    const data = await response.json();
-                    this.subscription = data.subscription || this.subscription;
-                    this.payments = data.payments || [];
+                const [subRes, payRes] = await Promise.all([
+                    api('/api/v1/tenant/subscription'),
+                    api('/api/v1/tenant/subscription/payments?limit=10')
+                ]);
+
+                if (subRes.ok) {
+                    this.data = await subRes.json();
+                }
+                if (payRes.ok) {
+                    const payData = await payRes.json();
+                    this.payments = payData.payments || [];
                 }
             } catch (e) {
                 console.error('Failed to load subscription:', e);
@@ -158,18 +332,112 @@ function subscriptionPage() {
             }
         },
 
+        async activateTrust() {
+            if (!confirm('Da li ste sigurni da zelite da aktivirate "Na rec"?\n\nVas Trust Score ce biti umanjen za 15 poena.\nImate 48 sati da platite.')) {
+                return;
+            }
+
+            this.trustLoading = true;
+            try {
+                const res = await api('/api/v1/tenant/subscription/trust-activate', {
+                    method: 'POST'
+                });
+
+                if (res.ok) {
+                    const result = await res.json();
+                    showNotification('success', result.message);
+                    await this.loadSubscription();
+                } else {
+                    const err = await res.json();
+                    showNotification('error', err.error || 'Greska pri aktivaciji');
+                }
+            } catch (e) {
+                showNotification('error', 'Greska pri aktivaciji');
+            } finally {
+                this.trustLoading = false;
+            }
+        },
+
         getStatusClass(status) {
             const classes = {
+                'DEMO': 'bg-purple-100 text-purple-800',
                 'TRIAL': 'bg-blue-100 text-blue-800',
                 'ACTIVE': 'bg-green-100 text-green-800',
-                'EXPIRED': 'bg-red-100 text-red-800',
-                'SUSPENDED': 'bg-red-100 text-red-800'
+                'EXPIRED': 'bg-yellow-100 text-yellow-800',
+                'SUSPENDED': 'bg-red-100 text-red-800',
+                'CANCELLED': 'bg-gray-100 text-gray-800'
             };
             return classes[status] || 'bg-gray-100 text-gray-800';
         },
 
+        getPaymentStatusClass(status) {
+            const classes = {
+                'PENDING': 'bg-yellow-100 text-yellow-800',
+                'PAID': 'bg-green-100 text-green-800',
+                'OVERDUE': 'bg-red-100 text-red-800',
+                'CANCELLED': 'bg-gray-100 text-gray-800',
+                'REFUNDED': 'bg-blue-100 text-blue-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        },
+
+        getTrustScoreColor(score) {
+            if (score >= 80) return 'text-green-600';
+            if (score >= 60) return 'text-blue-600';
+            if (score >= 40) return 'text-yellow-600';
+            if (score >= 20) return 'text-orange-600';
+            return 'text-red-600';
+        },
+
+        getTrustScoreStrokeColor(score) {
+            if (score >= 80) return '#16a34a';
+            if (score >= 60) return '#2563eb';
+            if (score >= 40) return '#ca8a04';
+            if (score >= 20) return '#ea580c';
+            return '#dc2626';
+        },
+
+        getTrustLevelColor(level) {
+            const colors = {
+                'EXCELLENT': 'text-green-600',
+                'GOOD': 'text-blue-600',
+                'WARNING': 'text-yellow-600',
+                'RISKY': 'text-orange-600',
+                'CRITICAL': 'text-red-600'
+            };
+            return colors[level] || 'text-gray-600';
+        },
+
+        getTrustLevelLabel(level) {
+            const labels = {
+                'EXCELLENT': 'Odlican',
+                'GOOD': 'Dobar',
+                'WARNING': 'Upozorenje',
+                'RISKY': 'Rizican',
+                'CRITICAL': 'Kritican'
+            };
+            return labels[level] || level;
+        },
+
+        getStatusStartDate() {
+            if (this.data.is_demo && this.data.demo_ends_at) {
+                // Demo started 7 days before end
+                return this.formatDate(this.data.created_at);
+            }
+            if (this.data.is_trial && this.data.trial_ends_at) {
+                return this.formatDate(this.data.trial_ends_at);
+            }
+            return this.formatDate(this.data.created_at) || '-';
+        },
+
+        getExpirationDate() {
+            if (this.data.is_demo) return this.formatDate(this.data.demo_ends_at);
+            if (this.data.is_trial) return this.formatDate(this.data.trial_ends_at);
+            return this.formatDate(this.data.subscription_ends_at) || '-';
+        },
+
         formatPrice(price) {
-            if (!price) return '0';
+            if (!price && price !== 0) return '0';
             return new Intl.NumberFormat('sr-RS').format(price);
         },
 

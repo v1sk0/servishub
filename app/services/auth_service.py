@@ -115,7 +115,7 @@ class AuthService:
                 raise AuthError('Preduzece sa ovim PIB-om vec postoji', 409)
 
         try:
-            # Kreiraj tenant u DEMO statusu (7 dana)
+            # Kreiraj tenant u TRIAL statusu (60 dana besplatno)
             tenant = Tenant(
                 name=company_name,
                 email=company_email,
@@ -128,7 +128,7 @@ class AuthService:
                 bank_account=bank_account,
                 latitude=company_latitude,
                 longitude=company_longitude,
-                status=TenantStatus.DEMO,
+                status=TenantStatus.TRIAL,
                 settings_json={
                     'warranty_defaults': {
                         'default': current_app.config.get('DEFAULT_WARRANTY_DAYS', 45)
@@ -139,8 +139,8 @@ class AuthService:
             db.session.add(tenant)
             db.session.flush()  # Da dobijemo tenant.id
 
-            # Postavi demo period (7 dana)
-            tenant.set_demo(demo_days=7)
+            # Postavi trial period (60 dana besplatno)
+            tenant.set_trial(trial_days=60)
 
             # Kreiraj prvu lokaciju
             location = ServiceLocation(

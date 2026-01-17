@@ -316,5 +316,402 @@ Ovaj email je automatski generisan, molimo ne odgovarajte na njega.
         return PendingEmailVerification.can_resend(email)
 
 
+    # =========================================================================
+    # BILLING EMAILS
+    # =========================================================================
+
+    def send_invoice_email(self, email: str, tenant_name: str, invoice_number: str,
+                           amount: float, due_date: str, period: str) -> bool:
+        """
+        Salje email sa novom fakturom.
+
+        Args:
+            email: Email adresa tenanta
+            tenant_name: Naziv servisa
+            invoice_number: Broj fakture
+            amount: Iznos u RSD
+            due_date: Rok placanja (formatirano)
+            period: Period fakture (npr. "Januar 2026")
+
+        Returns:
+            bool: True ako je uspesno poslato
+        """
+        subject = f"ServisHub - Nova faktura {invoice_number}"
+        html_content = self._build_invoice_email_html(
+            tenant_name, invoice_number, amount, due_date, period
+        )
+        text_content = self._build_invoice_email_text(
+            tenant_name, invoice_number, amount, due_date, period
+        )
+        return self._send_email(email, subject, html_content, text_content)
+
+    def send_payment_reminder_email(self, email: str, tenant_name: str,
+                                    invoice_number: str, amount: float,
+                                    days_overdue: int) -> bool:
+        """
+        Salje podsetnik za neplacenu fakturu.
+
+        Args:
+            email: Email adresa
+            tenant_name: Naziv servisa
+            invoice_number: Broj fakture
+            amount: Iznos
+            days_overdue: Broj dana kasnjenja
+
+        Returns:
+            bool: True ako je uspesno
+        """
+        subject = f"ServisHub - Podsetnik za uplatu {invoice_number}"
+        html_content = self._build_reminder_email_html(
+            tenant_name, invoice_number, amount, days_overdue
+        )
+        text_content = self._build_reminder_email_text(
+            tenant_name, invoice_number, amount, days_overdue
+        )
+        return self._send_email(email, subject, html_content, text_content)
+
+    def send_suspension_warning_email(self, email: str, tenant_name: str,
+                                      amount: float, days_until_suspension: int) -> bool:
+        """
+        Salje upozorenje o skoroj suspenziji.
+
+        Args:
+            email: Email adresa
+            tenant_name: Naziv servisa
+            amount: Ukupno dugovanje
+            days_until_suspension: Dana do suspenzije
+
+        Returns:
+            bool: True ako je uspesno
+        """
+        subject = "ServisHub - VAZNO: Suspenzija naloga za nekoliko dana"
+        html_content = self._build_suspension_warning_html(
+            tenant_name, amount, days_until_suspension
+        )
+        text_content = self._build_suspension_warning_text(
+            tenant_name, amount, days_until_suspension
+        )
+        return self._send_email(email, subject, html_content, text_content)
+
+    def send_suspension_notice_email(self, email: str, tenant_name: str,
+                                     amount: float, reason: str) -> bool:
+        """
+        Salje obavestenje o suspenziji naloga.
+
+        Args:
+            email: Email adresa
+            tenant_name: Naziv servisa
+            amount: Ukupno dugovanje
+            reason: Razlog suspenzije
+
+        Returns:
+            bool: True ako je uspesno
+        """
+        subject = "ServisHub - Nalog je suspendovan"
+        html_content = self._build_suspension_notice_html(tenant_name, amount, reason)
+        text_content = self._build_suspension_notice_text(tenant_name, amount, reason)
+        return self._send_email(email, subject, html_content, text_content)
+
+    def send_payment_confirmation_email(self, email: str, tenant_name: str,
+                                        invoice_number: str, amount: float) -> bool:
+        """
+        Salje potvrdu o primljenoj uplati.
+
+        Args:
+            email: Email adresa
+            tenant_name: Naziv servisa
+            invoice_number: Broj fakture
+            amount: Placeni iznos
+
+        Returns:
+            bool: True ako je uspesno
+        """
+        subject = f"ServisHub - Potvrda uplate {invoice_number}"
+        html_content = self._build_payment_confirmation_html(
+            tenant_name, invoice_number, amount
+        )
+        text_content = self._build_payment_confirmation_text(
+            tenant_name, invoice_number, amount
+        )
+        return self._send_email(email, subject, html_content, text_content)
+
+    def _send_email(self, to_email: str, subject: str,
+                    html_content: str, text_content: str) -> bool:
+        """
+        Interni helper za slanje emaila.
+
+        Returns:
+            bool: True ako uspesno
+        """
+        # U development modu, samo loguj
+        if not self.api_key or os.environ.get('FLASK_ENV') == 'development':
+            print(f"[DEV EMAIL] To: {to_email}")
+            print(f"[DEV EMAIL] Subject: {subject}")
+            return True
+
+        try:
+            payload = {
+                "personalizations": [
+                    {
+                        "to": [{"email": to_email}],
+                        "subject": subject
+                    }
+                ],
+                "from": {
+                    "email": self.from_email,
+                    "name": self.from_name
+                },
+                "content": [
+                    {"type": "text/plain", "value": text_content},
+                    {"type": "text/html", "value": html_content}
+                ]
+            }
+
+            response = requests.post(
+                self.API_URL,
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                },
+                timeout=10
+            )
+
+            return response.status_code in [200, 201, 202]
+
+        except Exception as e:
+            print(f"[EMAIL ERROR] {str(e)}")
+            return False
+
+    def _build_invoice_email_html(self, tenant_name: str, invoice_number: str,
+                                  amount: float, due_date: str, period: str) -> str:
+        """Gradi HTML za fakturu email."""
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"></head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+                <h1 style="color: white; margin: 0;">ServisHub</h1>
+                <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Nova faktura</p>
+            </div>
+            <div style="background: #f9fafb; padding: 30px; border: 1px solid #e5e7eb;">
+                <h2 style="margin-top: 0;">Postovani {tenant_name},</h2>
+                <p>Generisana je nova faktura za vasu pretplatu na ServisHub platformi.</p>
+
+                <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="padding: 8px 0; color: #6b7280;">Broj fakture:</td><td style="padding: 8px 0; text-align: right; font-weight: 600;">{invoice_number}</td></tr>
+                        <tr><td style="padding: 8px 0; color: #6b7280;">Period:</td><td style="padding: 8px 0; text-align: right;">{period}</td></tr>
+                        <tr><td style="padding: 8px 0; color: #6b7280;">Rok placanja:</td><td style="padding: 8px 0; text-align: right;">{due_date}</td></tr>
+                        <tr style="border-top: 2px solid #e5e7eb;"><td style="padding: 12px 0; font-weight: 600;">UKUPNO:</td><td style="padding: 12px 0; text-align: right; font-size: 20px; font-weight: 700; color: #667eea;">{amount:,.0f} RSD</td></tr>
+                    </table>
+                </div>
+
+                <p><strong>Uplatni racun:</strong> 265-1234567-89</p>
+                <p><strong>Poziv na broj:</strong> {invoice_number}</p>
+
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{self.frontend_url}/subscription" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: 600;">Pogledaj detalje</a>
+                </div>
+            </div>
+            <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
+                <p>&copy; {datetime.now().year} ServisHub</p>
+            </div>
+        </body>
+        </html>
+        """
+
+    def _build_invoice_email_text(self, tenant_name: str, invoice_number: str,
+                                  amount: float, due_date: str, period: str) -> str:
+        """Gradi text za fakturu email."""
+        return f"""
+ServisHub - Nova faktura
+
+Postovani {tenant_name},
+
+Generisana je nova faktura za vasu pretplatu.
+
+Broj fakture: {invoice_number}
+Period: {period}
+Rok placanja: {due_date}
+UKUPNO: {amount:,.0f} RSD
+
+Uplatni racun: 265-1234567-89
+Poziv na broj: {invoice_number}
+
+---
+(c) {datetime.now().year} ServisHub
+        """
+
+    def _build_reminder_email_html(self, tenant_name: str, invoice_number: str,
+                                   amount: float, days_overdue: int) -> str:
+        """Gradi HTML za podsetnik."""
+        urgency_color = '#dc2626' if days_overdue > 7 else '#f59e0b'
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"></head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: {urgency_color}; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+                <h1 style="color: white; margin: 0;">ServisHub</h1>
+                <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Podsetnik za uplatu</p>
+            </div>
+            <div style="background: #f9fafb; padding: 30px; border: 1px solid #e5e7eb;">
+                <h2 style="margin-top: 0;">Postovani {tenant_name},</h2>
+                <p>Zelimo da vas podsetimo da faktura <strong>{invoice_number}</strong> kasni <strong>{days_overdue} dana</strong>.</p>
+
+                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                    <p style="margin: 0; color: #991b1b;"><strong>Dugovanje: {amount:,.0f} RSD</strong></p>
+                </div>
+
+                <p>Molimo vas da uplatite sto pre kako biste izbegli suspenziju naloga.</p>
+
+                <p><strong>Uplatni racun:</strong> 265-1234567-89<br><strong>Poziv na broj:</strong> {invoice_number}</p>
+            </div>
+        </body>
+        </html>
+        """
+
+    def _build_reminder_email_text(self, tenant_name: str, invoice_number: str,
+                                   amount: float, days_overdue: int) -> str:
+        """Gradi text za podsetnik."""
+        return f"""
+ServisHub - Podsetnik za uplatu
+
+Postovani {tenant_name},
+
+Faktura {invoice_number} kasni {days_overdue} dana.
+Dugovanje: {amount:,.0f} RSD
+
+Molimo uplatite sto pre.
+
+Uplatni racun: 265-1234567-89
+Poziv na broj: {invoice_number}
+        """
+
+    def _build_suspension_warning_html(self, tenant_name: str, amount: float,
+                                       days_until: int) -> str:
+        """Gradi HTML za upozorenje o suspenziji."""
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"></head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: #dc2626; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+                <h1 style="color: white; margin: 0;">VAZNO OBAVESTENJE</h1>
+            </div>
+            <div style="background: #fef2f2; padding: 30px; border: 1px solid #fecaca;">
+                <h2 style="margin-top: 0; color: #991b1b;">Postovani {tenant_name},</h2>
+                <p style="color: #991b1b; font-size: 18px;"><strong>Vas nalog ce biti suspendovan za {days_until} dana!</strong></p>
+                <p>Ukupno dugovanje: <strong>{amount:,.0f} RSD</strong></p>
+                <p>Molimo vas da hitno izmirte dugovanje kako biste nastavili sa koriscenjem ServisHub platforme.</p>
+                <p><strong>Uplatni racun:</strong> 265-1234567-89</p>
+            </div>
+        </body>
+        </html>
+        """
+
+    def _build_suspension_warning_text(self, tenant_name: str, amount: float,
+                                       days_until: int) -> str:
+        return f"""
+VAZNO OBAVESTENJE - ServisHub
+
+Postovani {tenant_name},
+
+Vas nalog ce biti suspendovan za {days_until} dana!
+Ukupno dugovanje: {amount:,.0f} RSD
+
+Molimo hitno izmirte dugovanje.
+Uplatni racun: 265-1234567-89
+        """
+
+    def _build_suspension_notice_html(self, tenant_name: str, amount: float,
+                                      reason: str) -> str:
+        """Gradi HTML za obavestenje o suspenziji."""
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"></head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: #7f1d1d; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+                <h1 style="color: white; margin: 0;">Nalog Suspendovan</h1>
+            </div>
+            <div style="background: #fef2f2; padding: 30px; border: 1px solid #fecaca;">
+                <h2 style="margin-top: 0; color: #991b1b;">Postovani {tenant_name},</h2>
+                <p>Vas nalog na ServisHub platformi je suspendovan.</p>
+                <p><strong>Razlog:</strong> {reason}</p>
+                <p><strong>Dugovanje:</strong> {amount:,.0f} RSD</p>
+                <hr style="border: none; border-top: 1px solid #fecaca;">
+                <p>Da biste reaktivirali nalog, molimo uplatite dugovanje ili nas kontaktirajte za dogovor.</p>
+                <p><strong>Uplatni racun:</strong> 265-1234567-89</p>
+                <p><strong>Kontakt:</strong> podrska@servishub.rs</p>
+            </div>
+        </body>
+        </html>
+        """
+
+    def _build_suspension_notice_text(self, tenant_name: str, amount: float,
+                                      reason: str) -> str:
+        return f"""
+ServisHub - Nalog Suspendovan
+
+Postovani {tenant_name},
+
+Vas nalog je suspendovan.
+Razlog: {reason}
+Dugovanje: {amount:,.0f} RSD
+
+Za reaktivaciju uplatite dugovanje ili nas kontaktirajte.
+Uplatni racun: 265-1234567-89
+Kontakt: podrska@servishub.rs
+        """
+
+    def _build_payment_confirmation_html(self, tenant_name: str,
+                                         invoice_number: str, amount: float) -> str:
+        """Gradi HTML za potvrdu uplate."""
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"></head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: #059669; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+                <h1 style="color: white; margin: 0;">Uplata Primljena</h1>
+            </div>
+            <div style="background: #ecfdf5; padding: 30px; border: 1px solid #a7f3d0;">
+                <h2 style="margin-top: 0; color: #065f46;">Postovani {tenant_name},</h2>
+                <p>Vasa uplata je uspesno evidentirana!</p>
+                <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                    <p style="margin: 0;"><strong>Faktura:</strong> {invoice_number}</p>
+                    <p style="margin: 10px 0 0 0;"><strong>Iznos:</strong> {amount:,.0f} RSD</p>
+                </div>
+                <p>Hvala vam na poverenju!</p>
+            </div>
+            <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
+                <p>&copy; {datetime.now().year} ServisHub</p>
+            </div>
+        </body>
+        </html>
+        """
+
+    def _build_payment_confirmation_text(self, tenant_name: str,
+                                         invoice_number: str, amount: float) -> str:
+        return f"""
+ServisHub - Uplata Primljena
+
+Postovani {tenant_name},
+
+Vasa uplata je uspesno evidentirana!
+
+Faktura: {invoice_number}
+Iznos: {amount:,.0f} RSD
+
+Hvala vam na poverenju!
+
+---
+(c) {datetime.now().year} ServisHub
+        """
+
+
 # Singleton instanca servisa
 email_service = EmailService()
