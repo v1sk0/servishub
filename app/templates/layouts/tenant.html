@@ -434,15 +434,6 @@
         background: rgba(255, 255, 255, 0.08) !important;
     }
 </style>
-<script>
-    // Apply theme immediately to prevent flash
-    (function() {
-        var theme = localStorage.getItem('servishub-theme');
-        if (theme === 'glass') {
-            document.documentElement.classList.add('glass-theme');
-        }
-    })();
-</script>
 {% endblock %}
 
 {% block body %}

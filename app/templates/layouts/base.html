@@ -35,6 +35,14 @@
 
     <!-- Custom styles -->
     <style>
+        /* Prevent FOUC (Flash of Unstyled Content) */
+        html:not(.theme-ready) body {
+            visibility: hidden;
+        }
+        html.theme-ready body {
+            visibility: visible;
+        }
+
         [x-cloak] { display: none !important; }
 
         .fade-in {
@@ -219,13 +227,16 @@
         }
     </style>
 
-    <!-- Theme initialization (before Alpine loads) -->
+    <!-- Theme initialization (before Alpine loads) - prevents FOUC -->
     <script>
         (function() {
-            const theme = localStorage.getItem('servishub-theme') || 'light';
+            var root = document.documentElement;
+            var theme = localStorage.getItem('servishub-theme') || 'light';
             if (theme === 'glass') {
-                document.documentElement.classList.add('glass-theme');
+                root.classList.add('glass-theme');
             }
+            // Mark theme as ready to show body immediately
+            root.classList.add('theme-ready');
         })();
     </script>
 
