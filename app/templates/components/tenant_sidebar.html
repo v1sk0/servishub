@@ -218,20 +218,21 @@ function sidebarData() {
         },
 
         getPlanName() {
+            // Active statuses show package name
+            if (this.subscriptionStatus === 'DEMO' || this.subscriptionStatus === 'TRIAL' || this.subscriptionStatus === 'ACTIVE') {
+                return 'ServisHub Pro';
+            }
+            // Inactive statuses show status
             const names = {
-                'DEMO': 'Demo',
-                'TRIAL': 'Promo',
-                'ACTIVE': 'Standard',
-                'GRACE': 'Neplacen',
-                'SUSPENDED': 'Blokiran',
-                'CANCELLED': 'Otkazan'
+                'GRACE': 'Neplaceno',
+                'SUSPENDED': 'Suspendovano',
+                'CANCELLED': 'Otkazano'
             };
             return names[this.subscriptionStatus] || this.subscriptionStatus;
         },
 
         getPlanLabel() {
-            // Always show "Pretplata" as label
-            return 'Pretplata';
+            return 'Licenca';
         },
 
         getWidgetClass() {
