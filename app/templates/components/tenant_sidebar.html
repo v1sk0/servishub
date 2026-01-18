@@ -205,7 +205,7 @@ function sidebarData() {
                     this.subscriptionStatus = data.status;
                     this.daysRemaining = data.days_remaining;
                     this.graceDaysRemaining = data.grace_days_remaining || 0;
-                    this.locationCount = data.pricing?.location_count || 1;
+                    this.locationCount = data.pricing?.locations_count || 1;
                     // Calculate total days based on plan type
                     if (data.status === 'DEMO') this.totalDays = 7;
                     else if (data.status === 'TRIAL') this.totalDays = 14;
@@ -218,9 +218,10 @@ function sidebarData() {
         },
 
         getPlanName() {
-            // Active statuses show package name
+            // Active statuses show package name with location count
             if (this.subscriptionStatus === 'DEMO' || this.subscriptionStatus === 'TRIAL' || this.subscriptionStatus === 'ACTIVE') {
-                return 'ServisHub Pro';
+                const lokacija = this.locationCount === 1 ? 'lokacija' : 'lokacije';
+                return `Bazni paket (${this.locationCount} ${lokacija})`;
             }
             // Inactive statuses show status
             const names = {
