@@ -720,44 +720,137 @@
 
                 <!-- Working Hours Sub-tab -->
                 <div x-show="publicSubTab === 'hours'" class="space-y-4">
-                    <p class="text-sm text-gray-600 mb-4">Unesite radno vreme za svaki dan u nedelji (npr. "09:00-18:00" ili "Zatvoreno")</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="flex items-center gap-4">
+                    <p class="text-sm text-gray-600 mb-4">Podesite radno vreme za svaki dan. Obelezite "Zatvoreno" ako ne radite taj dan.</p>
+
+                    <div class="space-y-3">
+                        <!-- Monday -->
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                             <span class="w-24 text-sm font-medium text-gray-700">Ponedeljak</span>
-                            <input type="text" x-model="publicProfile.working_hours.mon" placeholder="09:00-18:00"
-                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                            <input type="time" x-model="publicProfile.working_hours.mon_open"
+                                   :disabled="publicProfile.working_hours.mon_closed"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <span class="text-gray-500">-</span>
+                            <input type="time" x-model="publicProfile.working_hours.mon_close"
+                                   :disabled="publicProfile.working_hours.mon_closed"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <label class="flex items-center gap-2 ml-4">
+                                <input type="checkbox" x-model="publicProfile.working_hours.mon_closed"
+                                       class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                                <span class="text-sm text-gray-600">Zatvoreno</span>
+                            </label>
                         </div>
-                        <div class="flex items-center gap-4">
+
+                        <!-- Tuesday -->
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                             <span class="w-24 text-sm font-medium text-gray-700">Utorak</span>
-                            <input type="text" x-model="publicProfile.working_hours.tue" placeholder="09:00-18:00"
-                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                            <input type="time" x-model="publicProfile.working_hours.tue_open"
+                                   :disabled="publicProfile.working_hours.tue_closed"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <span class="text-gray-500">-</span>
+                            <input type="time" x-model="publicProfile.working_hours.tue_close"
+                                   :disabled="publicProfile.working_hours.tue_closed"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <label class="flex items-center gap-2 ml-4">
+                                <input type="checkbox" x-model="publicProfile.working_hours.tue_closed"
+                                       class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                                <span class="text-sm text-gray-600">Zatvoreno</span>
+                            </label>
                         </div>
-                        <div class="flex items-center gap-4">
+
+                        <!-- Wednesday -->
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                             <span class="w-24 text-sm font-medium text-gray-700">Sreda</span>
-                            <input type="text" x-model="publicProfile.working_hours.wed" placeholder="09:00-18:00"
-                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                            <input type="time" x-model="publicProfile.working_hours.wed_open"
+                                   :disabled="publicProfile.working_hours.wed_closed"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <span class="text-gray-500">-</span>
+                            <input type="time" x-model="publicProfile.working_hours.wed_close"
+                                   :disabled="publicProfile.working_hours.wed_closed"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <label class="flex items-center gap-2 ml-4">
+                                <input type="checkbox" x-model="publicProfile.working_hours.wed_closed"
+                                       class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                                <span class="text-sm text-gray-600">Zatvoreno</span>
+                            </label>
                         </div>
-                        <div class="flex items-center gap-4">
+
+                        <!-- Thursday -->
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                             <span class="w-24 text-sm font-medium text-gray-700">Cetvrtak</span>
-                            <input type="text" x-model="publicProfile.working_hours.thu" placeholder="09:00-18:00"
-                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                            <input type="time" x-model="publicProfile.working_hours.thu_open"
+                                   :disabled="publicProfile.working_hours.thu_closed"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <span class="text-gray-500">-</span>
+                            <input type="time" x-model="publicProfile.working_hours.thu_close"
+                                   :disabled="publicProfile.working_hours.thu_closed"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <label class="flex items-center gap-2 ml-4">
+                                <input type="checkbox" x-model="publicProfile.working_hours.thu_closed"
+                                       class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                                <span class="text-sm text-gray-600">Zatvoreno</span>
+                            </label>
                         </div>
-                        <div class="flex items-center gap-4">
+
+                        <!-- Friday -->
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                             <span class="w-24 text-sm font-medium text-gray-700">Petak</span>
-                            <input type="text" x-model="publicProfile.working_hours.fri" placeholder="09:00-18:00"
-                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                            <input type="time" x-model="publicProfile.working_hours.fri_open"
+                                   :disabled="publicProfile.working_hours.fri_closed"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <span class="text-gray-500">-</span>
+                            <input type="time" x-model="publicProfile.working_hours.fri_close"
+                                   :disabled="publicProfile.working_hours.fri_closed"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <label class="flex items-center gap-2 ml-4">
+                                <input type="checkbox" x-model="publicProfile.working_hours.fri_closed"
+                                       class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                                <span class="text-sm text-gray-600">Zatvoreno</span>
+                            </label>
                         </div>
-                        <div class="flex items-center gap-4">
+
+                        <!-- Saturday -->
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                             <span class="w-24 text-sm font-medium text-gray-700">Subota</span>
-                            <input type="text" x-model="publicProfile.working_hours.sat" placeholder="09:00-14:00"
-                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                            <input type="time" x-model="publicProfile.working_hours.sat_open"
+                                   :disabled="publicProfile.working_hours.sat_closed"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <span class="text-gray-500">-</span>
+                            <input type="time" x-model="publicProfile.working_hours.sat_close"
+                                   :disabled="publicProfile.working_hours.sat_closed"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <label class="flex items-center gap-2 ml-4">
+                                <input type="checkbox" x-model="publicProfile.working_hours.sat_closed"
+                                       class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                                <span class="text-sm text-gray-600">Zatvoreno</span>
+                            </label>
                         </div>
-                        <div class="flex items-center gap-4">
+
+                        <!-- Sunday -->
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                             <span class="w-24 text-sm font-medium text-gray-700">Nedelja</span>
-                            <input type="text" x-model="publicProfile.working_hours.sun" placeholder="Zatvoreno"
-                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                            <input type="time" x-model="publicProfile.working_hours.sun_open"
+                                   :disabled="publicProfile.working_hours.sun_closed"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <span class="text-gray-500">-</span>
+                            <input type="time" x-model="publicProfile.working_hours.sun_close"
+                                   :disabled="publicProfile.working_hours.sun_closed"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400">
+                            <label class="flex items-center gap-2 ml-4">
+                                <input type="checkbox" x-model="publicProfile.working_hours.sun_closed"
+                                       class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                                <span class="text-sm text-gray-600">Zatvoreno</span>
+                            </label>
                         </div>
                     </div>
+
+                    <!-- Quick Fill Button -->
+                    <div class="pt-2">
+                        <button type="button" @click="fillDefaultWorkingHours()"
+                                class="text-sm text-green-600 hover:text-green-700 underline">
+                            Popuni standardno radno vreme (Pon-Pet 09:00-17:00, Sub 09:00-14:00)
+                        </button>
+                    </div>
+
                     <div class="flex justify-end pt-4">
                         <button @click="savePublicProfile()" :disabled="savingPublic"
                                 class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
@@ -1175,7 +1268,15 @@ function settingsPage() {
             postal_code: '',
             maps_url: '',
             maps_embed_url: '',
-            working_hours: {},
+            working_hours: {
+                mon_open: '09:00', mon_close: '17:00', mon_closed: false,
+                tue_open: '09:00', tue_close: '17:00', tue_closed: false,
+                wed_open: '09:00', wed_close: '17:00', wed_closed: false,
+                thu_open: '09:00', thu_close: '17:00', thu_closed: false,
+                fri_open: '09:00', fri_close: '17:00', fri_closed: false,
+                sat_open: '09:00', sat_close: '14:00', sat_closed: false,
+                sun_open: '', sun_close: '', sun_closed: true
+            },
             logo_url: '',
             cover_image_url: '',
             primary_color: '#3b82f6',
@@ -1283,7 +1384,7 @@ function settingsPage() {
                             postal_code: p.contact?.postal_code || '',
                             maps_url: p.contact?.maps_url || '',
                             maps_embed_url: p.contact?.maps_embed_url || '',
-                            working_hours: p.working_hours || {},
+                            working_hours: this.parseWorkingHours(p.working_hours),
                             logo_url: p.branding?.logo_url || '',
                             cover_image_url: p.branding?.cover_image_url || '',
                             primary_color: p.branding?.primary_color || '#3b82f6',
@@ -1546,6 +1647,59 @@ function settingsPage() {
         },
 
         // ==================== PUBLIC PROFILE ====================
+
+        parseWorkingHours(wh) {
+            // Parse working hours from API into the new format
+            const defaults = {
+                mon_open: '09:00', mon_close: '17:00', mon_closed: false,
+                tue_open: '09:00', tue_close: '17:00', tue_closed: false,
+                wed_open: '09:00', wed_close: '17:00', wed_closed: false,
+                thu_open: '09:00', thu_close: '17:00', thu_closed: false,
+                fri_open: '09:00', fri_close: '17:00', fri_closed: false,
+                sat_open: '09:00', sat_close: '14:00', sat_closed: false,
+                sun_open: '', sun_close: '', sun_closed: true
+            };
+
+            if (!wh || typeof wh !== 'object') return defaults;
+
+            // Check if it's the new format (has mon_open, etc.)
+            if ('mon_open' in wh || 'mon_closed' in wh) {
+                return { ...defaults, ...wh };
+            }
+
+            // Convert old format (e.g., {mon: "09:00-17:00"}) to new format
+            const result = { ...defaults };
+            const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+            for (const day of days) {
+                if (wh[day]) {
+                    const val = wh[day].toLowerCase();
+                    if (val === 'zatvoreno' || val === 'closed' || val === '-') {
+                        result[`${day}_closed`] = true;
+                        result[`${day}_open`] = '';
+                        result[`${day}_close`] = '';
+                    } else if (val.includes('-')) {
+                        const [open, close] = val.split('-').map(t => t.trim());
+                        result[`${day}_open`] = open || '';
+                        result[`${day}_close`] = close || '';
+                        result[`${day}_closed`] = false;
+                    }
+                }
+            }
+            return result;
+        },
+
+        fillDefaultWorkingHours() {
+            this.publicProfile.working_hours = {
+                mon_open: '09:00', mon_close: '17:00', mon_closed: false,
+                tue_open: '09:00', tue_close: '17:00', tue_closed: false,
+                wed_open: '09:00', wed_close: '17:00', wed_closed: false,
+                thu_open: '09:00', thu_close: '17:00', thu_closed: false,
+                fri_open: '09:00', fri_close: '17:00', fri_closed: false,
+                sat_open: '09:00', sat_close: '14:00', sat_closed: false,
+                sun_open: '', sun_close: '', sun_closed: true
+            };
+            showToast('Standardno radno vreme popunjeno', 'success');
+        },
 
         async savePublicProfile() {
             this.savingPublic = true;
