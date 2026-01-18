@@ -352,11 +352,11 @@
             </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <template x-for="location in locations" :key="location.id">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="bg-white rounded-xl shadow-sm border-2 border-gray-300 overflow-hidden">
                     <!-- Map Preview (TOP) -->
-                    <div class="h-40 relative bg-gray-100 overflow-hidden">
+                    <div class="h-32 relative bg-gray-100 overflow-hidden border-b-2 border-gray-200">
                         <!-- Google Maps Embed -->
                         <template x-if="location.address || location.city">
                             <iframe
