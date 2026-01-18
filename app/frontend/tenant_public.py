@@ -35,35 +35,10 @@ def require_public_site(f):
 
 
 # ============== Main Pages ==============
-
-@bp.route('/')
-@require_public_site
-def home():
-    """Homepage javne stranice servisa."""
-    tenant = g.public_tenant
-    profile = g.public_profile
-
-    # Dohvati aktivne usluge
-    services = ServiceItem.query.filter_by(
-        tenant_id=tenant.id,
-        is_active=True
-    ).order_by(ServiceItem.category, ServiceItem.display_order).all()
-
-    # Grupiši usluge po kategorijama
-    services_by_category = {}
-    for service in services:
-        cat = service.category or 'Ostalo'
-        if cat not in services_by_category:
-            services_by_category[cat] = []
-        services_by_category[cat].append(service)
-
-    return render_template(
-        'tenant_public/home.html',
-        tenant=tenant,
-        profile=profile,
-        services=services,
-        services_by_category=services_by_category
-    )
+#
+# NAPOMENA: Ruta '/' je objedinjena u frontend/public.py landing() funkciji
+# koja detektuje g.is_public_site i prikazuje odgovarajuci template.
+# Ostale rute (/cenovnik, /kontakt, /o-nama) ostaju ovde jer nemaju duplikate.
 
 
 @bp.route('/cenovnik')

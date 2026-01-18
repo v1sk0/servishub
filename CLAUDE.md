@@ -6,17 +6,15 @@ Instrukcije za Claude Code agente. **CITAJ OVO PRE BILO KAKVIH IZMENA.**
 
 ## RESUME POINT
 
-**v0.5.9** | 2026-01-18 | Backend 100% | Frontend 100%
+**v0.6.0** | 2026-01-19 | Backend 100% | Frontend 100%
 
-### Status: KOMPLETNO - UI/UX Performance optimizacije
+### Status: KOMPLETNO - Public Site Routing Fix
 
-**Poslednje izmene (v0.5.9):**
-- Eliminisan FOUC (Flash of Unstyled Content) - smooth fade-in
-- Alpine.js trzanje fiksirano (x-cloak)
-- Tab transitions u Settings stranici
-- Loading skeletons za Dashboard i Tickets
-- Chart.js tooltips theme-aware (light/glass)
-- Kreirana docs/UI_UX_PERFORMANCE.md dokumentacija
+**Poslednje izmene (v0.6.0):**
+- Fix: Duplikat `/` rute - objedinjena logika u public.py
+- Fix: Format radnog vremena (working_hours) konverzija za API
+- Fix: SQLAlchemy JSON polja - flag_modified za pravilno cuvanje
+- Dokumentacija azurirana (PUBLIC_SITE_DOCUMENTATION.md)
 
 Svi frontend moduli zavrseni i verifikovani:
 - Tenant panel (23 stranica)
@@ -414,6 +412,7 @@ GitHub: github.com/v1sk0/servishub
 
 | Verzija | Datum | Izmene |
 |---------|-------|--------|
+| v0.6.0 | 2026-01-19 | **Public Site Fix:** Route deduplication, working_hours format, JSON flag_modified |
 | v0.5.9 | 2026-01-18 | **UI/UX Performance:** FOUC fix, x-cloak, tab transitions, skeletons, chart tooltips |
 | v0.5.8 | 2026-01-18 | **Public Site:** Javne stranice tenanta (subdomain), settings tab, dokumentacija |
 | v0.5.7 | 2026-01-15 | **Platform Admin standardizacija:** vizuelna konzistencija svih stranica, KYC uklonjen iz sidebar-a |

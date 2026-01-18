@@ -1818,8 +1818,16 @@ function settingsPage() {
         async savePublicProfile() {
             this.savingPublic = true;
             try {
+                // Create a copy with converted working_hours
+                const profileToSave = {...this.publicProfile};
+
+                // Explicitly convert working_hours from form format to API format
+                if (profileToSave.working_hours && typeof profileToSave.working_hours === 'object') {
+                    profileToSave.working_hours = this.formatWorkingHoursForApi(profileToSave.working_hours);
+                }
+
                 // Sanitize URLs to prevent XSS
-                const sanitizedProfile = this.sanitizePublicProfile(this.publicProfile);
+                const sanitizedProfile = this.sanitizePublicProfile(profileToSave);
 
                 const response = await api('/tenant/public-profile', 'PUT', sanitizedProfile);
                 if (!response.ok) {
@@ -1845,6 +1853,31 @@ function settingsPage() {
             }
         },
 
+        // Konvertuje novi format radnog vremena u stari format za API/template
+        formatWorkingHoursForApi(wh) {
+            if (!wh || typeof wh !== 'object') return {};
+
+            const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+            const result = {};
+
+            for (const day of days) {
+                const closedKey = `${day}_closed`;
+                const openKey = `${day}_open`;
+                const closeKey = `${day}_close`;
+
+                if (wh[closedKey] === true) {
+                    result[day] = 'Zatvoreno';
+                } else if (wh[openKey] && wh[closeKey]) {
+                    result[day] = `${wh[openKey]}-${wh[closeKey]}`;
+                } else if (wh[openKey]) {
+                    result[day] = wh[openKey];
+                }
+                // Ako nema podataka za dan, ne dodajemo ga
+            }
+
+            return result;
+        },
+
         sanitizePublicProfile(profile) {
             // Create a clean copy with sanitized values
             const sanitized = {};
@@ -1855,6 +1888,15 @@ function settingsPage() {
             for (const [key, value] of Object.entries(profile)) {
                 if (value === null || value === undefined) {
                     sanitized[key] = value;
+                } else if (key === 'working_hours' && typeof value === 'object') {
+                    // Check if already in API format (no _closed keys) or needs conversion
+                    if ('mon_closed' in value || 'tue_closed' in value) {
+                        // Form format, needs conversion
+                        sanitized[key] = this.formatWorkingHoursForApi(value);
+                    } else {
+                        // Already in API format, pass through
+                        sanitized[key] = value;
+                    }
                 } else if (typeof value === 'string') {
                     // Sanitize string values
                     let sanitizedValue = value.trim();
@@ -1872,7 +1914,7 @@ function settingsPage() {
                     }
                     sanitized[key] = sanitizedValue;
                 } else if (typeof value === 'object') {
-                    // Recursively sanitize objects (like working_hours)
+                    // Recursively sanitize objects
                     sanitized[key] = this.sanitizePublicProfile(value);
                 } else {
                     sanitized[key] = value;

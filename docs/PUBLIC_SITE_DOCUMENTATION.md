@@ -727,6 +727,19 @@ def test_rate_limiter():
 
 ## Changelog
 
+### v1.1.0 (2026-01-19)
+
+**Bug Fixes:**
+- **Route Deduplication:** Objedinjena `/` ruta u `public.py` - resava konflikt izmedju main landing-a i tenant public home stranice
+- **Working Hours Format:** Dodata `formatWorkingHoursForApi()` funkcija koja konvertuje format iz settings forme (`mon_open`, `mon_close`, `mon_closed`) u API format (`mon: "09:00-17:00"`)
+- **SQLAlchemy JSON Fields:** Dodat `flag_modified()` za JSON polja (`working_hours`, `why_us_items`, `gallery_images`, `testimonials`) radi pravilnog detektovanja promena
+
+**Izmenjeni fajlovi:**
+- `app/frontend/public.py` - Landing ruta sada detektuje `g.is_public_site` i prikazuje odgovarajuci template
+- `app/frontend/tenant_public.py` - Uklonjena duplikat `/` ruta (objedinjena u public.py)
+- `app/templates/tenant/settings/index.html` - Dodata `formatWorkingHoursForApi()` i azurirana `sanitizePublicProfile()`
+- `app/api/v1/tenant.py` - Dodat `flag_modified()` za JSON polja
+
 ### v1.0.0 (2026-01-18)
 
 - Initial implementation
@@ -737,6 +750,48 @@ def test_rate_limiter():
 - Settings UI with 8 sub-tabs
 - QR code generation
 - Public API endpoints
+
+---
+
+## Working Hours Format
+
+### Settings Forma (Frontend)
+
+```javascript
+// Novi format za form binding
+working_hours: {
+    mon_open: '09:00',
+    mon_close: '17:00',
+    mon_closed: false,
+    tue_open: '09:00',
+    tue_close: '17:00',
+    tue_closed: false,
+    // ... ostali dani
+    sun_open: '',
+    sun_close: '',
+    sun_closed: true
+}
+```
+
+### API/Database Format
+
+```javascript
+// Format koji se cuva u bazi i koristi u template-ima
+working_hours: {
+    mon: '09:00-17:00',
+    tue: '09:00-17:00',
+    wed: '09:00-17:00',
+    thu: '09:00-17:00',
+    fri: '09:00-17:00',
+    sat: '09:00-14:00',
+    sun: 'Zatvoreno'
+}
+```
+
+### Konverzija
+
+**Frontend -> API:** `formatWorkingHoursForApi()` u settings/index.html
+**API -> Frontend:** `parseWorkingHours()` u settings/index.html
 
 ---
 

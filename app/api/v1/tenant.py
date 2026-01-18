@@ -857,6 +857,10 @@ def update_public_profile():
 
         setattr(profile, field, value)
 
+        # Mark JSON fields as modified for SQLAlchemy to detect changes
+        if field in ('working_hours', 'why_us_items', 'gallery_images', 'testimonials'):
+            flag_modified(profile, field)
+
     profile.updated_at = datetime.utcnow()
     db.session.commit()
 

@@ -693,6 +693,36 @@ if tenant.can_activate_trust:
 
 ## 14. Changelog
 
+### v172 (19. Januar 2026)
+
+**Public Site Routing Fix - kritične popravke:**
+
+**Route Deduplication:**
+- Objedinjena `/` ruta u `frontend/public.py`
+- Landing funkcija sada detektuje `g.is_public_site` i prikazuje odgovarajući template
+- Uklonjena duplikat ruta iz `tenant_public.py`
+
+**Working Hours Format Fix:**
+- Dodata `formatWorkingHoursForApi()` funkcija u settings JS
+- Konvertuje form format (`mon_open`, `mon_close`, `mon_closed`) u API format (`mon: "09:00-17:00"`)
+- Ažurirana `sanitizePublicProfile()` da poziva konverziju
+
+**SQLAlchemy JSON Fields:**
+- Dodat `flag_modified()` za JSON polja u API
+- Polja: `working_hours`, `why_us_items`, `gallery_images`, `testimonials`
+- Osigurava da SQLAlchemy pravilno detektuje promene u JSON vrednostima
+
+**Izmenjeni fajlovi:**
+- `app/frontend/public.py` - objedinjena landing logika
+- `app/frontend/tenant_public.py` - uklonjena duplikat `/` ruta
+- `app/templates/tenant/settings/index.html` - `formatWorkingHoursForApi()`, `sanitizePublicProfile()`
+- `app/api/v1/tenant.py` - `flag_modified()` za JSON
+
+**Ažurirana dokumentacija:**
+- `docs/PUBLIC_SITE_DOCUMENTATION.md` - v1.1.0 changelog, Working Hours Format sekcija
+
+---
+
 ### v163-v164 (18. Januar 2026)
 
 **UI/UX Performance Optimizacije - eliminacija trzanja:**
