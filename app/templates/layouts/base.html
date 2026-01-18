@@ -35,34 +35,64 @@
 
     <!-- Custom styles -->
     <style>
-        /* Prevent FOUC (Flash of Unstyled Content) */
+        /* Prevent FOUC (Flash of Unstyled Content) - improved */
         html:not(.theme-ready) body {
-            visibility: hidden;
+            opacity: 0;
         }
         html.theme-ready body {
-            visibility: visible;
+            opacity: 1;
+            transition: opacity 0.15s ease-out;
         }
 
+        /* Hide Alpine elements until initialized */
         [x-cloak] { display: none !important; }
 
+        /* Optimized fade-in without layout shift */
         .fade-in {
-            animation: fadeIn 0.3s ease-in-out;
+            animation: fadeIn 0.2s ease-out;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
-        /* Shimmer/shine effect for widgets - 45 degree angle, fast sweep */
+        /* Reduced motion preference support */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            html.theme-ready body {
+                transition: none;
+            }
+        }
+
+        /* Content visibility optimization for large pages */
+        .content-auto {
+            content-visibility: auto;
+            contain-intrinsic-size: 0 500px;
+        }
+
+        /* Shimmer/shine effect for widgets - optimized, runs once on hover */
         @keyframes shimmer {
             0% { transform: translateX(-100%) skewX(-25deg); }
-            40% { transform: translateX(250%) skewX(-25deg); }
             100% { transform: translateX(250%) skewX(-25deg); }
         }
         .animate-shimmer {
-            animation: shimmer 5s infinite;
+            animation: shimmer 1.5s ease-in-out;
             width: 50%;
+            will-change: transform;
+        }
+        /* Only animate on hover for performance */
+        .shimmer-on-hover .animate-shimmer {
+            animation: none;
+        }
+        .shimmer-on-hover:hover .animate-shimmer {
+            animation: shimmer 1s ease-in-out;
         }
 
         /* License-style subscription widget */

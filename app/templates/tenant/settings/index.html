@@ -3,7 +3,7 @@
 {% block title %}Podesavanja - ServisHub{% endblock %}
 
 {% block page_content %}
-<div x-data="settingsPage()" x-init="init()">
+<div x-data="settingsPage()" x-init="init()" x-cloak>
 
     <!-- Header -->
     <div class="mb-6">
@@ -61,7 +61,7 @@
     </div>
 
     <!-- ==================== PROFILE TAB ==================== -->
-    <div x-show="!loading && activeTab === 'profile'" class="space-y-6">
+    <div x-show="!loading && activeTab === 'profile'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Podaci servisa</h2>
 
@@ -112,7 +112,7 @@
     </div>
 
     <!-- ==================== SETTINGS TAB ==================== -->
-    <div x-show="!loading && activeTab === 'settings'" class="space-y-6">
+    <div x-show="!loading && activeTab === 'settings'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Podesavanja naloga</h2>
 
@@ -221,7 +221,7 @@
     </div>
 
     <!-- ==================== SUBSCRIPTION TAB ==================== -->
-    <div x-show="!loading && activeTab === 'subscription'" class="space-y-6">
+    <div x-show="!loading && activeTab === 'subscription'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
         <!-- Status Card -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
@@ -281,7 +281,7 @@
     </div>
 
     <!-- ==================== TEAM TAB ==================== -->
-    <div x-show="!loading && activeTab === 'team'" class="space-y-6">
+    <div x-show="!loading && activeTab === 'team'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
         <div class="flex items-center justify-between">
             <h2 class="text-lg font-semibold text-gray-900">Tim</h2>
             <button @click="openUserModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
@@ -341,7 +341,7 @@
     </div>
 
     <!-- ==================== LOCATIONS TAB ==================== -->
-    <div x-show="!loading && activeTab === 'locations'" class="space-y-6">
+    <div x-show="!loading && activeTab === 'locations'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
         <div class="flex items-center justify-between">
             <h2 class="text-lg font-semibold text-gray-900">Lokacije</h2>
             <button @click="openLocationModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
@@ -378,7 +378,7 @@
     </div>
 
     <!-- ==================== KYC TAB ==================== -->
-    <div x-show="!loading && activeTab === 'kyc'" class="space-y-6">
+    <div x-show="!loading && activeTab === 'kyc'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">KYC Verifikacija</h2>
 
@@ -483,7 +483,7 @@
     </div>
 
     <!-- ==================== JAVNA STRANICA TAB ==================== -->
-    <div x-show="!loading && activeTab === 'public_page'" class="space-y-6">
+    <div x-show="!loading && activeTab === 'public_page'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
         <!-- Status Banner -->
         <div :class="publicProfile.is_public ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'"
              class="rounded-xl border p-4">
@@ -613,7 +613,7 @@
 
             <div class="p-6">
                 <!-- Basic Info Sub-tab -->
-                <div x-show="publicSubTab === 'basic'" class="space-y-6">
+                <div x-show="publicSubTab === 'basic'" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Naziv za prikaz</label>
@@ -658,7 +658,7 @@
                 </div>
 
                 <!-- Contact Sub-tab -->
-                <div x-show="publicSubTab === 'contact'" class="space-y-6">
+                <div x-show="publicSubTab === 'contact'" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
@@ -719,7 +719,7 @@
                 </div>
 
                 <!-- Working Hours Sub-tab -->
-                <div x-show="publicSubTab === 'hours'" class="space-y-4">
+                <div x-show="publicSubTab === 'hours'" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-4">
                     <p class="text-sm text-gray-600 mb-4">Podesite radno vreme za svaki dan. Obelezite "Zatvoreno" ako ne radite taj dan.</p>
 
                     <div class="space-y-3">
@@ -861,7 +861,7 @@
                 </div>
 
                 <!-- Branding Sub-tab -->
-                <div x-show="publicSubTab === 'branding'" class="space-y-6">
+                <div x-show="publicSubTab === 'branding'" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
                         <input type="url" x-model="publicProfile.logo_url" maxlength="500"
@@ -908,7 +908,7 @@
                 </div>
 
                 <!-- Social Sub-tab -->
-                <div x-show="publicSubTab === 'social'" class="space-y-4">
+                <div x-show="publicSubTab === 'social'" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Facebook</label>
@@ -957,7 +957,7 @@
                 </div>
 
                 <!-- Pricing Sub-tab -->
-                <div x-show="publicSubTab === 'pricing'" class="space-y-6">
+                <div x-show="publicSubTab === 'pricing'" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                         <div>
                             <p class="font-medium text-gray-900">Prikazi cenovnik na javnoj stranici</p>
@@ -996,7 +996,7 @@
                 </div>
 
                 <!-- SEO Sub-tab -->
-                <div x-show="publicSubTab === 'seo'" class="space-y-6">
+                <div x-show="publicSubTab === 'seo'" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
                     <div class="p-4 bg-gray-50 rounded-lg">
                         <p class="text-sm text-gray-600">SEO podesavanja pomazu da vasa stranica bude bolje rangirana na Google pretrazi.</p>
                     </div>
@@ -1031,7 +1031,7 @@
                 </div>
 
                 <!-- Custom Domain Sub-tab -->
-                <div x-show="publicSubTab === 'domain'" class="space-y-6">
+                <div x-show="publicSubTab === 'domain'" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
                     <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                         <h4 class="font-medium text-blue-900 mb-2">Sta je custom domen?</h4>
                         <p class="text-sm text-blue-800">Pored automatske subdomena (<span x-text="tenantSlug"></span>.servishub.rs), mozete povezati svoj domen (npr. mojservis.rs) da bi vasa javna stranica bila dostupna na njemu.</p>
