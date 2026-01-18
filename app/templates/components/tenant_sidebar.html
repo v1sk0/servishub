@@ -218,10 +218,10 @@ function sidebarData() {
         },
 
         getPlanName() {
-            // Active statuses show package name with location count
+            // Active statuses show location count
             if (this.subscriptionStatus === 'DEMO' || this.subscriptionStatus === 'TRIAL' || this.subscriptionStatus === 'ACTIVE') {
                 const lokacija = this.locationCount === 1 ? 'lokacija' : 'lokacije';
-                return `Bazni paket (${this.locationCount} ${lokacija})`;
+                return `${this.locationCount} ${lokacija}`;
             }
             // Inactive statuses show status
             const names = {
