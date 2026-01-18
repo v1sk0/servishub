@@ -61,6 +61,10 @@ def _init_extensions(app):
     from .middleware import init_security_headers
     init_security_headers(app)
 
+    # Public Site Middleware - detektuje subdomen i custom domen za javne stranice
+    from .middleware.public_site import setup_public_site_middleware
+    setup_public_site_middleware(app)
+
     # Background Scheduler - pokrece billing taskove automatski
     # Samo u produkciji i ne tokom CLI komandi
     import os
@@ -106,6 +110,10 @@ def _register_blueprints(app):
     from .frontend import bp as frontend_bp, register_routes as register_frontend_routes
     register_frontend_routes()
     app.register_blueprint(frontend_bp)
+
+    # Tenant Public Site - Javne stranice tenanta (subdomen i custom domen)
+    from .frontend.tenant_public import bp as tenant_public_bp
+    app.register_blueprint(tenant_public_bp)
 
     # Zdravstvena provera - uvek dostupna
     @app.route('/health')

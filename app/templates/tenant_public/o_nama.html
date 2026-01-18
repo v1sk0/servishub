@@ -1,0 +1,113 @@
+{% extends "tenant_public/base.html" %}
+
+{% block title %}O nama - {{ profile.display_name or tenant.name }}{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<section class="hero-gradient text-white py-12 sm:py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-3xl sm:text-4xl font-bold mb-4">{{ profile.about_title or 'O nama' }}</h1>
+        {% if profile.tagline %}
+        <p class="text-lg text-white/90 max-w-2xl mx-auto">{{ profile.tagline }}</p>
+        {% endif %}
+    </div>
+</section>
+
+<!-- About Content -->
+<section class="py-12 sm:py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% if profile.about_content %}
+        <div class="prose prose-lg max-w-none">
+            {{ profile.about_content|safe }}
+        </div>
+        {% elif profile.description %}
+        <div class="prose prose-lg max-w-none">
+            <p class="text-gray-600 text-lg leading-relaxed">{{ profile.description }}</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{% if profile.why_us_items and profile.why_us_items|length > 0 %}
+<!-- Why Us Section -->
+<section class="py-12 sm:py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-12">{{ profile.why_us_title or 'Zasto izabrati nas?' }}</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for item in profile.why_us_items %}
+            <div class="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                {% if item.icon %}
+                <div class="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+                    <span class="text-3xl">{{ item.icon }}</span>
+                </div>
+                {% endif %}
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ item.title }}</h3>
+                <p class="text-gray-600">{{ item.text }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if profile.gallery_images and profile.gallery_images|length > 0 %}
+<!-- Gallery Section -->
+<section class="py-12 sm:py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-12">Galerija</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {% for image in profile.gallery_images %}
+            <div class="aspect-square rounded-lg overflow-hidden">
+                <img src="{{ image }}" alt="Gallery image" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if profile.testimonials and profile.testimonials|length > 0 %}
+<!-- Testimonials Section -->
+<section class="py-12 sm:py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-12">Sta kazu nasi klijenti</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for testimonial in profile.testimonials %}
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+                <div class="flex items-center mb-4">
+                    {% for i in range(testimonial.rating or 5) %}
+                    <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    {% endfor %}
+                </div>
+                <p class="text-gray-600 mb-4 italic">"{{ testimonial.text }}"</p>
+                <p class="font-semibold text-gray-900">- {{ testimonial.name }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- CTA Section -->
+<section class="py-12 sm:py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">Spremni da nam poverite vas uredjaj?</h2>
+        <p class="text-gray-600 mb-8 max-w-2xl mx-auto">Kontaktirajte nas ili nas posetite u nasem servisu.</p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            {% if profile.phone %}
+            <a href="tel:{{ profile.phone }}" class="inline-flex items-center justify-center px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:opacity-90 transition-opacity">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+                Pozovite: {{ profile.phone }}
+            </a>
+            {% endif %}
+            <a href="/kontakt" class="inline-flex items-center justify-center px-6 py-3 border-2 border-primary text-primary rounded-lg font-semibold hover:bg-primary hover:text-white transition-colors">
+                Pogledajte kontakt informacije
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

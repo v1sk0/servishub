@@ -44,6 +44,14 @@
                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 KYC
             </button>
+            <button @click="activeTab = 'public_page'"
+                    :class="activeTab === 'public_page' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+                </svg>
+                Javna Stranica
+            </button>
         </nav>
     </div>
 
@@ -474,6 +482,536 @@
         </div>
     </div>
 
+    <!-- ==================== JAVNA STRANICA TAB ==================== -->
+    <div x-show="!loading && activeTab === 'public_page'" class="space-y-6">
+        <!-- Status Banner -->
+        <div :class="publicProfile.is_public ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'"
+             class="rounded-xl border p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <template x-if="publicProfile.is_public">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </template>
+                    <template x-if="!publicProfile.is_public">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </template>
+                    <div>
+                        <p class="font-medium" :class="publicProfile.is_public ? 'text-green-900' : 'text-yellow-900'"
+                           x-text="publicProfile.is_public ? 'Javna stranica je aktivna' : 'Javna stranica je iskljucena'"></p>
+                        <p class="text-sm" :class="publicProfile.is_public ? 'text-green-700' : 'text-yellow-700'">
+                            <template x-if="publicProfile.is_public">
+                                <span>Vasa stranica je vidljiva na internetu</span>
+                            </template>
+                            <template x-if="!publicProfile.is_public">
+                                <span>Ukljucite da bi korisnici mogli da vide vasu stranicu</span>
+                            </template>
+                        </p>
+                    </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" x-model="publicProfile.is_public" @change="savePublicProfile()" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Preview Links -->
+        <div x-show="publicProfile.is_public" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Vasa javna stranica</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm text-gray-500 mb-2">Subdomena (automatska)</p>
+                    <div class="flex items-center gap-2">
+                        <a :href="publicPageUrls.subdomain" target="_blank"
+                           class="text-blue-600 hover:text-blue-700 hover:underline font-medium"
+                           x-text="publicPageUrls.subdomain"></a>
+                        <button @click="copyToClipboard(publicPageUrls.subdomain)" class="p-1 text-gray-400 hover:text-gray-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div x-show="publicPageUrls.custom_domain">
+                    <p class="text-sm text-gray-500 mb-2">Custom domen</p>
+                    <div class="flex items-center gap-2">
+                        <a :href="publicPageUrls.custom_domain" target="_blank"
+                           class="text-blue-600 hover:text-blue-700 hover:underline font-medium"
+                           x-text="publicPageUrls.custom_domain"></a>
+                        <button @click="copyToClipboard(publicPageUrls.custom_domain)" class="p-1 text-gray-400 hover:text-gray-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- QR Code -->
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <button @click="loadQRCode()" class="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h2M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                    </svg>
+                    Prikazi QR kod
+                </button>
+                <div x-show="qrCode" class="mt-3">
+                    <img :src="qrCode" alt="QR Code" class="w-32 h-32 border rounded-lg">
+                </div>
+            </div>
+        </div>
+
+        <!-- Sub-tabs for public page sections -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-200">
+                <nav class="flex overflow-x-auto" aria-label="Tabs">
+                    <button @click="publicSubTab = 'basic'"
+                            :class="publicSubTab === 'basic' ? 'border-green-500 text-green-600 bg-green-50' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                            class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
+                        Osnovni podaci
+                    </button>
+                    <button @click="publicSubTab = 'contact'"
+                            :class="publicSubTab === 'contact' ? 'border-green-500 text-green-600 bg-green-50' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                            class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
+                        Kontakt
+                    </button>
+                    <button @click="publicSubTab = 'hours'"
+                            :class="publicSubTab === 'hours' ? 'border-green-500 text-green-600 bg-green-50' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                            class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
+                        Radno vreme
+                    </button>
+                    <button @click="publicSubTab = 'branding'"
+                            :class="publicSubTab === 'branding' ? 'border-green-500 text-green-600 bg-green-50' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                            class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
+                        Branding
+                    </button>
+                    <button @click="publicSubTab = 'social'"
+                            :class="publicSubTab === 'social' ? 'border-green-500 text-green-600 bg-green-50' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                            class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
+                        Drustvene mreze
+                    </button>
+                    <button @click="publicSubTab = 'pricing'"
+                            :class="publicSubTab === 'pricing' ? 'border-green-500 text-green-600 bg-green-50' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                            class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
+                        Cenovnik
+                    </button>
+                    <button @click="publicSubTab = 'seo'"
+                            :class="publicSubTab === 'seo' ? 'border-green-500 text-green-600 bg-green-50' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                            class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
+                        SEO
+                    </button>
+                    <button @click="publicSubTab = 'domain'"
+                            :class="publicSubTab === 'domain' ? 'border-green-500 text-green-600 bg-green-50' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                            class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
+                        Custom Domen
+                    </button>
+                </nav>
+            </div>
+
+            <div class="p-6">
+                <!-- Basic Info Sub-tab -->
+                <div x-show="publicSubTab === 'basic'" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Naziv za prikaz</label>
+                            <input type="text" x-model="publicProfile.display_name" maxlength="200"
+                                   :placeholder="profile.name"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                            <p class="text-xs text-gray-500 mt-1">Ostavite prazno da koristite naziv servisa</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Slogan</label>
+                            <input type="text" x-model="publicProfile.tagline" maxlength="300"
+                                   placeholder="Vas moto ili kratki opis"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Opis</label>
+                        <textarea x-model="publicProfile.description" rows="4"
+                                  placeholder="Opis vase firme..."
+                                  class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Naslov O nama sekcije</label>
+                        <input type="text" x-model="publicProfile.about_title" maxlength="200"
+                               placeholder="O nama"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sadrzaj O nama</label>
+                        <textarea x-model="publicProfile.about_content" rows="6"
+                                  placeholder="Detaljniji tekst o vasoj firmi..."
+                                  class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Moze sadrzati HTML za formatiranje</p>
+                    </div>
+                    <div class="flex justify-end">
+                        <button @click="savePublicProfile()" :disabled="savingPublic"
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
+                            <span x-show="!savingPublic">Sacuvaj</span>
+                            <span x-show="savingPublic">Cuvam...</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Contact Sub-tab -->
+                <div x-show="publicSubTab === 'contact'" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                            <input type="tel" x-model="publicProfile.phone" maxlength="50"
+                                   :placeholder="profile.telefon"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Drugi telefon</label>
+                            <input type="tel" x-model="publicProfile.phone_secondary" maxlength="50"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" x-model="publicProfile.email" maxlength="100"
+                                   :placeholder="profile.email"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Grad</label>
+                            <input type="text" x-model="publicProfile.city" maxlength="100"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Adresa</label>
+                            <input type="text" x-model="publicProfile.address" maxlength="300"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Postanski broj</label>
+                            <input type="text" x-model="publicProfile.postal_code" maxlength="20"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Google Maps link</label>
+                        <input type="url" x-model="publicProfile.maps_url" maxlength="500"
+                               placeholder="https://maps.google.com/..."
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        <p class="text-xs text-gray-500 mt-1">Link ka vasoj lokaciji na Google Maps</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Google Maps embed URL</label>
+                        <input type="url" x-model="publicProfile.maps_embed_url" maxlength="500"
+                               placeholder="https://www.google.com/maps/embed?pb=..."
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        <p class="text-xs text-gray-500 mt-1">Za prikaz mape na stranici (kopirajte src iz iframe embed koda)</p>
+                    </div>
+                    <div class="flex justify-end">
+                        <button @click="savePublicProfile()" :disabled="savingPublic"
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
+                            <span x-show="!savingPublic">Sacuvaj</span>
+                            <span x-show="savingPublic">Cuvam...</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Working Hours Sub-tab -->
+                <div x-show="publicSubTab === 'hours'" class="space-y-4">
+                    <p class="text-sm text-gray-600 mb-4">Unesite radno vreme za svaki dan u nedelji (npr. "09:00-18:00" ili "Zatvoreno")</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="flex items-center gap-4">
+                            <span class="w-24 text-sm font-medium text-gray-700">Ponedeljak</span>
+                            <input type="text" x-model="publicProfile.working_hours.mon" placeholder="09:00-18:00"
+                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="w-24 text-sm font-medium text-gray-700">Utorak</span>
+                            <input type="text" x-model="publicProfile.working_hours.tue" placeholder="09:00-18:00"
+                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="w-24 text-sm font-medium text-gray-700">Sreda</span>
+                            <input type="text" x-model="publicProfile.working_hours.wed" placeholder="09:00-18:00"
+                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="w-24 text-sm font-medium text-gray-700">Cetvrtak</span>
+                            <input type="text" x-model="publicProfile.working_hours.thu" placeholder="09:00-18:00"
+                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="w-24 text-sm font-medium text-gray-700">Petak</span>
+                            <input type="text" x-model="publicProfile.working_hours.fri" placeholder="09:00-18:00"
+                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="w-24 text-sm font-medium text-gray-700">Subota</span>
+                            <input type="text" x-model="publicProfile.working_hours.sat" placeholder="09:00-14:00"
+                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="w-24 text-sm font-medium text-gray-700">Nedelja</span>
+                            <input type="text" x-model="publicProfile.working_hours.sun" placeholder="Zatvoreno"
+                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                    </div>
+                    <div class="flex justify-end pt-4">
+                        <button @click="savePublicProfile()" :disabled="savingPublic"
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
+                            <span x-show="!savingPublic">Sacuvaj</span>
+                            <span x-show="savingPublic">Cuvam...</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Branding Sub-tab -->
+                <div x-show="publicSubTab === 'branding'" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
+                        <input type="url" x-model="publicProfile.logo_url" maxlength="500"
+                               placeholder="https://..."
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        <p class="text-xs text-gray-500 mt-1">Link do vaseg loga (preporucena velicina: 200x200px)</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cover slika URL</label>
+                        <input type="url" x-model="publicProfile.cover_image_url" maxlength="500"
+                               placeholder="https://..."
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        <p class="text-xs text-gray-500 mt-1">Header slika za javnu stranicu (preporucena velicina: 1920x400px)</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Primarna boja</label>
+                            <div class="flex items-center gap-3">
+                                <input type="color" x-model="publicProfile.primary_color"
+                                       class="w-12 h-10 rounded border border-gray-300 cursor-pointer">
+                                <input type="text" x-model="publicProfile.primary_color" maxlength="7"
+                                       placeholder="#3b82f6"
+                                       class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Sekundarna boja</label>
+                            <div class="flex items-center gap-3">
+                                <input type="color" x-model="publicProfile.secondary_color"
+                                       class="w-12 h-10 rounded border border-gray-300 cursor-pointer">
+                                <input type="text" x-model="publicProfile.secondary_color" maxlength="7"
+                                       placeholder="#1e40af"
+                                       class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button @click="savePublicProfile()" :disabled="savingPublic"
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
+                            <span x-show="!savingPublic">Sacuvaj</span>
+                            <span x-show="savingPublic">Cuvam...</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Social Sub-tab -->
+                <div x-show="publicSubTab === 'social'" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Facebook</label>
+                            <input type="url" x-model="publicProfile.facebook_url" maxlength="300"
+                                   placeholder="https://facebook.com/..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
+                            <input type="url" x-model="publicProfile.instagram_url" maxlength="300"
+                                   placeholder="https://instagram.com/..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">YouTube</label>
+                            <input type="url" x-model="publicProfile.youtube_url" maxlength="300"
+                                   placeholder="https://youtube.com/..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">TikTok</label>
+                            <input type="url" x-model="publicProfile.tiktok_url" maxlength="300"
+                                   placeholder="https://tiktok.com/..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
+                            <input type="url" x-model="publicProfile.linkedin_url" maxlength="300"
+                                   placeholder="https://linkedin.com/..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                            <input type="url" x-model="publicProfile.website_url" maxlength="300"
+                                   placeholder="https://..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        </div>
+                    </div>
+                    <div class="flex justify-end pt-4">
+                        <button @click="savePublicProfile()" :disabled="savingPublic"
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
+                            <span x-show="!savingPublic">Sacuvaj</span>
+                            <span x-show="savingPublic">Cuvam...</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pricing Sub-tab -->
+                <div x-show="publicSubTab === 'pricing'" class="space-y-6">
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-900">Prikazi cenovnik na javnoj stranici</p>
+                            <p class="text-sm text-gray-500">Kada je ukljuceno, usluge iz cenovnika ce biti vidljive posetiocima</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" x-model="publicProfile.show_prices" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                        </label>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Napomena o cenama</label>
+                        <textarea x-model="publicProfile.price_disclaimer" rows="2" maxlength="500"
+                                  placeholder="Cene su okvirne i podlozne promenama nakon dijagnostike."
+                                  class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Ova napomena ce se prikazati ispod cenovnika</p>
+                    </div>
+                    <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div class="text-sm text-blue-800">
+                                <p class="font-medium">Usluge za cenovnik</p>
+                                <p>Usluge koje se prikazuju na javnoj stranici mozete podesiti u <a href="/pricing" class="underline hover:no-underline">Cenovniku</a>. Prikazuju se samo aktivne usluge.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button @click="savePublicProfile()" :disabled="savingPublic"
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
+                            <span x-show="!savingPublic">Sacuvaj</span>
+                            <span x-show="savingPublic">Cuvam...</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SEO Sub-tab -->
+                <div x-show="publicSubTab === 'seo'" class="space-y-6">
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <p class="text-sm text-gray-600">SEO podesavanja pomazu da vasa stranica bude bolje rangirana na Google pretrazi.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Meta naslov</label>
+                        <input type="text" x-model="publicProfile.meta_title" maxlength="100"
+                               placeholder="Servis mobilnih telefona - Vas Grad"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        <p class="text-xs text-gray-500 mt-1">Naslov koji se prikazuje u Google rezultatima (max 60 karaktera)</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Meta opis</label>
+                        <textarea x-model="publicProfile.meta_description" rows="2" maxlength="200"
+                                  placeholder="Profesionalan servis mobilnih telefona i racunara. Brza dijagnostika, kvalitetne popravke, garancija na rad."
+                                  class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Opis koji se prikazuje u Google rezultatima (max 160 karaktera)</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kljucne reci</label>
+                        <input type="text" x-model="publicProfile.meta_keywords" maxlength="300"
+                               placeholder="servis mobilnih, popravka telefona, zamena ekrana, beograd"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                        <p class="text-xs text-gray-500 mt-1">Razdvojene zarezom</p>
+                    </div>
+                    <div class="flex justify-end">
+                        <button @click="savePublicProfile()" :disabled="savingPublic"
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
+                            <span x-show="!savingPublic">Sacuvaj</span>
+                            <span x-show="savingPublic">Cuvam...</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Custom Domain Sub-tab -->
+                <div x-show="publicSubTab === 'domain'" class="space-y-6">
+                    <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 class="font-medium text-blue-900 mb-2">Sta je custom domen?</h4>
+                        <p class="text-sm text-blue-800">Pored automatske subdomena (<span x-text="tenantSlug"></span>.servishub.rs), mozete povezati svoj domen (npr. mojservis.rs) da bi vasa javna stranica bila dostupna na njemu.</p>
+                    </div>
+
+                    <!-- Current Domain Status -->
+                    <div x-show="customDomain.domain" class="border rounded-lg overflow-hidden">
+                        <div class="bg-gray-50 px-4 py-3 border-b">
+                            <h4 class="font-medium text-gray-900">Trenutni custom domen</h4>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-gray-900" x-text="customDomain.domain"></p>
+                                    <p class="text-sm" :class="customDomain.verified ? 'text-green-600' : 'text-yellow-600'"
+                                       x-text="customDomain.verified ? 'Verifikovan' : 'Ceka verifikaciju'"></p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button x-show="!customDomain.verified" @click="verifyDomain()" :disabled="verifyingDomain"
+                                            class="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                                        <span x-show="!verifyingDomain">Verifikuj</span>
+                                        <span x-show="verifyingDomain">Proveravam...</span>
+                                    </button>
+                                    <button @click="removeDomain()" class="px-3 py-1.5 bg-red-100 text-red-700 text-sm rounded-lg hover:bg-red-200">
+                                        Ukloni
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- DNS Instructions -->
+                            <div x-show="!customDomain.verified && customDomain.verification_instructions" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <h5 class="font-medium text-yellow-900 mb-2">DNS Podesavanja</h5>
+                                <p class="text-sm text-yellow-800 mb-3">Dodajte sledece DNS zapise kod vaseg domen provajdera:</p>
+                                <div class="space-y-3 text-sm">
+                                    <div class="bg-white p-3 rounded border">
+                                        <p class="text-xs text-gray-500 uppercase mb-1">Verifikacija (CNAME ili TXT)</p>
+                                        <p><strong>Host:</strong> <code class="bg-gray-100 px-1 rounded" x-text="customDomain.verification_instructions?.host"></code></p>
+                                        <p><strong>Vrednost:</strong> <code class="bg-gray-100 px-1 rounded text-xs break-all" x-text="customDomain.verification_instructions?.value"></code></p>
+                                    </div>
+                                    <div class="bg-white p-3 rounded border">
+                                        <p class="text-xs text-gray-500 uppercase mb-1">Routing (CNAME)</p>
+                                        <p><strong>Host:</strong> <code class="bg-gray-100 px-1 rounded" x-text="customDomain.domain"></code></p>
+                                        <p><strong>Vrednost:</strong> <code class="bg-gray-100 px-1 rounded">proxy.servishub.rs</code></p>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-yellow-700 mt-3">DNS promene mogu potrajati do 24 sata da se propagiraju.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add New Domain -->
+                    <div x-show="!customDomain.domain" class="border rounded-lg overflow-hidden">
+                        <div class="bg-gray-50 px-4 py-3 border-b">
+                            <h4 class="font-medium text-gray-900">Dodaj custom domen</h4>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex gap-3">
+                                <input type="text" x-model="newDomainInput" placeholder="mojservis.rs"
+                                       class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                                <button @click="setupDomain()" :disabled="settingUpDomain || !newDomainInput"
+                                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
+                                    <span x-show="!settingUpDomain">Dodaj</span>
+                                    <span x-show="settingUpDomain">Dodajem...</span>
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Unesite domen bez http:// ili www. (npr. mojservis.rs)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== USER MODAL ==================== -->
     <div x-show="userModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
@@ -605,6 +1143,7 @@ function settingsPage() {
         // State
         loading: true,
         saving: false,
+        savingPublic: false,
         activeTab: new URLSearchParams(window.location.search).get('tab') || 'settings',
         currentTheme: localStorage.getItem('servishub-theme') || 'light',
 
@@ -621,6 +1160,48 @@ function settingsPage() {
         users: [],
         locations: [],
         kyc: {},
+
+        // Public Profile
+        publicProfile: {
+            is_public: false,
+            display_name: '',
+            tagline: '',
+            description: '',
+            phone: '',
+            phone_secondary: '',
+            email: '',
+            address: '',
+            city: '',
+            postal_code: '',
+            maps_url: '',
+            maps_embed_url: '',
+            working_hours: {},
+            logo_url: '',
+            cover_image_url: '',
+            primary_color: '#3b82f6',
+            secondary_color: '#1e40af',
+            facebook_url: '',
+            instagram_url: '',
+            youtube_url: '',
+            tiktok_url: '',
+            linkedin_url: '',
+            website_url: '',
+            show_prices: true,
+            price_disclaimer: '',
+            meta_title: '',
+            meta_description: '',
+            meta_keywords: '',
+            about_title: '',
+            about_content: ''
+        },
+        publicSubTab: 'basic',
+        tenantSlug: '',
+        publicPageUrls: { subdomain: '', custom_domain: null },
+        customDomain: { domain: null, verified: false, verification_instructions: null },
+        qrCode: null,
+        newDomainInput: '',
+        settingUpDomain: false,
+        verifyingDomain: false,
 
         // Forms
         userForm: {},
@@ -651,13 +1232,14 @@ function settingsPage() {
         async loadAll() {
             this.loading = true;
             try {
-                const [profileRes, settingsRes, subscriptionRes, usersRes, locationsRes, kycRes] = await Promise.all([
+                const [profileRes, settingsRes, subscriptionRes, usersRes, locationsRes, kycRes, publicRes] = await Promise.all([
                     api('/tenant/profile'),
                     api('/tenant/settings'),
                     api('/tenant/subscription'),
                     api('/users'),
                     api('/locations'),
-                    api('/tenant/kyc')
+                    api('/tenant/kyc'),
+                    api('/tenant/public-profile')
                 ]);
 
                 if (profileRes.ok) this.profile = await profileRes.json();
@@ -677,6 +1259,60 @@ function settingsPage() {
                     // Init KYC form
                     if (kycData.representative) {
                         this.kycForm = { ...kycData.representative };
+                    }
+                }
+                if (publicRes.ok) {
+                    const publicData = await publicRes.json();
+                    this.tenantSlug = publicData.tenant_slug || '';
+                    this.publicPageUrls.subdomain = publicData.subdomain_url || `https://${this.tenantSlug}.servishub.rs`;
+                    this.publicPageUrls.custom_domain = publicData.custom_domain_url || null;
+
+                    if (publicData.exists && publicData.profile) {
+                        const p = publicData.profile;
+                        // Flatten profile data for form binding
+                        this.publicProfile = {
+                            is_public: p.is_public || false,
+                            display_name: p.display_name || '',
+                            tagline: p.tagline || '',
+                            description: p.description || '',
+                            phone: p.contact?.phone || '',
+                            phone_secondary: p.contact?.phone_secondary || '',
+                            email: p.contact?.email || '',
+                            address: p.contact?.address || '',
+                            city: p.contact?.city || '',
+                            postal_code: p.contact?.postal_code || '',
+                            maps_url: p.contact?.maps_url || '',
+                            maps_embed_url: p.contact?.maps_embed_url || '',
+                            working_hours: p.working_hours || {},
+                            logo_url: p.branding?.logo_url || '',
+                            cover_image_url: p.branding?.cover_image_url || '',
+                            primary_color: p.branding?.primary_color || '#3b82f6',
+                            secondary_color: p.branding?.secondary_color || '#1e40af',
+                            facebook_url: p.social?.facebook || '',
+                            instagram_url: p.social?.instagram || '',
+                            youtube_url: p.social?.youtube || '',
+                            tiktok_url: p.social?.tiktok || '',
+                            linkedin_url: p.social?.linkedin || '',
+                            website_url: p.social?.website || '',
+                            show_prices: p.pricing?.show_prices !== false,
+                            price_disclaimer: p.pricing?.disclaimer || '',
+                            meta_title: p.seo?.meta_title || '',
+                            meta_description: p.seo?.meta_description || '',
+                            meta_keywords: p.seo?.meta_keywords || '',
+                            about_title: p.sections?.about_title || '',
+                            about_content: p.sections?.about_content || ''
+                        };
+                        // Custom domain data
+                        if (p.custom_domain) {
+                            this.customDomain = {
+                                domain: p.custom_domain.domain || null,
+                                verified: p.custom_domain.verified || false,
+                                verification_instructions: p.custom_domain.verification_instructions || null
+                            };
+                            if (p.custom_domain.verified && p.custom_domain.domain) {
+                                this.publicPageUrls.custom_domain = `https://${p.custom_domain.domain}`;
+                            }
+                        }
                     }
                 }
             } catch (e) {
@@ -907,6 +1543,181 @@ function settingsPage() {
         formatDate(dateStr) {
             if (!dateStr) return '-';
             return new Date(dateStr).toLocaleDateString('sr-RS');
+        },
+
+        // ==================== PUBLIC PROFILE ====================
+
+        async savePublicProfile() {
+            this.savingPublic = true;
+            try {
+                // Sanitize URLs to prevent XSS
+                const sanitizedProfile = this.sanitizePublicProfile(this.publicProfile);
+
+                const response = await api('/tenant/public-profile', 'PUT', sanitizedProfile);
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Greska pri cuvanju');
+                }
+                const data = await response.json();
+                showToast('Javna stranica sacuvana', 'success');
+
+                // Reload to get updated data
+                if (data.profile) {
+                    // Update URLs in case custom domain changed
+                    const publicRes = await api('/tenant/public-profile');
+                    if (publicRes.ok) {
+                        const publicData = await publicRes.json();
+                        this.publicPageUrls.custom_domain = publicData.custom_domain_url || null;
+                    }
+                }
+            } catch (e) {
+                showToast(e.message || 'Greska pri cuvanju', 'error');
+            } finally {
+                this.savingPublic = false;
+            }
+        },
+
+        sanitizePublicProfile(profile) {
+            // Create a clean copy with sanitized values
+            const sanitized = {};
+            const urlFields = ['logo_url', 'cover_image_url', 'maps_url', 'maps_embed_url',
+                               'facebook_url', 'instagram_url', 'youtube_url', 'tiktok_url',
+                               'linkedin_url', 'website_url'];
+
+            for (const [key, value] of Object.entries(profile)) {
+                if (value === null || value === undefined) {
+                    sanitized[key] = value;
+                } else if (typeof value === 'string') {
+                    // Sanitize string values
+                    let sanitizedValue = value.trim();
+                    // For URL fields, validate URL format
+                    if (urlFields.includes(key) && sanitizedValue) {
+                        try {
+                            const url = new URL(sanitizedValue);
+                            // Only allow http/https
+                            if (!['http:', 'https:'].includes(url.protocol)) {
+                                sanitizedValue = '';
+                            }
+                        } catch {
+                            // Invalid URL, keep as is (server will validate)
+                        }
+                    }
+                    sanitized[key] = sanitizedValue;
+                } else if (typeof value === 'object') {
+                    // Recursively sanitize objects (like working_hours)
+                    sanitized[key] = this.sanitizePublicProfile(value);
+                } else {
+                    sanitized[key] = value;
+                }
+            }
+            return sanitized;
+        },
+
+        async loadQRCode() {
+            if (this.qrCode) {
+                this.qrCode = null;
+                return;
+            }
+            try {
+                const response = await api('/tenant/public-profile/qrcode');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.qrCode = data.qrcode;
+                }
+            } catch (e) {
+                showToast('Greska pri generisanju QR koda', 'error');
+            }
+        },
+
+        copyToClipboard(text) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Kopirano u clipboard', 'success');
+                });
+            } else {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('Kopirano u clipboard', 'success');
+            }
+        },
+
+        async setupDomain() {
+            if (!this.newDomainInput) return;
+
+            // Validate domain format
+            const domain = this.newDomainInput.toLowerCase().trim();
+            const domainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z]{2,})+$/;
+            if (!domainRegex.test(domain)) {
+                showToast('Neispravan format domena', 'error');
+                return;
+            }
+
+            this.settingUpDomain = true;
+            try {
+                const response = await api('/tenant/public-profile/custom-domain', 'POST', {
+                    domain: domain
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Greska pri dodavanju domena');
+                }
+
+                showToast('Domen dodat. Proverite DNS instrukcije.', 'success');
+                this.customDomain = {
+                    domain: data.domain,
+                    verified: false,
+                    verification_instructions: data.verification_instructions
+                };
+                this.newDomainInput = '';
+            } catch (e) {
+                showToast(e.message || 'Greska pri dodavanju domena', 'error');
+            } finally {
+                this.settingUpDomain = false;
+            }
+        },
+
+        async verifyDomain() {
+            this.verifyingDomain = true;
+            try {
+                const response = await api('/tenant/public-profile/custom-domain/verify', 'POST');
+                const data = await response.json();
+
+                if (data.verified) {
+                    showToast('Domen uspesno verifikovan!', 'success');
+                    this.customDomain.verified = true;
+                    this.publicPageUrls.custom_domain = data.url;
+                } else {
+                    const errors = data.errors?.join(', ') || 'DNS zapisi nisu ispravno podeseni';
+                    showToast(errors, 'error');
+                }
+            } catch (e) {
+                showToast('Greska pri verifikaciji domena', 'error');
+            } finally {
+                this.verifyingDomain = false;
+            }
+        },
+
+        async removeDomain() {
+            if (!confirm('Da li ste sigurni da zelite da uklonite custom domen?')) {
+                return;
+            }
+            try {
+                const response = await api('/tenant/public-profile/custom-domain', 'DELETE');
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Greska pri uklanjanju domena');
+                }
+                showToast('Domen uklonjen', 'success');
+                this.customDomain = { domain: null, verified: false, verification_instructions: null };
+                this.publicPageUrls.custom_domain = null;
+            } catch (e) {
+                showToast(e.message || 'Greska pri uklanjanju domena', 'error');
+            }
         }
     }
 }

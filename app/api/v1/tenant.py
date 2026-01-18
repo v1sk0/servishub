@@ -4,11 +4,15 @@ Tenant Profile and Settings API
 from flask import Blueprint, request, g
 from sqlalchemy.orm.attributes import flag_modified
 from app.extensions import db
-from app.models import Tenant, ServiceLocation, TenantUser, ServiceRepresentative
+from app.models import Tenant, ServiceLocation, TenantUser, ServiceRepresentative, TenantPublicProfile
 from app.api.middleware.auth import jwt_required
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
+import secrets
+import qrcode
+import io
+import base64
 
 bp = Blueprint('tenant', __name__, url_prefix='/tenant')
 
@@ -43,6 +47,66 @@ class KYCSubmission(BaseModel):
     email: Optional[EmailStr] = None
     lk_front_url: Optional[str] = Field(None, max_length=500)
     lk_back_url: Optional[str] = Field(None, max_length=500)
+
+
+class PublicProfileUpdate(BaseModel):
+    """Schema za ažuriranje public profile-a."""
+    is_public: Optional[bool] = None
+
+    # Osnovni podaci
+    display_name: Optional[str] = Field(None, max_length=200)
+    tagline: Optional[str] = Field(None, max_length=300)
+    description: Optional[str] = None
+
+    # Kontakt
+    phone: Optional[str] = Field(None, max_length=50)
+    phone_secondary: Optional[str] = Field(None, max_length=50)
+    email: Optional[EmailStr] = None
+    address: Optional[str] = Field(None, max_length=300)
+    city: Optional[str] = Field(None, max_length=100)
+    postal_code: Optional[str] = Field(None, max_length=20)
+    maps_url: Optional[str] = Field(None, max_length=500)
+    maps_embed_url: Optional[str] = Field(None, max_length=500)
+
+    # Radno vreme
+    working_hours: Optional[Dict[str, str]] = None
+
+    # Branding
+    logo_url: Optional[str] = Field(None, max_length=500)
+    cover_image_url: Optional[str] = Field(None, max_length=500)
+    primary_color: Optional[str] = Field(None, max_length=7)
+    secondary_color: Optional[str] = Field(None, max_length=7)
+
+    # Social linkovi
+    facebook_url: Optional[str] = Field(None, max_length=300)
+    instagram_url: Optional[str] = Field(None, max_length=300)
+    twitter_url: Optional[str] = Field(None, max_length=300)
+    linkedin_url: Optional[str] = Field(None, max_length=300)
+    youtube_url: Optional[str] = Field(None, max_length=300)
+    tiktok_url: Optional[str] = Field(None, max_length=300)
+    website_url: Optional[str] = Field(None, max_length=300)
+
+    # SEO
+    meta_title: Optional[str] = Field(None, max_length=100)
+    meta_description: Optional[str] = Field(None, max_length=200)
+    meta_keywords: Optional[str] = Field(None, max_length=300)
+
+    # Cenovnik
+    show_prices: Optional[bool] = None
+    price_disclaimer: Optional[str] = Field(None, max_length=500)
+
+    # Dodatne sekcije
+    about_title: Optional[str] = Field(None, max_length=200)
+    about_content: Optional[str] = None
+    why_us_title: Optional[str] = Field(None, max_length=200)
+    why_us_items: Optional[List[Dict[str, Any]]] = None
+    gallery_images: Optional[List[str]] = None
+    testimonials: Optional[List[Dict[str, Any]]] = None
+
+
+class CustomDomainSetup(BaseModel):
+    """Schema za podešavanje custom domena."""
+    domain: str = Field(..., min_length=4, max_length=255)
 
 
 # ============== Routes ==============
@@ -689,3 +753,365 @@ def submit_kyc():
         'message': 'KYC submitted for review',
         'representative_id': representative.id
     }, 201
+
+
+# ============== Public Profile (Javna Stranica) ==============
+
+@bp.route('/public-profile', methods=['GET'])
+@jwt_required
+def get_public_profile():
+    """
+    Dohvata public profile tenanta.
+
+    Ako profil ne postoji, vraća prazan template.
+    """
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    profile = TenantPublicProfile.query.filter_by(tenant_id=tenant.id).first()
+
+    if not profile:
+        # Vrati prazan template
+        return {
+            'exists': False,
+            'profile': None,
+            'tenant_slug': tenant.slug,
+            'subdomain_url': f'https://{tenant.slug}.servishub.rs'
+        }
+
+    return {
+        'exists': True,
+        'profile': profile.to_dict(include_private=True),
+        'tenant_slug': tenant.slug,
+        'subdomain_url': f'https://{tenant.slug}.servishub.rs',
+        'custom_domain_url': f'https://{profile.custom_domain}' if profile.custom_domain and profile.custom_domain_verified else None
+    }
+
+
+@bp.route('/public-profile', methods=['PUT'])
+@jwt_required
+def update_public_profile():
+    """
+    Ažurira public profile tenanta.
+
+    Ako profil ne postoji, kreira novi.
+    Samo OWNER i ADMIN mogu da menjaju.
+
+    Security:
+    - Requires JWT authentication
+    - Only OWNER and ADMIN roles can update
+    - HTML content is sanitized to prevent XSS
+    - URLs are validated to prevent malicious links
+    - Hex colors are validated
+    """
+    user = TenantUser.query.get(g.user_id)
+    if not user or user.role.value not in ['OWNER', 'ADMIN']:
+        return {'error': 'Admin access required'}, 403
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    try:
+        data = PublicProfileUpdate(**request.json)
+    except Exception as e:
+        return {'error': str(e)}, 400
+
+    # Import security utilities
+    from app.utils.security import sanitize_html, sanitize_url, validate_hex_color
+
+    # Dohvati ili kreiraj profil
+    profile = TenantPublicProfile.query.filter_by(tenant_id=tenant.id).first()
+    if not profile:
+        profile = TenantPublicProfile(tenant_id=tenant.id)
+        db.session.add(profile)
+
+    # Ažuriraj polja with security sanitization
+    update_data = data.model_dump(exclude_unset=True)
+
+    # Fields that contain HTML and need sanitization
+    html_fields = {'about_content', 'description'}
+
+    # Fields that are URLs
+    url_fields = {
+        'logo_url', 'cover_image_url', 'maps_url', 'maps_embed_url',
+        'facebook_url', 'instagram_url', 'twitter_url', 'linkedin_url',
+        'youtube_url', 'tiktok_url', 'website_url'
+    }
+
+    # Fields that are hex colors
+    color_fields = {'primary_color', 'secondary_color'}
+
+    for field, value in update_data.items():
+        if not hasattr(profile, field):
+            continue
+
+        # Apply appropriate sanitization
+        if field in html_fields and value:
+            value = sanitize_html(value)
+        elif field in url_fields and value:
+            value = sanitize_url(value)
+        elif field in color_fields and value:
+            value = validate_hex_color(value)
+
+        setattr(profile, field, value)
+
+    profile.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    return {
+        'message': 'Public profile updated',
+        'profile': profile.to_dict(include_private=True)
+    }
+
+
+@bp.route('/public-profile/custom-domain', methods=['POST'])
+@jwt_required
+def setup_custom_domain():
+    """
+    Postavlja custom domen za javnu stranicu.
+
+    Generiše verifikacioni token i vraća DNS instrukcije.
+    """
+    user = TenantUser.query.get(g.user_id)
+    if not user or user.role.value not in ['OWNER', 'ADMIN']:
+        return {'error': 'Admin access required'}, 403
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    try:
+        data = CustomDomainSetup(**request.json)
+    except Exception as e:
+        return {'error': str(e)}, 400
+
+    # Sanitizuj domen
+    domain = data.domain.lower().strip()
+    if domain.startswith('http://') or domain.startswith('https://'):
+        domain = domain.split('://', 1)[1]
+    if domain.startswith('www.'):
+        domain = domain[4:]
+    domain = domain.rstrip('/')
+
+    # Proveri da li domen već koristi drugi tenant
+    existing = TenantPublicProfile.query.filter(
+        TenantPublicProfile.custom_domain == domain,
+        TenantPublicProfile.tenant_id != tenant.id
+    ).first()
+    if existing:
+        return {'error': 'Ovaj domen je već registrovan'}, 400
+
+    # Dohvati ili kreiraj profil
+    profile = TenantPublicProfile.query.filter_by(tenant_id=tenant.id).first()
+    if not profile:
+        profile = TenantPublicProfile(tenant_id=tenant.id)
+        db.session.add(profile)
+
+    # Generiši verifikacioni token
+    verification_token = secrets.token_hex(16)
+
+    profile.custom_domain = domain
+    profile.custom_domain_verified = False
+    profile.custom_domain_verification_token = verification_token
+    profile.custom_domain_verified_at = None
+    profile.custom_domain_ssl_status = 'pending'
+    profile.updated_at = datetime.utcnow()
+
+    db.session.commit()
+
+    return {
+        'message': 'Custom domain configured. Please verify DNS records.',
+        'domain': domain,
+        'verification_instructions': profile.get_domain_verification_instructions()
+    }
+
+
+@bp.route('/public-profile/custom-domain/verify', methods=['POST'])
+@jwt_required
+def verify_custom_domain():
+    """
+    Verifikuje DNS postavke za custom domen.
+    """
+    user = TenantUser.query.get(g.user_id)
+    if not user or user.role.value not in ['OWNER', 'ADMIN']:
+        return {'error': 'Admin access required'}, 403
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    profile = TenantPublicProfile.query.filter_by(tenant_id=tenant.id).first()
+    if not profile or not profile.custom_domain:
+        return {'error': 'No custom domain configured'}, 400
+
+    if profile.custom_domain_verified:
+        return {'message': 'Domain already verified', 'verified': True}
+
+    # Verifikuj DNS
+    try:
+        from app.middleware.public_site import verify_custom_domain_dns
+        result = verify_custom_domain_dns(
+            profile.custom_domain,
+            profile.custom_domain_verification_token
+        )
+    except ImportError:
+        # Ako dns resolver nije instaliran, simuliraj
+        result = {
+            'verified': False,
+            'verification_record': False,
+            'routing_record': False,
+            'errors': ['DNS resolver not available. Please contact support.']
+        }
+
+    if result['verified']:
+        profile.custom_domain_verified = True
+        profile.custom_domain_verified_at = datetime.utcnow()
+        profile.custom_domain_ssl_status = 'active'  # Heroku će automatski SSL
+        db.session.commit()
+
+        return {
+            'message': 'Domain verified successfully!',
+            'verified': True,
+            'domain': profile.custom_domain,
+            'url': f'https://{profile.custom_domain}'
+        }
+    else:
+        return {
+            'message': 'Domain verification failed',
+            'verified': False,
+            'errors': result.get('errors', []),
+            'verification_record': result.get('verification_record', False),
+            'routing_record': result.get('routing_record', False),
+            'instructions': profile.get_domain_verification_instructions()
+        }, 400
+
+
+@bp.route('/public-profile/custom-domain', methods=['DELETE'])
+@jwt_required
+def remove_custom_domain():
+    """
+    Uklanja custom domen.
+    """
+    user = TenantUser.query.get(g.user_id)
+    if not user or user.role.value not in ['OWNER', 'ADMIN']:
+        return {'error': 'Admin access required'}, 403
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    profile = TenantPublicProfile.query.filter_by(tenant_id=tenant.id).first()
+    if not profile:
+        return {'error': 'No public profile'}, 404
+
+    profile.custom_domain = None
+    profile.custom_domain_verified = False
+    profile.custom_domain_verification_token = None
+    profile.custom_domain_verified_at = None
+    profile.custom_domain_ssl_status = None
+    profile.updated_at = datetime.utcnow()
+
+    db.session.commit()
+
+    return {'message': 'Custom domain removed'}
+
+
+@bp.route('/public-profile/qrcode', methods=['GET'])
+@jwt_required
+def get_public_profile_qrcode():
+    """
+    Generiše QR kod za javnu stranicu tenanta.
+
+    Query params:
+        - type: 'subdomain' ili 'custom' (default: 'subdomain')
+        - size: veličina u pikselima (default: 200)
+    """
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    profile = TenantPublicProfile.query.filter_by(tenant_id=tenant.id).first()
+
+    domain_type = request.args.get('type', 'subdomain')
+    size = min(request.args.get('size', 200, type=int), 500)
+
+    # Odredi URL
+    if domain_type == 'custom' and profile and profile.custom_domain and profile.custom_domain_verified:
+        url = f'https://{profile.custom_domain}'
+    else:
+        url = f'https://{tenant.slug}.servishub.rs'
+
+    # Generiši QR kod
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=2,
+    )
+    qr.add_data(url)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    # Resize
+    img = img.resize((size, size))
+
+    # Convert to base64
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+    img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    return {
+        'url': url,
+        'qrcode': f'data:image/png;base64,{img_base64}'
+    }
+
+
+@bp.route('/public-profile/preview', methods=['GET'])
+@jwt_required
+def get_public_profile_preview():
+    """
+    Vraća preview podataka za javnu stranicu.
+
+    Kombinuje podatke iz profila i tenanta, kao što bi se prikazali na javnoj stranici.
+    """
+    from app.models import ServiceItem
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    profile = TenantPublicProfile.query.filter_by(tenant_id=tenant.id).first()
+    if not profile:
+        return {
+            'exists': False,
+            'message': 'Public profile not configured'
+        }
+
+    # Dohvati usluge
+    services = ServiceItem.query.filter_by(
+        tenant_id=tenant.id,
+        is_active=True
+    ).order_by(ServiceItem.category, ServiceItem.display_order).all()
+
+    # Grupiši po kategorijama
+    services_by_category = {}
+    for service in services:
+        cat = service.category or 'Ostalo'
+        if cat not in services_by_category:
+            services_by_category[cat] = []
+        services_by_category[cat].append(service.to_dict())
+
+    return {
+        'exists': True,
+        'profile': profile.to_public_dict(tenant),
+        'services': [s.to_dict() for s in services] if profile.show_prices else [],
+        'services_by_category': services_by_category if profile.show_prices else {},
+        'urls': {
+            'subdomain': f'https://{tenant.slug}.servishub.rs',
+            'custom_domain': f'https://{profile.custom_domain}' if profile.custom_domain and profile.custom_domain_verified else None
+        }
+    }

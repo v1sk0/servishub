@@ -1,0 +1,270 @@
+{% extends "tenant_public/base.html" %}
+
+{% block title %}{{ profile.display_name or tenant.name }} - Servis mobilnih telefona{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-gradient text-white">
+    {% if profile.cover_image_url %}
+    <div class="relative">
+        <img src="{{ profile.cover_image_url }}" alt="Cover" class="w-full h-64 sm:h-80 md:h-96 object-cover opacity-20 absolute inset-0">
+    </div>
+    {% endif %}
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+        <div class="text-center">
+            {% if profile.logo_url %}
+            <img src="{{ profile.logo_url }}" alt="{{ profile.display_name or tenant.name }}" class="h-20 sm:h-24 mx-auto mb-6">
+            {% endif %}
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">{{ profile.display_name or tenant.name }}</h1>
+            {% if profile.tagline %}
+            <p class="text-lg sm:text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto">{{ profile.tagline }}</p>
+            {% endif %}
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                {% if profile.phone %}
+                <a href="tel:{{ profile.phone }}" class="inline-flex items-center justify-center px-6 py-3 bg-white text-primary rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                    </svg>
+                    Pozovite nas
+                </a>
+                {% endif %}
+                {% if profile.show_prices %}
+                <a href="/cenovnik" class="inline-flex items-center justify-center px-6 py-3 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    Pogledajte cenovnik
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if profile.description %}
+<!-- About Section -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto text-center">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">O nama</h2>
+            <p class="text-gray-600 text-lg leading-relaxed">{{ profile.description }}</p>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if profile.why_us_items and profile.why_us_items|length > 0 %}
+<!-- Why Us Section -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-12">{{ profile.why_us_title or 'Zasto mi?' }}</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for item in profile.why_us_items %}
+            <div class="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                {% if item.icon %}
+                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <span class="text-2xl">{{ item.icon }}</span>
+                </div>
+                {% endif %}
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ item.title }}</h3>
+                <p class="text-gray-600">{{ item.text }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if profile.show_prices and services_by_category %}
+<!-- Services Preview Section -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">Nase usluge</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">Pogledajte kompletnu ponudu usluga i cena</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for category, category_services in services_by_category.items() %}
+            <div class="bg-gray-50 rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <span class="w-2 h-2 bg-primary rounded-full mr-2"></span>
+                    {{ category }}
+                </h3>
+                <ul class="space-y-3">
+                    {% for service in category_services[:5] %}
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-700">{{ service.name }}</span>
+                        <span class="font-semibold text-gray-900">
+                            {% if service.price_note %}{{ service.price_note }} {% endif %}{{ service.price|int }} {{ service.currency }}
+                        </span>
+                    </li>
+                    {% endfor %}
+                    {% if category_services|length > 5 %}
+                    <li class="text-primary text-sm font-medium">+ jos {{ category_services|length - 5 }} usluga</li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-8">
+            <a href="/cenovnik" class="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:opacity-90 transition-opacity">
+                Pogledajte kompletan cenovnik
+                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+            </a>
+        </div>
+
+        {% if profile.price_disclaimer %}
+        <p class="text-center text-gray-500 text-sm mt-6">{{ profile.price_disclaimer }}</p>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+
+{% if profile.testimonials and profile.testimonials|length > 0 %}
+<!-- Testimonials Section -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-12">Sta kazu nasi klijenti</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for testimonial in profile.testimonials %}
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+                <div class="flex items-center mb-4">
+                    {% for i in range(testimonial.rating or 5) %}
+                    <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    {% endfor %}
+                </div>
+                <p class="text-gray-600 mb-4">"{{ testimonial.text }}"</p>
+                <p class="font-semibold text-gray-900">{{ testimonial.name }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if profile.gallery_images and profile.gallery_images|length > 0 %}
+<!-- Gallery Section -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-12">Galerija</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {% for image in profile.gallery_images %}
+            <div class="aspect-square rounded-lg overflow-hidden">
+                <img src="{{ image }}" alt="Gallery image" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Contact Section -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <!-- Contact Info -->
+            <div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Kontaktirajte nas</h2>
+                <p class="text-gray-600 mb-8">Imate pitanja? Slobodno nas kontaktirajte putem telefona ili nas posetite.</p>
+
+                <div class="space-y-6">
+                    {% if profile.address or profile.city %}
+                    <div class="flex items-start space-x-4">
+                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Adresa</h3>
+                            <p class="text-gray-600">{{ profile.address }}{% if profile.city %}, {{ profile.city }}{% endif %}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if profile.phone %}
+                    <div class="flex items-start space-x-4">
+                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Telefon</h3>
+                            <a href="tel:{{ profile.phone }}" class="text-primary hover:underline">{{ profile.phone }}</a>
+                            {% if profile.phone_secondary %}
+                            <br><a href="tel:{{ profile.phone_secondary }}" class="text-primary hover:underline">{{ profile.phone_secondary }}</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if profile.email %}
+                    <div class="flex items-start space-x-4">
+                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Email</h3>
+                            <a href="mailto:{{ profile.email }}" class="text-primary hover:underline">{{ profile.email }}</a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if profile.working_hours %}
+                    <div class="flex items-start space-x-4">
+                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Radno vreme</h3>
+                            <div class="text-gray-600 text-sm space-y-1">
+                                {% if profile.working_hours.mon %}<p>Pon: {{ profile.working_hours.mon }}</p>{% endif %}
+                                {% if profile.working_hours.tue %}<p>Uto: {{ profile.working_hours.tue }}</p>{% endif %}
+                                {% if profile.working_hours.wed %}<p>Sre: {{ profile.working_hours.wed }}</p>{% endif %}
+                                {% if profile.working_hours.thu %}<p>Cet: {{ profile.working_hours.thu }}</p>{% endif %}
+                                {% if profile.working_hours.fri %}<p>Pet: {{ profile.working_hours.fri }}</p>{% endif %}
+                                {% if profile.working_hours.sat %}<p>Sub: {{ profile.working_hours.sat }}</p>{% endif %}
+                                {% if profile.working_hours.sun %}<p>Ned: {{ profile.working_hours.sun }}</p>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Map -->
+            {% if profile.maps_embed_url %}
+            <div class="h-80 lg:h-auto rounded-xl overflow-hidden">
+                <iframe
+                    src="{{ profile.maps_embed_url }}"
+                    width="100%"
+                    height="100%"
+                    style="border:0; min-height: 320px;"
+                    allowfullscreen=""
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+            </div>
+            {% elif profile.maps_url %}
+            <div class="h-80 lg:h-auto rounded-xl overflow-hidden bg-gray-200 flex items-center justify-center">
+                <a href="{{ profile.maps_url }}" target="_blank" class="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:opacity-90 transition-opacity">
+                    Otvori u Google Maps
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

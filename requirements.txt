@@ -48,3 +48,6 @@ pyotp==2.9.0
 qrcode==7.4.2
 pillow==10.1.0
 APScheduler==3.10.4
+
+# DNS verification for custom domains
+dnspython==2.4.2

@@ -22,6 +22,7 @@ from .security_event import SecurityEvent, SecurityEventType, SecurityEventSever
 from .platform_settings import PlatformSettings
 from .tenant_message import TenantMessage, MessageType, MessagePriority, MessageCategory
 from .service import ServiceItem, DEFAULT_CATEGORIES
+from .tenant_public_profile import TenantPublicProfile
 
 __all__ = [
     # Tenant modeli
@@ -88,4 +89,6 @@ __all__ = [
     # Service modeli (Cenovnik)
     'ServiceItem',
     'DEFAULT_CATEGORIES',
+    # Public Profile (Javna stranica)
+    'TenantPublicProfile',
 ]
