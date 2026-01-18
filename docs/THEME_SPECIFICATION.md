@@ -445,8 +445,27 @@ transition: all 0.2s ease;
 
 ---
 
+## Performance & Animations
+
+Za detalje o UI/UX performance optimizacijama (FOUC prevention, loading skeletons, transitions, reduced motion), pogledaj:
+
+**[UI_UX_PERFORMANCE.md](./UI_UX_PERFORMANCE.md)**
+
+### Quick Reference
+
+| Tehnika | Fajl | Opis |
+|---------|------|------|
+| FOUC Prevention | `base.html` | opacity transition umesto visibility |
+| x-cloak | sve stranice | skriva Alpine elemente do init |
+| Tab Transitions | `settings/index.html` | 100-150ms ease-out |
+| Loading Skeletons | `dashboard.html`, `list.html` | animirani placeholder |
+| Reduced Motion | `base.html` | podrška za accessibility |
+
+---
+
 ## Version History
 
+- **v164**: UI/UX Performance optimizacije - FOUC fix, skeletons, transitions
 - **v128**: Complete dark glassmorphic theme implementation
 - Global theme auto-converts Tailwind classes to dark equivalents
 - All tenant pages use consistent styling

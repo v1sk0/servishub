@@ -1,6 +1,6 @@
 # ServisHub - Master Summary
 
-> Poslednje ažuriranje: 18. Januar 2026 (v158)
+> Poslednje ažuriranje: 18. Januar 2026 (v164)
 
 ---
 
@@ -692,6 +692,45 @@ if tenant.can_activate_trust:
 ---
 
 ## 14. Changelog
+
+### v163-v164 (18. Januar 2026)
+
+**UI/UX Performance Optimizacije - eliminacija trzanja:**
+
+**FOUC Prevention (v163):**
+- Promenjeno sa `visibility: hidden` na `opacity: 0` sa smooth transition
+- Uklonjen `translateY(-10px)` iz fadeIn animacije (uzrokovao layout shift)
+- Dodat `prefers-reduced-motion` media query za accessibility
+- Shimmer animacija optimizovana: sa infinite 5s na one-time 1.5s
+- Dodat `content-visibility: auto` CSS class za performance
+
+**Alpine.js Optimizacije (v163):**
+- Dodat `x-cloak` na root element u tenant.html
+- Dodat `x-cloak` na settings page root
+- Dodati `x-transition:enter` na sve glavne tabove u settings (7 tabova)
+- Dodati `x-transition:enter` na sve pod-tabove u "Javna Stranica" (8 tabova)
+
+**Loading Skeletons (v164):**
+- Dashboard: skeleton loading za sve 4 stat kartice
+- Tickets: skeleton loading za tabelu (5 skeleton redova)
+- Dodat skeleton CSS sa glass theme podrškom
+
+**Chart.js Theming (v164):**
+- Tooltips sada koriste theme-aware boje
+- Glass tema: tamna pozadina tooltipa sa svetlim tekstom
+- Light tema: bela pozadina sa tamnim tekstom
+
+**Nova dokumentacija:**
+- Kreiran `docs/UI_UX_PERFORMANCE.md` - kompletan vodič za UI/UX optimizacije
+
+**Izmenjeni fajlovi:**
+- `app/templates/layouts/base.html` - FOUC, animations, reduced motion
+- `app/templates/layouts/tenant.html` - x-cloak
+- `app/templates/tenant/settings/index.html` - tab transitions
+- `app/templates/tenant/dashboard.html` - skeletons, chart tooltips
+- `app/templates/tenant/tickets/list.html` - skeletons
+
+---
 
 ### v156-v158 (18. Januar 2026)
 

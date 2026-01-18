@@ -6,14 +6,17 @@ Instrukcije za Claude Code agente. **CITAJ OVO PRE BILO KAKVIH IZMENA.**
 
 ## RESUME POINT
 
-**v0.5.7** | 2026-01-15 | Backend 100% | Frontend 100%
+**v0.5.9** | 2026-01-18 | Backend 100% | Frontend 100%
 
-### Status: KOMPLETNO - Platform Admin standardizovan
+### Status: KOMPLETNO - UI/UX Performance optimizacije
 
-**Poslednje izmene (v0.5.7):**
-- Sve Platform Admin stranice vizuelno uskladjene (isti topbar, stat kartice, tabele)
-- KYC/Predstavnici uklonjen iz sidebar navigacije - premesta se u tenant detalje
-- Standardizovan pattern za sve admin stranice (dashboard, settings, suppliers, payments)
+**Poslednje izmene (v0.5.9):**
+- Eliminisan FOUC (Flash of Unstyled Content) - smooth fade-in
+- Alpine.js trzanje fiksirano (x-cloak)
+- Tab transitions u Settings stranici
+- Loading skeletons za Dashboard i Tickets
+- Chart.js tooltips theme-aware (light/glass)
+- Kreirana docs/UI_UX_PERFORMANCE.md dokumentacija
 
 Svi frontend moduli zavrseni i verifikovani:
 - Tenant panel (23 stranica)
@@ -142,6 +145,12 @@ servishub/
 │   └── tasks/               # Celery (buduci rad)
 │
 ├── migrations/              # Alembic migracije
+├── docs/                    # Dokumentacija
+│   ├── MASTER_SUMMARY.md    # Glavni pregled sistema
+│   ├── THEME_SPECIFICATION.md # Dizajn sistem i boje
+│   ├── UI_UX_PERFORMANCE.md # Performance optimizacije
+│   ├── PUBLIC_SITE_DOCUMENTATION.md # Javne stranice tenanta
+│   └── SECURITY_IMPLEMENTATION.md # Sigurnosne mere
 ├── run.py                   # Entry point
 ├── requirements.txt
 ├── Procfile                 # Heroku konfiguracija
@@ -405,6 +414,8 @@ GitHub: github.com/v1sk0/servishub
 
 | Verzija | Datum | Izmene |
 |---------|-------|--------|
+| v0.5.9 | 2026-01-18 | **UI/UX Performance:** FOUC fix, x-cloak, tab transitions, skeletons, chart tooltips |
+| v0.5.8 | 2026-01-18 | **Public Site:** Javne stranice tenanta (subdomain), settings tab, dokumentacija |
 | v0.5.7 | 2026-01-15 | **Platform Admin standardizacija:** vizuelna konzistencija svih stranica, KYC uklonjen iz sidebar-a |
 | v0.5.6 | 2026-01-15 | **Platform Admin refaktoring:** sidebar partial, theme support, KYC→Predstavnici |
 | v0.5.5 | 2026-01-12 | Verifikacija strukture, fix layout extends, cleanup |
