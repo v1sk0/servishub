@@ -218,22 +218,23 @@ function sidebarData() {
         },
 
         getPlanName() {
-            // Active statuses show location count
-            if (this.subscriptionStatus === 'DEMO' || this.subscriptionStatus === 'TRIAL' || this.subscriptionStatus === 'ACTIVE') {
-                const lokacija = this.locationCount === 1 ? 'lokacija' : 'lokacije';
-                return `${this.locationCount} ${lokacija}`;
-            }
-            // Inactive statuses show status
-            const names = {
-                'GRACE': 'Neplaceno',
-                'SUSPENDED': 'Suspendovano',
-                'CANCELLED': 'Otkazano'
-            };
-            return names[this.subscriptionStatus] || this.subscriptionStatus;
+            // Always show location count
+            const lokacija = this.locationCount === 1 ? 'Lokacija' : 'Lokacije';
+            return `${this.locationCount} ${lokacija}`;
         },
 
         getPlanLabel() {
-            return 'Licenca';
+            // Licenca: Type
+            const types = {
+                'DEMO': 'Demo',
+                'TRIAL': 'Trial',
+                'ACTIVE': 'Standard',
+                'GRACE': 'Na reč',
+                'SUSPENDED': 'Suspendovano',
+                'CANCELLED': 'Otkazano'
+            };
+            const type = types[this.subscriptionStatus] || '';
+            return type ? `Licenca: ${type}` : 'Licenca';
         },
 
         getWidgetClass() {
