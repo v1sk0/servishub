@@ -1085,13 +1085,18 @@ def get_ticket_trend():
 
     # Grupisanje po datumu
     dates = []
+    day_names = []
     received = []
     completed = []
     collected = []
 
+    # Serbian day names (3 letters)
+    sr_days = ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned']
+
     for i in range(days):
         day = start_date + timedelta(days=i)
         dates.append(day.strftime('%d.%m'))
+        day_names.append(sr_days[day.weekday()])
 
         # Primljeni tog dana
         received_count = sum(1 for t in tickets
@@ -1110,6 +1115,7 @@ def get_ticket_trend():
 
     return jsonify({
         'dates': dates,
+        'day_names': day_names,
         'received': received,
         'completed': completed,
         'collected': collected

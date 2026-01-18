@@ -645,13 +645,18 @@ def get_phone_trend():
 
     # Grupisanje po datumu
     dates = []
+    day_names = []
     added = []
     sold = []
     revenue = []
 
+    # Serbian day names (3 letters)
+    sr_days = ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned']
+
     for i in range(days):
         day = start_date + timedelta(days=i)
         dates.append(day.strftime('%d.%m'))
+        day_names.append(sr_days[day.weekday()])
 
         # Dodati tog dana
         added_count = sum(1 for p in phones
@@ -670,6 +675,7 @@ def get_phone_trend():
 
     return jsonify({
         'dates': dates,
+        'day_names': day_names,
         'added': added,
         'sold': sold,
         'revenue': revenue
