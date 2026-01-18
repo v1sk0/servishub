@@ -1,6 +1,6 @@
 # ServisHub - Master Summary
 
-> Poslednje ažuriranje: 18. Januar 2026 (v164)
+> Poslednje ažuriranje: 19. Januar 2026 (v173)
 
 ---
 
@@ -693,6 +693,43 @@ if tenant.can_activate_trust:
 
 ## 14. Changelog
 
+### v173 (19. Januar 2026)
+
+**Wildcard Subdomain - Kompletna infrastruktura:**
+
+**Heroku Configuration:**
+- Dodata wildcard domena `*.servishub.rs` na Heroku app `servicehubdolce`
+- Komanda: `heroku domains:add "*.servishub.rs" -a servicehubdolce`
+- DNS Target: `shallow-chinchilla-m9h0ogbc3nyistsb36tddywe.herokudns.com`
+- ACM automatski generise SSL sertifikate za sve subdomene
+
+**Cloudflare DNS:**
+- Dodat CNAME zapis: `*` → herokudns target
+- Proxy status: OFF (gray cloud) - obavezno za Heroku ACM
+
+**Kompletna DNS tabela:**
+| Domain | Type | Target | SSL |
+|--------|------|--------|-----|
+| `servishub.rs` | ALIAS | systematic-bean-...herokudns.com | ✅ ACM |
+| `www.servishub.rs` | CNAME | calm-mamenchisaurus-...herokudns.com | ✅ ACM |
+| `*.servishub.rs` | CNAME | shallow-chinchilla-...herokudns.com | ✅ ACM |
+
+**Bug Fix - savePublicProfile():**
+- Problem: Pydantic validation error `working_hours.mon_closed Input should be a valid string`
+- Uzrok: `working_hours` se slao u form formatu umesto API formata
+- Resenje: Eksplicitna konverzija u `savePublicProfile()` PRE sanitizacije
+- `sanitizePublicProfile()` sada proverava da li je vec konvertovano
+
+**Izmenjeni fajlovi:**
+- `app/templates/tenant/settings/index.html` - savePublicProfile() fix
+
+**Azurirana dokumentacija:**
+- `CLAUDE.md` - v0.6.1
+- `docs/PUBLIC_SITE_DOCUMENTATION.md` - v1.2.0 changelog, DNS tabela
+- `docs/MASTER_SUMMARY.md` - v173 changelog
+
+---
+
 ### v172 (19. Januar 2026)
 
 **Public Site Routing Fix - kritične popravke:**
@@ -882,4 +919,4 @@ if tenant.can_activate_trust:
 
 ---
 
-*Generisano: 18. Januar 2026*
+*Generisano: 19. Januar 2026*

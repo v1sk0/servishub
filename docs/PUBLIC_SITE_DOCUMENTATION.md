@@ -727,6 +727,36 @@ def test_rate_limiter():
 
 ## Changelog
 
+### v1.2.0 (2026-01-19)
+
+**Infrastructure - Wildcard Subdomain Setup:**
+
+**Heroku Configuration:**
+- Dodata wildcard domena `*.servishub.rs` na Heroku app `servicehubdolce`
+- DNS Target: `shallow-chinchilla-m9h0ogbc3nyistsb36tddywe.herokudns.com`
+- ACM (Automated Certificate Management) automatski generise SSL sertifikate
+
+**Cloudflare DNS:**
+- Dodat CNAME zapis: `*` → `shallow-chinchilla-m9h0ogbc3nyistsb36tddywe.herokudns.com`
+- Proxy status: OFF (DNS only) - potrebno za Heroku ACM
+
+**Kompletna DNS konfiguracija:**
+| Domain | Type | Target |
+|--------|------|--------|
+| `servishub.rs` | ALIAS | systematic-bean-o5pcn7cxkt3ofr6msd32sj80.herokudns.com |
+| `www.servishub.rs` | CNAME | calm-mamenchisaurus-uosuol1jv84vyexgkjhcxsln.herokudns.com |
+| `*.servishub.rs` | CNAME | shallow-chinchilla-m9h0ogbc3nyistsb36tddywe.herokudns.com |
+
+**Bug Fix - savePublicProfile():**
+- Eksplicitna konverzija `working_hours` u API format PRE sanitizacije
+- `sanitizePublicProfile()` sada detektuje da li je vec konvertovano (proverava `_closed` kljuceve)
+- Resava Pydantic validation error pri toggle-ovanju `is_public`
+
+**Izmenjeni fajlovi:**
+- `app/templates/tenant/settings/index.html` - `savePublicProfile()` eksplicitna konverzija
+
+---
+
 ### v1.1.0 (2026-01-19)
 
 **Bug Fixes:**

@@ -6,15 +6,21 @@ Instrukcije za Claude Code agente. **CITAJ OVO PRE BILO KAKVIH IZMENA.**
 
 ## RESUME POINT
 
-**v0.6.0** | 2026-01-19 | Backend 100% | Frontend 100%
+**v0.6.1** | 2026-01-19 | Backend 100% | Frontend 100%
 
-### Status: KOMPLETNO - Public Site Routing Fix
+### Status: KOMPLETNO - Public Site Wildcard Subdomain
 
-**Poslednje izmene (v0.6.0):**
+**Poslednje izmene (v0.6.1):**
+- **Heroku:** Dodata wildcard domena `*.servishub.rs`
+- **Cloudflare:** CNAME zapis za wildcard → herokudns.com
+- **SSL:** ACM automatski generise SSL za subdomene
+- Fix: `savePublicProfile()` - eksplicitna konverzija working_hours pre sanitizacije
+- Fix: `sanitizePublicProfile()` - detekcija vec konvertovanog formata
+
+**Prethodne izmene (v0.6.0):**
 - Fix: Duplikat `/` rute - objedinjena logika u public.py
 - Fix: Format radnog vremena (working_hours) konverzija za API
 - Fix: SQLAlchemy JSON polja - flag_modified za pravilno cuvanje
-- Dokumentacija azurirana (PUBLIC_SITE_DOCUMENTATION.md)
 
 Svi frontend moduli zavrseni i verifikovani:
 - Tenant panel (23 stranica)
@@ -412,6 +418,7 @@ GitHub: github.com/v1sk0/servishub
 
 | Verzija | Datum | Izmene |
 |---------|-------|--------|
+| v0.6.1 | 2026-01-19 | **Wildcard Subdomain:** Heroku + Cloudflare DNS, savePublicProfile fix |
 | v0.6.0 | 2026-01-19 | **Public Site Fix:** Route deduplication, working_hours format, JSON flag_modified |
 | v0.5.9 | 2026-01-18 | **UI/UX Performance:** FOUC fix, x-cloak, tab transitions, skeletons, chart tooltips |
 | v0.5.8 | 2026-01-18 | **Public Site:** Javne stranice tenanta (subdomain), settings tab, dokumentacija |
