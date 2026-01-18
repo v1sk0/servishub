@@ -2,6 +2,12 @@
 
 {% block title %}Dashboard - ServisHub{% endblock %}
 
+{% block head %}
+{{ super() }}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
 {% block page_content %}
 <style>
     /* ========================================
@@ -256,6 +262,70 @@
     .glass-theme .empty-state a {
         color: #60a5fa;
     }
+
+    /* ========================================
+       CHART PANELS
+       ======================================== */
+    .chart-panel {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .chart-panel-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .chart-panel-title {
+        color: #1e293b;
+        font-size: 1.125rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .chart-panel-title svg {
+        color: #64748b;
+    }
+    .chart-panel-body {
+        padding: 1.25rem;
+    }
+    .chart-container {
+        height: 280px;
+        position: relative;
+    }
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    @media (max-width: 1024px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Glass theme charts */
+    .glass-theme .chart-panel {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: none;
+    }
+    .glass-theme .chart-panel-header {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .glass-theme .chart-panel-title {
+        color: #f1f5f9;
+    }
+    .glass-theme .chart-panel-title svg {
+        color: #94a3b8;
+    }
 </style>
 
 <div x-data="dashboardPage()" x-init="loadData()">
@@ -340,6 +410,45 @@
         </div>
     </div>
 
+    <!-- Charts Grid -->
+    <div class="charts-grid">
+        <!-- Service Tickets Chart -->
+        <div class="chart-panel">
+            <div class="chart-panel-header">
+                <div class="chart-panel-title">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
+                    </svg>
+                    Servisni nalozi (30 dana)
+                </div>
+                <a href="/tickets" class="stat-link text-sm">Svi nalozi &rarr;</a>
+            </div>
+            <div class="chart-panel-body">
+                <div class="chart-container">
+                    <canvas id="ticketsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phones Chart -->
+        <div class="chart-panel">
+            <div class="chart-panel-header">
+                <div class="chart-panel-title">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+                    </svg>
+                    Telefoni (30 dana)
+                </div>
+                <a href="/inventory/phones" class="stat-link text-sm">Svi telefoni &rarr;</a>
+            </div>
+            <div class="chart-panel-body">
+                <div class="chart-container">
+                    <canvas id="phonesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Recent tickets -->
     <div class="glass-table-container">
         <div class="glass-table-header">
@@ -389,6 +498,8 @@ function dashboardPage() {
         stats: {},
         recentTickets: [],
         loading: true,
+        ticketsChart: null,
+        phonesChart: null,
 
         statusLabels: {
             'RECEIVED': 'Primljeno',
@@ -415,19 +526,19 @@ function dashboardPage() {
 
         async loadData() {
             try {
-                // Load tickets
+                // Load stats from dedicated endpoint
+                const statsResponse = await api('/api/v1/tickets/stats');
+                if (statsResponse.ok) {
+                    const statsData = await statsResponse.json();
+                    this.stats.openTickets = statsData.open_tickets || 0;
+                    this.stats.readyTickets = statsData.ready_tickets || 0;
+                }
+
+                // Load recent tickets
                 const ticketsResponse = await api('/api/v1/tickets?per_page=10');
                 if (ticketsResponse.ok) {
                     const data = await ticketsResponse.json();
-                    this.recentTickets = data.tickets || [];
-
-                    // Calculate stats from tickets
-                    this.stats.openTickets = this.recentTickets.filter(t =>
-                        !['DELIVERED', 'CANCELLED'].includes(t.status)
-                    ).length;
-                    this.stats.readyTickets = this.recentTickets.filter(t =>
-                        t.status === 'READY'
-                    ).length;
+                    this.recentTickets = data.items || [];
                 }
 
                 // Load phones
@@ -444,11 +555,185 @@ function dashboardPage() {
                     this.stats.pendingOrders = data.total || 0;
                 }
 
+                // Load chart data
+                await this.loadCharts();
+
             } catch (e) {
                 console.error('Failed to load dashboard data:', e);
             } finally {
                 this.loading = false;
             }
+        },
+
+        async loadCharts() {
+            // Detect if glass theme is active
+            const isGlassTheme = document.documentElement.classList.contains('glass-theme');
+            const gridColor = isGlassTheme ? 'rgba(255, 255, 255, 0.1)' : '#f1f3f4';
+            const textColor = isGlassTheme ? '#94a3b8' : '#5f6368';
+
+            // Load tickets trend
+            try {
+                const ticketsTrendResponse = await api('/api/v1/tickets/stats/trend');
+                if (ticketsTrendResponse.ok) {
+                    const trendData = await ticketsTrendResponse.json();
+                    this.renderTicketsChart(trendData, gridColor, textColor);
+                }
+            } catch (e) {
+                console.error('Failed to load tickets trend:', e);
+            }
+
+            // Load phones trend
+            try {
+                const phonesTrendResponse = await api('/api/v1/inventory/phones/stats/trend');
+                if (phonesTrendResponse.ok) {
+                    const trendData = await phonesTrendResponse.json();
+                    this.renderPhonesChart(trendData, gridColor, textColor);
+                }
+            } catch (e) {
+                console.error('Failed to load phones trend:', e);
+            }
+        },
+
+        renderTicketsChart(data, gridColor, textColor) {
+            const ctx = document.getElementById('ticketsChart');
+            if (!ctx) return;
+
+            if (this.ticketsChart) {
+                this.ticketsChart.destroy();
+            }
+
+            this.ticketsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates,
+                    datasets: [
+                        {
+                            label: 'Primljeno',
+                            data: data.received,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        },
+                        {
+                            label: 'Zavrseno',
+                            data: data.completed,
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        },
+                        {
+                            label: 'Naplaceno',
+                            data: data.collected,
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        }
+                    ]
+                },
+                options: this.getChartOptions(gridColor, textColor)
+            });
+        },
+
+        renderPhonesChart(data, gridColor, textColor) {
+            const ctx = document.getElementById('phonesChart');
+            if (!ctx) return;
+
+            if (this.phonesChart) {
+                this.phonesChart.destroy();
+            }
+
+            this.phonesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates,
+                    datasets: [
+                        {
+                            label: 'Dodato',
+                            data: data.added,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        },
+                        {
+                            label: 'Prodato',
+                            data: data.sold,
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        }
+                    ]
+                },
+                options: this.getChartOptions(gridColor, textColor)
+            });
+        },
+
+        getChartOptions(gridColor, textColor) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: { size: 12 },
+                            color: textColor
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleFont: { size: 13 },
+                        bodyFont: { size: 12 },
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { size: 11 },
+                            color: textColor,
+                            maxRotation: 0,
+                            maxTicksLimit: 10
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: gridColor },
+                        ticks: {
+                            font: { size: 11 },
+                            color: textColor,
+                            stepSize: 1
+                        }
+                    }
+                }
+            };
         },
 
         formatDate(dateStr) {

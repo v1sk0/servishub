@@ -578,3 +578,99 @@ def adjust_part_quantity(part_id):
     db.session.commit()
 
     return jsonify(part.to_dict()), 200
+
+
+# =============================================================================
+# STATISTIKA
+# =============================================================================
+
+@bp.route('/phones/stats/trend', methods=['GET'])
+@jwt_required
+@tenant_required
+def get_phone_trend():
+    """
+    Trend statistike telefona za dashboard grafike (30 dana).
+
+    Vraca dnevne podatke za:
+    - added: Broj dodanih telefona
+    - sold: Broj prodatih telefona
+    - revenue: Ukupna zarada od prodaje
+
+    Query params:
+        - days: Broj dana unazad (default 30, max 90)
+        - location_id: Filter po lokaciji (opciono)
+
+    Returns:
+        200: Trend podaci
+    """
+    from datetime import date, timedelta
+
+    user = g.current_user
+    tenant = g.current_tenant
+
+    # Dozvoljene lokacije
+    allowed_locations = user.get_accessible_location_ids()
+    location_id = request.args.get('location_id', type=int)
+
+    if location_id:
+        if location_id not in allowed_locations:
+            return jsonify({'error': 'Forbidden', 'message': 'Nemate pristup ovoj lokaciji'}), 403
+        location_filter = [location_id]
+    else:
+        location_filter = allowed_locations
+
+    # Broj dana
+    days = min(request.args.get('days', 30, type=int), 90)
+
+    # Datumi
+    today = date.today()
+    start_date = today - timedelta(days=days - 1)
+
+    # Bazni query
+    base_query = PhoneListing.query.filter(
+        PhoneListing.tenant_id == tenant.id,
+        db.or_(
+            PhoneListing.location_id.in_(location_filter),
+            PhoneListing.location_id.is_(None)
+        )
+    )
+
+    # Dohvati sve telefone u periodu
+    phones = base_query.filter(
+        db.or_(
+            db.func.date(PhoneListing.created_at) >= start_date,
+            db.func.date(PhoneListing.sold_at) >= start_date
+        )
+    ).all()
+
+    # Grupisanje po datumu
+    dates = []
+    added = []
+    sold = []
+    revenue = []
+
+    for i in range(days):
+        day = start_date + timedelta(days=i)
+        dates.append(day.strftime('%d.%m'))
+
+        # Dodati tog dana
+        added_count = sum(1 for p in phones
+            if p.created_at and p.created_at.date() == day)
+        added.append(added_count)
+
+        # Prodati tog dana
+        sold_phones = [p for p in phones
+            if p.sold_at and p.sold_at.date() == day]
+        sold.append(len(sold_phones))
+
+        # Zarada tog dana
+        day_revenue = sum(float(p.selling_price or 0) - float(p.purchase_price or 0)
+            for p in sold_phones)
+        revenue.append(round(day_revenue, 2))
+
+    return jsonify({
+        'dates': dates,
+        'added': added,
+        'sold': sold,
+        'revenue': revenue
+    }), 200

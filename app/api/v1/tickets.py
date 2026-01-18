@@ -1024,3 +1024,93 @@ def get_warranty_tickets():
         'per_page': per_page,
         'pages': (len(filtered_tickets) + per_page - 1) // per_page
     }), 200
+
+
+@bp.route('/stats/trend', methods=['GET'])
+@jwt_required
+@tenant_required
+def get_ticket_trend():
+    """
+    Trend statistike za dashboard grafike (30 dana).
+
+    Vraca dnevne podatke za:
+    - received: Broj primljenih naloga
+    - completed: Broj zavrsenih naloga
+    - collected: Broj naplacenih naloga
+
+    Query params:
+        - days: Broj dana unazad (default 30, max 90)
+        - location_id: Filter po lokaciji (opciono)
+
+    Returns:
+        200: Trend podaci
+    """
+    from datetime import date, timedelta
+
+    user = g.current_user
+    tenant = g.current_tenant
+
+    # Dozvoljene lokacije
+    allowed_locations = user.get_accessible_location_ids()
+    location_id = request.args.get('location_id', type=int)
+
+    if location_id:
+        if location_id not in allowed_locations:
+            return jsonify({'error': 'Forbidden', 'message': 'Nemate pristup ovoj lokaciji'}), 403
+        location_filter = [location_id]
+    else:
+        location_filter = allowed_locations
+
+    # Broj dana
+    days = min(request.args.get('days', 30, type=int), 90)
+
+    # Datumi
+    today = date.today()
+    start_date = today - timedelta(days=days - 1)
+
+    # Bazni query
+    base_query = ServiceTicket.query.filter(
+        ServiceTicket.tenant_id == tenant.id,
+        ServiceTicket.location_id.in_(location_filter)
+    )
+
+    # Dohvati sve naloge u periodu
+    tickets = base_query.filter(
+        db.or_(
+            db.func.date(ServiceTicket.created_at) >= start_date,
+            db.func.date(ServiceTicket.closed_at) >= start_date,
+            db.func.date(ServiceTicket.paid_at) >= start_date
+        )
+    ).all()
+
+    # Grupisanje po datumu
+    dates = []
+    received = []
+    completed = []
+    collected = []
+
+    for i in range(days):
+        day = start_date + timedelta(days=i)
+        dates.append(day.strftime('%d.%m'))
+
+        # Primljeni tog dana
+        received_count = sum(1 for t in tickets
+            if t.created_at and t.created_at.date() == day)
+        received.append(received_count)
+
+        # Zavrseni tog dana (DELIVERED ili READY)
+        completed_count = sum(1 for t in tickets
+            if t.closed_at and t.closed_at.date() == day)
+        completed.append(completed_count)
+
+        # Naplaceni tog dana
+        collected_count = sum(1 for t in tickets
+            if t.paid_at and t.paid_at.date() == day)
+        collected.append(collected_count)
+
+    return jsonify({
+        'dates': dates,
+        'received': received,
+        'completed': completed,
+        'collected': collected
+    }), 200
