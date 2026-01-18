@@ -263,6 +263,31 @@
         color: #60a5fa;
     }
 
+    /* Loading skeleton animation */
+    .skeleton {
+        background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s infinite;
+        border-radius: 4px;
+    }
+    .glass-theme .skeleton {
+        background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+        background-size: 200% 100%;
+    }
+    @keyframes skeleton-loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    .skeleton-text {
+        height: 1em;
+        width: 60%;
+    }
+    .skeleton-value {
+        height: 2.5rem;
+        width: 4rem;
+        margin-top: 0.5rem;
+    }
+
     /* ========================================
        CHART PANELS
        ======================================== */
@@ -393,7 +418,12 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="stat-label">Otvoreni nalozi</p>
-                    <p class="stat-value mt-2" x-text="stats.openTickets || 0"></p>
+                    <template x-if="loading">
+                        <div class="skeleton skeleton-value"></div>
+                    </template>
+                    <template x-if="!loading">
+                        <p class="stat-value mt-2" x-text="stats.openTickets || 0"></p>
+                    </template>
                 </div>
                 <div class="stat-icon blue">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -409,7 +439,12 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="stat-label">Spremno za preuzimanje</p>
-                    <p class="stat-value mt-2" x-text="stats.readyTickets || 0"></p>
+                    <template x-if="loading">
+                        <div class="skeleton skeleton-value"></div>
+                    </template>
+                    <template x-if="!loading">
+                        <p class="stat-value mt-2" x-text="stats.readyTickets || 0"></p>
+                    </template>
                 </div>
                 <div class="stat-icon green">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -425,7 +460,12 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="stat-label">Telefoni na lageru</p>
-                    <p class="stat-value mt-2" x-text="stats.phonesInStock || 0"></p>
+                    <template x-if="loading">
+                        <div class="skeleton skeleton-value"></div>
+                    </template>
+                    <template x-if="!loading">
+                        <p class="stat-value mt-2" x-text="stats.phonesInStock || 0"></p>
+                    </template>
                 </div>
                 <div class="stat-icon purple">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -441,7 +481,12 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="stat-label">Aktivne naruzbine</p>
-                    <p class="stat-value mt-2" x-text="stats.pendingOrders || 0"></p>
+                    <template x-if="loading">
+                        <div class="skeleton skeleton-value"></div>
+                    </template>
+                    <template x-if="!loading">
+                        <p class="stat-value mt-2" x-text="stats.pendingOrders || 0"></p>
+                    </template>
                 </div>
                 <div class="stat-icon yellow">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -767,6 +812,7 @@ function dashboardPage() {
         },
 
         getChartOptions(gridColor, textColor) {
+            const isGlassTheme = document.documentElement.classList.contains('glass-theme');
             return {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -785,7 +831,11 @@ function dashboardPage() {
                         }
                     },
                     tooltip: {
-                        backgroundColor: '#1e293b',
+                        backgroundColor: isGlassTheme ? 'rgba(30, 41, 59, 0.95)' : '#ffffff',
+                        titleColor: isGlassTheme ? '#f1f5f9' : '#1e293b',
+                        bodyColor: isGlassTheme ? '#cbd5e1' : '#64748b',
+                        borderColor: isGlassTheme ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0',
+                        borderWidth: 1,
                         titleFont: { size: 13 },
                         bodyFont: { size: 12 },
                         padding: 12,

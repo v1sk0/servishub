@@ -306,6 +306,28 @@
     /* Glass theme filter select */
     .glass-theme .filter-select { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #f1f5f9; }
     .glass-theme .filter-select option { background: #1e293b; color: #f1f5f9; }
+
+    /* Loading skeleton */
+    .skeleton {
+        background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s infinite;
+        border-radius: 4px;
+    }
+    .glass-theme .skeleton {
+        background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+        background-size: 200% 100%;
+    }
+    @keyframes skeleton-loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    .skeleton-row td { padding: 0.875rem 1rem; }
+    .skeleton-cell { height: 1rem; border-radius: 4px; }
+    .skeleton-cell.w-16 { width: 4rem; }
+    .skeleton-cell.w-24 { width: 6rem; }
+    .skeleton-cell.w-32 { width: 8rem; }
+    .skeleton-cell.w-20 { width: 5rem; }
 </style>
 
 <div x-data="ticketsPage()" x-init="init()">
@@ -393,8 +415,25 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <!-- Loading skeleton rows -->
+                    <template x-if="loading">
+                        <template x-for="i in 5" :key="'skeleton-'+i">
+                            <tr class="skeleton-row">
+                                <td><div class="skeleton skeleton-cell w-16"></div></td>
+                                <td><div class="skeleton skeleton-cell w-20"></div></td>
+                                <td><div class="skeleton skeleton-cell w-32"></div></td>
+                                <td><div class="skeleton skeleton-cell w-32"></div></td>
+                                <td><div class="skeleton skeleton-cell w-24"></div></td>
+                                <td><div class="skeleton skeleton-cell w-16"></div></td>
+                                <td><div class="skeleton skeleton-cell w-20"></div></td>
+                                <td><div class="skeleton skeleton-cell w-24"></div></td>
+                                <td><div class="skeleton skeleton-cell w-20"></div></td>
+                            </tr>
+                        </template>
+                    </template>
+                    <!-- Actual data rows -->
                     <template x-for="ticket in openTickets" :key="ticket.id">
-                        <tr :class="{'strobe-alert': getDaysOpen(ticket) > 20}">
+                        <tr x-show="!loading" :class="{'strobe-alert': getDaysOpen(ticket) > 20}">
                             <td>
                                 <span class="cell-link" @click="viewTicket(ticket)" x-text="'#' + ticket.ticket_number_formatted"></span>
                             </td>
