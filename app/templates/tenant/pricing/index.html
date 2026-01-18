@@ -1,0 +1,598 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Cenovnik - ServisHub{% endblock %}
+
+{% block content %}
+<div x-data="pricingPage()" x-init="init()">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Cenovnik usluga</h1>
+            <p class="text-gray-600 mt-1">Definisajte kategorije i usluge koje nudite klijentima</p>
+        </div>
+        <button @click="openAddModal()"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span>Dodaj uslugu</span>
+        </button>
+    </div>
+
+    <!-- Info Note -->
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+        <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <p class="text-sm text-blue-800 font-medium">Napomena o cenama</p>
+                <p class="text-sm text-blue-700 mt-1">Cene su okvirne i podlozne promenama nakon dijagnostike uredjaja. Konacna cena zavisi od stanja uredjaja i potrebnih delova.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <p class="text-sm text-gray-500 mb-1">Ukupno usluga</p>
+            <p class="text-2xl font-bold text-gray-900" x-text="stats.total || 0"></p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <p class="text-sm text-gray-500 mb-1">Aktivne</p>
+            <p class="text-2xl font-bold text-green-600" x-text="stats.active || 0"></p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <p class="text-sm text-gray-500 mb-1">Neaktivne</p>
+            <p class="text-2xl font-bold text-gray-400" x-text="stats.inactive || 0"></p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <p class="text-sm text-gray-500 mb-1">Kategorija</p>
+            <p class="text-2xl font-bold text-blue-600" x-text="stats.unique_categories || 0"></p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+        <div class="flex flex-col sm:flex-row gap-4">
+            <!-- Search -->
+            <div class="flex-1">
+                <div class="relative">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <input type="text" x-model="filters.search" @input.debounce.300ms="loadServices()"
+                           placeholder="Pretrazi po nazivu usluge..."
+                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="w-full sm:w-48">
+                <select x-model="filters.category" @change="loadServices()"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                    <option value="">Sve kategorije</option>
+                    <template x-for="cat in categories" :key="cat">
+                        <option :value="cat" x-text="cat"></option>
+                    </template>
+                </select>
+            </div>
+
+            <!-- Active Filter -->
+            <div class="w-full sm:w-40">
+                <select x-model="filters.includeInactive" @change="loadServices()"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                    <option value="false">Samo aktivne</option>
+                    <option value="true">Sve usluge</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div x-show="loading" class="flex justify-center py-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    </div>
+
+    <!-- Empty State -->
+    <div x-show="!loading && services.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Nemate definisanih usluga</h3>
+        <p class="text-gray-500 mb-4">Dodajte kategorije i usluge koje nudite klijentima</p>
+        <button @click="openAddModal()" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span>Dodaj prvu uslugu</span>
+        </button>
+    </div>
+
+    <!-- Services Grouped by Category -->
+    <div x-show="!loading && services.length > 0" class="space-y-6">
+        <template x-for="category in groupedCategories" :key="category.name">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <!-- Category Header -->
+                <div class="bg-gray-50 border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="font-semibold text-gray-900" x-text="category.name"></h3>
+                        <span class="text-sm text-gray-500" x-text="'(' + category.services.length + ' ' + (category.services.length === 1 ? 'usluga' : 'usluga') + ')'"></span>
+                    </div>
+                </div>
+
+                <!-- Services Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50/50 border-b border-gray-100">
+                            <tr>
+                                <th class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usluga</th>
+                                <th class="px-6 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cena</th>
+                                <th class="px-6 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Akcije</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <template x-for="service in category.services" :key="service.id">
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="px-6 py-3">
+                                        <div>
+                                            <p class="font-medium text-gray-900" x-text="service.name"></p>
+                                            <p x-show="service.description" class="text-sm text-gray-500 mt-0.5 line-clamp-1" x-text="service.description"></p>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-3 text-right">
+                                        <div>
+                                            <span class="font-bold text-gray-900" x-text="formatPrice(service.price)"></span>
+                                            <span class="text-gray-500 text-sm" x-text="service.currency"></span>
+                                            <p x-show="service.price_note" class="text-xs text-gray-400" x-text="service.price_note"></p>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-3 text-center">
+                                        <span x-show="service.is_active" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            Aktivna
+                                        </span>
+                                        <span x-show="!service.is_active" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                            Neaktivna
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-3 text-right">
+                                        <div class="flex items-center justify-end gap-1">
+                                            <button @click="openEditModal(service)"
+                                                    class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                                    title="Izmeni">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                </svg>
+                                            </button>
+                                            <button @click="toggleActive(service)"
+                                                    class="p-1.5 rounded-lg transition"
+                                                    :class="service.is_active ? 'text-gray-400 hover:text-amber-600 hover:bg-amber-50' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'"
+                                                    :title="service.is_active ? 'Deaktiviraj' : 'Aktiviraj'">
+                                                <svg x-show="service.is_active" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                                </svg>
+                                                <svg x-show="!service.is_active" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                            </button>
+                                            <button @click="confirmDelete(service)"
+                                                    class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                                    title="Obrisi">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div x-show="showModal" x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeModal()"></div>
+
+            <!-- Modal Panel -->
+            <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+
+                <div class="bg-white px-4 pb-4 pt-5 sm:p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4" x-text="editingService ? 'Izmeni uslugu' : 'Dodaj novu uslugu'"></h3>
+
+                    <form @submit.prevent="saveService()">
+                        <!-- Category (Combobox-style) -->
+                        <div class="mb-4" x-data="{ showSuggestions: false }">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kategorija *</label>
+                            <div class="relative">
+                                <input type="text" x-model="form.category" required
+                                       @focus="showSuggestions = true"
+                                       @blur="setTimeout(() => showSuggestions = false, 200)"
+                                       placeholder="npr. Konzole, Laptopovi, Trotineti..."
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <!-- Suggestions dropdown -->
+                                <div x-show="showSuggestions && filteredSuggestions.length > 0"
+                                     class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                    <template x-for="suggestion in filteredSuggestions" :key="suggestion">
+                                        <button type="button"
+                                                @mousedown.prevent="form.category = suggestion; showSuggestions = false"
+                                                class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 transition"
+                                                x-text="suggestion"></button>
+                                    </template>
+                                </div>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">Izaberite postojecu ili upisite novu kategoriju</p>
+                        </div>
+
+                        <!-- Name -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Naziv usluge *</label>
+                            <input type="text" x-model="form.name" required
+                                   placeholder="npr. Zamena ekrana, Popravka joypad-a..."
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Opis</label>
+                            <textarea x-model="form.description" rows="2"
+                                      placeholder="Kratak opis usluge..."
+                                      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        </div>
+
+                        <!-- Price Row -->
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Cena *</label>
+                                <input type="number" x-model="form.price" required min="0" step="0.01"
+                                       placeholder="0.00"
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Valuta</label>
+                                <select x-model="form.currency"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                                    <option value="RSD">RSD</option>
+                                    <option value="EUR">EUR</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Price Note -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Napomena uz cenu</label>
+                            <input type="text" x-model="form.price_note"
+                                   placeholder="npr. od, po satu, po uredjaju"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <!-- Is Active -->
+                        <div class="mb-6">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" x-model="form.is_active"
+                                       class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <span class="text-sm text-gray-700">Aktivna usluga (prikazuje se na javnoj stranici)</span>
+                            </label>
+                        </div>
+
+                        <!-- Error -->
+                        <div x-show="error" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p class="text-sm text-red-600" x-text="error"></p>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="flex gap-3 justify-end">
+                            <button type="button" @click="closeModal()"
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                                Otkazi
+                            </button>
+                            <button type="submit" :disabled="saving"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50">
+                                <span x-show="!saving" x-text="editingService ? 'Sacuvaj izmene' : 'Dodaj uslugu'"></span>
+                                <span x-show="saving">Cuvanje...</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div x-show="showDeleteModal" x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showDeleteModal = false"></div>
+
+            <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md">
+                <div class="bg-white px-4 pb-4 pt-5 sm:p-6">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">Brisanje usluge</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500">Da li ste sigurni da zelite da obrisete uslugu "<span x-text="deletingService?.name"></span>"? Ova akcija se ne moze ponistiti.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse gap-3">
+                        <button type="button" @click="deleteService()" :disabled="deleting"
+                                class="inline-flex w-full justify-center rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto disabled:opacity-50">
+                            <span x-show="!deleting">Obrisi</span>
+                            <span x-show="deleting">Brisanje...</span>
+                        </button>
+                        <button type="button" @click="showDeleteModal = false"
+                                class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">
+                            Otkazi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function pricingPage() {
+    return {
+        loading: true,
+        services: [],
+        categories: [],
+        defaultCategories: [],
+        stats: {},
+        filters: {
+            search: '',
+            category: '',
+            includeInactive: 'false'
+        },
+
+        // Modal state
+        showModal: false,
+        editingService: null,
+        saving: false,
+        error: null,
+        form: {
+            name: '',
+            description: '',
+            category: '',
+            price: '',
+            currency: 'RSD',
+            price_note: '',
+            is_active: true
+        },
+
+        // Delete state
+        showDeleteModal: false,
+        deletingService: null,
+        deleting: false,
+
+        // Computed: services grouped by category
+        get groupedCategories() {
+            const groups = {};
+            for (const service of this.services) {
+                const cat = service.category || 'Ostalo';
+                if (!groups[cat]) {
+                    groups[cat] = [];
+                }
+                groups[cat].push(service);
+            }
+            // Sort categories alphabetically, but put "Ostalo" last
+            const sortedKeys = Object.keys(groups).sort((a, b) => {
+                if (a === 'Ostalo') return 1;
+                if (b === 'Ostalo') return -1;
+                return a.localeCompare(b, 'sr');
+            });
+            return sortedKeys.map(name => ({
+                name,
+                services: groups[name]
+            }));
+        },
+
+        // Computed: filtered category suggestions
+        get filteredSuggestions() {
+            const input = (this.form.category || '').toLowerCase();
+            if (!input) return this.categories;
+            return this.categories.filter(c => c.toLowerCase().includes(input));
+        },
+
+        async init() {
+            await this.loadServices();
+            await this.loadStats();
+        },
+
+        async loadServices() {
+            this.loading = true;
+            try {
+                const params = new URLSearchParams();
+                if (this.filters.search) params.append('search', this.filters.search);
+                if (this.filters.category) params.append('category', this.filters.category);
+                if (this.filters.includeInactive === 'true') params.append('include_inactive', 'true');
+
+                const res = await api(`/services?${params.toString()}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    this.services = data.services || [];
+                    this.categories = data.categories || [];
+                    this.defaultCategories = data.default_categories || [];
+                }
+            } catch (e) {
+                console.error('Failed to load services:', e);
+                showToast('Greska pri ucitavanju usluga', 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async loadStats() {
+            try {
+                const res = await api('/services/stats');
+                if (res.ok) {
+                    this.stats = await res.json();
+                }
+            } catch (e) {
+                console.error('Failed to load stats:', e);
+            }
+        },
+
+        formatPrice(price) {
+            return new Intl.NumberFormat('sr-RS').format(price);
+        },
+
+        openAddModal() {
+            this.editingService = null;
+            this.form = {
+                name: '',
+                description: '',
+                category: this.categories.length > 0 ? '' : 'Mobilni telefoni',
+                price: '',
+                currency: 'RSD',
+                price_note: '',
+                is_active: true
+            };
+            this.error = null;
+            this.showModal = true;
+        },
+
+        openEditModal(service) {
+            this.editingService = service;
+            this.form = {
+                name: service.name,
+                description: service.description || '',
+                category: service.category || 'Ostalo',
+                price: service.price,
+                currency: service.currency || 'RSD',
+                price_note: service.price_note || '',
+                is_active: service.is_active
+            };
+            this.error = null;
+            this.showModal = true;
+        },
+
+        closeModal() {
+            this.showModal = false;
+            this.editingService = null;
+            this.error = null;
+        },
+
+        async saveService() {
+            this.saving = true;
+            this.error = null;
+
+            try {
+                const payload = {
+                    name: this.form.name.trim(),
+                    description: this.form.description.trim() || null,
+                    category: this.form.category.trim() || 'Ostalo',
+                    price: parseFloat(this.form.price),
+                    currency: this.form.currency,
+                    price_note: this.form.price_note.trim() || null,
+                    is_active: this.form.is_active
+                };
+
+                let res;
+                if (this.editingService) {
+                    res = await api(`/services/${this.editingService.id}`, 'PUT', payload);
+                } else {
+                    res = await api('/services', 'POST', payload);
+                }
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    showToast(this.editingService ? 'Usluga azurirana' : 'Usluga dodata', 'success');
+                    this.closeModal();
+                    await this.loadServices();
+                    await this.loadStats();
+                } else {
+                    this.error = data.error || 'Greska pri cuvanju';
+                }
+            } catch (e) {
+                console.error('Save error:', e);
+                this.error = 'Greska u komunikaciji sa serverom';
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        async toggleActive(service) {
+            try {
+                const res = await api(`/services/${service.id}`, 'PUT', {
+                    is_active: !service.is_active
+                });
+
+                if (res.ok) {
+                    service.is_active = !service.is_active;
+                    showToast(service.is_active ? 'Usluga aktivirana' : 'Usluga deaktivirana', 'success');
+                    await this.loadStats();
+                } else {
+                    const data = await res.json();
+                    showToast(data.error || 'Greska pri promeni statusa', 'error');
+                }
+            } catch (e) {
+                console.error('Toggle error:', e);
+                showToast('Greska u komunikaciji sa serverom', 'error');
+            }
+        },
+
+        confirmDelete(service) {
+            this.deletingService = service;
+            this.showDeleteModal = true;
+        },
+
+        async deleteService() {
+            if (!this.deletingService) return;
+
+            this.deleting = true;
+            try {
+                const res = await api(`/services/${this.deletingService.id}`, 'DELETE');
+
+                if (res.ok) {
+                    showToast('Usluga obrisana', 'success');
+                    this.showDeleteModal = false;
+                    this.deletingService = null;
+                    await this.loadServices();
+                    await this.loadStats();
+                } else {
+                    const data = await res.json();
+                    showToast(data.error || 'Greska pri brisanju', 'error');
+                }
+            } catch (e) {
+                console.error('Delete error:', e);
+                showToast('Greska u komunikaciji sa serverom', 'error');
+            } finally {
+                this.deleting = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

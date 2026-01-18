@@ -21,6 +21,7 @@ from .email_verification import PendingEmailVerification
 from .security_event import SecurityEvent, SecurityEventType, SecurityEventSeverity
 from .platform_settings import PlatformSettings
 from .tenant_message import TenantMessage, MessageType, MessagePriority, MessageCategory
+from .service import ServiceItem, DEFAULT_CATEGORIES
 
 __all__ = [
     # Tenant modeli
@@ -84,4 +85,7 @@ __all__ = [
     'MessageType',
     'MessagePriority',
     'MessageCategory',
+    # Service modeli (Cenovnik)
+    'ServiceItem',
+    'DEFAULT_CATEGORIES',
 ]

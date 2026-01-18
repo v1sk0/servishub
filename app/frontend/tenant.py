@@ -191,3 +191,11 @@ def settings_subscription():
 def settings_kyc():
     """KYC verifikacija."""
     return render_template('tenant/settings/kyc.html')
+
+
+# ============== Pricing / Cenovnik ==============
+
+@bp.route('/pricing')
+def pricing():
+    """Cenovnik usluga."""
+    return render_template('tenant/pricing/index.html')
