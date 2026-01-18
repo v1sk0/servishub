@@ -1,6 +1,6 @@
 # ServisHub - Master Summary
 
-> Poslednje ažuriranje: 17. Januar 2026 (v103)
+> Poslednje ažuriranje: 18. Januar 2026 (v158)
 
 ---
 
@@ -30,9 +30,11 @@
 | OAuth | Google OAuth 2.0 sa PKCE |
 
 ### Frontend (Tenant App)
-- Verovatno SPA (Alpine.js/Vue based na CSP)
-- Tailwind CSS
+- Alpine.js za reaktivnost
+- Tailwind CSS za stilizovanje
+- Chart.js 4.4.0 za grafike na dashboardu
 - CDN resursi (cloudflare, jsdelivr)
+- Glass theme (glassmorphism) opcija
 
 ### Deployment
 - Heroku (produkcija)
@@ -440,7 +442,28 @@ Admin može postaviti custom cene za određeni tenant:
 | GET | `/api/v1/subscription/invoice/:id` | Detalji fakture |
 | POST | `/api/v1/subscription/activate-trust` | "Na reč" aktivacija |
 
-### 8.4 Admin Payments (planirati)
+### 8.4 Dashboard Stats (`/api/v1`)
+
+| Method | Endpoint | Opis |
+|--------|----------|------|
+| GET | `/tickets/stats/trend` | Trend servisnih naloga (primljeno, završeno, naplaćeno) |
+| GET | `/inventory/phones/stats/trend` | Trend telefona (dodato, prodato, zarada) |
+
+**Query parametri:**
+- `days` - Broj dana (7, 30, 90, 365). Default: 30
+
+**Response format:**
+```json
+{
+  "dates": ["01.01", "02.01", ...],
+  "day_names": ["Pon", "Uto", ...],
+  "received": [1, 2, ...],
+  "completed": [1, 0, ...],
+  "collected": [0, 1, ...]
+}
+```
+
+### 8.5 Admin Payments (planirati)
 
 | Method | Endpoint | Opis |
 |--------|----------|------|
@@ -670,6 +693,78 @@ if tenant.can_activate_trust:
 
 ## 14. Changelog
 
+### v156-v158 (18. Januar 2026)
+
+**Dashboard Charts - Kompletna implementacija:**
+- Dodata Chart.js 4.4.0 biblioteka za grafike
+- Novi API endpoint: `GET /api/v1/tickets/stats/trend` - trend servisnih naloga
+- Novi API endpoint: `GET /api/v1/inventory/phones/stats/trend` - trend telefona
+- Line chart za servisne naloge: Primljeno, Završeno, Naplaćeno
+- Line chart za telefone: Dodato, Prodato
+- Srpska imena dana ispod datuma (Pon, Uto, Sre, Čet, Pet, Sub, Ned)
+- Period selektor za oba charta: 7 dana, 30 dana, Kvartal (90), Godina (365)
+- Podrška za Light i Glass teme
+
+**Izmenjeni fajlovi:**
+- `app/templates/tenant/dashboard.html` - dodati chartovi sa selektorima
+- `app/api/v1/tickets.py` - dodat `/stats/trend` endpoint
+- `app/api/v1/inventory.py` - dodat `/phones/stats/trend` endpoint
+
+---
+
+### v139-v149 (17-18. Januar 2026)
+
+**Subscription Widget u Sidebar-u:**
+- License-style widget sa guilloche pattern pozadinom
+- Shimmer animacija (45 stepeni, 5s interval)
+- Prikaz statusa: Trial/Standard/Na reč
+- Prikaz broja lokacija
+- Preostali dani sa progress barom
+- Poseban stil za GRACE period (žuta boja)
+
+**Izmenjeni fajlovi:**
+- `app/templates/components/tenant_sidebar.html` - dodat subscription widget
+- `app/templates/layouts/base.html` - dodati CSS stilovi za widget
+
+---
+
+### v136-v138 (17. Januar 2026)
+
+**UI/UX poboljšanja:**
+- Fix FOUC (Flash of Unstyled Content) - `theme-ready` CSS klasa
+- Settings stranica - preuređeni tabovi, tema na prvom mestu
+- Sidebar dropdown perzistencija
+- Google OAuth timing fix
+
+**Izmenjeni fajlovi:**
+- `app/templates/layouts/base.html` - FOUC fix
+- `app/templates/tenant/settings/index.html` - tab reorder
+- `app/templates/components/tenant_sidebar.html` - dropdown fix
+
+---
+
+### v130-v135 (16-17. Januar 2026)
+
+**Theme sistem:**
+- Light/Dark tema toggle u settings
+- Glass theme (glassmorphism) opcija
+- CSS varijable za teme (`--glass-bg`, `--glass-card`, itd.)
+- Poboljšan modal za servisne naloge
+
+**JWT fix:**
+- Ispravljen problem sa tenant podacima - dodat `g.tenant_id` i `g.user_id`
+
+**Tickets fix:**
+- Ispravljen bug: API vraća `items`, frontend očekivao `tickets`
+
+**Izmenjeni fajlovi:**
+- `app/templates/layouts/base.html` - glass theme CSS
+- `app/templates/tenant/settings/index.html` - theme toggle
+- `app/api/middleware/jwt_utils.py` - JWT fix
+- `app/templates/tenant/tickets/list.html` - data.items fix
+
+---
+
 ### v103 (17. Januar 2026)
 
 **Admin Paketi stranica - redizajn:**
@@ -718,4 +813,4 @@ if tenant.can_activate_trust:
 
 ---
 
-*Generisano: Januar 2026*
+*Generisano: 18. Januar 2026*
