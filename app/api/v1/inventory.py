@@ -619,8 +619,8 @@ def get_phone_trend():
     else:
         location_filter = allowed_locations
 
-    # Broj dana
-    days = min(request.args.get('days', 30, type=int), 90)
+    # Broj dana (max 365 za godisnji prikaz)
+    days = min(request.args.get('days', 30, type=int), 365)
 
     # Datumi
     today = date.today()
