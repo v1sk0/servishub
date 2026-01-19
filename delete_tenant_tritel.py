@@ -5,7 +5,7 @@ Run this on Heroku: heroku run python delete_tenant_tritel.py --app servishub
 from app import create_app
 from app.extensions import db
 from app.models.tenant import Tenant, ServiceLocation
-from app.models.ticket import Ticket
+from app.models.ticket import ServiceTicket
 from app.models.user import TenantUser
 
 app = create_app()
@@ -28,7 +28,7 @@ with app.app_context():
     print(f'  Created: {tenant.created_at}')
 
     # Count related records
-    tickets = Ticket.query.filter_by(tenant_id=tenant.id).count()
+    tickets = ServiceTicket.query.filter_by(tenant_id=tenant.id).count()
     users = TenantUser.query.filter_by(tenant_id=tenant.id).count()
     locations = ServiceLocation.query.filter_by(tenant_id=tenant.id).count()
 
