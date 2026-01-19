@@ -215,6 +215,13 @@ def get_settings():
 
     settings = tenant.settings_json or {}
 
+    # Default print clause
+    default_clause = (
+        'Uređaj se čuva 30 dana od obaveštenja o završetku popravke. '
+        'Nakon isteka navedenog roka servis ne odgovara za uređaj. '
+        'Garancija važi od datuma preuzimanja uređaja.'
+    )
+
     return {
         'default_warranty_days': settings.get('default_warranty_days', 30),
         'default_currency': settings.get('default_currency', 'RSD'),
@@ -224,7 +231,8 @@ def get_settings():
         'auto_sms_on_ready': settings.get('auto_sms_on_ready', False),
         'working_hours': settings.get('working_hours', {}),
         'receipt_footer': settings.get('receipt_footer', ''),
-        'terms_and_conditions': settings.get('terms_and_conditions', '')
+        'terms_and_conditions': settings.get('terms_and_conditions', ''),
+        'print_clause': tenant.print_clause or default_clause
     }
 
 
@@ -245,6 +253,11 @@ def update_settings():
 
     # Update with new values
     new_settings = request.json or {}
+
+    # Handle print_clause separately (dedicated column, not in settings_json)
+    if 'print_clause' in new_settings:
+        tenant.print_clause = new_settings.pop('print_clause')
+
     for key, value in new_settings.items():
         if value is not None:
             settings[key] = value

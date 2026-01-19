@@ -104,6 +104,16 @@ class Tenant(db.Model):
     # Primer: {"warranty_defaults": {"phone_repair": 45}, "currency": "RSD"}
     settings_json = db.Column(db.JSON, default=dict)
 
+    # ============================================
+    # PRINT SETTINGS - Podešavanja za štampu
+    # ============================================
+    print_clause = db.Column(
+        db.Text,
+        default='Uređaj se čuva 30 dana od obaveštenja o završetku popravke. '
+                'Nakon isteka navedenog roka servis ne odgovara za uređaj. '
+                'Garancija važi od datuma preuzimanja uređaja.'
+    )
+
     # Timestampovi
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(

@@ -818,9 +818,15 @@ def get_ticket_print_data(ticket_id):
     if not user.has_location_access(ticket.location_id):
         return jsonify({'error': 'Forbidden', 'message': 'Nemate pristup ovoj lokaciji'}), 403
 
-    # Dohvati tenant settings za klauzolu
-    settings = tenant.settings_json or {}
-    clause = settings.get('ticket_clause', '')
+    # Default print clause
+    default_clause = (
+        'Uređaj se čuva 30 dana od obaveštenja o završetku popravke. '
+        'Nakon isteka navedenog roka servis ne odgovara za uređaj. '
+        'Garancija važi od datuma preuzimanja uređaja.'
+    )
+
+    # Dohvati klauzolu iz tenant.print_clause kolone
+    clause = tenant.print_clause or default_clause
 
     # URL za QR kod
     qr_url = f"/tickets/public/{ticket.access_token}" if ticket.access_token else None
@@ -832,7 +838,8 @@ def get_ticket_print_data(ticket_id):
             'pib': tenant.pib,
             'address': tenant.adresa_sedista,
             'email': tenant.email,
-            'phone': tenant.telefon
+            'phone': tenant.telefon,
+            'print_clause': clause
         },
         'location': {
             'name': ticket.location.name if ticket.location else None,

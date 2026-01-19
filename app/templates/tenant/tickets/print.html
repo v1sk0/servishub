@@ -657,6 +657,11 @@
             margin: 1
           });
         }
+
+        // Set print clause from tenant settings
+        if (tenant?.print_clause) {
+          document.getElementById(`clause-${i}`).textContent = tenant.print_clause;
+        }
       }
     }
 
