@@ -1006,12 +1006,18 @@ function ticketsPage() {
         },
 
         syncSelectedProblems() {
-            // Sync selected chips with description text - remove chips whose text is no longer in description
+            // Bidirectional sync: select chips matching text, deselect chips not in text
             const desc = (this.newTicket.problem_description || '').toLowerCase();
-            this.selectedProblems = this.selectedProblems.filter(id => {
-                const prob = this.currentProblems.find(p => p.id === id);
-                return prob && desc.includes(prob.label.toLowerCase());
-            });
+
+            // Build new selection based on what's in the description
+            const newSelection = [];
+            for (const prob of this.currentProblems) {
+                if (desc.includes(prob.label.toLowerCase())) {
+                    newSelection.push(prob.id);
+                }
+            }
+
+            this.selectedProblems = newSelection;
             this.newTicket.problem_areas = [...this.selectedProblems];
         },
 
