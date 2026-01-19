@@ -717,6 +717,11 @@
                             class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
                         SEO
                     </button>
+                    <button @click="publicSubTab = 'sections'"
+                            :class="publicSubTab === 'sections' ? 'border-green-500 text-green-600 bg-green-50' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                            class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
+                        Sekcije
+                    </button>
                     <button @click="publicSubTab = 'domain'"
                             :class="publicSubTab === 'domain' ? 'border-green-500 text-green-600 bg-green-50' : 'border-transparent text-gray-500 hover:text-gray-700'"
                             class="px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap">
@@ -1144,6 +1149,217 @@
                     </div>
                 </div>
 
+                <!-- Sections Sub-tab (NEW v2) -->
+                <div x-show="publicSubTab === 'sections'" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
+
+                    <!-- WhatsApp Settings -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-green-50 px-4 py-3 border-b border-green-200">
+                            <h4 class="font-medium text-green-900 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                                </svg>
+                                WhatsApp dugme
+                            </h4>
+                        </div>
+                        <div class="p-4 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-gray-900">Prikazi WhatsApp dugme</p>
+                                    <p class="text-sm text-gray-500">Floating dugme u donjem desnom uglu</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="publicProfile.show_whatsapp_button" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                            <div x-show="publicProfile.show_whatsapp_button" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp broj</label>
+                                    <input type="tel" x-model="publicProfile.whatsapp_number"
+                                           placeholder="381641234567"
+                                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                                    <p class="text-xs text-gray-500 mt-1">Bez + ili razmaka, npr: 381641234567</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Predefinisana poruka</label>
+                                    <input type="text" x-model="publicProfile.whatsapp_message" maxlength="300"
+                                           placeholder="Zdravo! Imam pitanje..."
+                                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Tracking Widget -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-blue-50 px-4 py-3 border-b border-blue-200">
+                            <h4 class="font-medium text-blue-900">Status Tracking Widget</h4>
+                        </div>
+                        <div class="p-4 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-gray-900">Prikazi widget za pracenje statusa</p>
+                                    <p class="text-sm text-gray-500">Omogucava korisnicima da provere status naloga sa pocetne strane</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="publicProfile.show_tracking_widget" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            <div x-show="publicProfile.show_tracking_widget">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Naslov widgeta</label>
+                                <input type="text" x-model="publicProfile.tracking_widget_title" maxlength="200"
+                                       placeholder="Pratite status popravke"
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Brands Section -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-purple-50 px-4 py-3 border-b border-purple-200">
+                            <h4 class="font-medium text-purple-900">Brendovi koje servisirate</h4>
+                        </div>
+                        <div class="p-4 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-gray-900">Prikazi sekciju brendova</p>
+                                    <p class="text-sm text-gray-500">Prikazuje grid sa logotipima brendova</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="publicProfile.show_brands_section" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                </label>
+                            </div>
+                            <div x-show="publicProfile.show_brands_section">
+                                <label class="block text-sm font-medium text-gray-700 mb-3">Izaberite brendove</label>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                    <template x-for="brand in ['apple', 'samsung', 'xiaomi', 'huawei', 'google', 'oneplus', 'motorola', 'oppo', 'vivo', 'realme', 'lenovo', 'hp', 'dell', 'asus', 'acer', 'msi']">
+                                        <label class="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                                               :class="publicProfile.supported_brands.includes(brand) ? 'border-purple-500 bg-purple-50' : 'border-gray-200'">
+                                            <input type="checkbox"
+                                                   :checked="publicProfile.supported_brands.includes(brand)"
+                                                   @change="toggleBrand(brand)"
+                                                   class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                                            <span class="text-sm font-medium capitalize" x-text="brand"></span>
+                                        </label>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Process Section -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-orange-50 px-4 py-3 border-b border-orange-200">
+                            <h4 class="font-medium text-orange-900">Proces rada</h4>
+                        </div>
+                        <div class="p-4 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-gray-900">Prikazi sekciju procesa</p>
+                                    <p class="text-sm text-gray-500">Prikazuje korake servisa (Prijem → Dijagnostika → Popravka → Preuzimanje)</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="publicProfile.show_process_section" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                </label>
+                            </div>
+                            <div x-show="publicProfile.show_process_section">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Naslov sekcije</label>
+                                <input type="text" x-model="publicProfile.process_title" maxlength="200"
+                                       placeholder="Kako funkcionise"
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500">
+                                <p class="text-xs text-gray-500 mt-2">Koraci procesa su predefinisani i prikazuju standardni servisni tok.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ Section -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-cyan-50 px-4 py-3 border-b border-cyan-200 flex items-center justify-between">
+                            <h4 class="font-medium text-cyan-900">Cesto postavljana pitanja (FAQ)</h4>
+                            <button type="button" @click="addFaqItem()"
+                                    class="text-sm px-3 py-1 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">
+                                + Dodaj pitanje
+                            </button>
+                        </div>
+                        <div class="p-4 space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Naslov sekcije</label>
+                                <input type="text" x-model="publicProfile.faq_title" maxlength="200"
+                                       placeholder="Cesto postavljana pitanja"
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-cyan-500">
+                            </div>
+
+                            <div x-show="publicProfile.faq_items.length === 0" class="text-center py-6 text-gray-500">
+                                <p>Nema dodatih pitanja.</p>
+                                <p class="text-sm">Kliknite "Dodaj pitanje" da dodate prvo FAQ.</p>
+                            </div>
+
+                            <div class="space-y-3">
+                                <template x-for="(item, index) in publicProfile.faq_items" :key="index">
+                                    <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                        <div class="flex items-start justify-between mb-3">
+                                            <span class="text-xs font-medium text-gray-500">Pitanje #<span x-text="index + 1"></span></span>
+                                            <button type="button" @click="removeFaqItem(index)"
+                                                    class="text-red-600 hover:text-red-700 text-sm">
+                                                Ukloni
+                                            </button>
+                                        </div>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Pitanje</label>
+                                                <input type="text" x-model="publicProfile.faq_items[index].question"
+                                                       placeholder="Npr: Koliko traje popravka?"
+                                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-cyan-500">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Odgovor</label>
+                                                <textarea x-model="publicProfile.faq_items[index].answer" rows="2"
+                                                          placeholder="Odgovor na pitanje..."
+                                                          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-cyan-500"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Suggested FAQs -->
+                            <div class="p-3 bg-cyan-50 border border-cyan-200 rounded-lg">
+                                <p class="text-sm font-medium text-cyan-900 mb-2">Predlozena pitanja za servis:</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" @click="addSuggestedFaq('Koliko traje popravka telefona?', 'Vreme popravke zavisi od vrste kvara. Vecina popravki se zavrsi istog dana ili u roku od 24-48 sati.')"
+                                            class="text-xs px-2 py-1 bg-white border border-cyan-300 rounded hover:bg-cyan-100">
+                                        Koliko traje popravka?
+                                    </button>
+                                    <button type="button" @click="addSuggestedFaq('Da li dobijam garanciju na popravku?', 'Da, na sve nase popravke dajemo garanciju. Trajanje garancije zavisi od vrste popravke.')"
+                                            class="text-xs px-2 py-1 bg-white border border-cyan-300 rounded hover:bg-cyan-100">
+                                        Garancija?
+                                    </button>
+                                    <button type="button" @click="addSuggestedFaq('Koliko kosta dijagnostika?', 'Dijagnostika je besplatna ako se odlucite za popravku. U suprotnom, naplacuje se minimalna naknada.')"
+                                            class="text-xs px-2 py-1 bg-white border border-cyan-300 rounded hover:bg-cyan-100">
+                                        Cena dijagnostike?
+                                    </button>
+                                    <button type="button" @click="addSuggestedFaq('Da li mogu da pratim status popravke?', 'Da, mozete pratiti status vase popravke putem koda koji dobijate prilikom prijema uredjaja.')"
+                                            class="text-xs px-2 py-1 bg-white border border-cyan-300 rounded hover:bg-cyan-100">
+                                        Pracenje statusa?
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button @click="savePublicProfile()" :disabled="savingPublic"
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
+                            <span x-show="!savingPublic">Sacuvaj sve sekcije</span>
+                            <span x-show="savingPublic">Cuvam...</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Custom Domain Sub-tab -->
                 <div x-show="publicSubTab === 'domain'" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
                     <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -1407,7 +1623,21 @@ function settingsPage() {
             meta_description: '',
             meta_keywords: '',
             about_title: '',
-            about_content: ''
+            about_content: '',
+            // New v2 fields
+            faq_title: 'Često postavljana pitanja',
+            faq_items: [],
+            show_brands_section: true,
+            supported_brands: [],
+            show_process_section: true,
+            process_title: 'Kako funkcioniše',
+            process_steps: [],
+            show_whatsapp_button: false,
+            whatsapp_number: '',
+            whatsapp_message: 'Zdravo! Imam pitanje u vezi servisa.',
+            show_tracking_widget: true,
+            tracking_widget_title: 'Pratite status popravke',
+            hero_style: 'centered'
         },
         publicSubTab: 'basic',
         tenantSlug: '',
@@ -1515,7 +1745,21 @@ function settingsPage() {
                             meta_description: p.seo?.meta_description || '',
                             meta_keywords: p.seo?.meta_keywords || '',
                             about_title: p.sections?.about_title || '',
-                            about_content: p.sections?.about_content || ''
+                            about_content: p.sections?.about_content || '',
+                            // New v2 fields - these come from separate groups in API response
+                            faq_title: p.faq?.title || 'Često postavljana pitanja',
+                            faq_items: p.faq?.items || [],
+                            show_brands_section: p.brands?.show_section !== false,
+                            supported_brands: p.brands?.supported || [],
+                            show_process_section: p.process?.show_section !== false,
+                            process_title: p.process?.title || 'Kako funkcioniše',
+                            process_steps: p.process?.steps || [],
+                            show_whatsapp_button: p.whatsapp?.show_button || false,
+                            whatsapp_number: p.whatsapp?.number || '',
+                            whatsapp_message: p.whatsapp?.message || 'Zdravo! Imam pitanje u vezi servisa.',
+                            show_tracking_widget: p.tracking?.show_widget !== false,
+                            tracking_widget_title: p.tracking?.title || 'Pratite status popravke',
+                            hero_style: p.hero_style || 'centered'
                         };
                         // Custom domain data
                         if (p.custom_domain) {
@@ -1813,6 +2057,47 @@ function settingsPage() {
                 sun_open: '', sun_close: '', sun_closed: true
             };
             showToast('Standardno radno vreme popunjeno', 'success');
+        },
+
+        // ==================== SECTIONS HELPERS (v2) ====================
+
+        toggleBrand(brand) {
+            if (!Array.isArray(this.publicProfile.supported_brands)) {
+                this.publicProfile.supported_brands = [];
+            }
+            const index = this.publicProfile.supported_brands.indexOf(brand);
+            if (index > -1) {
+                this.publicProfile.supported_brands.splice(index, 1);
+            } else {
+                this.publicProfile.supported_brands.push(brand);
+            }
+        },
+
+        addFaqItem() {
+            if (!Array.isArray(this.publicProfile.faq_items)) {
+                this.publicProfile.faq_items = [];
+            }
+            this.publicProfile.faq_items.push({ question: '', answer: '' });
+        },
+
+        removeFaqItem(index) {
+            if (Array.isArray(this.publicProfile.faq_items) && index >= 0 && index < this.publicProfile.faq_items.length) {
+                this.publicProfile.faq_items.splice(index, 1);
+            }
+        },
+
+        addSuggestedFaq(question, answer) {
+            if (!Array.isArray(this.publicProfile.faq_items)) {
+                this.publicProfile.faq_items = [];
+            }
+            // Check if this FAQ already exists
+            const exists = this.publicProfile.faq_items.some(item => item.question === question);
+            if (!exists) {
+                this.publicProfile.faq_items.push({ question, answer });
+                showToast('FAQ dodato', 'success');
+            } else {
+                showToast('Ovo pitanje vec postoji', 'warning');
+            }
         },
 
         async savePublicProfile() {

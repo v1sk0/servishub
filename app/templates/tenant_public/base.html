@@ -38,6 +38,10 @@
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
+    <!-- AOS - Animate on Scroll -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
     <!-- Custom Styles -->
     <style>
         [x-cloak] { display: none !important; }
@@ -99,12 +103,13 @@
                     {% endif %}
                     <a href="/kontakt" class="text-gray-600 hover:text-primary font-medium transition-colors">Kontakt</a>
 
-                    {% if profile.phone %}
-                    <a href="tel:{{ profile.phone }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg font-medium hover:opacity-90 transition-opacity">
+                    {% set nav_phone = profile.phone or tenant.telefon %}
+                    {% if nav_phone %}
+                    <a href="tel:{{ nav_phone }}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg font-medium hover:opacity-90 transition-opacity">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                         </svg>
-                        {{ profile.phone }}
+                        {{ nav_phone }}
                     </a>
                     {% endif %}
                 </div>
@@ -134,9 +139,10 @@
                 <a href="/o-nama" class="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">O nama</a>
                 {% endif %}
                 <a href="/kontakt" class="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100">Kontakt</a>
-                {% if profile.phone %}
-                <a href="tel:{{ profile.phone }}" class="block px-3 py-2 bg-primary text-white rounded-md text-center font-medium">
-                    Pozovite: {{ profile.phone }}
+                {% set mobile_phone = profile.phone or tenant.telefon %}
+                {% if mobile_phone %}
+                <a href="tel:{{ mobile_phone }}" class="block px-3 py-2 bg-primary text-white rounded-md text-center font-medium">
+                    Pozovite: {{ mobile_phone }}
                 </a>
                 {% endif %}
             </div>
@@ -207,30 +213,35 @@
                 <!-- Contact Info -->
                 <div>
                     <h3 class="text-lg font-semibold mb-4">Kontakt</h3>
+                    {# Fallback na tenant podatke #}
+                    {% set footer_address = profile.address or tenant.adresa_sedista %}
+                    {% set footer_city = profile.city or tenant.grad %}
+                    {% set footer_phone = profile.phone or tenant.telefon %}
+                    {% set footer_email = profile.email or tenant.email %}
                     <ul class="space-y-3">
-                        {% if profile.address or profile.city %}
+                        {% if footer_address or footer_city %}
                         <li class="flex items-start space-x-3">
                             <svg class="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
-                            <span class="text-gray-400">{{ profile.address }}{% if profile.city %}, {{ profile.city }}{% endif %}</span>
+                            <span class="text-gray-400">{{ footer_address }}{% if footer_city %}, {{ footer_city }}{% endif %}</span>
                         </li>
                         {% endif %}
-                        {% if profile.phone %}
+                        {% if footer_phone %}
                         <li class="flex items-center space-x-3">
                             <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                             </svg>
-                            <a href="tel:{{ profile.phone }}" class="text-gray-400 hover:text-white transition-colors">{{ profile.phone }}</a>
+                            <a href="tel:{{ footer_phone }}" class="text-gray-400 hover:text-white transition-colors">{{ footer_phone }}</a>
                         </li>
                         {% endif %}
-                        {% if profile.email %}
+                        {% if footer_email %}
                         <li class="flex items-center space-x-3">
                             <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                             </svg>
-                            <a href="mailto:{{ profile.email }}" class="text-gray-400 hover:text-white transition-colors">{{ profile.email }}</a>
+                            <a href="mailto:{{ footer_email }}" class="text-gray-400 hover:text-white transition-colors">{{ footer_email }}</a>
                         </li>
                         {% endif %}
                     </ul>
@@ -245,6 +256,44 @@
             </div>
         </div>
     </footer>
+
+    <!-- Floating Buttons -->
+    {% if profile.show_whatsapp_button and profile.whatsapp_number %}
+    <!-- WhatsApp Button (bottom right) -->
+    <a href="https://wa.me/{{ profile.whatsapp_number|replace('+', '')|replace(' ', '')|replace('-', '') }}{% if profile.whatsapp_message %}?text={{ profile.whatsapp_message|urlencode }}{% endif %}"
+       target="_blank"
+       rel="noopener noreferrer"
+       class="fixed bottom-6 right-6 w-14 h-14 bg-green-500 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-green-600 hover:scale-110 transition-all duration-300 z-50"
+       aria-label="Kontaktirajte nas putem WhatsApp-a">
+        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+    </a>
+    {% endif %}
+
+    {% set floating_phone = profile.phone or tenant.telefon %}
+    {% if floating_phone %}
+    <!-- Call Button (bottom left, mobile only) -->
+    <a href="tel:{{ floating_phone }}"
+       class="md:hidden fixed bottom-6 left-6 w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:opacity-90 hover:scale-110 transition-all duration-300 z-50"
+       aria-label="Pozovite nas">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+        </svg>
+    </a>
+    {% endif %}
+
+    <!-- AOS Initialization -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            AOS.init({
+                duration: 800,
+                once: true,
+                offset: 100,
+                easing: 'ease-out-cubic'
+            });
+        });
+    </script>
 
     {% block scripts %}{% endblock %}
 </body>

@@ -103,6 +103,31 @@ class PublicProfileUpdate(BaseModel):
     gallery_images: Optional[List[str]] = None
     testimonials: Optional[List[Dict[str, Any]]] = None
 
+    # FAQ
+    faq_title: Optional[str] = Field(None, max_length=200)
+    faq_items: Optional[List[Dict[str, Any]]] = None  # [{"question": "...", "answer": "..."}]
+
+    # Brendovi
+    show_brands_section: Optional[bool] = None
+    supported_brands: Optional[List[str]] = None  # ["apple", "samsung", ...]
+
+    # Proces rada
+    show_process_section: Optional[bool] = None
+    process_title: Optional[str] = Field(None, max_length=200)
+    process_steps: Optional[List[Dict[str, Any]]] = None  # [{"step": 1, "icon": "...", "title": "...", "description": "..."}]
+
+    # WhatsApp
+    show_whatsapp_button: Optional[bool] = None
+    whatsapp_number: Optional[str] = Field(None, max_length=20)
+    whatsapp_message: Optional[str] = Field(None, max_length=300)
+
+    # Status tracking widget
+    show_tracking_widget: Optional[bool] = None
+    tracking_widget_title: Optional[str] = Field(None, max_length=200)
+
+    # Hero stil
+    hero_style: Optional[str] = Field(None, max_length=20)
+
 
 class CustomDomainSetup(BaseModel):
     """Schema za podešavanje custom domena."""
@@ -858,7 +883,8 @@ def update_public_profile():
         setattr(profile, field, value)
 
         # Mark JSON fields as modified for SQLAlchemy to detect changes
-        if field in ('working_hours', 'why_us_items', 'gallery_images', 'testimonials'):
+        if field in ('working_hours', 'why_us_items', 'gallery_images', 'testimonials',
+                     'faq_items', 'supported_brands', 'process_steps'):
             flag_modified(profile, field)
 
     profile.updated_at = datetime.utcnow()

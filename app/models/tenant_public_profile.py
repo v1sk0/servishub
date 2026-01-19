@@ -129,6 +129,44 @@ class TenantPublicProfile(db.Model):
     testimonials = db.Column(db.JSON, default=list)  # [{"name": "...", "text": "...", "rating": 5}]
 
     # ============================================
+    # FAQ - Često postavljana pitanja
+    # ============================================
+    faq_title = db.Column(db.String(200), default='Često postavljana pitanja')
+    faq_items = db.Column(db.JSON, default=list)  # [{"question": "...", "answer": "..."}]
+
+    # ============================================
+    # BRENDOVI
+    # ============================================
+    show_brands_section = db.Column(db.Boolean, default=True)
+    supported_brands = db.Column(db.JSON, default=list)  # ["apple", "samsung", "xiaomi", ...]
+
+    # ============================================
+    # PROCES RADA
+    # ============================================
+    show_process_section = db.Column(db.Boolean, default=True)
+    process_title = db.Column(db.String(200), default='Kako funkcioniše')
+    process_steps = db.Column(db.JSON, default=list)
+    # Format: [{"step": 1, "icon": "📱", "title": "...", "description": "..."}]
+
+    # ============================================
+    # WHATSAPP
+    # ============================================
+    show_whatsapp_button = db.Column(db.Boolean, default=False)
+    whatsapp_number = db.Column(db.String(20))  # Bez + i razmaka, npr: "381641234567"
+    whatsapp_message = db.Column(db.String(300), default='Zdravo! Imam pitanje u vezi servisa.')
+
+    # ============================================
+    # STATUS TRACKING WIDGET
+    # ============================================
+    show_tracking_widget = db.Column(db.Boolean, default=True)
+    tracking_widget_title = db.Column(db.String(200), default='Pratite status popravke')
+
+    # ============================================
+    # HERO STIL
+    # ============================================
+    hero_style = db.Column(db.String(20), default='centered')  # 'centered', 'split', 'minimal'
+
+    # ============================================
     # TIMESTAMPS
     # ============================================
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -208,6 +246,29 @@ class TenantPublicProfile(db.Model):
                 'gallery_images': self.gallery_images or [],
                 'testimonials': self.testimonials or [],
             },
+            'faq': {
+                'title': self.faq_title,
+                'items': self.faq_items or [],
+            },
+            'brands': {
+                'show_section': self.show_brands_section,
+                'supported': self.supported_brands or [],
+            },
+            'process': {
+                'show_section': self.show_process_section,
+                'title': self.process_title,
+                'steps': self.process_steps or [],
+            },
+            'whatsapp': {
+                'show_button': self.show_whatsapp_button,
+                'number': self.whatsapp_number,
+                'message': self.whatsapp_message,
+            },
+            'tracking': {
+                'show_widget': self.show_tracking_widget,
+                'title': self.tracking_widget_title,
+            },
+            'hero_style': self.hero_style,
         }
 
         if include_private:
@@ -276,4 +337,27 @@ class TenantPublicProfile(db.Model):
                 'gallery_images': self.gallery_images or [],
                 'testimonials': self.testimonials or [],
             },
+            'faq': {
+                'title': self.faq_title or 'Često postavljana pitanja',
+                'items': self.faq_items or [],
+            },
+            'brands': {
+                'show_section': self.show_brands_section,
+                'supported': self.supported_brands or [],
+            },
+            'process': {
+                'show_section': self.show_process_section,
+                'title': self.process_title or 'Kako funkcioniše',
+                'steps': self.process_steps or [],
+            },
+            'whatsapp': {
+                'show_button': self.show_whatsapp_button,
+                'number': self.whatsapp_number,
+                'message': self.whatsapp_message,
+            },
+            'tracking': {
+                'show_widget': self.show_tracking_widget,
+                'title': self.tracking_widget_title or 'Pratite status popravke',
+            },
+            'hero_style': self.hero_style or 'centered',
         }
