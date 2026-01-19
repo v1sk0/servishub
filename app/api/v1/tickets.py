@@ -818,10 +818,17 @@ def get_ticket_print_data(ticket_id):
     if not user.has_location_access(ticket.location_id):
         return jsonify({'error': 'Forbidden', 'message': 'Nemate pristup ovoj lokaciji'}), 403
 
-    # Default print clause (from Dolce Vita)
+    # Default print clause
     default_clause = (
-        'Uređaj se čuva 30 dana od obaveštenja o završetku popravke. '
-        'Garancija važi od datuma završetka popravke.'
+        'Predajom uređaja u servis prihvatam da sam odgovoran za svoje podatke i backup; '
+        'servis ne odgovara za gubitak podataka, kartica i opreme, niti za kvar uređaja koji je posledica '
+        'prethodnih oštećenja, vlage ili samog otvaranja uređaja, kao ni za gubitak vodootpornosti. '
+        'Korisnik se obavezuje da preuzme uređaj najkasnije u roku od 30 dana od obaveštenja da je uređaj '
+        'spreman za preuzimanje. Nakon isteka tog roka, servis ima pravo da obračuna naknadu za čuvanje uređaja, '
+        'a dalje postupanje sa uređajem vršiće se u skladu sa važećim propisima. Garancija važi od datuma završetka popravke. '
+        'Servis ne odgovara za ranije prisutna estetska oštećenja (ogrebotine, udubljenja, naprsline) koja su evidentirana '
+        'pri prijemu uređaja ili su usled prljavštine i oštećenja bila prikrivena. U slučaju da popravka nije moguća ili '
+        'korisnik odustane nakon postavljene ponude, servis ima pravo da naplati izvršenu dijagnostiku u iznosu od 2000 RSD.'
     )
 
     # Dohvati klauzolu iz tenant.print_clause kolone
