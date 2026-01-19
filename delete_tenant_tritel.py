@@ -7,6 +7,7 @@ from app.extensions import db
 from app.models.tenant import Tenant, ServiceLocation
 from app.models.ticket import ServiceTicket
 from app.models.user import TenantUser
+from app.models.representative import ServiceRepresentative
 
 app = create_app()
 with app.app_context():
@@ -37,8 +38,17 @@ with app.app_context():
     print(f'  Users: {users}')
     print(f'  Locations: {locations}')
 
-    # Delete tenant (CASCADE will handle related records)
-    print(f'\nDeleting tenant {tenant.name} (ID: {tenant.id})...')
+    # Delete related records that might have FK constraints
+    reps = ServiceRepresentative.query.filter_by(tenant_id=tenant.id).all()
+    print(f'  Representatives: {len(reps)}')
+
+    print(f'\nDeleting representatives...')
+    for rep in reps:
+        db.session.delete(rep)
+    db.session.commit()
+
+    # Delete tenant (CASCADE will handle remaining related records)
+    print(f'Deleting tenant {tenant.name} (ID: {tenant.id})...')
     db.session.delete(tenant)
     db.session.commit()
     print('DONE! Tenant and all related data have been deleted.')
