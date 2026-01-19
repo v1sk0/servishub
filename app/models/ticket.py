@@ -138,7 +138,7 @@ class ServiceTicket(db.Model):
 
     # Garancija
     warranty_days = db.Column(db.Integer, default=45)  # Default iz tenant settings
-    closed_at = db.Column(db.DateTime)                  # Kada je popravka zavrsena (READY) - garancija krece od ovog datuma
+    closed_at = db.Column(db.DateTime)                  # Kada je nalog zatvoren (DELIVERED) - garancija krece od ovog datuma
 
     # Naplata
     is_paid = db.Column(db.Boolean, default=False)

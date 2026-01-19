@@ -360,12 +360,9 @@ def update_ticket_status(ticket_id):
 
     old_status = ticket.status.value
 
-    # Ako se popravka završava (READY), postavi closed_at za garanciju
-    # Garancija kreće od momenta završetka popravke, ne od preuzimanja
-    if new_status_enum == TicketStatus.READY and not ticket.closed_at:
-        ticket.status = new_status_enum
-        ticket.closed_at = datetime.utcnow()
-    elif new_status_enum == TicketStatus.DELIVERED and ticket.status != TicketStatus.DELIVERED:
+    # Garancija kreće od momenta preuzimanja (DELIVERED)
+    # closed_at se postavlja samo kada kupac preuzme uređaj
+    if new_status_enum == TicketStatus.DELIVERED and ticket.status != TicketStatus.DELIVERED:
         ticket.close_ticket()
     else:
         ticket.status = new_status_enum
