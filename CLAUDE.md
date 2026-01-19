@@ -6,16 +6,28 @@ Instrukcije za Claude Code agente. **CITAJ OVO PRE BILO KAKVIH IZMENA.**
 
 ## RESUME POINT
 
-**v0.6.1** | 2026-01-19 | Backend 100% | Frontend 100%
+**v0.6.2** | 2026-01-19 | Backend 100% | Frontend 100%
 
-### Status: KOMPLETNO - Public Site Wildcard Subdomain
+### Status: KOMPLETNO - Public Site v2 (nove sekcije + poboljšanja)
 
-**Poslednje izmene (v0.6.1):**
+**Poslednje izmene (v0.6.2):**
+- **Public Site v2:** Kompletna revizija javnog sajta tenanta
+  - FAQ sekcija sa accordion stilom
+  - Brendovi sekcija (grid sa logotipima)
+  - Proces rada sekcija (6 koraka timeline)
+  - Status tracking widget
+  - Floating WhatsApp dugme
+  - Floating Call dugme (mobile)
+  - AOS animacije na svim sekcijama
+- **Contact fallback:** Kontakt podaci koriste fallback na tenant podatke
+- **Settings UI:** Novi "Sekcije" tab za uređivanje FAQ, Brendova, Procesa
+- **Database:** Nova migracija `o6p7q8r9s0t1_add_public_site_v2_fields.py`
+- **API Fix:** Preprocessing za FormData (dict→list konverzija, prazan email)
+
+**Prethodne izmene (v0.6.1):**
 - **Heroku:** Dodata wildcard domena `*.servishub.rs`
 - **Cloudflare:** CNAME zapis za wildcard → herokudns.com
 - **SSL:** ACM automatski generise SSL za subdomene
-- Fix: `savePublicProfile()` - eksplicitna konverzija working_hours pre sanitizacije
-- Fix: `sanitizePublicProfile()` - detekcija vec konvertovanog formata
 
 **Prethodne izmene (v0.6.0):**
 - Fix: Duplikat `/` rute - objedinjena logika u public.py
@@ -58,8 +70,9 @@ servishub/
 │   ├── config.py            # Konfiguracija
 │   ├── extensions.py        # Flask ekstenzije
 │   │
-│   ├── models/              # 10 SQLAlchemy modula
+│   ├── models/              # 11 SQLAlchemy modula
 │   │   ├── tenant.py        # Tenant, ServiceLocation
+│   │   ├── tenant_public_profile.py # TenantPublicProfile (javna stranica)
 │   │   ├── user.py          # TenantUser, UserLocation
 │   │   ├── ticket.py        # ServiceTicket
 │   │   ├── inventory.py     # PhoneListing, SparePart
@@ -139,10 +152,14 @@ servishub/
 │   │   │   ├── orders/ (list, detail)
 │   │   │   └── settings.html
 │   │   │
-│   │   └── public/          # 2 stranice
-│   │       ├── landing.html
-│   │       ├── track.html
-│   │       └── marketplace.html
+│   │   ├── public/          # 3 stranice (ServisHub landing)
+│   │   │   ├── landing.html
+│   │   │   ├── track.html
+│   │   │   └── marketplace.html
+│   │   │
+│   │   └── tenant_public/   # 2 stranice (javni sajt tenanta)
+│   │       ├── base.html    # Layout sa nav, footer, floating buttons
+│   │       └── home.html    # Homepage sa svim sekcijama
 │   │
 │   ├── services/            # Business logic
 │   ├── repositories/        # Data access
@@ -324,6 +341,66 @@ const data = await supplierApi('/api/supplier/listings');
 - Pocinje od `closed_at` timestamp-a
 - `warranty_remaining_days` = warranty_expires_at - now
 
+### 6. TenantPublicProfile Model (Public Site v2)
+
+```python
+# Osnovni podaci
+is_public, display_name, tagline, description
+
+# Kontakt (fallback na Tenant ako prazno)
+phone, phone_secondary, email, address, city, postal_code
+maps_url, maps_embed_url
+
+# Branding
+logo_url, cover_image_url, primary_color, secondary_color
+
+# Radno vreme (JSON)
+working_hours = {"mon": "09:00-18:00", "tue": "09:00-18:00", ...}
+
+# Social linkovi
+facebook_url, instagram_url, twitter_url, linkedin_url, youtube_url, tiktok_url
+
+# SEO
+meta_title, meta_description, meta_keywords
+
+# Custom domain
+custom_domain, custom_domain_verified, custom_domain_ssl_status
+
+# === PUBLIC SITE v2 POLJA ===
+
+# FAQ sekcija
+faq_title = "Često postavljana pitanja"
+faq_items = [{"question": "...", "answer": "..."}]
+
+# Brendovi
+show_brands_section = True
+supported_brands = ["apple", "samsung", "xiaomi", ...]
+
+# Proces rada
+show_process_section = True
+process_title = "Kako funkcioniše"
+process_steps = [{"step": 1, "icon": "📱", "title": "...", "description": "..."}]
+
+# WhatsApp
+show_whatsapp_button = False
+whatsapp_number = "381641234567"  # bez + i razmaka
+whatsapp_message = "Zdravo! Imam pitanje..."
+
+# Status tracking widget
+show_tracking_widget = True
+tracking_widget_title = "Pratite status popravke"
+
+# Hero stil
+hero_style = "centered"  # 'centered', 'split', 'minimal'
+```
+
+**Kontakt Fallback:**
+Ako je polje u `TenantPublicProfile` prazno, template koristi podatke iz `Tenant` modela:
+- `profile.address` → `tenant.adresa_sedista`
+- `profile.city` → `tenant.grad`
+- `profile.phone` → `tenant.telefon`
+- `profile.email` → `tenant.email`
+
 ---
 
 ## Boja Tema
@@ -418,6 +495,7 @@ GitHub: github.com/v1sk0/servishub
 
 | Verzija | Datum | Izmene |
 |---------|-------|--------|
+| v0.6.2 | 2026-01-19 | **Public Site v2:** FAQ, Brendovi, Proces, WhatsApp, Status tracking, AOS animacije, Contact fallback |
 | v0.6.1 | 2026-01-19 | **Wildcard Subdomain:** Heroku + Cloudflare DNS, savePublicProfile fix |
 | v0.6.0 | 2026-01-19 | **Public Site Fix:** Route deduplication, working_hours format, JSON flag_modified |
 | v0.5.9 | 2026-01-18 | **UI/UX Performance:** FOUC fix, x-cloak, tab transitions, skeletons, chart tooltips |
