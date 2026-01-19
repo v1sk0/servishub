@@ -827,6 +827,14 @@ function ticketsPage() {
         async init() {
             await this.loadLocations();
             await this.loadAllTickets();
+
+            // Check if we should open the add modal (from dashboard link)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('openModal') === 'true') {
+                this.showAddModal = true;
+                // Clean up URL
+                window.history.replaceState({}, '', window.location.pathname);
+            }
         },
 
         async loadLocations() {
