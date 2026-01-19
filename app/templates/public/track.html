@@ -171,7 +171,7 @@
                     <!-- Steps -->
                     <div class="relative flex justify-between">
                         <template x-for="(step, index) in simpleSteps" :key="step.id">
-                            <div class="flex flex-col items-center" style="width: 25%;">
+                            <div class="flex flex-col items-center" style="width: 33.33%;">
                                 <!-- Step circle -->
                                 <div class="relative">
                                     <!-- Pulse ring for current step -->
@@ -531,56 +531,46 @@ function trackPage(token) {
             this.simpleSteps = [
                 {
                     id: 1,
-                    label: 'Otvoren',
-                    sublabel: 'Nalog kreiran',
-                    icon: '📋',
+                    label: 'U radu',
+                    sublabel: 'Radimo na popravci',
+                    icon: '🔧',
                     isCompleted: stepIndex > 0,
                     isCurrent: stepIndex === 0
                 },
                 {
                     id: 2,
-                    label: 'U obradi',
-                    sublabel: 'Radimo na popravci',
-                    icon: '🔧',
+                    label: 'Završen',
+                    sublabel: 'Čeka preuzimanje',
+                    icon: '✅',
                     isCompleted: stepIndex > 1,
                     isCurrent: stepIndex === 1
                 },
                 {
                     id: 3,
-                    label: 'Završen',
-                    sublabel: 'Čeka preuzimanje',
-                    icon: '✅',
-                    isCompleted: stepIndex > 2,
-                    isCurrent: stepIndex === 2
-                },
-                {
-                    id: 4,
                     label: 'Preuzet',
                     sublabel: 'Garancija aktivna',
                     icon: '🎉',
-                    isCompleted: stepIndex >= 3,
-                    isCurrent: stepIndex === 3
+                    isCompleted: stepIndex >= 2,
+                    isCurrent: stepIndex === 2
                 }
             ];
         },
 
         getStepIndex(status) {
-            // Map API statuses to simple 4-step flow
-            // Step 0: RECEIVED (just opened)
-            // Step 1: DIAGNOSED, IN_PROGRESS, WAITING_PARTS (in progress)
-            // Step 2: READY (finished, waiting pickup)
-            // Step 3: DELIVERED (picked up, warranty starts)
+            // Map API statuses to simple 3-step flow
+            // Step 0: RECEIVED, DIAGNOSED, IN_PROGRESS, WAITING_PARTS (in progress)
+            // Step 1: READY (finished, waiting pickup)
+            // Step 2: DELIVERED (picked up, warranty starts)
             switch(status) {
                 case 'RECEIVED':
-                    return 0;
                 case 'DIAGNOSED':
                 case 'IN_PROGRESS':
                 case 'WAITING_PARTS':
-                    return 1;
+                    return 0;
                 case 'READY':
-                    return 2;
+                    return 1;
                 case 'DELIVERED':
-                    return 3;
+                    return 2;
                 case 'CANCELLED':
                     return -1;
                 default:
@@ -591,16 +581,16 @@ function trackPage(token) {
         getProgressPercent() {
             const status = this.ticket?.status?.value;
             const stepIndex = this.getStepIndex(status);
-            // 4 steps, so: 0=0%, 1=33%, 2=66%, 3=100%
-            return Math.max(0, (stepIndex / 3) * 100);
+            // 3 steps, so: 0=0%, 1=50%, 2=100%
+            return Math.max(0, (stepIndex / 2) * 100);
         },
 
         getSimpleStatusLabel(status) {
             const labels = {
-                'RECEIVED': 'Otvoren',
-                'DIAGNOSED': 'U obradi',
-                'IN_PROGRESS': 'U obradi',
-                'WAITING_PARTS': 'Čekamo delove',
+                'RECEIVED': 'U radu',
+                'DIAGNOSED': 'U radu',
+                'IN_PROGRESS': 'U radu',
+                'WAITING_PARTS': 'U radu - čekamo delove',
                 'READY': 'Završen - čeka preuzimanje',
                 'DELIVERED': 'Preuzet',
                 'CANCELLED': 'Otkazan'
