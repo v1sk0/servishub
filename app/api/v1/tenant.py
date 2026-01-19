@@ -61,7 +61,7 @@ class PublicProfileUpdate(BaseModel):
     # Kontakt
     phone: Optional[str] = Field(None, max_length=50)
     phone_secondary: Optional[str] = Field(None, max_length=50)
-    email: Optional[EmailStr] = None
+    email: Optional[str] = Field(None, max_length=100)  # Allow empty string, validate separately
     address: Optional[str] = Field(None, max_length=300)
     city: Optional[str] = Field(None, max_length=100)
     postal_code: Optional[str] = Field(None, max_length=20)
@@ -814,6 +814,35 @@ def get_public_profile():
     }
 
 
+def _preprocess_public_profile_data(data: dict) -> dict:
+    """
+    Preprocess data before Pydantic validation.
+
+    - Converts dict-indexed objects (from FormData) to proper lists
+    - Converts empty strings to None for optional fields
+    """
+    # Fields that should be lists
+    list_fields = ['faq_items', 'supported_brands', 'process_steps', 'why_us_items',
+                   'gallery_images', 'testimonials']
+
+    for field in list_fields:
+        if field in data and isinstance(data[field], dict):
+            # Convert {'0': 'val1', '1': 'val2'} to ['val1', 'val2']
+            try:
+                # Sort by numeric key and extract values
+                sorted_items = sorted(data[field].items(), key=lambda x: int(x[0]))
+                data[field] = [item[1] for item in sorted_items]
+            except (ValueError, TypeError):
+                # If keys aren't numeric, just take values
+                data[field] = list(data[field].values())
+
+    # Convert empty strings to None for email
+    if 'email' in data and data['email'] == '':
+        data['email'] = None
+
+    return data
+
+
 @bp.route('/public-profile', methods=['PUT'])
 @jwt_required
 def update_public_profile():
@@ -839,7 +868,9 @@ def update_public_profile():
         return {'error': 'Tenant not found'}, 404
 
     try:
-        data = PublicProfileUpdate(**request.json)
+        # Preprocess data before validation
+        raw_data = _preprocess_public_profile_data(request.json.copy())
+        data = PublicProfileUpdate(**raw_data)
     except Exception as e:
         return {'error': str(e)}, 400
 
