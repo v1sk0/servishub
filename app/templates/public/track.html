@@ -178,30 +178,18 @@
                             <div class="flex flex-col items-center" style="width: 33.33%;">
                                 <!-- Step circle -->
                                 <div class="relative z-10">
-                                    <!-- Glowing ring for current step -->
-                                    <template x-if="step.isCurrent">
-                                        <div class="absolute -inset-2 rounded-full">
-                                            <!-- Pulsing glow -->
-                                            <div class="absolute inset-0 rounded-full bg-blue-400/50 animate-ping-slow"></div>
-                                            <!-- Static glow -->
-                                            <div class="absolute inset-1 rounded-full bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 blur-md opacity-60"></div>
-                                        </div>
-                                    </template>
-
                                     <!-- Main circle -->
-                                    <div class="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 transform"
+                                    <div class="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 overflow-hidden"
                                          :class="{
-                                             'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/50 scale-110 ring-4 ring-white': step.isCurrent,
-                                             'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-500/40 ring-4 ring-white': step.isCompleted,
-                                             'bg-white text-gray-400 border-2 border-gray-200 shadow-sm': !step.isCompleted && !step.isCurrent
+                                             'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg scale-110 step-current': step.isCurrent,
+                                             'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md': step.isCompleted,
+                                             'bg-gray-100 text-gray-400': !step.isCompleted && !step.isCurrent
                                          }">
-                                        <!-- 45° Shimmer overlay for current -->
-                                        <div x-show="step.isCurrent" class="absolute inset-0 rounded-full overflow-hidden">
-                                            <div class="absolute inset-0 shimmer-45"></div>
-                                        </div>
+                                        <!-- Shimmer for current step -->
+                                        <div x-show="step.isCurrent" class="absolute inset-0 shimmer-sweep"></div>
                                         <!-- Completed checkmark -->
                                         <template x-if="step.isCompleted">
-                                            <svg class="w-6 h-6 animate-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                                             </svg>
                                         </template>
@@ -476,41 +464,38 @@
             45deg,
             transparent,
             transparent 8px,
-            rgba(255,255,255,0.15) 8px,
-            rgba(255,255,255,0.15) 16px
+            rgba(255,255,255,0.2) 8px,
+            rgba(255,255,255,0.2) 16px
         );
         background-size: 50px 50px;
-        animation: stripe-move 1s linear infinite;
+        animation: stripe-move 0.8s linear infinite;
     }
 
-    /* 45° shimmer for active step */
-    @keyframes shimmer-45 {
-        0% { transform: translateX(-150%) translateY(-150%) rotate(45deg); }
-        100% { transform: translateX(150%) translateY(150%) rotate(45deg); }
+    /* 45° shimmer sweep for active step */
+    @keyframes shimmer-sweep {
+        0% { left: -100%; }
+        100% { left: 100%; }
     }
-    .shimmer-45 {
+    .shimmer-sweep {
+        position: absolute;
+        top: 0;
+        width: 100%;
+        height: 100%;
         background: linear-gradient(
             45deg,
-            transparent 30%,
-            rgba(255,255,255,0.5) 50%,
-            transparent 70%
+            transparent 20%,
+            rgba(255,255,255,0.4) 40%,
+            rgba(255,255,255,0.6) 50%,
+            rgba(255,255,255,0.4) 60%,
+            transparent 80%
         );
-        animation: shimmer-45 2s ease-in-out infinite;
+        animation: shimmer-sweep 1.5s ease-in-out infinite;
     }
 
-    /* Slow ping for current step */
-    @keyframes ping-slow {
-        0% { transform: scale(1); opacity: 0.5; }
-        75%, 100% { transform: scale(1.5); opacity: 0; }
+    /* Current step glow */
+    .step-current {
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(99, 102, 241, 0.3);
     }
-    .animate-ping-slow { animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
-
-    @keyframes check {
-        0% { transform: scale(0); opacity: 0; }
-        50% { transform: scale(1.2); }
-        100% { transform: scale(1); opacity: 1; }
-    }
-    .animate-check { animation: check 0.5s ease-out; }
 
     @keyframes bounce-slow {
         0%, 100% { transform: translateY(0); }
@@ -520,7 +505,7 @@
 
     /* Progress bar glow */
     .progress-bar-active {
-        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+        box-shadow: 0 0 8px rgba(59, 130, 246, 0.4), 0 0 16px rgba(59, 130, 246, 0.2);
     }
 </style>
 
