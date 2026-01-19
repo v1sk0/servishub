@@ -399,6 +399,7 @@ class ServiceTicket(db.Model):
             'location_id': self.location_id,
             'created_at': self.created_at.isoformat(),
             'closed_at': self.closed_at.isoformat() if self.closed_at else None,
+            'access_token': self.access_token,
         }
 
         # Dodaj ime tehnicara ako postoji
