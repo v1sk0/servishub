@@ -74,7 +74,7 @@
         <div x-show="!loading && ticket" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-100 transform translate-y-0">
 
             <!-- Hero Card -->
-            <div class="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-3xl shadow-2xl shadow-blue-500/25 overflow-hidden mb-6">
+            <div class="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-3xl shadow-2xl shadow-blue-500/25 overflow-hidden mb-6 relative">
                 <!-- Pattern overlay -->
                 <div class="absolute inset-0 opacity-10">
                     <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -112,7 +112,7 @@
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" :class="getStatusPingClass(ticket.status?.value)"></span>
                                 <span class="relative inline-flex rounded-full h-2.5 w-2.5" :class="getStatusDotClass(ticket.status?.value)"></span>
                             </span>
-                            <span x-text="ticket.status?.label"></span>
+                            <span x-text="getSimpleStatusLabel(ticket.status?.value)"></span>
                         </span>
                     </div>
                 </div>
@@ -147,57 +147,79 @@
                 </div>
             </template>
 
-            <!-- Progress Timeline -->
-            <div class="bg-white rounded-3xl shadow-xl shadow-gray-200/50 p-6 sm:p-8 mb-6">
-                <h2 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <!-- Progress Tracker - 4 Steps -->
+            <div class="bg-white rounded-3xl shadow-xl shadow-gray-200/50 p-6 sm:p-8 mb-6 overflow-hidden">
+                <h2 class="text-lg font-bold text-gray-900 mb-8 flex items-center gap-2">
                     <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                     </svg>
                     Status popravke
                 </h2>
 
-                <!-- Vertical Timeline for Mobile -->
-                <div class="space-y-0">
-                    <template x-for="(step, index) in ticket.progress" :key="step.status">
-                        <div class="relative flex items-start gap-4 pb-8 last:pb-0">
-                            <!-- Line -->
-                            <div x-show="index < ticket.progress.length - 1"
-                                 class="absolute left-5 top-10 w-0.5 h-full -ml-px"
-                                 :class="step.is_completed ? 'bg-blue-500' : 'bg-gray-200'"></div>
+                <!-- Horizontal Progress Bar -->
+                <div class="relative mb-8">
+                    <!-- Background line -->
+                    <div class="absolute top-6 left-0 right-0 h-1 bg-gray-200 rounded-full"></div>
 
-                            <!-- Circle -->
-                            <div class="relative z-10 flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300"
-                                 :class="{
-                                     'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30': step.is_completed || step.is_current,
-                                     'bg-gray-100 text-gray-400': !step.is_completed && !step.is_current,
-                                     'ring-4 ring-blue-100': step.is_current
-                                 }">
-                                <template x-if="step.is_completed">
-                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </template>
-                                <template x-if="!step.is_completed">
-                                    <span x-text="getStepIcon(step.status)" class="text-lg"></span>
-                                </template>
+                    <!-- Animated progress line -->
+                    <div class="absolute top-6 left-0 h-1 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 rounded-full transition-all duration-1000 ease-out progress-glow"
+                         :style="{ width: getProgressPercent() + '%' }">
+                        <!-- Shimmer effect -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer rounded-full"></div>
+                    </div>
+
+                    <!-- Steps -->
+                    <div class="relative flex justify-between">
+                        <template x-for="(step, index) in simpleSteps" :key="step.id">
+                            <div class="flex flex-col items-center" style="width: 25%;">
+                                <!-- Step circle -->
+                                <div class="relative">
+                                    <!-- Pulse ring for current step -->
+                                    <div x-show="step.isCurrent"
+                                         class="absolute inset-0 w-12 h-12 -m-1 rounded-full bg-blue-400 animate-pulse-ring"></div>
+
+                                    <!-- Main circle -->
+                                    <div class="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 transform"
+                                         :class="{
+                                             'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/40 scale-110': step.isCompleted || step.isCurrent,
+                                             'bg-gray-100 text-gray-400 border-2 border-gray-200': !step.isCompleted && !step.isCurrent
+                                         }">
+                                        <!-- Completed checkmark -->
+                                        <template x-if="step.isCompleted">
+                                            <svg class="w-6 h-6 animate-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </template>
+                                        <!-- Current/Pending icon -->
+                                        <template x-if="!step.isCompleted">
+                                            <span class="text-xl" x-text="step.icon"></span>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Step label -->
+                                <div class="mt-4 text-center">
+                                    <p class="text-sm font-semibold transition-colors duration-300"
+                                       :class="step.isCurrent ? 'text-blue-600' : step.isCompleted ? 'text-gray-900' : 'text-gray-400'"
+                                       x-text="step.label"></p>
+                                    <p class="text-xs text-gray-400 mt-0.5 hidden sm:block" x-text="step.sublabel"></p>
+                                </div>
                             </div>
+                        </template>
+                    </div>
+                </div>
 
-                            <!-- Content -->
-                            <div class="flex-1 min-w-0 pt-1.5">
-                                <p class="font-semibold"
-                                   :class="step.is_current ? 'text-blue-600' : step.is_completed ? 'text-gray-900' : 'text-gray-400'"
-                                   x-text="step.label"></p>
-                                <p class="text-sm text-gray-500" x-text="getStepDescription(step.status)"></p>
-                            </div>
-
-                            <!-- Current indicator -->
-                            <template x-if="step.is_current">
-                                <span class="flex-shrink-0 px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
-                                    Trenutno
-                                </span>
-                            </template>
+                <!-- Current status detail -->
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center animate-bounce-slow">
+                            <span class="text-xl" x-text="getCurrentStepIcon()"></span>
                         </div>
-                    </template>
+                        <div>
+                            <p class="text-sm text-blue-600 font-medium">Trenutni status</p>
+                            <p class="font-bold text-gray-900" x-text="getCurrentStepMessage()"></p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -426,6 +448,35 @@
     }
     .animate-blob { animation: blob 8s infinite; }
     .animation-delay-2000 { animation-delay: 2s; }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(200%); }
+    }
+    .animate-shimmer { animation: shimmer 2s infinite; }
+
+    @keyframes pulse-ring {
+        0% { transform: scale(1); opacity: 0.5; }
+        100% { transform: scale(1.5); opacity: 0; }
+    }
+    .animate-pulse-ring { animation: pulse-ring 1.5s ease-out infinite; }
+
+    @keyframes check {
+        0% { transform: scale(0); opacity: 0; }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-check { animation: check 0.5s ease-out; }
+
+    @keyframes bounce-slow {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    .animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
+
+    .progress-glow {
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3);
+    }
 </style>
 
 <script>
@@ -437,6 +488,7 @@ function trackPage(token) {
         error: false,
         errorMessage: '',
         requiresPhone: false,
+        simpleSteps: [],
 
         async loadTicket() {
             try {
@@ -457,6 +509,7 @@ function trackPage(token) {
 
                 if (response.ok) {
                     this.ticket = data;
+                    this.buildSimpleSteps();
                 } else {
                     this.error = true;
                     this.errorMessage = data.message || data.error || 'Nalog nije pronađen';
@@ -469,6 +522,118 @@ function trackPage(token) {
             } finally {
                 this.loading = false;
             }
+        },
+
+        buildSimpleSteps() {
+            const status = this.ticket?.status?.value;
+            const stepIndex = this.getStepIndex(status);
+
+            this.simpleSteps = [
+                {
+                    id: 1,
+                    label: 'Otvoren',
+                    sublabel: 'Nalog kreiran',
+                    icon: '📋',
+                    isCompleted: stepIndex > 0,
+                    isCurrent: stepIndex === 0
+                },
+                {
+                    id: 2,
+                    label: 'U obradi',
+                    sublabel: 'Radimo na popravci',
+                    icon: '🔧',
+                    isCompleted: stepIndex > 1,
+                    isCurrent: stepIndex === 1
+                },
+                {
+                    id: 3,
+                    label: 'Završen',
+                    sublabel: 'Čeka preuzimanje',
+                    icon: '✅',
+                    isCompleted: stepIndex > 2,
+                    isCurrent: stepIndex === 2
+                },
+                {
+                    id: 4,
+                    label: 'Preuzet',
+                    sublabel: 'Garancija aktivna',
+                    icon: '🎉',
+                    isCompleted: stepIndex >= 3,
+                    isCurrent: stepIndex === 3
+                }
+            ];
+        },
+
+        getStepIndex(status) {
+            // Map API statuses to simple 4-step flow
+            // Step 0: RECEIVED (just opened)
+            // Step 1: DIAGNOSED, IN_PROGRESS, WAITING_PARTS (in progress)
+            // Step 2: READY (finished, waiting pickup)
+            // Step 3: DELIVERED (picked up, warranty starts)
+            switch(status) {
+                case 'RECEIVED':
+                    return 0;
+                case 'DIAGNOSED':
+                case 'IN_PROGRESS':
+                case 'WAITING_PARTS':
+                    return 1;
+                case 'READY':
+                    return 2;
+                case 'DELIVERED':
+                    return 3;
+                case 'CANCELLED':
+                    return -1;
+                default:
+                    return 0;
+            }
+        },
+
+        getProgressPercent() {
+            const status = this.ticket?.status?.value;
+            const stepIndex = this.getStepIndex(status);
+            // 4 steps, so: 0=0%, 1=33%, 2=66%, 3=100%
+            return Math.max(0, (stepIndex / 3) * 100);
+        },
+
+        getSimpleStatusLabel(status) {
+            const labels = {
+                'RECEIVED': 'Otvoren',
+                'DIAGNOSED': 'U obradi',
+                'IN_PROGRESS': 'U obradi',
+                'WAITING_PARTS': 'Čekamo delove',
+                'READY': 'Završen - čeka preuzimanje',
+                'DELIVERED': 'Preuzet',
+                'CANCELLED': 'Otkazan'
+            };
+            return labels[status] || status;
+        },
+
+        getCurrentStepIcon() {
+            const status = this.ticket?.status?.value;
+            const icons = {
+                'RECEIVED': '📋',
+                'DIAGNOSED': '🔍',
+                'IN_PROGRESS': '🔧',
+                'WAITING_PARTS': '⏳',
+                'READY': '✅',
+                'DELIVERED': '🎉',
+                'CANCELLED': '❌'
+            };
+            return icons[status] || '📋';
+        },
+
+        getCurrentStepMessage() {
+            const status = this.ticket?.status?.value;
+            const messages = {
+                'RECEIVED': 'Vaš uređaj je primljen na servis i čeka pregled',
+                'DIAGNOSED': 'Tehničar je pregledao uređaj i utvrdio kvar',
+                'IN_PROGRESS': 'Tehničar trenutno radi na popravci vašeg uređaja',
+                'WAITING_PARTS': 'Čekamo potrebne delove za popravku',
+                'READY': 'Popravka je završena! Možete preuzeti uređaj',
+                'DELIVERED': 'Uređaj je preuzet. Garancija je aktivna!',
+                'CANCELLED': 'Servisni nalog je otkazan'
+            };
+            return messages[status] || 'Status u obradi...';
         },
 
         getStatusBadgeClass(status) {
@@ -510,32 +675,6 @@ function trackPage(token) {
             return classes[status] || 'bg-gray-500';
         },
 
-        getStepIcon(status) {
-            const icons = {
-                'RECEIVED': '📥',
-                'DIAGNOSED': '🔍',
-                'IN_PROGRESS': '🔧',
-                'WAITING_PARTS': '⏳',
-                'READY': '✅',
-                'DELIVERED': '📦',
-                'CANCELLED': '❌'
-            };
-            return icons[status] || '•';
-        },
-
-        getStepDescription(status) {
-            const descriptions = {
-                'RECEIVED': 'Uređaj je primljen na servis',
-                'DIAGNOSED': 'Utvrđen je kvar na uređaju',
-                'IN_PROGRESS': 'Tehničar radi na popravci',
-                'WAITING_PARTS': 'Čekamo potrebne delove',
-                'READY': 'Uređaj je spreman za preuzimanje',
-                'DELIVERED': 'Uređaj je preuzet',
-                'CANCELLED': 'Nalog je otkazan'
-            };
-            return descriptions[status] || '';
-        },
-
         getDeviceEmoji(type) {
             const emojis = {
                 'PHONE': '📱',
@@ -545,13 +684,6 @@ function trackPage(token) {
                 'OTHER': '📟'
             };
             return emojis[type] || '📱';
-        },
-
-        getProgressWidth() {
-            if (!this.ticket?.progress) return 0;
-            const currentIndex = this.ticket.progress.findIndex(s => s.is_current);
-            if (currentIndex === -1) return 100;
-            return ((currentIndex) / (this.ticket.progress.length - 1)) * 100;
         },
 
         formatPrice(price) {
