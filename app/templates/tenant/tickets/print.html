@@ -101,18 +101,6 @@
       font-weight: bold;
     }
 
-    /* Device condition grade */
-    .grade-badge {
-      display: inline-block;
-      padding: 1mm 3mm;
-      border-radius: 3px;
-      font-weight: bold;
-      color: #fff;
-    }
-    .grade-a { background: #22c55e; }
-    .grade-b { background: #f59e0b; }
-    .grade-c { background: #ef4444; }
-
     /* Priority badge */
     .priority-badge {
       display: inline-block;
@@ -380,10 +368,6 @@
             <th>Lokacija:</th>
             <td colspan="3" id="location-1"></td>
           </tr>
-          <tr id="condition-row-1" style="display: none;">
-            <th>Stanje:</th>
-            <td colspan="5" id="device-condition-1"></td>
-          </tr>
           <tr id="imei-row-1" style="display: none;">
             <th>IMEI:</th>
             <td colspan="5" id="imei-1"></td>
@@ -483,10 +467,6 @@
             <th>Lokacija:</th>
             <td colspan="3" id="location-2"></td>
           </tr>
-          <tr id="condition-row-2" style="display: none;">
-            <th>Stanje:</th>
-            <td colspan="5" id="device-condition-2"></td>
-          </tr>
           <tr id="imei-row-2" style="display: none;">
             <th>IMEI:</th>
             <td colspan="5" id="imei-2"></td>
@@ -579,22 +559,6 @@
       return priorityMap[priority] || priority || '-';
     }
 
-    // Format device condition
-    function formatCondition(grade, notes, notWorking) {
-      let result = '';
-      if (grade) {
-        const gradeClass = grade === 'A' ? 'grade-a' : (grade === 'B' ? 'grade-b' : 'grade-c');
-        result += `<span class="grade-badge ${gradeClass}">${grade}</span> `;
-      }
-      if (notWorking) {
-        result += '<strong style="color: red;">(Ne radi)</strong> ';
-      }
-      if (notes) {
-        result += notes;
-      }
-      return result || '-';
-    }
-
     // Show error
     function showError(message) {
       document.getElementById('loading').style.display = 'none';
@@ -641,13 +605,6 @@
             `${ticket.technician.first_name} ${ticket.technician.last_name || ''}`.trim() :
             '-';
         document.getElementById(`location-${i}`).textContent = ticket.location?.name || '-';
-
-        // Device condition
-        if (ticket.device_condition_grade || ticket.device_condition_notes || ticket.device_not_working) {
-          document.getElementById(`condition-row-${i}`).style.display = '';
-          document.getElementById(`device-condition-${i}`).innerHTML =
-            formatCondition(ticket.device_condition_grade, ticket.device_condition_notes, ticket.device_not_working);
-        }
 
         // IMEI
         if (ticket.imei) {
