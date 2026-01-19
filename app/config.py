@@ -43,7 +43,7 @@ class Config:
     # JWT Authentication
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-change-in-production')
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(
-        seconds=int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 900))  # 15 min default
+        seconds=int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 28800))  # 8 sati default
     )
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(
         seconds=int(os.getenv('JWT_REFRESH_TOKEN_EXPIRES', 2592000))  # 30 dana default
