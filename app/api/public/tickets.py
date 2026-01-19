@@ -2,14 +2,18 @@
 Public Tickets API - Pracenje servisnih naloga za krajnje kupce.
 
 Endpointi:
-- GET /track/:token - Prati status naloga putem QR koda
+- GET /track/:token - Prati status naloga putem QR koda ili broja naloga
 - GET /track/:token/history - Istorija promena statusa
 
-Token je 64-karakterni hex string generisan prilikom kreiranja naloga.
+Token može biti:
+- 64-karakterni hex string (access_token) - generisan prilikom kreiranja naloga
+- Broj naloga u formatu "SRV-XXXX" ili samo broj "XXXX" - traži se po tenant_id
+
 Ne zahteva autentifikaciju ali je rate-limited.
 """
 
-from flask import Blueprint, request
+import re
+from flask import Blueprint, request, g
 from app.extensions import db
 from app.models import ServiceTicket, Tenant, ServiceLocation
 
@@ -31,17 +35,54 @@ STATUS_LABELS = {
 STATUS_ORDER = ['RECEIVED', 'DIAGNOSED', 'IN_PROGRESS', 'WAITING_PARTS', 'READY', 'DELIVERED']
 
 
+# ============== Helper Functions ==============
+
+def _parse_ticket_identifier(identifier):
+    """
+    Parsira identifikator naloga i vraća tip i vrednost.
+
+    Formati:
+    - 64-karakterni string: access_token
+    - "SRV-0003" ili "srv-0003": ticket_number = 3
+    - "3" ili "0003": ticket_number = 3
+
+    Returns:
+        tuple: (type, value) gde je type 'token' ili 'number'
+    """
+    if not identifier:
+        return None, None
+
+    identifier = identifier.strip()
+
+    # 64-karakterni access_token
+    if len(identifier) == 64:
+        return 'token', identifier
+
+    # Format SRV-XXXX (case insensitive)
+    srv_match = re.match(r'^SRV-?(\d+)$', identifier, re.IGNORECASE)
+    if srv_match:
+        return 'number', int(srv_match.group(1))
+
+    # Samo broj
+    if identifier.isdigit():
+        return 'number', int(identifier)
+
+    return None, None
+
+
 # ============== Routes ==============
 
 @bp.route('/<string:token>', methods=['GET'])
 def track_ticket(token):
     """
-    Prati status servisnog naloga putem tokena.
+    Prati status servisnog naloga putem tokena ili broja naloga.
 
-    Token se dobija:
-    - Iz QR koda na potvrdi o prijemu
-    - SMS-om nakon kreiranja naloga
-    - Email-om
+    Token može biti:
+    - 64-karakterni access_token (iz QR koda, SMS-a ili email-a)
+    - Broj naloga u formatu "SRV-0003" ili samo "3"
+
+    Ako se koristi broj naloga, potreban je tenant_id parametar
+    ili tenant kontekst iz subdomene (g.public_tenant).
 
     Returns:
         - status: Trenutni status naloga
@@ -50,10 +91,57 @@ def track_ticket(token):
         - device: Podaci o uredjaju (bez lozinke)
         - warranty: Info o garanciji (ako je zatvoren)
     """
-    if not token or len(token) != 64:
-        return {'error': 'Invalid token'}, 400
+    id_type, id_value = _parse_ticket_identifier(token)
 
-    ticket = ServiceTicket.query.filter_by(access_token=token).first()
+    if id_type is None:
+        return {'error': 'Invalid ticket identifier. Use ticket number (SRV-0003 or 3) or access token.'}, 400
+
+    ticket = None
+
+    if id_type == 'token':
+        # Pretraga po access_token (originalni siguran način)
+        ticket = ServiceTicket.query.filter_by(access_token=id_value).first()
+    else:
+        # Pretraga po ticket_number - zahteva verifikaciju telefonom
+        tenant_id = request.args.get('tenant_id', type=int)
+        phone_digits = request.args.get('phone', '').strip()
+
+        # Validacija: potrebna su poslednja 4 broja telefona za sigurnost
+        if not phone_digits or len(phone_digits) < 4:
+            return {
+                'error': 'Phone verification required',
+                'message': 'Unesite poslednja 4 broja Vašeg telefona za verifikaciju.',
+                'requires_phone': True
+            }, 400
+
+        # Ako nema tenant_id u parametrima, probaj iz g.public_tenant
+        if not tenant_id and hasattr(g, 'public_tenant') and g.public_tenant:
+            tenant_id = g.public_tenant.id
+
+        if tenant_id:
+            ticket = ServiceTicket.query.filter_by(
+                tenant_id=tenant_id,
+                ticket_number=id_value
+            ).first()
+        else:
+            # Bez tenant konteksta, probaj naći jedinstven nalog
+            tickets = ServiceTicket.query.filter_by(ticket_number=id_value).all()
+            if len(tickets) == 1:
+                ticket = tickets[0]
+            elif len(tickets) > 1:
+                return {
+                    'error': 'Multiple tickets found with this number. Please use the full access token from your receipt.',
+                    'hint': 'Scan the QR code on your receipt or use the link from SMS/email.'
+                }, 400
+
+        # Verifikacija telefona - poslednja 4 broja moraju da se poklope
+        if ticket:
+            customer_phone = (ticket.customer_phone or '').replace(' ', '').replace('-', '').replace('+', '')
+            if not customer_phone or not customer_phone.endswith(phone_digits[-4:]):
+                return {
+                    'error': 'Phone verification failed',
+                    'message': 'Broj telefona se ne poklapa sa podacima naloga.'
+                }, 403
 
     if not ticket:
         return {'error': 'Ticket not found'}, 404

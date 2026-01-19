@@ -47,25 +47,35 @@
 <section class="py-10 bg-primary/5">
     <div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{{ profile.tracking_widget_title or 'Pratite status popravke' }}</h2>
-        <p class="text-gray-600 mb-6">Unesite broj servisnog naloga da proverite status</p>
-        <form @submit.prevent="if(token.trim()) window.location.href = '/track/' + encodeURIComponent(token.trim())" class="flex flex-col sm:flex-row gap-3 justify-center" x-data="{ token: '' }">
+        <p class="text-gray-600 mb-6">Unesite broj naloga i poslednja 4 broja Vašeg telefona</p>
+        <form @submit.prevent="if(token.trim() && phone.trim().length >= 4) window.location.href = '/track/' + encodeURIComponent(token.trim()) + '?tenant_id={{ tenant.id }}&phone=' + encodeURIComponent(phone.trim())" class="flex flex-col sm:flex-row gap-3 justify-center items-center" x-data="{ token: '', phone: '' }">
             <input
                 type="text"
                 x-model="token"
-                placeholder="Npr. SN-2024-001234"
-                class="flex-1 max-w-xs px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-center sm:text-left"
+                placeholder="Broj naloga (npr. 3)"
+                class="w-full sm:w-40 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-center"
+                required
+            >
+            <input
+                type="text"
+                x-model="phone"
+                placeholder="Posl. 4 cifre tel."
+                maxlength="4"
+                pattern="[0-9]{4}"
+                class="w-full sm:w-36 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-center"
                 required
             >
             <button
                 type="submit"
-                class="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:opacity-90 transition-opacity inline-flex items-center justify-center"
+                class="w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:opacity-90 transition-opacity inline-flex items-center justify-center"
             >
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
-                Proveri status
+                Proveri
             </button>
         </form>
+        <p class="text-xs text-gray-500 mt-3">Broj telefona koji ste ostavili prilikom prijema uređaja</p>
     </div>
 </section>
 {% endif %}

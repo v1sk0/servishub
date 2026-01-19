@@ -40,8 +40,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </div>
-            <h2 class="text-xl font-bold text-gray-900 mb-2">Nalog nije pronađen</h2>
-            <p class="text-gray-600 mb-6">Token nije validan ili je nalog uklonjen.</p>
+            <h2 class="text-xl font-bold text-gray-900 mb-2" x-text="requiresPhone ? 'Verifikacija potrebna' : 'Nalog nije pronađen'"></h2>
+            <p class="text-gray-600 mb-6" x-text="errorMessage || 'Token nije validan ili je nalog uklonjen.'"></p>
             <a href="/" class="text-primary-600 hover:text-primary-700 font-medium">← Nazad na početnu</a>
         </div>
 
@@ -257,18 +257,38 @@ function trackPage(token) {
         ticket: null,
         loading: true,
         error: false,
+        errorMessage: '',
+        requiresPhone: false,
 
         async loadTicket() {
             try {
-                const response = await fetch('/api/public/track/' + this.token);
+                // Prosledi tenant_id i phone ako postoje u URL-u
+                const urlParams = new URLSearchParams(window.location.search);
+                const tenantId = urlParams.get('tenant_id');
+                const phone = urlParams.get('phone');
+
+                let apiUrl = '/api/public/track/' + this.token;
+                const queryParams = [];
+                if (tenantId) queryParams.push('tenant_id=' + tenantId);
+                if (phone) queryParams.push('phone=' + encodeURIComponent(phone));
+                if (queryParams.length > 0) {
+                    apiUrl += '?' + queryParams.join('&');
+                }
+
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
                 if (response.ok) {
-                    this.ticket = await response.json();
+                    this.ticket = data;
                 } else {
                     this.error = true;
+                    this.errorMessage = data.message || data.error || 'Nalog nije pronađen';
+                    this.requiresPhone = data.requires_phone || false;
                 }
             } catch (e) {
                 console.error('Failed to load ticket:', e);
                 this.error = true;
+                this.errorMessage = 'Greška pri učitavanju naloga';
             } finally {
                 this.loading = false;
             }
