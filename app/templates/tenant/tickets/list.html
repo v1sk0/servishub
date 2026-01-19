@@ -292,10 +292,8 @@
     .glass-theme .category-option span { color: #94a3b8; }
     .glass-theme .category-option.selected span { color: #60a5fa; }
 
-    /* Glass theme grade selector */
-    .glass-theme .grade-option { background: rgba(255, 255, 255, 0.03); border: 2px solid rgba(255, 255, 255, 0.1); }
-    .glass-theme .grade-option .grade-letter { color: #f1f5f9; }
-    .glass-theme .grade-option .grade-text { color: #64748b; }
+    /* Glass theme grade selector - keep colored backgrounds, adjust selected state */
+    .glass-theme .grade-option.selected { border-color: #f1f5f9; box-shadow: 0 0 0 2px rgba(30, 41, 59, 0.8), 0 6px 20px rgba(0, 0, 0, 0.4); }
 
     /* Glass theme problem chips */
     .glass-theme .problem-chip { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; }
