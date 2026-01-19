@@ -48,10 +48,9 @@
     <div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{{ profile.tracking_widget_title or 'Pratite status popravke' }}</h2>
         <p class="text-gray-600 mb-6">Unesite broj servisnog naloga da proverite status</p>
-        <form action="/track" method="GET" class="flex flex-col sm:flex-row gap-3 justify-center" x-data="{ token: '' }">
+        <form @submit.prevent="if(token.trim()) window.location.href = '/track/' + encodeURIComponent(token.trim())" class="flex flex-col sm:flex-row gap-3 justify-center" x-data="{ token: '' }">
             <input
                 type="text"
-                name="token"
                 x-model="token"
                 placeholder="Npr. SN-2024-001234"
                 class="flex-1 max-w-xs px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-center sm:text-left"
