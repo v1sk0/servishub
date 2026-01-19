@@ -666,7 +666,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Opis kvara <span x-show="selectedProblems.length === 0">*</span></label>
-                    <textarea class="form-input" rows="2" x-model="newTicket.problem_description" placeholder="Opišite problem..."></textarea>
+                    <textarea class="form-input" rows="2" x-model="newTicket.problem_description" @input="syncSelectedProblems()" placeholder="Opišite problem..."></textarea>
                 </div>
 
                 <!-- Section: Stanje uredaja -->
@@ -1002,6 +1002,16 @@ function ticketsPage() {
                 return prob ? prob.label : '';
             }).filter(Boolean);
             this.newTicket.problem_description = labels.join(', ');
+            this.newTicket.problem_areas = [...this.selectedProblems];
+        },
+
+        syncSelectedProblems() {
+            // Sync selected chips with description text - remove chips whose text is no longer in description
+            const desc = (this.newTicket.problem_description || '').toLowerCase();
+            this.selectedProblems = this.selectedProblems.filter(id => {
+                const prob = this.currentProblems.find(p => p.id === id);
+                return prob && desc.includes(prob.label.toLowerCase());
+            });
             this.newTicket.problem_areas = [...this.selectedProblems];
         },
 
