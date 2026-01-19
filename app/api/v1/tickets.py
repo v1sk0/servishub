@@ -818,11 +818,10 @@ def get_ticket_print_data(ticket_id):
     if not user.has_location_access(ticket.location_id):
         return jsonify({'error': 'Forbidden', 'message': 'Nemate pristup ovoj lokaciji'}), 403
 
-    # Default print clause
+    # Default print clause (from Dolce Vita)
     default_clause = (
         'Uređaj se čuva 30 dana od obaveštenja o završetku popravke. '
-        'Nakon isteka navedenog roka servis ne odgovara za uređaj. '
-        'Garancija važi od datuma preuzimanja uređaja.'
+        'Garancija važi od datuma završetka popravke.'
     )
 
     # Dohvati klauzolu iz tenant.print_clause kolone

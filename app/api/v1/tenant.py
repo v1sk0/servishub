@@ -215,11 +215,10 @@ def get_settings():
 
     settings = tenant.settings_json or {}
 
-    # Default print clause
+    # Default print clause (from Dolce Vita)
     default_clause = (
         'Uređaj se čuva 30 dana od obaveštenja o završetku popravke. '
-        'Nakon isteka navedenog roka servis ne odgovara za uređaj. '
-        'Garancija važi od datuma preuzimanja uređaja.'
+        'Garancija važi od datuma završetka popravke.'
     )
 
     return {

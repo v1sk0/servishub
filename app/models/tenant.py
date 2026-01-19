@@ -110,8 +110,7 @@ class Tenant(db.Model):
     print_clause = db.Column(
         db.Text,
         default='Uređaj se čuva 30 dana od obaveštenja o završetku popravke. '
-                'Nakon isteka navedenog roka servis ne odgovara za uređaj. '
-                'Garancija važi od datuma preuzimanja uređaja.'
+                'Garancija važi od datuma završetka popravke.'
     )
 
     # Timestampovi
