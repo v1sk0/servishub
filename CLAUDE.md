@@ -6,11 +6,20 @@ Instrukcije za Claude Code agente. **CITAJ OVO PRE BILO KAKVIH IZMENA.**
 
 ## RESUME POINT
 
-**v0.6.2** | 2026-01-19 | Backend 100% | Frontend 100%
+**v0.6.3** | 2026-01-19 | Backend 100% | Frontend 100%
 
-### Status: KOMPLETNO - Public Site v2 (nove sekcije + poboljšanja)
+### Status: KOMPLETNO - Ticket Tracking Security
 
-**Poslednje izmene (v0.6.2):**
+**Poslednje izmene (v0.6.3):**
+- **Security:** Phone verification za ticket tracking po broju naloga
+  - Pretraga po broju (SRV-0003) zahteva poslednja 4 broja telefona
+  - Sprečen enumeration napad (pogađanje brojeva naloga)
+  - Access token (QR kod) i dalje radi bez verifikacije
+- **Tracking Widget:** Ažuriran da traži broj naloga + telefon
+- **API:** Nova helper funkcija `_parse_ticket_identifier()` za parsiranje formata
+- **UX:** Bolji error messages sa srpskim tekstom
+
+**Prethodne izmene (v0.6.2):**
 - **Public Site v2:** Kompletna revizija javnog sajta tenanta
   - FAQ sekcija sa accordion stilom
   - Brendovi sekcija (grid sa logotipima)
@@ -401,6 +410,41 @@ Ako je polje u `TenantPublicProfile` prazno, template koristi podatke iz `Tenant
 - `profile.phone` → `tenant.telefon`
 - `profile.email` → `tenant.email`
 
+### 7. Ticket Tracking API (Public)
+
+**Endpoint:** `GET /api/public/track/<identifier>`
+
+**Podržani formati identifikatora:**
+
+| Format | Primer | Verifikacija |
+|--------|--------|--------------|
+| Access Token (64 char) | `a1b2c3d4...` | ❌ Nije potrebna |
+| Broj naloga | `SRV-0003`, `3`, `0003` | ✅ Poslednja 4 broja telefona |
+
+**Parametri za pretragu po broju:**
+- `tenant_id` - ID tenanta (prosleđuje se automatski sa javne stranice)
+- `phone` - Poslednja 4 broja telefona kupca (obavezno za sigurnost)
+
+**Sigurnosne mere:**
+1. **Phone verification** - Sprečava enumeration napad (pogađanje brojeva 1, 2, 3...)
+2. **Tenant context** - Broj naloga je jedinstven samo u okviru tenanta
+3. **Access token** - 64-char token za siguran pristup bez verifikacije (QR kod)
+
+**Primer korišćenja:**
+```
+# Sa access tokenom (QR kod, SMS, email)
+GET /api/public/track/a1b2c3d4e5f6...
+
+# Sa brojem naloga (widget na javnoj stranici)
+GET /api/public/track/3?tenant_id=8&phone=1234
+```
+
+**Odgovori:**
+- `200` - Podaci o nalogu
+- `400` - Neispravan format ili nedostaje telefon
+- `403` - Telefon se ne poklapa
+- `404` - Nalog nije pronađen
+
 ---
 
 ## Boja Tema
@@ -495,6 +539,7 @@ GitHub: github.com/v1sk0/servishub
 
 | Verzija | Datum | Izmene |
 |---------|-------|--------|
+| v0.6.3 | 2026-01-19 | **Security:** Phone verification za ticket tracking, sprečen enumeration napad |
 | v0.6.2 | 2026-01-19 | **Public Site v2:** FAQ, Brendovi, Proces, WhatsApp, Status tracking, AOS animacije, Contact fallback |
 | v0.6.1 | 2026-01-19 | **Wildcard Subdomain:** Heroku + Cloudflare DNS, savePublicProfile fix |
 | v0.6.0 | 2026-01-19 | **Public Site Fix:** Route deduplication, working_hours format, JSON flag_modified |
