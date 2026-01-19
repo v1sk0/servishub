@@ -158,14 +158,18 @@
 
                 <!-- Horizontal Progress Bar -->
                 <div class="relative mb-8">
-                    <!-- Background line -->
-                    <div class="absolute top-6 left-0 right-0 h-1 bg-gray-200 rounded-full"></div>
+                    <!-- Background line - connects all steps -->
+                    <div class="absolute top-6 left-[16.66%] right-[16.66%] h-2 bg-gray-200 rounded-full"></div>
 
-                    <!-- Animated progress line -->
-                    <div class="absolute top-6 left-0 h-1 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 rounded-full transition-all duration-1000 ease-out progress-glow"
-                         :style="{ width: getProgressPercent() + '%' }">
-                        <!-- Shimmer effect -->
-                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer rounded-full"></div>
+                    <!-- Animated progress line with Mac-style stripes -->
+                    <div class="absolute top-6 left-[16.66%] h-2 rounded-full transition-all duration-1000 ease-out overflow-hidden progress-bar-active"
+                         :style="{ width: getProgressWidth() }">
+                        <!-- Base gradient -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600"></div>
+                        <!-- Mac-style diagonal stripes -->
+                        <div class="absolute inset-0 stripe-animation"></div>
+                        <!-- Shine overlay -->
+                        <div class="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-black/10"></div>
                     </div>
 
                     <!-- Steps -->
@@ -173,27 +177,27 @@
                         <template x-for="(step, index) in simpleSteps" :key="step.id">
                             <div class="flex flex-col items-center" style="width: 33.33%;">
                                 <!-- Step circle -->
-                                <div class="relative">
+                                <div class="relative z-10">
                                     <!-- Glowing ring for current step -->
                                     <template x-if="step.isCurrent">
-                                        <div class="absolute -inset-1">
-                                            <!-- Rotating gradient border -->
-                                            <div class="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 animate-spin-slow opacity-75 blur-sm"></div>
-                                            <!-- Inner glow -->
-                                            <div class="absolute inset-0.5 rounded-full bg-white"></div>
+                                        <div class="absolute -inset-2 rounded-full">
+                                            <!-- Pulsing glow -->
+                                            <div class="absolute inset-0 rounded-full bg-blue-400/50 animate-ping-slow"></div>
+                                            <!-- Static glow -->
+                                            <div class="absolute inset-1 rounded-full bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 blur-md opacity-60"></div>
                                         </div>
                                     </template>
 
                                     <!-- Main circle -->
                                     <div class="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 transform"
                                          :class="{
-                                             'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/50 scale-110': step.isCurrent,
-                                             'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-500/40': step.isCompleted,
-                                             'bg-gray-100 text-gray-400 border-2 border-gray-200': !step.isCompleted && !step.isCurrent
+                                             'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/50 scale-110 ring-4 ring-white': step.isCurrent,
+                                             'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-500/40 ring-4 ring-white': step.isCompleted,
+                                             'bg-white text-gray-400 border-2 border-gray-200 shadow-sm': !step.isCompleted && !step.isCurrent
                                          }">
-                                        <!-- Shimmer overlay for current -->
+                                        <!-- 45° Shimmer overlay for current -->
                                         <div x-show="step.isCurrent" class="absolute inset-0 rounded-full overflow-hidden">
-                                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer-fast"></div>
+                                            <div class="absolute inset-0 shimmer-45"></div>
                                         </div>
                                         <!-- Completed checkmark -->
                                         <template x-if="step.isCompleted">
@@ -462,23 +466,44 @@
     .animate-blob { animation: blob 8s infinite; }
     .animation-delay-2000 { animation-delay: 2s; }
 
-    @keyframes shimmer {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(200%); }
+    /* Mac-style diagonal stripes animation */
+    @keyframes stripe-move {
+        0% { background-position: 0 0; }
+        100% { background-position: 50px 50px; }
     }
-    .animate-shimmer { animation: shimmer 2s infinite; }
+    .stripe-animation {
+        background: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 8px,
+            rgba(255,255,255,0.15) 8px,
+            rgba(255,255,255,0.15) 16px
+        );
+        background-size: 50px 50px;
+        animation: stripe-move 1s linear infinite;
+    }
 
-    @keyframes shimmer-fast {
-        0% { transform: translateX(-100%) skewX(-15deg); }
-        100% { transform: translateX(200%) skewX(-15deg); }
+    /* 45° shimmer for active step */
+    @keyframes shimmer-45 {
+        0% { transform: translateX(-150%) translateY(-150%) rotate(45deg); }
+        100% { transform: translateX(150%) translateY(150%) rotate(45deg); }
     }
-    .animate-shimmer-fast { animation: shimmer-fast 1.5s ease-in-out infinite; }
+    .shimmer-45 {
+        background: linear-gradient(
+            45deg,
+            transparent 30%,
+            rgba(255,255,255,0.5) 50%,
+            transparent 70%
+        );
+        animation: shimmer-45 2s ease-in-out infinite;
+    }
 
-    @keyframes spin-slow {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+    /* Slow ping for current step */
+    @keyframes ping-slow {
+        0% { transform: scale(1); opacity: 0.5; }
+        75%, 100% { transform: scale(1.5); opacity: 0; }
     }
-    .animate-spin-slow { animation: spin-slow 3s linear infinite; }
+    .animate-ping-slow { animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
 
     @keyframes check {
         0% { transform: scale(0); opacity: 0; }
@@ -493,14 +518,9 @@
     }
     .animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
 
-    @keyframes glow-pulse {
-        0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.4), 0 0 10px rgba(59, 130, 246, 0.2); }
-        50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 40px rgba(99, 102, 241, 0.4); }
-    }
-    .animate-glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
-
-    .progress-glow {
-        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3);
+    /* Progress bar glow */
+    .progress-bar-active {
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.3);
     }
 </style>
 
@@ -608,6 +628,21 @@ function trackPage(token) {
             const stepIndex = this.getStepIndex(status);
             // 3 steps, so: 0=0%, 1=50%, 2=100%
             return Math.max(0, (stepIndex / 2) * 100);
+        },
+
+        getProgressWidth() {
+            const stepIndex = this.getStepIndex(this.ticket?.status?.value);
+            // Progress bar connects step centers
+            // Steps are at 16.66%, 50%, 83.33% of container
+            // Progress bar starts at 16.66% (first step center)
+            // Total distance = 66.66% of container width
+            // Step 0: width = 0
+            // Step 1: width = 33.33% (half way to second step)
+            // Step 2: width = 66.66% (full, to third step)
+            if (stepIndex <= 0) return '0%';
+            if (stepIndex === 1) return '33.33%';  // To second step center
+            if (stepIndex >= 2) return '66.66%';   // To third step center
+            return '0%';
         },
 
         getSimpleStatusLabel(status) {
