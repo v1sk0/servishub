@@ -205,15 +205,13 @@
     .form-section-title { font-size: 0.875rem; font-weight: 600; color: #3b82f6; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0; }
 
     /* Not working label */
-    .not-working-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem; background: #fef2f2; border: 2px solid #fecaca; border-radius: 0.5rem; transition: all 0.2s; }
-    .not-working-label:hover { background: #fee2e2; border-color: #f87171; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2); }
-    .not-working-label:has(input:checked) { background: #ef4444; border-color: #dc2626; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
-    .not-working-label:has(input:checked) .not-working-text { color: white; }
-    .not-working-label:has(input:checked) .not-working-subtext { color: rgba(255, 255, 255, 0.8); }
-    .not-working-label input[type="checkbox"] { width: 1.25rem; height: 1.25rem; accent-color: #ef4444; cursor: pointer; }
-    .not-working-label:has(input:checked) input[type="checkbox"] { accent-color: white; }
+    .not-working-label { display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem 1.5rem; background: #fef2f2; border: 2px solid #fecaca; border-radius: 0.5rem; transition: all 0.2s; }
+    .not-working-label:hover { background: #fee2e2; border-color: #f87171; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); }
+    .not-working-label.active { background: linear-gradient(135deg, #ef4444, #dc2626); border-color: transparent; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
+    .not-working-label.active .not-working-text { color: white; }
+    .not-working-label.active svg { color: white; }
+    .not-working-label svg { color: #dc2626; transition: all 0.2s; }
     .not-working-text { font-weight: 700; color: #dc2626; font-size: 0.875rem; transition: all 0.2s; }
-    .not-working-subtext { color: #64748b; font-size: 0.75rem; transition: all 0.2s; }
 
     /* Light theme filter select */
     .filter-select { padding: 0.5rem 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; color: #1e293b; font-size: 0.875rem; }
@@ -304,8 +302,11 @@
 
     /* Glass theme not working label */
     .glass-theme .not-working-label { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
+    .glass-theme .not-working-label svg { color: #f87171; }
     .glass-theme .not-working-text { color: #f87171; }
-    .glass-theme .not-working-subtext { color: #94a3b8; }
+    .glass-theme .not-working-label.active { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .glass-theme .not-working-label.active svg { color: white; }
+    .glass-theme .not-working-label.active .not-working-text { color: white; }
 
     /* Glass theme filter select */
     .glass-theme .filter-select { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #f1f5f9; }
@@ -692,11 +693,13 @@
                     <label class="form-label">Napomena o stanju</label>
                     <textarea class="form-input" rows="2" x-model="newTicket.device_condition_notes" placeholder="Ogrebotine, ostecenja..."></textarea>
                 </div>
-                <div class="form-group">
-                    <label class="not-working-label">
-                        <input type="checkbox" x-model="newTicket.device_not_working">
-                        <span class="not-working-text">NE RADI</span>
-                        <span class="not-working-subtext">(ne pali se)</span>
+                <div class="form-group" style="display: flex; justify-content: center;">
+                    <label class="not-working-label" @click="newTicket.device_not_working = !newTicket.device_not_working" :class="{'active': newTicket.device_not_working}">
+                        <input type="checkbox" x-model="newTicket.device_not_working" style="display: none;">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                        </svg>
+                        <span class="not-working-text">Uređaj ne pali</span>
                     </label>
                 </div>
 
