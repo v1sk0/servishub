@@ -309,8 +309,7 @@
       background: #6d28d9;
     }
   </style>
-  <!-- QR Code library -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.js"></script>
+  <!-- QR Code is generated server-side as base64 -->
 </head>
 <body>
   <!-- Print button (hidden on print) -->
@@ -421,7 +420,7 @@
           </tr>
         </table>
         <div class="qr-section">
-          <canvas id="qr-code-1"></canvas>
+          <img id="qr-code-1" src="" alt="QR" style="width: 75px; height: 75px;">
           <p>Pracenje naloga</p>
         </div>
       </div>
@@ -524,7 +523,7 @@
           </tr>
         </table>
         <div class="qr-section">
-          <canvas id="qr-code-2"></canvas>
+          <img id="qr-code-2" src="" alt="QR" style="width: 75px; height: 75px;">
           <p>Pracenje naloga</p>
         </div>
       </div>
@@ -604,7 +603,7 @@
     }
 
     // Fill both copies with data
-    function fillTicketData(ticket, tenant) {
+    function fillTicketData(ticket, tenant, qr_code_base64) {
       for (let i = 1; i <= 2; i++) {
         // Tenant info
         document.getElementById(`tenant-name-${i}`).textContent = tenant?.name || 'ServisHub';
@@ -656,13 +655,9 @@
           document.getElementById(`imei-${i}`).textContent = ticket.imei;
         }
 
-        // Generate QR code
-        if (ticket.access_token) {
-          const trackUrl = `${window.location.origin}/track/${ticket.access_token}`;
-          QRCode.toCanvas(document.getElementById(`qr-code-${i}`), trackUrl, {
-            width: 75,
-            margin: 1
-          });
+        // Set QR code image (server-generated base64)
+        if (qr_code_base64) {
+          document.getElementById(`qr-code-${i}`).src = `data:image/png;base64,${qr_code_base64}`;
         }
 
         // Set print clause from tenant settings
@@ -703,7 +698,7 @@
         const data = await response.json();
 
         // Fill both copies
-        fillTicketData(data.ticket, data.tenant);
+        fillTicketData(data.ticket, data.tenant, data.qr_code_base64);
 
         // Show content
         document.getElementById('loading').style.display = 'none';

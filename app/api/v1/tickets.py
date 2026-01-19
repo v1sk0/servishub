@@ -7,6 +7,9 @@ servisnim nalozima unutar tenanta.
 
 from flask import Blueprint, request, jsonify, g
 from datetime import datetime
+import io
+import base64
+import qrcode
 
 from ..middleware.auth import jwt_required, tenant_required, location_access_required
 from ...extensions import db
@@ -834,8 +837,27 @@ def get_ticket_print_data(ticket_id):
     # Dohvati klauzolu iz tenant.print_clause kolone
     clause = tenant.print_clause or default_clause
 
-    # URL za QR kod
-    qr_url = f"/tickets/public/{ticket.access_token}" if ticket.access_token else None
+    # Generiši QR kod kao base64 (server-side, kao Dolce Vita)
+    qr_code_base64 = None
+    if ticket.access_token:
+        # Kreiraj pun URL za tracking
+        track_url = f"{request.host_url.rstrip('/')}/track/{ticket.access_token}"
+
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=6,
+            border=2,
+        )
+        qr.add_data(track_url)
+        qr.make(fit=True)
+
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        # Konvertuj u base64 za ugrađivanje u HTML
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        qr_code_base64 = base64.b64encode(buffer.getvalue()).decode()
 
     return jsonify({
         'ticket': ticket.to_dict(include_sensitive=True),
@@ -852,7 +874,7 @@ def get_ticket_print_data(ticket_id):
             'address': ticket.location.address if ticket.location else None,
             'phone': ticket.location.phone if ticket.location else None
         },
-        'qr_url': qr_url,
+        'qr_code_base64': qr_code_base64,
         'clause': clause,
         'print_date': datetime.utcnow().isoformat()
     }), 200
