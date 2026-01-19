@@ -174,16 +174,27 @@
                             <div class="flex flex-col items-center" style="width: 33.33%;">
                                 <!-- Step circle -->
                                 <div class="relative">
-                                    <!-- Pulse ring for current step -->
-                                    <div x-show="step.isCurrent"
-                                         class="absolute inset-0 w-12 h-12 -m-1 rounded-full bg-blue-400 animate-pulse-ring"></div>
+                                    <!-- Glowing ring for current step -->
+                                    <template x-if="step.isCurrent">
+                                        <div class="absolute -inset-1">
+                                            <!-- Rotating gradient border -->
+                                            <div class="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 animate-spin-slow opacity-75 blur-sm"></div>
+                                            <!-- Inner glow -->
+                                            <div class="absolute inset-0.5 rounded-full bg-white"></div>
+                                        </div>
+                                    </template>
 
                                     <!-- Main circle -->
                                     <div class="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 transform"
                                          :class="{
-                                             'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/40 scale-110': step.isCompleted || step.isCurrent,
+                                             'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/50 scale-110': step.isCurrent,
+                                             'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-500/40': step.isCompleted,
                                              'bg-gray-100 text-gray-400 border-2 border-gray-200': !step.isCompleted && !step.isCurrent
                                          }">
+                                        <!-- Shimmer overlay for current -->
+                                        <div x-show="step.isCurrent" class="absolute inset-0 rounded-full overflow-hidden">
+                                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer-fast"></div>
+                                        </div>
                                         <!-- Completed checkmark -->
                                         <template x-if="step.isCompleted">
                                             <svg class="w-6 h-6 animate-check" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -192,7 +203,7 @@
                                         </template>
                                         <!-- Current/Pending icon -->
                                         <template x-if="!step.isCompleted">
-                                            <span class="text-xl" x-text="step.icon"></span>
+                                            <span class="text-xl relative z-10" x-text="step.icon"></span>
                                         </template>
                                     </div>
                                 </div>
@@ -200,9 +211,11 @@
                                 <!-- Step label -->
                                 <div class="mt-4 text-center">
                                     <p class="text-sm font-semibold transition-colors duration-300"
-                                       :class="step.isCurrent ? 'text-blue-600' : step.isCompleted ? 'text-gray-900' : 'text-gray-400'"
+                                       :class="step.isCurrent ? 'text-blue-600' : step.isCompleted ? 'text-emerald-600' : 'text-gray-400'"
                                        x-text="step.label"></p>
-                                    <p class="text-xs text-gray-400 mt-0.5 hidden sm:block" x-text="step.sublabel"></p>
+                                    <p class="text-xs mt-0.5 hidden sm:block"
+                                       :class="step.isCurrent ? 'text-blue-400' : 'text-gray-400'"
+                                       x-text="step.sublabel"></p>
                                 </div>
                             </div>
                         </template>
@@ -455,11 +468,17 @@
     }
     .animate-shimmer { animation: shimmer 2s infinite; }
 
-    @keyframes pulse-ring {
-        0% { transform: scale(1); opacity: 0.5; }
-        100% { transform: scale(1.5); opacity: 0; }
+    @keyframes shimmer-fast {
+        0% { transform: translateX(-100%) skewX(-15deg); }
+        100% { transform: translateX(200%) skewX(-15deg); }
     }
-    .animate-pulse-ring { animation: pulse-ring 1.5s ease-out infinite; }
+    .animate-shimmer-fast { animation: shimmer-fast 1.5s ease-in-out infinite; }
+
+    @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .animate-spin-slow { animation: spin-slow 3s linear infinite; }
 
     @keyframes check {
         0% { transform: scale(0); opacity: 0; }
@@ -473,6 +492,12 @@
         50% { transform: translateY(-5px); }
     }
     .animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
+
+    @keyframes glow-pulse {
+        0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.4), 0 0 10px rgba(59, 130, 246, 0.2); }
+        50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 40px rgba(99, 102, 241, 0.4); }
+    }
+    .animate-glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
 
     .progress-glow {
         box-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3);
