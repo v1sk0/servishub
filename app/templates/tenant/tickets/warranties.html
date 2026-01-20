@@ -496,33 +496,9 @@ function warrantiesPage() {
             ]);
         },
 
-        getAccessToken() {
-            // Try 'access_token' first (used by tenant login)
-            const directToken = localStorage.getItem('access_token');
-            if (directToken) {
-                return directToken;
-            }
-            // Fallback to 'servishub_token' (legacy format)
-            const tokenData = localStorage.getItem('servishub_token');
-            if (tokenData) {
-                try {
-                    const parsed = JSON.parse(tokenData);
-                    return parsed.access_token;
-                } catch (e) {
-                    return tokenData;
-                }
-            }
-            return null;
-        },
-
         async loadLocations() {
-            const accessToken = this.getAccessToken();
-            if (!accessToken) return;
-
             try {
-                const response = await fetch('/api/v1/locations', {
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
+                const response = await api('/api/v1/locations');
                 if (response.ok) {
                     const data = await response.json();
                     this.locations = data.locations || [];
@@ -534,11 +510,6 @@ function warrantiesPage() {
 
         async loadWarranties() {
             this.loading = true;
-            const accessToken = this.getAccessToken();
-            if (!accessToken) {
-                window.location.href = '/login';
-                return;
-            }
 
             try {
                 const params = new URLSearchParams({
@@ -551,9 +522,7 @@ function warrantiesPage() {
                 if (this.filters.warranty_status) params.append('warranty_status', this.filters.warranty_status);
                 if (this.filters.location_id) params.append('location_id', this.filters.location_id);
 
-                const response = await fetch(`/api/v1/tickets/warranties?${params}`, {
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
+                const response = await api(`/api/v1/tickets/warranties?${params}`);
 
                 if (response.ok) {
                     const data = await response.json();
@@ -570,8 +539,6 @@ function warrantiesPage() {
                         expiring_soon: 0,
                         expired: 0
                     };
-                } else if (response.status === 401) {
-                    window.location.href = '/login';
                 }
             } catch (e) {
                 console.error('Error loading warranties:', e);
