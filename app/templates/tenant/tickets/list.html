@@ -128,25 +128,55 @@
     .grade-B { background: linear-gradient(135deg, #eab308, #ca8a04); color: #000; }
     .grade-C { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
 
-    /* Light theme duration bar */
-    .duration-bar { position: relative; height: 24px; background: #e2e8f0; border-radius: 12px; overflow: hidden; min-width: 100px; }
-    .duration-fill { height: 100%; border-radius: 12px; transition: width 0.3s ease; }
-    .duration-fill.green { background: linear-gradient(90deg, #22c55e, #4ade80); }
-    .duration-fill.yellow { background: linear-gradient(90deg, #eab308, #facc15); }
-    .duration-fill.red { background: linear-gradient(90deg, #ef4444, #f87171); }
-    .duration-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.75rem; font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    /* Light theme duration bar - Dolce Vita animated stripes */
+    @keyframes stripes-move {
+        0% { background-position: 0 0; }
+        100% { background-position: 40px 0; }
+    }
+    .duration-bar { position: relative; height: 24px; background: #e8eaed; border-radius: 12px; overflow: hidden; min-width: 100px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+    .duration-fill {
+        height: 100%;
+        border-radius: 12px;
+        transition: width 0.3s ease;
+        background-size: 40px 40px;
+        animation: stripes-move 1.5s linear infinite;
+    }
+    .duration-fill.green {
+        background-color: #34a853;
+        background-image: linear-gradient(135deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+        box-shadow: 0 0 12px rgba(52, 168, 83, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+    }
+    .duration-fill.yellow {
+        background-color: #f9ab00;
+        background-image: linear-gradient(135deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+        box-shadow: 0 0 12px rgba(249, 171, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+    }
+    .duration-fill.red {
+        background-color: #ea4335;
+        background-image: linear-gradient(135deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+        box-shadow: 0 0 12px rgba(234, 67, 53, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+    }
+    .duration-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.75rem; font-weight: 600; color: #202124; white-space: nowrap; text-shadow: 0 0 2px rgba(255,255,255,0.8); }
 
     /* Light theme action buttons */
     .action-btn { padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; display: inline-flex; align-items: center; gap: 4px; }
     .action-btn svg { width: 12px; height: 12px; }
     .action-btn.complete { background: #dcfce7; color: #166534; }
-    .action-btn.complete:hover { background: #22c55e; color: white; }
+    .action-btn.complete:hover { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); transform: translateY(-1px); }
     .action-btn.reject { background: #fee2e2; color: #991b1b; }
-    .action-btn.reject:hover { background: #ef4444; color: white; }
+    .action-btn.reject:hover { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); transform: translateY(-1px); }
     .action-btn.print { background: #dbeafe; color: #1e40af; }
-    .action-btn.print:hover { background: #3b82f6; color: white; }
+    .action-btn.print:hover { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); transform: translateY(-1px); }
     .action-btn.collect { background: #f3e8ff; color: #6b21a8; }
-    .action-btn.collect:hover { background: #8b5cf6; color: white; }
+    .action-btn.collect:hover { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; box-shadow: 0 0 15px rgba(139, 92, 246, 0.4); transform: translateY(-1px); }
+    .action-btn.notify { background: #fef2f2; color: #991b1b; position: relative; }
+    .action-btn.notify:hover:not(.disabled) { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); transform: translateY(-1px); }
+    .action-btn.notify.disabled { opacity: 0.5; cursor: not-allowed; }
+    .action-btn.notify.first-notify { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } }
+
+    /* Notification badge */
+    .notification-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; background: #ef4444; color: white; border-radius: 9px; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3); }
 
     /* Strobe alert */
     @keyframes strobeFlash { 0%, 100% { background: rgba(239, 68, 68, 0.1); } 50% { background: rgba(239, 68, 68, 0.25); } }
@@ -164,6 +194,39 @@
     .modal-close:hover { color: #1e293b; }
     .modal-body { padding: 1.5rem; }
     .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 0.75rem; }
+
+    /* Notification modal info card */
+    .notify-info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    .notify-info-row { display: flex; justify-content: space-between; padding: 0.25rem 0; font-size: 0.875rem; }
+    .notify-info-row span:first-child { color: #64748b; }
+    .notify-info-row span:last-child { color: #1e293b; font-weight: 500; }
+
+    /* Notification history */
+    .notify-history { margin: 1rem 0; }
+    .notify-history h4 { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .notify-history-item { display: flex; justify-content: space-between; padding: 0.5rem; background: #f1f5f9; border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.813rem; }
+    .notify-history-item .history-date { color: #64748b; }
+    .notify-history-item .history-comment { color: #1e293b; }
+
+    /* Quick reply buttons */
+    .quick-reply-section { margin: 1rem 0; }
+    .quick-reply-section label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.5rem; }
+    .quick-reply-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .quick-reply-btn { padding: 0.5rem 0.75rem; background: #e0e7ff; color: #3730a3; border: none; border-radius: 6px; font-size: 0.813rem; cursor: pointer; transition: all 0.2s; }
+    .quick-reply-btn:hover { background: #6366f1; color: white; }
+
+    /* Danger button for write-off */
+    .btn-danger { padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .btn-danger:hover { background: #dc2626; }
+
+    /* Collect modal price section */
+    .collect-price-section { margin: 1.5rem 0; }
+    .collect-price-section label { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.5rem; }
+    .price-inputs { display: flex; gap: 0.5rem; }
+    .price-inputs input { flex: 1; padding: 0.75rem 1rem; font-size: 1.25rem; font-weight: 600; border: 2px solid #8b5cf6; border-radius: 8px; text-align: right; }
+    .price-inputs input:focus { outline: none; border-color: #6d28d9; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); }
+    .price-inputs select { padding: 0.75rem; font-size: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; background: white; }
+    .collect-confirm-text { text-align: center; color: #64748b; font-size: 0.875rem; margin-top: 1rem; }
 
     /* Light theme form */
     .form-group { margin-bottom: 1rem; }
@@ -265,6 +328,9 @@
     .glass-theme .action-btn.reject { background: rgba(239, 68, 68, 0.2); color: #f87171; }
     .glass-theme .action-btn.print { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
     .glass-theme .action-btn.collect { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+    .glass-theme .action-btn.notify { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .glass-theme .action-btn.notify:hover:not(.disabled) { background: rgba(239, 68, 68, 0.4); }
+    .glass-theme .notification-badge { background: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
 
     /* Glass theme modal */
     .glass-theme .modal-overlay { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); }
@@ -274,6 +340,27 @@
     .glass-theme .modal-close { color: #64748b; }
     .glass-theme .modal-close:hover { color: #f1f5f9; }
     .glass-theme .modal-footer { border-top: 1px solid rgba(255, 255, 255, 0.1); }
+
+    /* Glass theme notification modal */
+    .glass-theme .notify-info-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .glass-theme .notify-info-row span:first-child { color: #94a3b8; }
+    .glass-theme .notify-info-row span:last-child { color: #f1f5f9; }
+    .glass-theme .notify-history h4 { color: #94a3b8; }
+    .glass-theme .notify-history-item { background: rgba(255, 255, 255, 0.05); }
+    .glass-theme .notify-history-item .history-date { color: #94a3b8; }
+    .glass-theme .notify-history-item .history-comment { color: #f1f5f9; }
+    .glass-theme .quick-reply-section label { color: #94a3b8; }
+    .glass-theme .quick-reply-btn { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
+    .glass-theme .quick-reply-btn:hover { background: rgba(99, 102, 241, 0.4); color: white; }
+    .glass-theme .btn-danger { background: rgba(239, 68, 68, 0.8); }
+    .glass-theme .btn-danger:hover { background: #ef4444; }
+
+    /* Glass theme collect modal */
+    .glass-theme .collect-price-section label { color: #94a3b8; }
+    .glass-theme .price-inputs input { background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(139, 92, 246, 0.5); color: #f1f5f9; }
+    .glass-theme .price-inputs input:focus { border-color: rgba(139, 92, 246, 0.8); box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); }
+    .glass-theme .price-inputs select { background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.15); color: #f1f5f9; }
+    .glass-theme .collect-confirm-text { color: #94a3b8; }
 
     /* Glass theme form */
     .glass-theme .form-label { color: #94a3b8; }
@@ -507,6 +594,7 @@
                         <th>Klijent</th>
                         <th>Uredjaj</th>
                         <th>Cena</th>
+                        <th>Čeka</th>
                         <th>Akcije</th>
                     </tr>
                 </thead>
@@ -527,7 +615,24 @@
                                 <span class="cell-muted" x-text="ticket.currency || 'RSD'"></span>
                             </td>
                             <td>
+                                <div class="duration-bar">
+                                    <div class="duration-fill"
+                                         :class="getWaitingDurationClass(ticket)"
+                                         :style="'width: ' + getWaitingDurationPercent(ticket) + '%'">
+                                    </div>
+                                    <span class="duration-text" x-text="getDaysWaiting(ticket) + 'd'"></span>
+                                </div>
+                            </td>
+                            <td>
                                 <div class="flex gap-1">
+                                    <button @click.stop="openNotifyModal(ticket)"
+                                            class="action-btn notify"
+                                            :class="{'first-notify': (ticket.notification_count || 0) === 0, 'disabled': !ticket.can_notify}"
+                                            :disabled="!ticket.can_notify">
+                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                        Obavesti
+                                        <span x-show="ticket.notification_count > 0" class="notification-badge" x-text="ticket.notification_count"></span>
+                                    </button>
                                     <button @click.stop="collectTicket(ticket)" class="action-btn collect">
                                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                                         Naplati
@@ -742,6 +847,139 @@
             </div>
         </div>
     </div>
+
+    <!-- Notification Modal -->
+    <div x-show="showNotifyModal" x-cloak class="modal-overlay" @click.self="showNotifyModal = false">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                <h3 style="color: white;">Obaveštenje kupca</h3>
+                <button class="modal-close" @click="showNotifyModal = false" style="color: rgba(255,255,255,0.7);">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Ticket info card -->
+                <div class="notify-info-card">
+                    <div class="notify-info-row">
+                        <span>Broj naloga:</span>
+                        <span x-text="'#' + notifyTicket?.ticket_number_formatted"></span>
+                    </div>
+                    <div class="notify-info-row">
+                        <span>Klijent:</span>
+                        <span x-text="notifyTicket?.customer_name"></span>
+                    </div>
+                    <div class="notify-info-row">
+                        <span>Kontakt:</span>
+                        <span x-text="notifyTicket?.customer_phone || '-'"></span>
+                    </div>
+                    <div class="notify-info-row">
+                        <span>Uređaj:</span>
+                        <span x-text="(notifyTicket?.brand || '') + ' ' + (notifyTicket?.model || '')"></span>
+                    </div>
+                    <div class="notify-info-row">
+                        <span>Broj obaveštenja:</span>
+                        <span x-text="notifyTicket?.notification_count || 0"></span>
+                    </div>
+                </div>
+
+                <!-- Notification history -->
+                <div x-show="notificationHistory.length > 0" class="notify-history">
+                    <h4>Istorija obaveštenja</h4>
+                    <template x-for="n in notificationHistory" :key="n.id">
+                        <div class="notify-history-item">
+                            <span class="history-date" x-text="formatDate(n.timestamp)"></span>
+                            <span class="history-comment" x-text="n.comment || '-'"></span>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Quick reply buttons -->
+                <div class="quick-reply-section">
+                    <label>Brzi odgovor:</label>
+                    <div class="quick-reply-buttons">
+                        <button type="button" class="quick-reply-btn" @click="notifyComment = 'Klijent rekao da će doći'">
+                            Klijent će doći
+                        </button>
+                        <button type="button" class="quick-reply-btn" @click="notifyComment = 'Klijent se ne javlja na telefon'">
+                            Ne javlja se
+                        </button>
+                        <button type="button" class="quick-reply-btn" @click="notifyComment = 'Ostavljena poruka'">
+                            Ostavljena poruka
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Comment input -->
+                <div class="form-group">
+                    <label class="form-label">Komentar:</label>
+                    <textarea x-model="notifyComment" rows="2" class="form-input" placeholder="Šta je kupac rekao..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @click="showNotifyModal = false">Otkaži</button>
+                <button x-show="notifyTicket?.can_write_off" class="btn-danger" @click="writeOffTicket()">
+                    Otpiši nalog
+                </button>
+                <button class="btn-primary" @click="confirmNotify()">
+                    Potvrdi obaveštenje
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collect Modal -->
+    <div x-show="showCollectModal" x-cloak class="modal-overlay" @click.self="showCollectModal = false">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">
+                <h3 style="color: white;">Potvrda naplate</h3>
+                <button class="modal-close" @click="showCollectModal = false" style="color: rgba(255,255,255,0.7);">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Ticket info card -->
+                <div class="notify-info-card">
+                    <div class="notify-info-row">
+                        <span>Broj naloga:</span>
+                        <span x-text="'#' + collectTicketData?.ticket_number_formatted"></span>
+                    </div>
+                    <div class="notify-info-row">
+                        <span>Klijent:</span>
+                        <span x-text="collectTicketData?.customer_name"></span>
+                    </div>
+                    <div class="notify-info-row">
+                        <span>Uređaj:</span>
+                        <span x-text="(collectTicketData?.brand || '') + ' ' + (collectTicketData?.model || '')"></span>
+                    </div>
+                </div>
+
+                <div class="collect-price-section">
+                    <label>Iznos za naplatu</label>
+                    <div class="price-inputs">
+                        <input type="number" x-model="collectPrice" placeholder="0" min="0">
+                        <select x-model="collectCurrency">
+                            <option value="RSD">RSD</option>
+                            <option value="EUR">EUR</option>
+                        </select>
+                    </div>
+                </div>
+
+                <p class="collect-confirm-text">
+                    Da li želite da potvrdite naplatu ovog servisnog naloga?
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @click="showCollectModal = false">Otkaži</button>
+                <button class="btn-primary" @click="confirmCollect()" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">
+                    Potvrdi naplatu
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -829,6 +1067,18 @@ function ticketsPage() {
         selectedProblems: [],
         currentProblems: PROBLEM_CATEGORIES['phone'] || [],
 
+        // Notification modal state
+        showNotifyModal: false,
+        notifyTicket: null,
+        notifyComment: '',
+        notificationHistory: [],
+
+        // Collect modal state
+        showCollectModal: false,
+        collectTicketData: null,
+        collectPrice: '',
+        collectCurrency: 'RSD',
+
         async init() {
             await this.loadLocations();
             await this.loadAllTickets();
@@ -909,16 +1159,103 @@ function ticketsPage() {
             }
         },
 
-        async collectTicket(ticket) {
-            if (!confirm('Naplatiti nalog #' + ticket.ticket_number_formatted + '?')) return;
+        // =============================================
+        // COLLECT MODAL SYSTEM
+        // =============================================
+        collectTicket(ticket) {
+            // Open modal instead of confirm()
+            this.collectTicketData = ticket;
+            this.collectPrice = ticket.final_price || ticket.estimated_price || '';
+            this.collectCurrency = ticket.currency || 'RSD';
+            this.showCollectModal = true;
+        },
+
+        async confirmCollect() {
+            if (!this.collectTicketData) return;
+
             try {
-                const r = await api('/api/v1/tickets/' + ticket.id + '/status', {
+                const r = await api('/api/v1/tickets/' + this.collectTicketData.id + '/status', {
                     method: 'PATCH',
-                    body: JSON.stringify({ status: 'DELIVERED' })
+                    body: JSON.stringify({
+                        status: 'DELIVERED',
+                        final_price: this.collectPrice ? parseFloat(this.collectPrice) : null,
+                        currency: this.collectCurrency
+                    })
                 });
-                if (r.ok) await this.loadAllTickets();
+                if (r.ok) {
+                    this.showCollectModal = false;
+                    await this.loadAllTickets();
+                } else {
+                    const err = await r.json();
+                    alert(err.message || 'Greška pri naplati');
+                }
             } catch (e) {
-                console.error(e);
+                console.error('Failed to collect ticket:', e);
+                alert('Greška pri naplati');
+            }
+        },
+
+        // =============================================
+        // NOTIFICATION SYSTEM
+        // =============================================
+        async openNotifyModal(ticket) {
+            this.notifyTicket = ticket;
+            this.notifyComment = '';
+            this.notificationHistory = [];
+
+            // Load notification history
+            try {
+                const r = await api('/api/v1/tickets/' + ticket.id + '/notifications');
+                if (r.ok) {
+                    const data = await r.json();
+                    this.notificationHistory = data.notifications || [];
+                }
+            } catch (e) {
+                console.error('Failed to load notifications:', e);
+            }
+
+            this.showNotifyModal = true;
+        },
+
+        async confirmNotify() {
+            if (!this.notifyTicket) return;
+
+            try {
+                const r = await api('/api/v1/tickets/' + this.notifyTicket.id + '/notify', {
+                    method: 'POST',
+                    body: JSON.stringify({ comment: this.notifyComment })
+                });
+                if (r.ok) {
+                    this.showNotifyModal = false;
+                    await this.loadAllTickets();
+                } else {
+                    const err = await r.json();
+                    alert(err.message || 'Greška pri slanju obaveštenja');
+                }
+            } catch (e) {
+                console.error('Failed to send notification:', e);
+                alert('Greška pri slanju obaveštenja');
+            }
+        },
+
+        async writeOffTicket() {
+            if (!this.notifyTicket) return;
+            if (!confirm('Da li ste sigurni da želite da otpišete ovaj nalog? Ova akcija se ne može poništiti.')) return;
+
+            try {
+                const r = await api('/api/v1/tickets/' + this.notifyTicket.id + '/write-off', {
+                    method: 'POST'
+                });
+                if (r.ok) {
+                    this.showNotifyModal = false;
+                    await this.loadAllTickets();
+                } else {
+                    const err = await r.json();
+                    alert(err.message || 'Greška pri otpisu naloga');
+                }
+            } catch (e) {
+                console.error('Failed to write off ticket:', e);
+                alert('Greška pri otpisu naloga');
             }
         },
 
@@ -1031,14 +1368,34 @@ function ticketsPage() {
 
         getDurationClass(ticket) {
             const days = this.getDaysOpen(ticket);
-            if (days <= 3) return 'green';
-            if (days <= 7) return 'yellow';
+            if (days <= 10) return 'green';
+            if (days <= 18) return 'yellow';
             return 'red';
         },
 
         getDurationPercent(ticket) {
             const days = this.getDaysOpen(ticket);
-            return Math.min(100, (days / 14) * 100);
+            return Math.min(100, (days / 30) * 100);
+        },
+
+        // Pending tickets - days waiting for pickup
+        getDaysWaiting(ticket) {
+            if (!ticket.closed_at) return 0;
+            const closed = new Date(ticket.closed_at);
+            const now = new Date();
+            return Math.floor((now - closed) / (1000 * 60 * 60 * 24));
+        },
+
+        getWaitingDurationClass(ticket) {
+            const days = this.getDaysWaiting(ticket);
+            if (days <= 7) return 'green';
+            if (days <= 15) return 'yellow';
+            return 'red';
+        },
+
+        getWaitingDurationPercent(ticket) {
+            const days = this.getDaysWaiting(ticket);
+            return Math.min(100, (days / 30) * 100);
         },
 
         formatDate(dateStr) {
