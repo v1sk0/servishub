@@ -235,7 +235,7 @@ def create_ticket():
     return jsonify(ticket.to_dict()), 201
 
 
-@bp.route('/<int:ticket_id>', methods=['PUT'])
+@bp.route('/<int:ticket_id>', methods=['PUT', 'PATCH'])
 @jwt_required
 @tenant_required
 def update_ticket(ticket_id):
@@ -324,7 +324,7 @@ def update_ticket(ticket_id):
     return jsonify(ticket.to_dict()), 200
 
 
-@bp.route('/<int:ticket_id>/status', methods=['PUT'])
+@bp.route('/<int:ticket_id>/status', methods=['PUT', 'PATCH'])
 @jwt_required
 @tenant_required
 def update_ticket_status(ticket_id):
@@ -332,7 +332,10 @@ def update_ticket_status(ticket_id):
     Menja status servisnog naloga.
 
     Request body:
-        - status: Novi status (RECEIVED, DIAGNOSED, IN_PROGRESS, WAITING_PARTS, READY, DELIVERED, CANCELLED)
+        - status: Novi status (RECEIVED, DIAGNOSED, IN_PROGRESS, WAITING_PARTS, READY, DELIVERED, CANCELLED, REJECTED)
+        - rejection_reason: Razlog odbijanja (obavezno za REJECTED status)
+        - final_price: Konacna cena (opciono, za naplatu)
+        - currency: Valuta (opciono)
 
     Returns:
         200: Azuriran status
@@ -363,10 +366,22 @@ def update_ticket_status(ticket_id):
 
     old_status = ticket.status.value
 
+    # Za REJECTED status, razlog je obavezan
+    if new_status_enum == TicketStatus.REJECTED:
+        rejection_reason = data.get('rejection_reason')
+        if not rejection_reason:
+            return jsonify({'error': 'Validation Error', 'message': 'Razlog odbijanja je obavezan'}), 400
+        ticket.rejection_reason = rejection_reason
+        ticket.status = new_status_enum
     # Garancija kreće od momenta preuzimanja (DELIVERED)
     # closed_at se postavlja samo kada kupac preuzme uređaj
-    if new_status_enum == TicketStatus.DELIVERED and ticket.status != TicketStatus.DELIVERED:
+    elif new_status_enum == TicketStatus.DELIVERED and ticket.status != TicketStatus.DELIVERED:
         ticket.close_ticket()
+        # Opciono azuriraj cenu pri naplati
+        if data.get('final_price') is not None:
+            ticket.final_price = data.get('final_price')
+        if data.get('currency'):
+            ticket.currency = data.get('currency')
     else:
         ticket.status = new_status_enum
 

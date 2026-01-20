@@ -28,6 +28,7 @@ class TicketStatus(enum.Enum):
     READY - Gotovo, ceka preuzimanje
     DELIVERED - Preuzeto od strane kupca
     CANCELLED - Otkazano
+    REJECTED - Odbijeno (neisplativa popravka, nema delova, itd.)
     """
     RECEIVED = 'RECEIVED'
     DIAGNOSED = 'DIAGNOSED'
@@ -36,6 +37,7 @@ class TicketStatus(enum.Enum):
     READY = 'READY'
     DELIVERED = 'DELIVERED'
     CANCELLED = 'CANCELLED'
+    REJECTED = 'REJECTED'
 
 
 class TicketPriority(enum.Enum):
@@ -123,6 +125,9 @@ class ServiceTicket(db.Model):
         default=TicketPriority.NORMAL,
         nullable=False
     )
+
+    # Razlog odbijanja (kada je status REJECTED)
+    rejection_reason = db.Column(db.Text)
 
     # Dodeljeni tehnicar
     assigned_technician_id = db.Column(
@@ -374,6 +379,7 @@ class ServiceTicket(db.Model):
             'resolution': self.resolution,
             'status': self.status.value,
             'priority': self.priority.value,
+            'rejection_reason': self.rejection_reason,
             'estimated_price': float(self.estimated_price) if self.estimated_price else None,
             'final_price': float(self.final_price) if self.final_price else None,
             'currency': self.currency,

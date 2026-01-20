@@ -561,9 +561,13 @@
                             </td>
                             <td>
                                 <div class="flex gap-1">
-                                    <button @click.stop="finishTicket(ticket)" class="action-btn complete">
+                                    <button @click.stop="openFinishModal(ticket)" class="action-btn complete">
                                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                         Završi
+                                    </button>
+                                    <button @click.stop="openRejectModal(ticket)" class="action-btn reject">
+                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        Odbij
                                     </button>
                                     <button @click.stop="printTicket(ticket)" class="action-btn print">
                                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
@@ -980,6 +984,147 @@
             </div>
         </div>
     </div>
+
+    <!-- Reject Modal -->
+    <div x-show="showRejectModal" x-cloak class="modal-overlay" @click.self="showRejectModal = false">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                <h3 style="color: white;">Odbijanje naloga</h3>
+                <button class="modal-close" @click="showRejectModal = false" style="color: rgba(255,255,255,0.7);">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Ticket info card -->
+                <div class="notify-info-card">
+                    <div class="notify-info-row">
+                        <span>Broj naloga:</span>
+                        <span x-text="'#' + rejectTicket?.ticket_number_formatted"></span>
+                    </div>
+                    <div class="notify-info-row">
+                        <span>Klijent:</span>
+                        <span x-text="rejectTicket?.customer_name"></span>
+                    </div>
+                    <div class="notify-info-row">
+                        <span>Kontakt:</span>
+                        <span x-text="rejectTicket?.customer_phone || '-'"></span>
+                    </div>
+                    <div class="notify-info-row">
+                        <span>Uređaj:</span>
+                        <span x-text="(rejectTicket?.brand || '') + ' ' + (rejectTicket?.model || '')"></span>
+                    </div>
+                    <div class="notify-info-row">
+                        <span>Problem:</span>
+                        <span x-text="rejectTicket?.problem_description || '-'"></span>
+                    </div>
+                </div>
+
+                <!-- Quick reject reasons -->
+                <div class="quick-reply-section">
+                    <label>Razlog odbijanja:</label>
+                    <div class="quick-reply-buttons">
+                        <button type="button" class="quick-reply-btn" @click="rejectComment = 'Neisplativa popravka'">
+                            Neisplativa popravka
+                        </button>
+                        <button type="button" class="quick-reply-btn" @click="rejectComment = 'Nema delova'">
+                            Nema delova
+                        </button>
+                        <button type="button" class="quick-reply-btn" @click="rejectComment = 'Kupac odustao'">
+                            Kupac odustao
+                        </button>
+                        <button type="button" class="quick-reply-btn" @click="rejectComment = 'Nije moguće popraviti'">
+                            Nije moguće popraviti
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Comment input -->
+                <div class="form-group">
+                    <label class="form-label">Komentar (obavezno):</label>
+                    <textarea x-model="rejectComment" rows="3" class="form-input" placeholder="Unesite razlog odbijanja..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @click="showRejectModal = false">Otkaži</button>
+                <button class="btn-danger" @click="confirmReject()" :disabled="!rejectComment.trim()">
+                    Potvrdi odbijanje
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Finish Modal -->
+    <div x-show="showFinishModal" x-cloak class="modal-overlay" @click.self="showFinishModal = false">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                <h3 style="color: white;">Završavanje naloga</h3>
+                <button class="modal-close" @click="showFinishModal = false" style="color: rgba(255,255,255,0.7);">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Ticket info card -->
+                <div class="notify-info-card">
+                    <div class="notify-info-row">
+                        <span>Broj naloga:</span>
+                        <span x-text="'#' + finishTicket?.ticket_number_formatted"></span>
+                    </div>
+                    <div class="notify-info-row">
+                        <span>Klijent:</span>
+                        <span x-text="finishTicket?.customer_name"></span>
+                    </div>
+                    <div class="notify-info-row">
+                        <span>Kontakt:</span>
+                        <span x-text="finishTicket?.customer_phone || '-'"></span>
+                    </div>
+                    <div class="notify-info-row">
+                        <span>Uređaj:</span>
+                        <span x-text="(finishTicket?.brand || '') + ' ' + (finishTicket?.model || '')"></span>
+                    </div>
+                    <div class="notify-info-row">
+                        <span>Problem:</span>
+                        <span x-text="finishTicket?.problem_description || '-'"></span>
+                    </div>
+                </div>
+
+                <!-- Quick finish reasons -->
+                <div class="quick-reply-section">
+                    <label>Opis popravke:</label>
+                    <div class="quick-reply-buttons">
+                        <button type="button" class="quick-reply-btn" style="background: #dcfce7; color: #166534;" @click="finishResolution = 'Uređaj popravljen'">
+                            Uređaj popravljen
+                        </button>
+                        <button type="button" class="quick-reply-btn" style="background: #dcfce7; color: #166534;" @click="finishResolution = 'Zamenjeni delovi'">
+                            Zamenjeni delovi
+                        </button>
+                        <button type="button" class="quick-reply-btn" style="background: #dcfce7; color: #166534;" @click="finishResolution = 'Softverska intervencija'">
+                            Softverska intervencija
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Resolution input -->
+                <div class="form-group">
+                    <label class="form-label">Detalji popravke (opciono):</label>
+                    <textarea x-model="finishResolution" rows="3" class="form-input" placeholder="Opišite šta je urađeno..."></textarea>
+                </div>
+
+                <p class="collect-confirm-text">
+                    Da li želite da označite ovaj nalog kao završen i spreman za preuzimanje?
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @click="showFinishModal = false">Otkaži</button>
+                <button class="btn-primary" @click="confirmFinish()" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                    Potvrdi završetak
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -1079,6 +1224,16 @@ function ticketsPage() {
         collectPrice: '',
         collectCurrency: 'RSD',
 
+        // Reject modal state
+        showRejectModal: false,
+        rejectTicket: null,
+        rejectComment: '',
+
+        // Finish modal state
+        showFinishModal: false,
+        finishTicket: null,
+        finishResolution: '',
+
         async init() {
             await this.loadLocations();
             await this.loadAllTickets();
@@ -1146,16 +1301,42 @@ function ticketsPage() {
             window.location.href = '/tickets/' + ticket.id;
         },
 
-        async finishTicket(ticket) {
-            if (!confirm('Završiti nalog #' + ticket.ticket_number_formatted + '?')) return;
+        // =============================================
+        // FINISH MODAL SYSTEM
+        // =============================================
+        openFinishModal(ticket) {
+            this.finishTicket = ticket;
+            this.finishResolution = ticket.resolution || '';
+            this.showFinishModal = true;
+        },
+
+        async confirmFinish() {
+            if (!this.finishTicket) return;
+
             try {
-                const r = await api('/api/v1/tickets/' + ticket.id + '/status', {
+                // First update resolution if provided
+                if (this.finishResolution.trim()) {
+                    await api('/api/v1/tickets/' + this.finishTicket.id, {
+                        method: 'PATCH',
+                        body: JSON.stringify({ resolution: this.finishResolution.trim() })
+                    });
+                }
+
+                // Then change status to READY
+                const r = await api('/api/v1/tickets/' + this.finishTicket.id + '/status', {
                     method: 'PATCH',
                     body: JSON.stringify({ status: 'READY' })
                 });
-                if (r.ok) await this.loadAllTickets();
+                if (r.ok) {
+                    this.showFinishModal = false;
+                    await this.loadAllTickets();
+                } else {
+                    const err = await r.json();
+                    alert(err.message || 'Greška pri završavanju naloga');
+                }
             } catch (e) {
-                console.error(e);
+                console.error('Failed to finish ticket:', e);
+                alert('Greška pri završavanju naloga');
             }
         },
 
@@ -1256,6 +1437,39 @@ function ticketsPage() {
             } catch (e) {
                 console.error('Failed to write off ticket:', e);
                 alert('Greška pri otpisu naloga');
+            }
+        },
+
+        // =============================================
+        // REJECT SYSTEM
+        // =============================================
+        openRejectModal(ticket) {
+            this.rejectTicket = ticket;
+            this.rejectComment = '';
+            this.showRejectModal = true;
+        },
+
+        async confirmReject() {
+            if (!this.rejectTicket || !this.rejectComment.trim()) return;
+
+            try {
+                const r = await api('/api/v1/tickets/' + this.rejectTicket.id + '/status', {
+                    method: 'PATCH',
+                    body: JSON.stringify({
+                        status: 'REJECTED',
+                        rejection_reason: this.rejectComment.trim()
+                    })
+                });
+                if (r.ok) {
+                    this.showRejectModal = false;
+                    await this.loadAllTickets();
+                } else {
+                    const err = await r.json();
+                    alert(err.message || 'Greška pri odbijanju naloga');
+                }
+            } catch (e) {
+                console.error('Failed to reject ticket:', e);
+                alert('Greška pri odbijanju naloga');
             }
         },
 
