@@ -262,6 +262,13 @@ def update_ticket(ticket_id):
     if not user.has_location_access(ticket.location_id):
         return jsonify({'error': 'Forbidden', 'message': 'Nemate pristup ovoj lokaciji'}), 403
 
+    # Arhivirani nalozi (naplaceni/odbijeni) se ne mogu editovati
+    if ticket.status in [TicketStatus.DELIVERED, TicketStatus.REJECTED]:
+        return jsonify({
+            'error': 'Forbidden',
+            'message': 'Arhivirani nalozi se ne mogu menjati'
+        }), 403
+
     # Sacuvaj stare vrednosti za audit
     old_data = ticket.to_dict()
 
@@ -998,15 +1005,17 @@ def get_ticket_stats():
 @tenant_required
 def get_warranty_tickets():
     """
-    Lista naloga sa garancijama.
+    Arhiva naloga - lista zavrsenih (naplacenih) i odbijenih naloga.
 
     Query params:
-        - filter: Filter po statusu garancije (active, expiring, expired)
+        - warranty_status: Filter po statusu garancije (active, expiring, expired)
+        - ticket_status: Filter po tipu naloga (all, delivered, rejected)
+        - search: Pretraga po imenu, telefonu, uredjaju
         - location_id: Filter po lokaciji
         - page, per_page: Paginacija
 
     Returns:
-        Paginirana lista naloga sa garancijama
+        Paginirana lista naloga sa garancijama i statistike
     """
     user = g.current_user
     tenant = g.current_tenant
@@ -1022,58 +1031,117 @@ def get_warranty_tickets():
     else:
         location_filter = allowed_locations
 
-    # Samo zatvoreni sa garancijom
+    # Arhivirani nalozi: DELIVERED ili REJECTED
+    ticket_status_filter = request.args.get('ticket_status', 'all')
+
+    if ticket_status_filter == 'delivered':
+        status_filter = [TicketStatus.DELIVERED]
+    elif ticket_status_filter == 'rejected':
+        status_filter = [TicketStatus.REJECTED]
+    else:
+        status_filter = [TicketStatus.DELIVERED, TicketStatus.REJECTED]
+
     query = ServiceTicket.query.filter(
         ServiceTicket.tenant_id == tenant.id,
         ServiceTicket.location_id.in_(location_filter),
-        ServiceTicket.status == TicketStatus.DELIVERED,
-        ServiceTicket.closed_at.isnot(None),
-        ServiceTicket.warranty_days > 0
+        ServiceTicket.status.in_(status_filter)
     )
 
-    # Dohvati sve i filtriraj u Pythonu (posto warranty_expires_at je property)
-    tickets = query.order_by(ServiceTicket.closed_at.desc()).all()
+    # Pretraga
+    search = request.args.get('search', '').strip()
+    if search:
+        search_pattern = f'%{search}%'
+        query = query.filter(
+            db.or_(
+                ServiceTicket.customer_name.ilike(search_pattern),
+                ServiceTicket.customer_phone.ilike(search_pattern),
+                ServiceTicket.brand.ilike(search_pattern),
+                ServiceTicket.model.ilike(search_pattern),
+                ServiceTicket.ticket_number.ilike(search_pattern)
+            )
+        )
 
-    # Filter po statusu garancije
-    filter_type = request.args.get('filter', 'all')
+    # Dohvati sve i filtriraj u Pythonu (posto warranty_expires_at je property)
+    all_tickets = query.order_by(ServiceTicket.created_at.desc()).all()
+
+    # Filter po statusu garancije (samo za DELIVERED)
+    warranty_filter = request.args.get('warranty_status', 'all')
     filtered_tickets = []
 
-    for t in tickets:
-        remaining = t.warranty_remaining_days
-        if remaining is None:
-            continue
+    # Statistike
+    stats = {
+        'total': 0,
+        'delivered': 0,
+        'rejected': 0,
+        'active': 0,
+        'expiring_soon': 0,
+        'expired': 0
+    }
 
-        if filter_type == 'active' and remaining > 10:
-            filtered_tickets.append(t)
-        elif filter_type == 'expiring' and 0 < remaining <= 10:
-            filtered_tickets.append(t)
-        elif filter_type == 'expired' and remaining <= 0:
-            filtered_tickets.append(t)
-        elif filter_type == 'all':
-            filtered_tickets.append(t)
+    for t in all_tickets:
+        stats['total'] += 1
+
+        if t.status == TicketStatus.REJECTED:
+            stats['rejected'] += 1
+            # Za REJECTED, warranty filter ne vazi - uvek prikazuj
+            if warranty_filter in ['all', 'rejected'] or ticket_status_filter == 'rejected':
+                filtered_tickets.append(t)
+            elif warranty_filter == 'all':
+                filtered_tickets.append(t)
+        else:
+            # DELIVERED - ima garanciju
+            stats['delivered'] += 1
+            remaining = t.warranty_remaining_days
+
+            if remaining is not None:
+                if remaining > 10:
+                    stats['active'] += 1
+                elif remaining > 0:
+                    stats['expiring_soon'] += 1
+                else:
+                    stats['expired'] += 1
+
+            # Filter
+            if warranty_filter == 'active' and remaining and remaining > 10:
+                filtered_tickets.append(t)
+            elif warranty_filter == 'expiring' and remaining and 0 < remaining <= 10:
+                filtered_tickets.append(t)
+            elif warranty_filter == 'expired' and (remaining is None or remaining <= 0):
+                filtered_tickets.append(t)
+            elif warranty_filter == 'all':
+                filtered_tickets.append(t)
 
     # Paginacija
     page = request.args.get('page', 1, type=int)
-    per_page = min(request.args.get('per_page', 20, type=int), 100)
+    per_page = min(request.args.get('per_page', 50, type=int), 100)
 
     start = (page - 1) * per_page
     end = start + per_page
     paginated = filtered_tickets[start:end]
 
+    def get_warranty_status(ticket):
+        if ticket.status == TicketStatus.REJECTED:
+            return 'rejected'
+        remaining = ticket.warranty_remaining_days
+        if remaining and remaining > 10:
+            return 'active'
+        elif remaining and remaining > 0:
+            return 'expiring'
+        return 'expired'
+
     return jsonify({
-        'items': [
+        'tickets': [
             {
                 **t.to_dict(),
-                'warranty_status': 'active' if t.warranty_remaining_days and t.warranty_remaining_days > 10
-                    else 'expiring' if t.warranty_remaining_days and t.warranty_remaining_days > 0
-                    else 'expired'
+                'warranty_status': get_warranty_status(t)
             }
             for t in paginated
         ],
+        'stats': stats,
         'total': len(filtered_tickets),
         'page': page,
         'per_page': per_page,
-        'pages': (len(filtered_tickets) + per_page - 1) // per_page
+        'total_pages': (len(filtered_tickets) + per_page - 1) // per_page
     }), 200
 
 

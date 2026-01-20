@@ -1,14 +1,14 @@
 {% extends "layouts/tenant.html" %}
 
-{% block title %}Garancije - ServisHub{% endblock %}
+{% block title %}Arhiva naloga - ServisHub{% endblock %}
 
 {% block content %}
 <div class="p-6" x-data="warrantiesPage()" x-init="init()">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Garancije</h1>
-            <p class="text-gray-500 mt-1">Pracenje garancija servisnih naloga</p>
+            <h1 class="text-2xl font-bold text-gray-900">Arhiva naloga</h1>
+            <p class="text-gray-500 mt-1">Naplaceni i odbijeni servisni nalozi</p>
         </div>
         <a href="/tickets" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,62 +19,82 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <!-- Active warranties -->
-        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <!-- Total -->
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500 cursor-pointer hover:shadow-lg transition-shadow"
+             @click="filters.ticket_status = ''; filters.warranty_status = ''; loadWarranties()">
             <div class="flex items-center">
                 <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-500">Aktivne</p>
+                    <p class="text-sm font-medium text-gray-500">Ukupno</p>
+                    <p class="text-2xl font-bold text-gray-900" x-text="stats.total"></p>
+                </div>
+                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delivered (Naplaceni) -->
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500 cursor-pointer hover:shadow-lg transition-shadow"
+             @click="filters.ticket_status = 'delivered'; filters.warranty_status = ''; loadWarranties()">
+            <div class="flex items-center">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-500">Naplaceni</p>
+                    <p class="text-2xl font-bold text-gray-900" x-text="stats.delivered"></p>
+                </div>
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active warranties -->
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500 cursor-pointer hover:shadow-lg transition-shadow"
+             @click="filters.ticket_status = 'delivered'; filters.warranty_status = 'active'; loadWarranties()">
+            <div class="flex items-center">
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-500">Aktivne garancije</p>
                     <p class="text-2xl font-bold text-gray-900" x-text="stats.active"></p>
                 </div>
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                     </svg>
                 </div>
             </div>
         </div>
 
-        <!-- Expiring soon -->
-        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
+        <!-- Expired warranties -->
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500 cursor-pointer hover:shadow-lg transition-shadow"
+             @click="filters.ticket_status = 'delivered'; filters.warranty_status = 'expired'; loadWarranties()">
             <div class="flex items-center">
                 <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-500">Istice uskoro</p>
-                    <p class="text-2xl font-bold text-gray-900" x-text="stats.expiring_soon"></p>
+                    <p class="text-sm font-medium text-gray-500">Istekle garancije</p>
+                    <p class="text-2xl font-bold text-gray-900" x-text="stats.expired"></p>
                 </div>
-                <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                 </div>
             </div>
         </div>
 
-        <!-- Expired -->
-        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+        <!-- Rejected -->
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500 cursor-pointer hover:shadow-lg transition-shadow"
+             @click="filters.ticket_status = 'rejected'; filters.warranty_status = ''; loadWarranties()">
             <div class="flex items-center">
                 <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-500">Istekle</p>
-                    <p class="text-2xl font-bold text-gray-900" x-text="stats.expired"></p>
+                    <p class="text-sm font-medium text-gray-500">Odbijeni</p>
+                    <p class="text-2xl font-bold text-gray-900" x-text="stats.rejected"></p>
                 </div>
-                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <!-- Total -->
-        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
-            <div class="flex items-center">
-                <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-500">Ukupno</p>
-                    <p class="text-2xl font-bold text-gray-900" x-text="stats.total"></p>
-                </div>
-                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                     </svg>
                 </div>
             </div>
@@ -89,17 +109,27 @@
                 <input type="text"
                        x-model="filters.search"
                        @input.debounce.300ms="loadWarranties()"
-                       placeholder="Pretrazi po kupcu, uredjaju..."
+                       placeholder="Pretrazi po kupcu, uredjaju, broju naloga..."
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
             </div>
 
-            <!-- Status filter -->
-            <select x-model="filters.status"
+            <!-- Ticket status filter -->
+            <select x-model="filters.ticket_status"
                     @change="loadWarranties()"
                     class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                <option value="">Svi nalozi</option>
+                <option value="delivered">Naplaceni</option>
+                <option value="rejected">Odbijeni</option>
+            </select>
+
+            <!-- Warranty status filter -->
+            <select x-model="filters.warranty_status"
+                    @change="loadWarranties()"
+                    class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    :disabled="filters.ticket_status === 'rejected'">
                 <option value="">Sve garancije</option>
-                <option value="active">Aktivne</option>
-                <option value="expiring">Istice uskoro (7 dana)</option>
+                <option value="active">Aktivne (>10 dana)</option>
+                <option value="expiring">Istice uskoro (1-10 dana)</option>
                 <option value="expired">Istekle</option>
             </select>
 
@@ -133,10 +163,9 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nalog</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kupac</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uredjaj</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Zatvoreno</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cena</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Garancija</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Istice</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preostalo</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Akcije</th>
                     </tr>
@@ -146,7 +175,8 @@
                         <tr class="hover:bg-gray-50">
                             <!-- Ticket number -->
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900" x-text="'#' + ticket.ticket_number"></div>
+                                <div class="text-sm font-medium text-primary-600" x-text="'#' + ticket.ticket_number"></div>
+                                <div class="text-xs text-gray-500" x-text="formatDate(ticket.created_at)"></div>
                             </td>
 
                             <!-- Customer -->
@@ -158,64 +188,84 @@
                             <!-- Device -->
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900" x-text="ticket.brand + ' ' + ticket.model"></div>
-                                <div class="text-sm text-gray-500" x-text="ticket.service_section || 'Telefoni'"></div>
+                                <div class="text-sm text-gray-500" x-text="ticket.service_section || ''"></div>
                             </td>
 
-                            <!-- Closed date -->
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(ticket.closed_at)"></td>
-
-                            <!-- Warranty days -->
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="ticket.warranty_days + ' dana'"></td>
-
-                            <!-- Expires date -->
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(ticket.warranty_expires_at)"></td>
-
-                            <!-- Days remaining -->
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 py-1 text-xs font-medium rounded-full"
-                                      :class="{
-                                          'bg-green-100 text-green-800': ticket.warranty_remaining_days > 10,
-                                          'bg-yellow-100 text-yellow-800': ticket.warranty_remaining_days > 0 && ticket.warranty_remaining_days <= 10,
-                                          'bg-red-100 text-red-800': ticket.warranty_remaining_days <= 0
-                                      }">
-                                    <span x-text="ticket.warranty_remaining_days > 0 ? ticket.warranty_remaining_days + ' dana' : 'Istekla'"></span>
-                                </span>
+                            <!-- Date -->
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span x-text="formatDate(ticket.closed_at || ticket.created_at)"></span>
                             </td>
 
-                            <!-- Warranty status -->
+                            <!-- Price -->
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 py-1 text-xs font-medium rounded-full"
-                                      :class="{
-                                          'bg-green-100 text-green-800': ticket.warranty_remaining_days > 10,
-                                          'bg-yellow-100 text-yellow-800': ticket.warranty_remaining_days > 0 && ticket.warranty_remaining_days <= 10,
-                                          'bg-red-100 text-red-800': ticket.warranty_remaining_days <= 0
-                                      }">
-                                    <span x-text="ticket.warranty_remaining_days > 10 ? 'Aktivna' : (ticket.warranty_remaining_days > 0 ? 'Istice uskoro' : 'Istekla')"></span>
-                                </span>
+                                <template x-if="ticket.status === 'DELIVERED'">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        <span x-text="(ticket.final_price || ticket.estimated_price || 0).toLocaleString('sr-RS')"></span>
+                                        <span class="text-gray-500" x-text="ticket.currency || 'RSD'"></span>
+                                    </div>
+                                </template>
+                                <template x-if="ticket.status === 'REJECTED'">
+                                    <div class="text-sm text-gray-400">-</div>
+                                </template>
+                            </td>
+
+                            <!-- Warranty -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <template x-if="ticket.status === 'DELIVERED'">
+                                    <div>
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full"
+                                              :class="{
+                                                  'bg-green-100 text-green-800': ticket.warranty_remaining_days > 10,
+                                                  'bg-yellow-100 text-yellow-800': ticket.warranty_remaining_days > 0 && ticket.warranty_remaining_days <= 10,
+                                                  'bg-gray-100 text-gray-600': ticket.warranty_remaining_days <= 0
+                                              }">
+                                            <span x-text="ticket.warranty_remaining_days > 0 ? ticket.warranty_remaining_days + ' dana' : 'Istekla'"></span>
+                                        </span>
+                                        <div class="text-xs text-gray-400 mt-1" x-text="'od ' + ticket.warranty_days + 'd'"></div>
+                                    </div>
+                                </template>
+                                <template x-if="ticket.status === 'REJECTED'">
+                                    <span class="text-sm text-gray-400">-</span>
+                                </template>
+                            </td>
+
+                            <!-- Status -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <template x-if="ticket.status === 'DELIVERED'">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                        Naplacen
+                                    </span>
+                                </template>
+                                <template x-if="ticket.status === 'REJECTED'">
+                                    <div>
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                                            Odbijen
+                                        </span>
+                                        <div class="text-xs text-red-500 mt-1 max-w-[150px] truncate"
+                                             x-text="ticket.rejection_reason"
+                                             :title="ticket.rejection_reason"></div>
+                                    </div>
+                                </template>
                             </td>
 
                             <!-- Actions -->
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <button @click="showDetail(ticket)"
-                                        class="text-primary-600 hover:text-primary-900 mr-3">
+                                        class="text-primary-600 hover:text-primary-900">
                                     Detalji
                                 </button>
-                                <a :href="'/tickets/' + ticket.id"
-                                   class="text-gray-600 hover:text-gray-900">
-                                    Otvori
-                                </a>
                             </td>
                         </tr>
                     </template>
 
                     <!-- Empty state -->
                     <tr x-show="warranties.length === 0">
-                        <td colspan="9" class="px-6 py-12 text-center text-gray-500">
+                        <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                             <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
                             </svg>
-                            <p class="text-lg font-medium">Nema garancija</p>
-                            <p class="text-sm">Garancije ce se pojaviti nakon zatvaranja naloga.</p>
+                            <p class="text-lg font-medium">Nema naloga u arhivi</p>
+                            <p class="text-sm">Arhivirani nalozi ce se pojaviti nakon naplate ili odbijanja.</p>
                         </td>
                     </tr>
                 </tbody>
@@ -286,21 +336,23 @@
                 <!-- Header -->
                 <div class="px-6 py-4 border-b flex items-center justify-between"
                      :class="{
-                         'bg-green-50 border-green-200': selectedTicket?.warranty_remaining_days > 10,
-                         'bg-yellow-50 border-yellow-200': selectedTicket?.warranty_remaining_days > 0 && selectedTicket?.warranty_remaining_days <= 10,
-                         'bg-red-50 border-red-200': selectedTicket?.warranty_remaining_days <= 0
+                         'bg-red-50 border-red-200': selectedTicket?.status === 'REJECTED',
+                         'bg-green-50 border-green-200': selectedTicket?.status === 'DELIVERED' && selectedTicket?.warranty_remaining_days > 10,
+                         'bg-yellow-50 border-yellow-200': selectedTicket?.status === 'DELIVERED' && selectedTicket?.warranty_remaining_days > 0 && selectedTicket?.warranty_remaining_days <= 10,
+                         'bg-gray-50 border-gray-200': selectedTicket?.status === 'DELIVERED' && selectedTicket?.warranty_remaining_days <= 0
                      }">
                     <div>
                         <h3 class="text-lg font-medium text-gray-900">
-                            Garancija - Nalog #<span x-text="selectedTicket?.ticket_number"></span>
+                            Nalog #<span x-text="selectedTicket?.ticket_number"></span>
                         </h3>
                         <span class="text-sm"
                               :class="{
-                                  'text-green-700': selectedTicket?.warranty_remaining_days > 10,
-                                  'text-yellow-700': selectedTicket?.warranty_remaining_days > 0 && selectedTicket?.warranty_remaining_days <= 10,
-                                  'text-red-700': selectedTicket?.warranty_remaining_days <= 0
+                                  'text-red-700': selectedTicket?.status === 'REJECTED',
+                                  'text-green-700': selectedTicket?.status === 'DELIVERED' && selectedTicket?.warranty_remaining_days > 10,
+                                  'text-yellow-700': selectedTicket?.status === 'DELIVERED' && selectedTicket?.warranty_remaining_days > 0 && selectedTicket?.warranty_remaining_days <= 10,
+                                  'text-gray-700': selectedTicket?.status === 'DELIVERED' && selectedTicket?.warranty_remaining_days <= 0
                               }"
-                              x-text="selectedTicket?.warranty_remaining_days > 0 ? 'Aktivna garancija' : 'Garancija istekla'"></span>
+                              x-text="selectedTicket?.status === 'REJECTED' ? 'Odbijen nalog' : (selectedTicket?.warranty_remaining_days > 0 ? 'Aktivna garancija' : 'Garancija istekla')"></span>
                     </div>
                     <button @click="showDetailModal = false" class="text-gray-400 hover:text-gray-600">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -311,27 +363,37 @@
 
                 <!-- Body -->
                 <div class="px-6 py-4">
-                    <!-- Warranty info -->
-                    <div class="grid grid-cols-3 gap-4 mb-6 text-center">
-                        <div>
-                            <p class="text-sm text-gray-500">Trajanje</p>
-                            <p class="text-lg font-bold text-gray-900" x-text="selectedTicket?.warranty_days + ' dana'"></p>
+                    <!-- Rejection reason (for rejected tickets) -->
+                    <template x-if="selectedTicket?.status === 'REJECTED'">
+                        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <h4 class="text-sm font-medium text-red-800 mb-2">Razlog odbijanja</h4>
+                            <p class="text-red-700" x-text="selectedTicket?.rejection_reason || '-'"></p>
                         </div>
-                        <div>
-                            <p class="text-sm text-gray-500">Preostalo</p>
-                            <p class="text-lg font-bold"
-                               :class="{
-                                   'text-green-600': selectedTicket?.warranty_remaining_days > 10,
-                                   'text-yellow-600': selectedTicket?.warranty_remaining_days > 0 && selectedTicket?.warranty_remaining_days <= 10,
-                                   'text-red-600': selectedTicket?.warranty_remaining_days <= 0
-                               }"
-                               x-text="selectedTicket?.warranty_remaining_days > 0 ? selectedTicket?.warranty_remaining_days + ' dana' : 'Istekla'"></p>
+                    </template>
+
+                    <!-- Warranty info (for delivered tickets) -->
+                    <template x-if="selectedTicket?.status === 'DELIVERED'">
+                        <div class="grid grid-cols-3 gap-4 mb-6 text-center">
+                            <div>
+                                <p class="text-sm text-gray-500">Trajanje</p>
+                                <p class="text-lg font-bold text-gray-900" x-text="selectedTicket?.warranty_days + ' dana'"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Preostalo</p>
+                                <p class="text-lg font-bold"
+                                   :class="{
+                                       'text-green-600': selectedTicket?.warranty_remaining_days > 10,
+                                       'text-yellow-600': selectedTicket?.warranty_remaining_days > 0 && selectedTicket?.warranty_remaining_days <= 10,
+                                       'text-gray-500': selectedTicket?.warranty_remaining_days <= 0
+                                   }"
+                                   x-text="selectedTicket?.warranty_remaining_days > 0 ? selectedTicket?.warranty_remaining_days + ' dana' : 'Istekla'"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Istice</p>
+                                <p class="text-lg font-bold text-gray-900" x-text="formatDate(selectedTicket?.warranty_expires_at)"></p>
+                            </div>
                         </div>
-                        <div>
-                            <p class="text-sm text-gray-500">Istice</p>
-                            <p class="text-lg font-bold text-gray-900" x-text="formatDate(selectedTicket?.warranty_expires_at)"></p>
-                        </div>
-                    </div>
+                    </template>
 
                     <!-- Customer info -->
                     <div class="mb-4">
@@ -348,20 +410,30 @@
                         <p class="text-gray-600" x-text="selectedTicket?.imei ? 'IMEI: ' + selectedTicket?.imei : ''"></p>
                     </div>
 
-                    <!-- Work done -->
+                    <!-- Problem description -->
                     <div class="mb-4">
-                        <h4 class="text-sm font-medium text-gray-500 mb-2">Izvrseni rad</h4>
-                        <p class="text-gray-600" x-text="selectedTicket?.resolution || selectedTicket?.problem_description || '-'"></p>
+                        <h4 class="text-sm font-medium text-gray-500 mb-2">Opis problema</h4>
+                        <p class="text-gray-600" x-text="selectedTicket?.problem_description || '-'"></p>
                     </div>
 
-                    <!-- Price -->
-                    <div class="mb-4">
-                        <h4 class="text-sm font-medium text-gray-500 mb-2">Naplaceno</h4>
-                        <p class="text-gray-900 font-medium">
-                            <span x-text="selectedTicket?.final_price || selectedTicket?.estimated_price || '-'"></span>
-                            <span x-text="selectedTicket?.currency || 'RSD'"></span>
-                        </p>
-                    </div>
+                    <!-- Resolution (for delivered tickets) -->
+                    <template x-if="selectedTicket?.status === 'DELIVERED'">
+                        <div class="mb-4">
+                            <h4 class="text-sm font-medium text-gray-500 mb-2">Izvrseni rad</h4>
+                            <p class="text-gray-600" x-text="selectedTicket?.resolution || '-'"></p>
+                        </div>
+                    </template>
+
+                    <!-- Price (for delivered tickets) -->
+                    <template x-if="selectedTicket?.status === 'DELIVERED'">
+                        <div class="mb-4">
+                            <h4 class="text-sm font-medium text-gray-500 mb-2">Naplaceno</h4>
+                            <p class="text-gray-900 font-medium">
+                                <span x-text="(selectedTicket?.final_price || selectedTicket?.estimated_price || 0).toLocaleString('sr-RS')"></span>
+                                <span x-text="selectedTicket?.currency || 'RSD'"></span>
+                            </p>
+                        </div>
+                    </template>
 
                     <!-- Dates -->
                     <div class="grid grid-cols-2 gap-4 text-sm">
@@ -370,8 +442,8 @@
                             <p class="text-gray-900" x-text="formatDate(selectedTicket?.created_at)"></p>
                         </div>
                         <div>
-                            <p class="text-gray-500">Zatvoren</p>
-                            <p class="text-gray-900" x-text="formatDate(selectedTicket?.closed_at)"></p>
+                            <p class="text-gray-500" x-text="selectedTicket?.status === 'REJECTED' ? 'Odbijen' : 'Zatvoren'"></p>
+                            <p class="text-gray-900" x-text="formatDate(selectedTicket?.closed_at || selectedTicket?.updated_at)"></p>
                         </div>
                     </div>
                 </div>
@@ -382,10 +454,6 @@
                             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
                         Zatvori
                     </button>
-                    <a :href="'/tickets/' + selectedTicket?.id"
-                       class="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-lg hover:bg-primary-700">
-                        Otvori nalog
-                    </a>
                 </div>
             </div>
         </div>
@@ -399,19 +467,22 @@ function warrantiesPage() {
         warranties: [],
         locations: [],
         stats: {
+            total: 0,
+            delivered: 0,
+            rejected: 0,
             active: 0,
             expiring_soon: 0,
-            expired: 0,
-            total: 0
+            expired: 0
         },
         filters: {
             search: '',
-            status: '',
+            ticket_status: '',
+            warranty_status: '',
             location_id: ''
         },
         pagination: {
             page: 1,
-            per_page: 20,
+            per_page: 50,
             total: 0,
             total_pages: 0
         },
@@ -426,6 +497,12 @@ function warrantiesPage() {
         },
 
         getAccessToken() {
+            // Try 'access_token' first (used by tenant login)
+            const directToken = localStorage.getItem('access_token');
+            if (directToken) {
+                return directToken;
+            }
+            // Fallback to 'servishub_token' (legacy format)
             const tokenData = localStorage.getItem('servishub_token');
             if (tokenData) {
                 try {
@@ -470,7 +547,8 @@ function warrantiesPage() {
                 });
 
                 if (this.filters.search) params.append('search', this.filters.search);
-                if (this.filters.status) params.append('warranty_status', this.filters.status);
+                if (this.filters.ticket_status) params.append('ticket_status', this.filters.ticket_status);
+                if (this.filters.warranty_status) params.append('warranty_status', this.filters.warranty_status);
                 if (this.filters.location_id) params.append('location_id', this.filters.location_id);
 
                 const response = await fetch(`/api/v1/tickets/warranties?${params}`, {
@@ -481,14 +559,16 @@ function warrantiesPage() {
                     const data = await response.json();
                     this.warranties = data.tickets || [];
                     this.pagination.total = data.total || 0;
-                    this.pagination.total_pages = Math.ceil(this.pagination.total / this.pagination.per_page);
+                    this.pagination.total_pages = data.total_pages || Math.ceil(this.pagination.total / this.pagination.per_page);
 
                     // Update stats
                     this.stats = data.stats || {
+                        total: 0,
+                        delivered: 0,
+                        rejected: 0,
                         active: 0,
                         expiring_soon: 0,
-                        expired: 0,
-                        total: 0
+                        expired: 0
                     };
                 } else if (response.status === 401) {
                     window.location.href = '/login';
