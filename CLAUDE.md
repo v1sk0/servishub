@@ -6,11 +6,21 @@ Instrukcije za Claude Code agente. **CITAJ OVO PRE BILO KAKVIH IZMENA.**
 
 ## RESUME POINT
 
-**v0.6.3** | 2026-01-19 | Backend 100% | Frontend 100%
+**v235** | 2026-01-21 | Backend 100% | Frontend 100%
 
-### Status: KOMPLETNO - Ticket Tracking Security
+### Status: KOMPLETNO - Admin Settings Social Links
 
-**Poslednje izmene (v0.6.3):**
+**Poslednje izmene (v235):**
+- **Admin Settings:** Social linkovi dodati u Company modal
+  - Facebook, Instagram, LinkedIn, Twitter/X, YouTube
+  - Koriste se na landing page u Contact sekciji
+- **Model:** `PlatformSettings` azuriran
+  - `get_company_data()` - ukljucuje social_* polja
+  - `get_contact_data()` - koristi company_* polja direktno
+- **API:** `UpdateCompanyRequest` prosiren social poljima
+- **Landing Page:** Dinamicki prikazuje kontakt iz company data
+
+**Prethodne izmene (v0.6.3):**
 - **Security:** Phone verification za ticket tracking po broju naloga
   - Pretraga po broju (SRV-0003) zahteva poslednja 4 broja telefona
   - Sprečen enumeration napad (pogađanje brojeva naloga)
@@ -535,10 +545,82 @@ GitHub: github.com/v1sk0/servishub
 
 ---
 
+## Billing Sistem
+
+### Status Flow
+```
+DEMO (7 dana) ──────────────────────────────────────> CANCELLED
+     │
+     └──> TRIAL (60 dana, admin aktivira) ──────────> CANCELLED
+                    │
+                    └──> ACTIVE (pretplata) ────────> CANCELLED
+                              │
+                              └──> EXPIRED (grace 7 dana)
+                                        │
+                                        └──> SUSPENDED
+```
+
+### Cene (PlatformSettings)
+- `base_price`: Mesecna cena baznog paketa (default: 3600 RSD)
+- `location_price`: Cena dodatne lokacije (default: 1800 RSD)
+- `trial_days`: Trajanje trial perioda (default: 60 dana)
+- `grace_period_days`: Grace period pre suspenzije (default: 7 dana)
+
+### Trust Score
+- Bodovi: 0-100 (visi = bolji)
+- Omogucava "na rec" produzenje (max 7 dana)
+- Smanjuje se za kasnjenje
+- Povecava se za redovne uplate
+
+### CLI Komande za Billing
+```bash
+flask billing-daily       # Sve dnevne provere
+flask check-subscriptions # Provera isteklih pretplata
+flask generate-invoices   # Generisanje faktura (1. u mesecu)
+flask mark-overdue        # Oznaci prekoracene fakture
+flask update-overdue-days # Azuriraj dane kasnjenja
+flask send-billing-emails --type=reminders  # Email podsecanja
+```
+
+---
+
+## Platform Settings (Globalna Podesavanja)
+
+### Endpoint: `/api/admin/settings/company`
+
+Sadrzi podatke o firmi ServisHub koji se koriste na fakturama i landing page.
+
+**Polja:**
+```python
+# Osnovni podaci
+company_name, company_address, company_city, company_postal_code
+company_country, company_pib, company_mb
+company_phone, company_email, company_website
+company_bank_name, company_bank_account
+
+# Social linkovi (za landing page)
+social_facebook, social_instagram, social_linkedin
+social_twitter, social_youtube
+```
+
+**Tok podataka:**
+```
+Admin Panel → Company Modal → PlatformSettings
+     ↓
+get_company_data() + get_contact_data()
+     ↓
+Public API /api/v1/public/pricing
+     ↓
+Landing Page (kontakt sekcija, social ikone)
+```
+
+---
+
 ## Changelog
 
 | Verzija | Datum | Izmene |
 |---------|-------|--------|
+| v235 | 2026-01-21 | **Admin Settings:** Social linkovi u Company modal, landing page dinamicki kontakt |
 | v0.6.3 | 2026-01-19 | **Security:** Phone verification za ticket tracking, sprečen enumeration napad |
 | v0.6.2 | 2026-01-19 | **Public Site v2:** FAQ, Brendovi, Proces, WhatsApp, Status tracking, AOS animacije, Contact fallback |
 | v0.6.1 | 2026-01-19 | **Wildcard Subdomain:** Heroku + Cloudflare DNS, savePublicProfile fix |
