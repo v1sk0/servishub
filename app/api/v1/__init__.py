@@ -16,7 +16,7 @@ def register_routes():
     Registruje sve sub-blueprinte za v1 API.
     Poziva se iz app factory-ja.
     """
-    from . import auth, tickets, inventory, tenant, locations, users, marketplace, orders, messages, services
+    from . import auth, tickets, inventory, tenant, locations, users, marketplace, orders, messages, services, public
 
     bp.register_blueprint(auth.bp)
     bp.register_blueprint(tickets.bp)
@@ -28,3 +28,4 @@ def register_routes():
     bp.register_blueprint(orders.bp)
     bp.register_blueprint(messages.bp)
     bp.register_blueprint(services.bp)
+    bp.register_blueprint(public.bp)

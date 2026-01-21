@@ -220,7 +220,7 @@
     </div>
 
     <!-- Pricing -->
-    <div class="py-12 bg-white">
+    <div class="py-12 bg-white" x-data="pricingComponent()" x-init="loadPricing()">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="lg:text-center mb-10">
                 <h2 class="text-base text-primary-600 font-semibold tracking-wide uppercase">Cenovnik</h2>
@@ -233,15 +233,18 @@
                 <div class="bg-white border-2 border-primary-600 rounded-2xl shadow-xl overflow-hidden">
                     <div class="px-6 py-8 bg-primary-600 sm:p-10 sm:pb-6">
                         <div class="flex justify-center">
-                            <span class="inline-flex px-4 py-1 rounded-full text-sm font-semibold tracking-wide uppercase bg-primary-200 text-primary-700">
+                            <span class="inline-flex px-4 py-1 rounded-full text-sm font-semibold tracking-wide uppercase bg-primary-200 text-primary-700"
+                                  x-text="trialText">
                                 3 meseca besplatno
                             </span>
                         </div>
                         <div class="mt-4 flex justify-center items-baseline text-6xl font-extrabold text-white">
-                            3.600
-                            <span class="ml-1 text-2xl font-medium text-primary-200">RSD/mes</span>
+                            <span x-text="formattedBasePrice">3.600</span>
+                            <span class="ml-1 text-2xl font-medium text-primary-200" x-text="currency + '/mes'">RSD/mes</span>
                         </div>
-                        <p class="mt-5 text-lg text-center text-primary-200">+ 1.800 RSD za svaku dodatnu lokaciju</p>
+                        <p class="mt-5 text-lg text-center text-primary-200">
+                            + <span x-text="formattedLocationPrice">1.800</span> <span x-text="currency">RSD</span> za svaku dodatnu lokaciju
+                        </p>
                     </div>
                     <div class="px-6 pt-6 pb-8 bg-white sm:p-10 sm:pt-6">
                         <ul class="space-y-4">
@@ -312,6 +315,52 @@
             </form>
         </div>
     </div>
+
+    <!-- Pricing JavaScript -->
+    <script>
+    function pricingComponent() {
+        return {
+            basePrice: 3600,
+            locationPrice: 1800,
+            currency: 'RSD',
+            trialDays: 90,
+
+            get formattedBasePrice() {
+                return this.formatPrice(this.basePrice);
+            },
+
+            get formattedLocationPrice() {
+                return this.formatPrice(this.locationPrice);
+            },
+
+            get trialText() {
+                const months = Math.floor(this.trialDays / 30);
+                if (months === 1) return '1 mesec besplatno';
+                if (months >= 2 && months <= 4) return months + ' meseca besplatno';
+                return months + ' meseci besplatno';
+            },
+
+            formatPrice(price) {
+                return price.toLocaleString('sr-RS');
+            },
+
+            async loadPricing() {
+                try {
+                    const response = await fetch('/api/v1/public/pricing');
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.basePrice = data.base_price || 3600;
+                        this.locationPrice = data.location_price || 1800;
+                        this.currency = data.currency || 'RSD';
+                        this.trialDays = data.trial_days || 90;
+                    }
+                } catch (error) {
+                    console.error('Failed to load pricing:', error);
+                }
+            }
+        }
+    }
+    </script>
 
     <!-- Footer -->
     <footer class="bg-gray-900">
