@@ -201,6 +201,116 @@
     .reveal-delay-2 { transition-delay: 0.2s; }
     .reveal-delay-3 { transition-delay: 0.3s; }
     .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
+
+    /* ============================================
+       TRUST BADGE PREMIUM (SECURITY/MODERN)
+       ============================================ */
+    .trust-badge-premium {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 100px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #c4b5fd;
+        transition: all 0.3s ease;
+    }
+
+    .trust-badge-premium:hover {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(168, 85, 247, 0.3) 100%);
+        border-color: rgba(139, 92, 246, 0.5);
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .trust-badge-premium svg {
+        color: #a78bfa;
+    }
+
+    /* ============================================
+       SECURITY SECTION
+       ============================================ */
+    .security-card {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: 16px;
+        padding: 24px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .security-card:hover {
+        background: rgba(16, 185, 129, 0.15);
+        border-color: rgba(16, 185, 129, 0.3);
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px -15px rgba(16, 185, 129, 0.2);
+    }
+
+    .security-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 16px;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .security-icon svg {
+        width: 32px;
+        height: 32px;
+        color: #10b981;
+    }
+
+    /* ============================================
+       FAQ SECTION
+       ============================================ */
+    .faq-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .faq-item:hover {
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .faq-question {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .faq-question:hover {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .faq-answer {
+        padding: 0 24px 20px;
+        color: #9ca3af;
+        line-height: 1.7;
+    }
+
+    .faq-icon {
+        width: 24px;
+        height: 24px;
+        color: #6366f1;
+        transition: transform 0.3s ease;
+    }
+
+    .faq-item.open .faq-icon {
+        transform: rotate(180deg);
+    }
 
     /* ============================================
        STATS COUNTER ANIMATION
@@ -482,8 +592,8 @@
                         </a>
                     </div>
 
-                    <!-- Trust badges -->
-                    <div class="mt-10 flex items-center gap-6 justify-center lg:justify-start reveal reveal-delay-4">
+                    <!-- Trust badges row 1 -->
+                    <div class="mt-10 flex flex-wrap items-center gap-4 justify-center lg:justify-start reveal reveal-delay-4">
                         <div class="flex items-center gap-2 text-sm text-gray-500">
                             <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
@@ -501,6 +611,22 @@
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                             </svg>
                             Podrška 24/7
+                        </div>
+                    </div>
+
+                    <!-- Trust badges row 2 - Security & Modern -->
+                    <div class="mt-4 flex flex-wrap items-center gap-4 justify-center lg:justify-start reveal reveal-delay-5">
+                        <div class="trust-badge-premium">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            <span>Sigurnost na najvišem nivou</span>
+                        </div>
+                        <div class="trust-badge-premium">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span>Najmoderniji program 2026</span>
                         </div>
                     </div>
                 </div>
@@ -693,6 +819,89 @@
                         Personalizovan website za vaš servis.
                         Kupci mogu pratiti status naloga online 24/7.
                     </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ============================================
+         SECURITY & TRUST
+         ============================================ -->
+    <section id="security" class="relative py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-medium mb-6 reveal">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    Enterprise-grade sigurnost
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4 reveal">
+                    Sigurnost na <span class="gradient-text">najvišem nivou</span>
+                </h2>
+                <p class="text-xl text-gray-400 max-w-2xl mx-auto reveal reveal-delay-1">
+                    Vaši podaci su zaštićeni najmodernijim sigurnosnim standardima
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- SSL/TLS -->
+                <div class="security-card reveal">
+                    <div class="security-icon">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold mb-2">SSL/TLS Enkripcija</h3>
+                    <p class="text-gray-500 text-sm">256-bit enkripcija za sve podatke u tranzitu</p>
+                </div>
+
+                <!-- Cloud Backup -->
+                <div class="security-card reveal reveal-delay-1">
+                    <div class="security-icon">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold mb-2">Cloud Backup</h3>
+                    <p class="text-gray-500 text-sm">Automatski backup svakih 24h na AWS infrastrukturi</p>
+                </div>
+
+                <!-- GDPR -->
+                <div class="security-card reveal reveal-delay-2">
+                    <div class="security-icon">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold mb-2">GDPR Compliant</h3>
+                    <p class="text-gray-500 text-sm">Usklađeno sa EU regulativom o zaštiti podataka</p>
+                </div>
+
+                <!-- 99.9% Uptime -->
+                <div class="security-card reveal reveal-delay-3">
+                    <div class="security-icon">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold mb-2">99.9% Uptime</h3>
+                    <p class="text-gray-500 text-sm">Garantovana dostupnost sa SLA ugovorom</p>
+                </div>
+            </div>
+
+            <!-- Tech stack badges -->
+            <div class="mt-12 text-center reveal reveal-delay-4">
+                <p class="text-gray-500 text-sm mb-4">Izgrađeno sa najmodernijim tehnologijama</p>
+                <div class="flex flex-wrap justify-center gap-3">
+                    <span class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-400">Python/Flask</span>
+                    <span class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-400">PostgreSQL</span>
+                    <span class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-400">AWS Cloud</span>
+                    <span class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-400">Redis Cache</span>
+                    <span class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-400">Alpine.js</span>
+                    <span class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-400">Tailwind CSS</span>
                 </div>
             </div>
         </div>
@@ -940,6 +1149,104 @@
                     <p class="text-center text-sm text-gray-500 mt-4">
                         Bez kreditne kartice. Otkažite bilo kada.
                     </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ============================================
+         FAQ
+         ============================================ -->
+    <section id="faq" class="relative py-24">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4 reveal">
+                    Često postavljana <span class="gradient-text">pitanja</span>
+                </h2>
+                <p class="text-xl text-gray-400 reveal reveal-delay-1">
+                    Sve što treba da znate pre početka
+                </p>
+            </div>
+
+            <div class="space-y-4" x-data="{ openFaq: null }">
+                <!-- FAQ 1 -->
+                <div class="faq-item reveal" :class="{ 'open': openFaq === 1 }">
+                    <div class="faq-question" @click="openFaq = openFaq === 1 ? null : 1">
+                        <span>Da li je ServisHub težak za korišćenje?</span>
+                        <svg class="faq-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                    <div class="faq-answer" x-show="openFaq === 1" x-collapse>
+                        Ne! ServisHub je dizajniran da bude intuitivan i jednostavan. Većina korisnika počne da radi za manje od 15 minuta. Pored toga, nudimo besplatnu video obuku i podršku 24/7.
+                    </div>
+                </div>
+
+                <!-- FAQ 2 -->
+                <div class="faq-item reveal reveal-delay-1" :class="{ 'open': openFaq === 2 }">
+                    <div class="faq-question" @click="openFaq = openFaq === 2 ? null : 2">
+                        <span>Mogu li da importujem postojeće podatke?</span>
+                        <svg class="faq-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                    <div class="faq-answer" x-show="openFaq === 2" x-collapse>
+                        Da, podržavamo import iz Excel-a i CSV fajlova. Naš tim može pomoći sa migracijom podataka iz drugih sistema besplatno.
+                    </div>
+                </div>
+
+                <!-- FAQ 3 -->
+                <div class="faq-item reveal reveal-delay-2" :class="{ 'open': openFaq === 3 }">
+                    <div class="faq-question" @click="openFaq = openFaq === 3 ? null : 3">
+                        <span>Šta se dešava kada istekne trial period?</span>
+                        <svg class="faq-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                    <div class="faq-answer" x-show="openFaq === 3" x-collapse>
+                        Vaši podaci ostaju sačuvani. Možete nastaviti sa pretplatom ili eksportovati sve podatke. Nema pritiska - vi odlučujete kada ste spremni.
+                    </div>
+                </div>
+
+                <!-- FAQ 4 -->
+                <div class="faq-item reveal reveal-delay-3" :class="{ 'open': openFaq === 4 }">
+                    <div class="faq-question" @click="openFaq = openFaq === 4 ? null : 4">
+                        <span>Da li mogu pristupiti sa telefona?</span>
+                        <svg class="faq-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                    <div class="faq-answer" x-show="openFaq === 4" x-collapse>
+                        Apsolutno! ServisHub je potpuno responzivan i radi na svim uređajima. Imate pristup svim funkcijama sa telefona, tableta ili računara.
+                    </div>
+                </div>
+
+                <!-- FAQ 5 -->
+                <div class="faq-item reveal reveal-delay-4" :class="{ 'open': openFaq === 5 }">
+                    <div class="faq-question" @click="openFaq = openFaq === 5 ? null : 5">
+                        <span>Da li su moji podaci sigurni?</span>
+                        <svg class="faq-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                    <div class="faq-answer" x-show="openFaq === 5" x-collapse>
+                        Da, bezbednost je naš prioritet. Koristimo 256-bit SSL enkripciju, automatske backupe na AWS cloud-u i potpuno smo usklađeni sa GDPR regulativom.
+                    </div>
+                </div>
+
+                <!-- FAQ 6 -->
+                <div class="faq-item reveal reveal-delay-5" :class="{ 'open': openFaq === 6 }">
+                    <div class="faq-question" @click="openFaq = openFaq === 6 ? null : 6">
+                        <span>Kako funkcioniše podrška?</span>
+                        <svg class="faq-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                    <div class="faq-answer" x-show="openFaq === 6" x-collapse>
+                        Nudimo podršku 24/7 putem chata, emaila i telefona. Prosečno vreme odgovora je manje od 2 sata. Svi korisnici dobijaju istu premium podršku.
+                    </div>
                 </div>
             </div>
         </div>
