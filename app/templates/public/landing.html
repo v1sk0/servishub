@@ -288,6 +288,14 @@
                                 </div>
                                 <p class="ml-3 text-base text-gray-700">QR praćenje za kupce</p>
                             </li>
+                            <li class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <p class="ml-3 text-base text-gray-700">Personalizovan website</p>
+                            </li>
                         </ul>
                         <div class="mt-8">
                             <a href="/register" class="block w-full bg-primary-600 text-center py-3 px-4 rounded-md shadow text-white font-medium hover:bg-primary-700">
@@ -334,6 +342,11 @@
             },
 
             get trialText() {
+                // Za manje od 60 dana prikaži dane
+                if (this.trialDays < 60) {
+                    return this.trialDays + ' dana besplatno';
+                }
+                // Za 60+ dana prikaži mesece
                 const months = Math.floor(this.trialDays / 30);
                 if (months === 1) return '1 mesec besplatno';
                 if (months >= 2 && months <= 4) return months + ' meseca besplatno';
