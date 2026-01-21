@@ -294,21 +294,16 @@
        ============================================ */
     .pricing-card {
         position: relative;
+        transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        border: 2px solid transparent;
     }
 
-    .pricing-card::before {
-        content: '';
-        position: absolute;
-        inset: -2px;
-        background: linear-gradient(135deg, #6366f1, #a855f7, #3b82f6);
-        border-radius: 26px;
-        z-index: -1;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .pricing-card:hover::before {
-        opacity: 1;
+    .pricing-card:hover {
+        border-color: rgba(139, 92, 246, 0.6);
+        box-shadow:
+            0 0 20px rgba(139, 92, 246, 0.3),
+            0 0 40px rgba(99, 102, 241, 0.2),
+            inset 0 0 20px rgba(139, 92, 246, 0.05);
     }
 
     /* ============================================
