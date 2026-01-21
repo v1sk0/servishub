@@ -726,9 +726,17 @@ window.setAdminTheme = function(newTheme) {
         border-bottom-color: var(--glass-border) !important;
     }
 
-    /* Glass theme pagination buttons */
+    /* Glass theme pagination buttons and bg-gray-100 elements */
     .admin-glass .bg-gray-100 {
         background: rgba(25, 25, 55, 0.7) !important;
+        color: var(--glass-text) !important;
+    }
+
+    /* Glass theme - hover states za bg-gray-100 buttons */
+    .admin-glass .bg-gray-100:hover,
+    .admin-glass .hover\:bg-gray-200:hover {
+        background: rgba(35, 35, 70, 0.8) !important;
+        color: var(--glass-text) !important;
     }
 
     /* ==================== SHARED STYLES ==================== */
