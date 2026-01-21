@@ -5,21 +5,56 @@
 {% block head %}
 <style>
     /* Force light theme colors for public landing page */
-    .public-page, .public-page * { color: inherit; }
+    /* Reset glass-theme overrides completely */
+    .public-page .text-white { color: #ffffff !important; }
     .public-page .text-gray-900 { color: #111827 !important; }
     .public-page .text-gray-800 { color: #1f2937 !important; }
     .public-page .text-gray-700 { color: #374151 !important; }
     .public-page .text-gray-600 { color: #4b5563 !important; }
     .public-page .text-gray-500 { color: #6b7280 !important; }
     .public-page .text-gray-400 { color: #9ca3af !important; }
+    .public-page .text-primary-600 { color: #2563eb !important; }
+    .public-page .text-primary-700 { color: #1d4ed8 !important; }
+    .public-page .text-primary-200 { color: #bfdbfe !important; }
+    .public-page .text-green-500 { color: #22c55e !important; }
+    .public-page .text-green-600 { color: #16a34a !important; }
+    .public-page .text-blue-600 { color: #2563eb !important; }
+    .public-page .text-purple-600 { color: #9333ea !important; }
+    .public-page .text-yellow-600 { color: #ca8a04 !important; }
+    .public-page .text-red-600 { color: #dc2626 !important; }
+
+    /* Backgrounds */
     .public-page .bg-white { background-color: #ffffff !important; }
     .public-page .bg-gray-50 { background-color: #f9fafb !important; }
     .public-page .bg-gray-100 { background-color: #f3f4f6 !important; }
+    .public-page .bg-gray-900 { background-color: #111827 !important; }
+    .public-page .bg-primary-100 { background-color: #dbeafe !important; }
+    .public-page .bg-primary-200 { background-color: #bfdbfe !important; }
+    .public-page .bg-primary-600 { background-color: #2563eb !important; }
+    .public-page .bg-green-100 { background-color: #dcfce7 !important; }
+    .public-page .bg-blue-100 { background-color: #dbeafe !important; }
+    .public-page .bg-purple-100 { background-color: #f3e8ff !important; }
+    .public-page .bg-yellow-100 { background-color: #fef9c3 !important; }
+    .public-page .bg-red-100 { background-color: #fee2e2 !important; }
+
+    /* Borders */
     .public-page .border-gray-200 { border-color: #e5e7eb !important; }
     .public-page .border-gray-300 { border-color: #d1d5db !important; }
-    .public-page .shadow-sm, .public-page .shadow {
-        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+    .public-page .border-primary-600 { border-color: #2563eb !important; }
+
+    /* Shadows */
+    .public-page .shadow-sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important; }
+    .public-page .shadow { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1) !important; }
+    .public-page .shadow-lg { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important; }
+    .public-page .shadow-xl { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important; }
+
+    /* Input fields */
+    .public-page input {
+        background-color: #ffffff !important;
+        color: #111827 !important;
+        border-color: #d1d5db !important;
     }
+    .public-page input::placeholder { color: #9ca3af !important; }
 </style>
 {% endblock %}
 
