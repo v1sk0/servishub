@@ -106,6 +106,7 @@ class SecurityEventLogger:
     def log_event(cls, event_type: str, details: Optional[Dict[str, Any]] = None,
                   user_id: Optional[int] = None, email: Optional[str] = None,
                   level: str = 'info', user_type: Optional[str] = None,
+                  tenant_id: Optional[int] = None,
                   save_to_db: bool = True) -> None:
         """
         Loguje bezbednosni dogadjaj.
@@ -117,6 +118,7 @@ class SecurityEventLogger:
             email: Email korisnika (bice hashiran)
             level: Log level (info, warning, error)
             user_type: Tip korisnika (tenant_user, admin, guest)
+            tenant_id: ID tenanta (servisa) - za pracenje po tenantima
             save_to_db: Da li da sacuva u bazu (default: True)
         """
         context = cls._get_request_context()
@@ -126,6 +128,7 @@ class SecurityEventLogger:
             'event': event_type,
             'context': context,
             'user_id': user_id,
+            'tenant_id': tenant_id,
             'email_hash': email_hash,
             'details': details or {}
         }
@@ -160,6 +163,7 @@ class SecurityEventLogger:
                     severity=severity,
                     user_id=user_id,
                     user_type=user_type,
+                    tenant_id=tenant_id,
                     email_hash=email_hash,
                     ip_address=context.get('ip'),
                     user_agent=context.get('user_agent'),
@@ -173,23 +177,52 @@ class SecurityEventLogger:
                 security_logger.error(f"Failed to save security event to database: {e}")
 
     @classmethod
-    def log_login_success(cls, user_id: int, email: str, auth_method: str = 'email') -> None:
+    def log_login_success(cls, user_id: int, email: str, auth_method: str = 'email',
+                          tenant_id: Optional[int] = None, user_type: str = 'tenant_user') -> None:
         """Loguje uspesnu prijavu."""
         cls.log_event(
             SecurityEventType.LOGIN_SUCCESS,
             details={'auth_method': auth_method},
             user_id=user_id,
-            email=email
+            email=email,
+            tenant_id=tenant_id,
+            user_type=user_type
         )
 
     @classmethod
-    def log_login_failed(cls, email: str, reason: str = 'invalid_credentials') -> None:
+    def log_login_failed(cls, email: str, reason: str = 'invalid_credentials',
+                         tenant_id: Optional[int] = None) -> None:
         """Loguje neuspesnu prijavu."""
         cls.log_event(
             SecurityEventType.LOGIN_FAILED,
             details={'reason': reason},
             email=email,
-            level='warning'
+            tenant_id=tenant_id,
+            level='warning',
+            user_type='tenant_user'
+        )
+
+    @classmethod
+    def log_tenant_register(cls, tenant_id: int, email: str, company_name: str) -> None:
+        """Loguje registraciju novog tenanta."""
+        cls.log_event(
+            SecurityEventType.LOGIN_SUCCESS,  # Koristimo LOGIN_SUCCESS za registraciju
+            details={'action': 'register', 'company': company_name},
+            email=email,
+            tenant_id=tenant_id,
+            user_type='tenant_user'
+        )
+
+    @classmethod
+    def log_tenant_logout(cls, user_id: int, email: str, tenant_id: int) -> None:
+        """Loguje odjavu tenant korisnika."""
+        cls.log_event(
+            SecurityEventType.LOGOUT,
+            details={},
+            user_id=user_id,
+            email=email,
+            tenant_id=tenant_id,
+            user_type='tenant_user'
         )
 
     @classmethod

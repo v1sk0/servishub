@@ -83,6 +83,9 @@ class SecurityEvent(db.Model):
     user_type = db.Column(db.String(20), nullable=True)  # 'tenant_user', 'admin', 'guest'
     email_hash = db.Column(db.String(64), nullable=True)  # SHA256 hash za privatnost
 
+    # Tenant ID - za pracenje security eventova po servisu
+    tenant_id = db.Column(db.Integer, nullable=True, index=True)
+
     # IP i User Agent
     ip_address = db.Column(db.String(45), nullable=True, index=True)  # IPv6 max 45 chars
     user_agent = db.Column(db.String(500), nullable=True)
@@ -108,6 +111,7 @@ class SecurityEvent(db.Model):
     @classmethod
     def log(cls, event_type: str, severity: str = 'info',
             user_id: int = None, user_type: str = None, email_hash: str = None,
+            tenant_id: int = None,
             ip_address: str = None, user_agent: str = None,
             endpoint: str = None, method: str = None,
             details: dict = None) -> 'SecurityEvent':
@@ -120,6 +124,7 @@ class SecurityEvent(db.Model):
             user_id: ID korisnika (opciono)
             user_type: Tip korisnika (tenant_user, admin, guest)
             email_hash: Hash email adrese za privatnost
+            tenant_id: ID tenanta (servisa) - za pracenje po tenantima
             ip_address: IP adresa klijenta
             user_agent: User Agent string
             endpoint: API endpoint
@@ -137,6 +142,7 @@ class SecurityEvent(db.Model):
             user_id=user_id,
             user_type=user_type,
             email_hash=email_hash,
+            tenant_id=tenant_id,
             ip_address=ip_address,
             user_agent=user_agent[:500] if user_agent else None,
             endpoint=endpoint,
@@ -158,6 +164,7 @@ class SecurityEvent(db.Model):
             'severity': self.severity,
             'user_id': self.user_id,
             'user_type': self.user_type,
+            'tenant_id': self.tenant_id,
             'ip_address': self.ip_address,
             'user_agent': self.user_agent[:100] + '...' if self.user_agent and len(self.user_agent) > 100 else self.user_agent,
             'endpoint': self.endpoint,

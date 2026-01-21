@@ -19,7 +19,7 @@ from ..schemas.auth import (
 )
 from ..middleware.auth import jwt_required, tenant_required
 from ...services.auth_service import auth_service, AuthError
-from ...services.security_service import rate_limit, RateLimits
+from ...services.security_service import rate_limit, RateLimits, SecurityEventLogger
 from ...models import ServiceLocation
 from ...extensions import db
 
@@ -145,6 +145,13 @@ def register():
         # Obrisi verifikacioni zapis posle uspesne registracije
         email_service.delete_verification(owner_email)
 
+        # Log registraciju novog tenanta
+        SecurityEventLogger.log_tenant_register(
+            tenant_id=tenant.id,
+            email=user.email,
+            company_name=tenant.name
+        )
+
         return jsonify({
             'message': 'Registracija uspesna! Imate 7 dana DEMO perioda.',
             'tenant': {
@@ -199,6 +206,15 @@ def login():
     try:
         user, tenant, tokens = auth_service.login(data.email, data.password)
 
+        # Log uspesnu prijavu
+        SecurityEventLogger.log_login_success(
+            user_id=user.id,
+            email=user.email,
+            auth_method='email',
+            tenant_id=tenant.id,
+            user_type='tenant_user'
+        )
+
         return jsonify({
             'user': {
                 'id': user.id,
@@ -225,6 +241,11 @@ def login():
         }), 200
 
     except AuthError as e:
+        # Log neuspesnu prijavu
+        SecurityEventLogger.log_login_failed(
+            email=data.email,
+            reason=e.message
+        )
         return jsonify({
             'error': 'Login Error',
             'message': e.message
@@ -376,7 +397,7 @@ def logout():
     from ...models import AuditLog, AuditAction
     from ...extensions import db
 
-    # Loguj odjavu
+    # Loguj odjavu u AuditLog
     if hasattr(g, 'current_user_id'):
         AuditLog.log(
             entity_type='auth',
@@ -385,6 +406,16 @@ def logout():
             changes={},
             tenant_id=g.token_payload.get('tenant_id')
         )
+
+        # Loguj odjavu u SecurityEvent
+        tenant_id = g.token_payload.get('tenant_id')
+        email = g.token_payload.get('email', '')
+        SecurityEventLogger.log_tenant_logout(
+            user_id=g.current_user_id,
+            email=email,
+            tenant_id=tenant_id
+        )
+
         db.session.commit()
 
     return jsonify({
@@ -784,6 +815,15 @@ def google_callback():
 
             # Generiši tokene
             tokens = auth_service.generate_tokens(existing_user)
+
+            # Log uspesnu Google OAuth prijavu
+            SecurityEventLogger.log_login_success(
+                user_id=existing_user.id,
+                email=existing_user.email,
+                auth_method='google_oauth',
+                tenant_id=existing_user.tenant_id,
+                user_type='tenant_user'
+            )
 
             # Sačuvaj token u sesiju umesto URL-a (sigurnije)
             session['oauth_tokens'] = {

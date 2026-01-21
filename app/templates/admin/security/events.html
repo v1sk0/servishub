@@ -152,6 +152,20 @@
                             </select>
                         </div>
                         <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Korisnik</label>
+                            <select x-model="filterUserType" @change="loadEvents()" class="block w-36 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm">
+                                <option value="">Svi korisnici</option>
+                                <option value="tenant_user">Servis (Tenant)</option>
+                                <option value="admin">Admin</option>
+                                <option value="guest">Guest</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tenant ID</label>
+                            <input type="number" x-model="filterTenantId" @input.debounce.500ms="loadEvents()" placeholder="npr. 123"
+                                   class="block w-24 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm">
+                        </div>
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">IP adresa</label>
                             <input type="text" x-model="filterIp" @input.debounce.500ms="loadEvents()" placeholder="npr. 192.168.1.1"
                                    class="block w-40 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm">
@@ -185,9 +199,10 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vreme</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tip</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Severity</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Korisnik</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tenant</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Adresa</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Endpoint</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User ID</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Detalji</th>
                             </tr>
                         </thead>
@@ -206,10 +221,22 @@
                                               x-text="event.severity"></span>
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full"
+                                              :class="getUserTypeBadgeClass(event.user_type)"
+                                              x-text="event.user_type || 'guest'"></span>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <template x-if="event.tenant_id">
+                                            <button @click="filterByTenant(event.tenant_id)" class="text-xs font-mono text-purple-600 hover:underline" x-text="'#' + event.tenant_id"></button>
+                                        </template>
+                                        <template x-if="!event.tenant_id">
+                                            <span class="text-xs text-gray-400">-</span>
+                                        </template>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
                                         <button @click="filterByIp(event.ip_address)" class="text-xs font-mono text-blue-600 hover:underline" x-text="event.ip_address || '-'"></button>
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500" x-text="event.endpoint || '-'"></td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500" x-text="event.user_id || '-'"></td>
                                     <td class="px-4 py-3">
                                         <template x-if="event.details && Object.keys(event.details).length > 0">
                                             <button @click="showDetails(event)" class="text-red-600 hover:text-red-900 text-xs font-medium">
@@ -264,7 +291,10 @@
                         <div><span class="text-gray-500">Tip:</span> <span x-text="selectedEvent?.event_type"></span></div>
                         <div><span class="text-gray-500">Severity:</span> <span x-text="selectedEvent?.severity"></span></div>
                         <div><span class="text-gray-500">IP:</span> <span class="font-mono" x-text="selectedEvent?.ip_address"></span></div>
-                        <div class="col-span-2"><span class="text-gray-500">Endpoint:</span> <span x-text="selectedEvent?.endpoint"></span></div>
+                        <div><span class="text-gray-500">Korisnik:</span> <span x-text="selectedEvent?.user_type || 'guest'"></span></div>
+                        <div><span class="text-gray-500">Tenant ID:</span> <span class="font-mono" x-text="selectedEvent?.tenant_id || '-'"></span></div>
+                        <div><span class="text-gray-500">User ID:</span> <span class="font-mono" x-text="selectedEvent?.user_id || '-'"></span></div>
+                        <div><span class="text-gray-500">Endpoint:</span> <span x-text="selectedEvent?.endpoint"></span></div>
                         <div class="col-span-2"><span class="text-gray-500">User Agent:</span> <span class="text-xs" x-text="selectedEvent?.user_agent"></span></div>
                     </div>
                 </div>
@@ -302,6 +332,8 @@ function securityEventsPage() {
         filterHours: '24',
         filterEventType: '',
         filterSeverity: '',
+        filterUserType: '',
+        filterTenantId: '',
         filterIp: '',
         filterSearch: '',
         showDetailsModal: false,
@@ -325,6 +357,8 @@ function securityEventsPage() {
                 const params = new URLSearchParams({ page: page, per_page: 50, hours: this.filterHours });
                 if (this.filterEventType) params.append('event_type', this.filterEventType);
                 if (this.filterSeverity) params.append('severity', this.filterSeverity);
+                if (this.filterUserType) params.append('user_type', this.filterUserType);
+                if (this.filterTenantId) params.append('tenant_id', this.filterTenantId);
                 if (this.filterIp) params.append('ip_address', this.filterIp);
                 if (this.filterSearch) params.append('search', this.filterSearch);
 
@@ -370,10 +404,19 @@ function securityEventsPage() {
             }
         },
 
+        filterByTenant(tenantId) {
+            if (tenantId) {
+                this.filterTenantId = tenantId.toString();
+                this.loadEvents(1);
+            }
+        },
+
         resetFilters() {
             this.filterHours = '24';
             this.filterEventType = '';
             this.filterSeverity = '';
+            this.filterUserType = '';
+            this.filterTenantId = '';
             this.filterIp = '';
             this.filterSearch = '';
             this.loadEvents(1);
@@ -418,6 +461,15 @@ function securityEventsPage() {
                 'critical': 'bg-purple-100 text-purple-800'
             };
             return classes[severity] || 'bg-gray-100 text-gray-800';
+        },
+
+        getUserTypeBadgeClass(userType) {
+            const classes = {
+                'tenant_user': 'bg-purple-100 text-purple-800',
+                'admin': 'bg-red-100 text-red-800',
+                'guest': 'bg-gray-100 text-gray-800'
+            };
+            return classes[userType] || 'bg-gray-100 text-gray-800';
         }
     }
 }

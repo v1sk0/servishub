@@ -45,8 +45,10 @@ def list_security_events():
     severity = request.args.get('severity')
     ip_address = request.args.get('ip_address')
     user_id = request.args.get('user_id', type=int)
+    tenant_id = request.args.get('tenant_id', type=int)
     hours = request.args.get('hours', 24, type=int)
     search = request.args.get('search')
+    user_type = request.args.get('user_type')  # admin, tenant_user, guest
 
     # Osnovni query
     query = SecurityEvent.query
@@ -67,6 +69,12 @@ def list_security_events():
 
     if user_id:
         query = query.filter(SecurityEvent.user_id == user_id)
+
+    if tenant_id:
+        query = query.filter(SecurityEvent.tenant_id == tenant_id)
+
+    if user_type:
+        query = query.filter(SecurityEvent.user_type == user_type)
 
     if search:
         search_term = f'%{search}%'
@@ -99,7 +107,9 @@ def list_security_events():
             'event_type': event_type,
             'severity': severity,
             'ip_address': ip_address,
-            'user_id': user_id
+            'user_id': user_id,
+            'tenant_id': tenant_id,
+            'user_type': user_type
         }
     }), 200
 
