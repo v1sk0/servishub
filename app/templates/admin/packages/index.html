@@ -583,8 +583,9 @@ function packagesPage() {
 
         setTheme(newTheme) {
             this.theme = newTheme;
-            localStorage.setItem('admin-theme', newTheme);
-            document.documentElement.setAttribute('data-admin-theme', newTheme);
+            if (window.setAdminTheme) {
+                window.setAdminTheme(newTheme);
+            }
         },
 
         formatPrice(value) {

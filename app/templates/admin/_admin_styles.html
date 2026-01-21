@@ -5,10 +5,25 @@
 (function() {
     var t = localStorage.getItem('admin-theme') || 'light';
     var d = document.documentElement;
-    d.setAttribute('data-admin-theme', t);
-    // Dodaj istu klasu koju koristi Alpine za instant stilove
+    // VAZNO: Ukloni obe klase prvo da ne dodje do mesanja tema
+    d.classList.remove('admin-light', 'admin-glass');
+    // Dodaj korektnu klasu
     d.classList.add(t === 'glass' ? 'admin-glass' : 'admin-light');
+    d.setAttribute('data-admin-theme', t);
 })();
+
+// Globalna funkcija za promenu teme - koriste je sve admin stranice
+window.setAdminTheme = function(newTheme) {
+    var d = document.documentElement;
+    // VAZNO: Ukloni obe klase prvo
+    d.classList.remove('admin-light', 'admin-glass');
+    // Dodaj novu klasu
+    d.classList.add(newTheme === 'glass' ? 'admin-glass' : 'admin-light');
+    // Postavi data atribut
+    d.setAttribute('data-admin-theme', newTheme);
+    // Sacuvaj u localStorage
+    localStorage.setItem('admin-theme', newTheme);
+};
 </script>
 
 <style>
@@ -609,8 +624,130 @@
         border-color: rgba(251, 146, 60, 0.35) !important;
     }
 
+    /* ==================== LIGHT THEME - DODATNI STILOVI ==================== */
+
+    /* Light theme modal overlay */
+    .admin-light .modal-overlay,
+    .admin-light .fixed.inset-0.z-50 {
+        background: transparent;
+    }
+    .admin-light .fixed.inset-0.bg-black {
+        background: rgba(0, 0, 0, 0.5) !important;
+    }
+
+    /* Light theme modal content */
+    .admin-light .relative.admin-card,
+    .admin-light .modal-content {
+        background: white !important;
+        border: 1px solid #e5e7eb !important;
+    }
+
+    /* Light theme status badges - osiguraj vidljivost */
+    .admin-light .bg-purple-100 { background: #f3e8ff !important; }
+    .admin-light .text-purple-800 { color: #6b21a8 !important; }
+    .admin-light .bg-blue-100 { background: #dbeafe !important; }
+    .admin-light .text-blue-800 { color: #1e40af !important; }
+    .admin-light .bg-green-100 { background: #dcfce7 !important; }
+    .admin-light .text-green-800 { color: #166534 !important; }
+    .admin-light .bg-yellow-100 { background: #fef9c3 !important; }
+    .admin-light .text-yellow-800 { color: #854d0e !important; }
+    .admin-light .bg-red-100 { background: #fee2e2 !important; }
+    .admin-light .text-red-800 { color: #991b1b !important; }
+    .admin-light .bg-orange-100 { background: #ffedd5 !important; }
+    .admin-light .text-orange-800 { color: #9a3412 !important; }
+
+    /* Light theme hover states - rows */
+    .admin-light tbody tr:hover,
+    .admin-light .hover\:bg-gray-50:hover {
+        background: #f9fafb !important;
+    }
+
+    /* Light theme dividers */
+    .admin-light .divide-y > :not(:last-child),
+    .admin-light .divide-gray-200 > :not(:last-child) {
+        border-bottom-color: #e5e7eb !important;
+    }
+
+    /* Light theme colored backgrounds -50 variants */
+    .admin-light .bg-red-50 { background: #fef2f2 !important; }
+    .admin-light .bg-yellow-50 { background: #fefce8 !important; }
+    .admin-light .bg-green-50 { background: #f0fdf4 !important; }
+    .admin-light .bg-blue-50 { background: #eff6ff !important; }
+    .admin-light .bg-orange-50 { background: #fff7ed !important; }
+    .admin-light .bg-indigo-50 { background: #eef2ff !important; }
+
+    /* Light theme text -700 colors */
+    .admin-light .text-red-700 { color: #b91c1c !important; }
+    .admin-light .text-yellow-700 { color: #a16207 !important; }
+    .admin-light .text-green-700 { color: #15803d !important; }
+    .admin-light .text-blue-700 { color: #1d4ed8 !important; }
+    .admin-light .text-orange-700 { color: #c2410c !important; }
+    .admin-light .text-indigo-700 { color: #4338ca !important; }
+
+    /* Light theme stat cards colored text */
+    .admin-light .text-blue-600 { color: #2563eb !important; }
+    .admin-light .text-green-600 { color: #16a34a !important; }
+    .admin-light .text-yellow-600 { color: #ca8a04 !important; }
+    .admin-light .text-red-600 { color: #dc2626 !important; }
+    .admin-light .text-purple-600 { color: #9333ea !important; }
+
+    /* Light theme links */
+    .admin-light a.text-red-600:hover { color: #b91c1c !important; }
+
+    /* Light theme pagination buttons */
+    .admin-light .bg-gray-100 {
+        background: #f3f4f6 !important;
+    }
+
+    /* ==================== GLASS THEME - DODATNI STILOVI ==================== */
+
+    /* Glass theme modal overlay */
+    .admin-glass .fixed.inset-0.bg-black {
+        background: rgba(0, 0, 0, 0.7) !important;
+    }
+
+    /* Glass theme modal content */
+    .admin-glass .relative.admin-card,
+    .admin-glass .modal-content {
+        background: var(--glass-card) !important;
+        border: 1px solid var(--glass-border) !important;
+        backdrop-filter: blur(20px) !important;
+    }
+
+    /* Glass theme hover states - rows */
+    .admin-glass tbody tr:hover,
+    .admin-glass .hover\:bg-gray-50:hover {
+        background: rgba(239, 68, 68, 0.1) !important;
+    }
+
+    /* Glass theme dividers */
+    .admin-glass .divide-y > :not(:last-child),
+    .admin-glass .divide-gray-200 > :not(:last-child) {
+        border-bottom-color: var(--glass-border) !important;
+    }
+
+    /* Glass theme pagination buttons */
+    .admin-glass .bg-gray-100 {
+        background: rgba(25, 25, 55, 0.7) !important;
+    }
+
     /* ==================== SHARED STYLES ==================== */
     .theme-btn {
         transition: all 0.2s ease;
+    }
+
+    /* Theme transition za smooth switch */
+    .admin-wrapper,
+    .admin-sidebar,
+    .admin-topbar,
+    .admin-card,
+    .bg-white,
+    table,
+    thead,
+    tbody tr,
+    input,
+    select,
+    textarea {
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     }
 </style>
