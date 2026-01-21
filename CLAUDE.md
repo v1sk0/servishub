@@ -54,13 +54,15 @@ Instrukcije za Claude Code agente. **CITAJ OVO PRE BILO KAKVIH IZMENA.**
 - Fix: SQLAlchemy JSON polja - flag_modified za pravilno cuvanje
 
 Svi frontend moduli zavrseni i verifikovani:
-- Tenant panel (23 stranica)
-- Admin panel (10 stranica + 2 partials)
-- Supplier panel (6 stranica)
-- Public stranice (2 stranice)
+- Tenant panel (28 stranica) - ukljucuje tickets/print, warranties, verify_email, pricing
+- Admin panel (13 stranica + 2 partials) - ukljucuje activity, packages, security
+- Supplier panel (9 stranica)
+- Public stranice (5 stranica) - ukljucuje privacy, terms
+- Tenant Public (5 stranica) - home, base, cenovnik, kontakt, o_nama
+- Components (2 fajla) - sidebar partials
 - Layouts (3 fajla)
 
-**Ukupno:** 53 HTML fajla (51 template + 2 admin partial)
+**Ukupno:** 67 HTML fajlova
 
 > Azuriraj ovaj RESUME POINT nakon svake znacajne izmene!
 
@@ -89,34 +91,48 @@ servishub/
 │   ├── config.py            # Konfiguracija
 │   ├── extensions.py        # Flask ekstenzije
 │   │
-│   ├── models/              # 11 SQLAlchemy modula
+│   ├── models/              # 16 SQLAlchemy modula
 │   │   ├── tenant.py        # Tenant, ServiceLocation
 │   │   ├── tenant_public_profile.py # TenantPublicProfile (javna stranica)
 │   │   ├── user.py          # TenantUser, UserLocation
-│   │   ├── ticket.py        # ServiceTicket
+│   │   ├── ticket.py        # ServiceTicket, TicketNotificationLog
 │   │   ├── inventory.py     # PhoneListing, SparePart
 │   │   ├── supplier.py      # Supplier, SupplierListing, SupplierUser
 │   │   ├── order.py         # PartOrder, PartOrderItem, PartOrderMessage
 │   │   ├── representative.py # ServiceRepresentative (KYC)
 │   │   ├── admin.py         # PlatformAdmin
-│   │   └── audit.py         # AuditLog
+│   │   ├── admin_activity.py # AdminActivityLog
+│   │   ├── audit.py         # AuditLog
+│   │   ├── email_verification.py # PendingEmailVerification
+│   │   ├── platform_settings.py # PlatformSettings (globalna config)
+│   │   ├── security_event.py # SecurityEvent (security log)
+│   │   ├── service.py       # ServiceItem (cenovnik usluga)
+│   │   └── tenant_message.py # TenantMessage (admin->tenant poruke)
 │   │
-│   ├── api/                 # 115+ API ruta
-│   │   ├── v1/              # Tenant API (65 ruta)
+│   ├── api/                 # 120+ API ruta
+│   │   ├── v1/              # Tenant API (70+ ruta)
 │   │   │   ├── auth.py      # login, register, refresh, me
 │   │   │   ├── tenant.py    # profile, settings, subscription, kyc
 │   │   │   ├── users.py     # CRUD korisnika
 │   │   │   ├── locations.py # CRUD lokacija
-│   │   │   ├── tickets.py   # CRUD naloga
+│   │   │   ├── tickets.py   # CRUD naloga, notify, write-off
 │   │   │   ├── inventory.py # phones, parts
 │   │   │   ├── marketplace.py # pretraga, brands
-│   │   │   └── orders.py    # narudzbine
+│   │   │   ├── orders.py    # narudzbine
+│   │   │   ├── services.py  # cenovnik usluga (ServiceItem)
+│   │   │   ├── messages.py  # tenant poruke od admina
+│   │   │   └── public.py    # javni pricing endpoint
 │   │   │
-│   │   ├── admin/           # Admin API (21 ruta)
+│   │   ├── admin/           # Admin API (35+ ruta)
 │   │   │   ├── auth.py      # admin login
 │   │   │   ├── dashboard.py # statistika
 │   │   │   ├── tenants.py   # upravljanje servisima
-│   │   │   └── kyc.py       # KYC verifikacija
+│   │   │   ├── kyc.py       # KYC verifikacija
+│   │   │   ├── settings.py  # platform settings, company data
+│   │   │   ├── payments.py  # uplate i fakture
+│   │   │   ├── activity.py  # admin activity log
+│   │   │   ├── security.py  # security events
+│   │   │   └── scheduler.py # background jobs status
 │   │   │
 │   │   ├── supplier/        # Supplier API (22 rute)
 │   │   │   ├── auth.py      # supplier login/register
@@ -139,46 +155,54 @@ servishub/
 │   │   ├── supplier.py      # /supplier/*
 │   │   └── public.py        # /, /track
 │   │
-│   ├── templates/           # 51 Jinja2 template
+│   ├── templates/           # 67 Jinja2 template
 │   │   ├── layouts/         # 3 layout-a
 │   │   │   ├── base.html    # Osnovni (public, admin)
 │   │   │   ├── tenant.html  # Tenant panel (plava tema)
 │   │   │   └── supplier.html # Supplier panel (ljubicasta tema)
 │   │   │
-│   │   ├── tenant/          # 23 stranice
-│   │   │   ├── login.html, register.html, dashboard.html
-│   │   │   ├── tickets/ (list, new, detail, edit)
+│   │   ├── components/      # 2 sidebar partials
+│   │   │   ├── tenant_sidebar.html
+│   │   │   └── supplier_sidebar.html
+│   │   │
+│   │   ├── tenant/          # 28 stranica
+│   │   │   ├── login.html, register.html, dashboard.html, verify_email.html
+│   │   │   ├── tickets/ (list, new, detail, edit, print, warranties)
 │   │   │   ├── inventory/ (phones, phones_new, parts, parts_new)
 │   │   │   ├── marketplace/ (search)
 │   │   │   ├── orders/ (list, detail)
 │   │   │   ├── locations/ (list, new, detail)
 │   │   │   ├── team/ (list, new, detail)
-│   │   │   └── settings/ (index, profile, subscription, kyc)
+│   │   │   ├── settings/ (index, profile, subscription, kyc)
+│   │   │   └── pricing/ (index)
 │   │   │
-│   │   ├── admin/           # 10 stranica + 2 partials
+│   │   ├── admin/           # 13 stranica + 2 partials
 │   │   │   ├── _sidebar.html        # SHARED: navigacija za sve admin stranice
 │   │   │   ├── _admin_styles.html   # SHARED: CSS teme (light/glass)
 │   │   │   ├── login.html, dashboard.html
 │   │   │   ├── tenants/ (list, detail)
-│   │   │   ├── kyc/ (list, detail) - preimenovano: "Predstavnici"
+│   │   │   ├── kyc/ (list, detail)
 │   │   │   ├── suppliers/ (list, detail)
 │   │   │   ├── payments/ (list)
-│   │   │   └── settings/ (index)
+│   │   │   ├── settings/ (index)
+│   │   │   ├── activity/ (list)
+│   │   │   ├── packages/ (index)
+│   │   │   └── security/ (events)
 │   │   │
-│   │   ├── supplier/        # 6 stranica
-│   │   │   ├── login.html, register.html, dashboard.html
+│   │   ├── supplier/        # 9 stranica
+│   │   │   ├── login.html, register.html, dashboard.html, settings.html
 │   │   │   ├── catalog/ (list, new, detail)
-│   │   │   ├── orders/ (list, detail)
-│   │   │   └── settings.html
+│   │   │   └── orders/ (list, detail)
 │   │   │
-│   │   ├── public/          # 3 stranice (ServisHub landing)
-│   │   │   ├── landing.html
-│   │   │   ├── track.html
-│   │   │   └── marketplace.html
+│   │   ├── public/          # 5 stranica (ServisHub landing)
+│   │   │   ├── landing.html, track.html, marketplace.html
+│   │   │   ├── privacy.html
+│   │   │   └── terms.html
 │   │   │
-│   │   └── tenant_public/   # 2 stranice (javni sajt tenanta)
+│   │   └── tenant_public/   # 5 stranica (javni sajt tenanta)
 │   │       ├── base.html    # Layout sa nav, footer, floating buttons
-│   │       └── home.html    # Homepage sa svim sekcijama
+│   │       ├── home.html    # Homepage sa svim sekcijama
+│   │       ├── cenovnik.html, kontakt.html, o_nama.html
 │   │
 │   ├── services/            # Business logic
 │   ├── repositories/        # Data access
@@ -216,8 +240,8 @@ flask create-admin         # Kreiraj platform admin-a
 
 | API | Prefix | Auth | Rute |
 |-----|--------|------|------|
-| V1 (Tenant) | /api/v1 | JWT (access_token) | 65 |
-| Admin | /api/admin | JWT (admin_access_token) | 21 |
+| V1 (Tenant) | /api/v1 | JWT (access_token) | 70+ |
+| Admin | /api/admin | JWT (admin_access_token) | 35+ |
 | Supplier | /api/supplier | JWT (supplier_access_token) | 22 |
 | Public | /api/public | None | 7 |
 
@@ -227,16 +251,19 @@ flask create-admin         # Kreiraj platform admin-a
 
 ## Frontend Stranice - Kompletna Lista
 
-### Tenant Panel (23)
+### Tenant Panel (28)
 | URL | Template |
 |-----|----------|
 | `/login` | tenant/login.html |
 | `/register` | tenant/register.html |
 | `/dashboard` | tenant/dashboard.html |
+| `/verify-email` | tenant/verify_email.html |
 | `/tickets` | tenant/tickets/list.html |
 | `/tickets/new` | tenant/tickets/new.html |
 | `/tickets/:id` | tenant/tickets/detail.html |
 | `/tickets/:id/edit` | tenant/tickets/edit.html |
+| `/tickets/:id/print` | tenant/tickets/print.html |
+| `/tickets/warranties` | tenant/tickets/warranties.html |
 | `/inventory/phones` | tenant/inventory/phones.html |
 | `/inventory/phones/new` | tenant/inventory/phones_new.html |
 | `/inventory/parts` | tenant/inventory/parts.html |
@@ -254,8 +281,9 @@ flask create-admin         # Kreiraj platform admin-a
 | `/settings/profile` | tenant/settings/profile.html |
 | `/settings/subscription` | tenant/settings/subscription.html |
 | `/settings/kyc` | tenant/settings/kyc.html |
+| `/pricing` | tenant/pricing/index.html |
 
-### Admin Panel (10 stranica + 2 partials)
+### Admin Panel (13 stranica + 2 partials)
 
 **Partials (shared komponente):**
 | Fajl | Namena |
@@ -270,16 +298,17 @@ flask create-admin         # Kreiraj platform admin-a
 | `/admin/dashboard` | admin/dashboard.html | dashboard |
 | `/admin/tenants` | admin/tenants/list.html | tenants |
 | `/admin/tenants/:id` | admin/tenants/detail.html | tenants |
-| `/admin/kyc` | admin/kyc/list.html | - (nije u navigaciji) |
-| `/admin/kyc/:id` | admin/kyc/detail.html | - (nije u navigaciji) |
+| `/admin/kyc` | admin/kyc/list.html | - |
+| `/admin/kyc/:id` | admin/kyc/detail.html | - |
 | `/admin/suppliers` | admin/suppliers/list.html | suppliers |
 | `/admin/suppliers/:id` | admin/suppliers/detail.html | suppliers |
 | `/admin/payments` | admin/payments/list.html | payments |
 | `/admin/settings` | admin/settings/index.html | settings |
+| `/admin/activity` | admin/activity/list.html | activity |
+| `/admin/packages` | admin/packages/index.html | packages |
+| `/admin/security` | admin/security/events.html | security |
 
-**Napomena:** KYC stranice postoje ali nisu u sidebar navigaciji - funkcionalnost se premesta u detalje servisa.
-
-### Supplier Panel (6)
+### Supplier Panel (9)
 | URL | Template |
 |-----|----------|
 | `/supplier/login` | supplier/login.html |
@@ -292,12 +321,23 @@ flask create-admin         # Kreiraj platform admin-a
 | `/supplier/orders/:id` | supplier/orders/detail.html |
 | `/supplier/settings` | supplier/settings.html |
 
-### Public (2)
+### Public (5)
 | URL | Template |
 |-----|----------|
 | `/` | public/landing.html |
 | `/track/:token` | public/track.html |
 | `/marketplace` | public/marketplace.html |
+| `/privacy` | public/privacy.html |
+| `/terms` | public/terms.html |
+
+### Tenant Public (5) - Javni sajt servisa
+| URL | Template |
+|-----|----------|
+| `subdomain.servishub.rs/` | tenant_public/home.html |
+| `subdomain.servishub.rs/cenovnik` | tenant_public/cenovnik.html |
+| `subdomain.servishub.rs/kontakt` | tenant_public/kontakt.html |
+| `subdomain.servishub.rs/o-nama` | tenant_public/o_nama.html |
+| (base layout) | tenant_public/base.html |
 
 ---
 
@@ -642,4 +682,4 @@ Landing Page (kontakt sekcija, social ikone)
 
 ---
 
-*Backend: 115+ ruta | Frontend: 53 fajla (51 template + 2 admin partials) | Heroku: Ready*
+*Backend: 120+ ruta | Frontend: 67 fajlova | Heroku: Ready*
