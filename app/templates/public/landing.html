@@ -2,8 +2,29 @@
 
 {% block title %}ServisHub - SaaS platforma za servise{% endblock %}
 
+{% block head %}
+<style>
+    /* Force light theme colors for public landing page */
+    .public-page, .public-page * { color: inherit; }
+    .public-page .text-gray-900 { color: #111827 !important; }
+    .public-page .text-gray-800 { color: #1f2937 !important; }
+    .public-page .text-gray-700 { color: #374151 !important; }
+    .public-page .text-gray-600 { color: #4b5563 !important; }
+    .public-page .text-gray-500 { color: #6b7280 !important; }
+    .public-page .text-gray-400 { color: #9ca3af !important; }
+    .public-page .bg-white { background-color: #ffffff !important; }
+    .public-page .bg-gray-50 { background-color: #f9fafb !important; }
+    .public-page .bg-gray-100 { background-color: #f3f4f6 !important; }
+    .public-page .border-gray-200 { border-color: #e5e7eb !important; }
+    .public-page .border-gray-300 { border-color: #d1d5db !important; }
+    .public-page .shadow-sm, .public-page .shadow {
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="min-h-screen bg-white">
+<div class="public-page min-h-screen bg-white">
     <!-- Header -->
     <header class="bg-white shadow-sm">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
