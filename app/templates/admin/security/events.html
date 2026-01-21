@@ -227,7 +227,10 @@
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <template x-if="event.tenant_id">
-                                            <button @click="filterByTenant(event.tenant_id)" class="text-xs font-mono text-purple-600 hover:underline" x-text="'#' + event.tenant_id"></button>
+                                            <div class="flex flex-col">
+                                                <button @click="filterByTenant(event.tenant_id)" class="text-xs font-mono text-purple-600 hover:underline" x-text="'#' + event.tenant_id"></button>
+                                                <span x-show="event.tenant_name" class="text-xs text-gray-500 truncate max-w-[120px]" x-text="event.tenant_name" :title="event.tenant_name"></span>
+                                            </div>
                                         </template>
                                         <template x-if="!event.tenant_id">
                                             <span class="text-xs text-gray-400">-</span>
@@ -292,7 +295,7 @@
                         <div><span class="text-gray-500">Severity:</span> <span x-text="selectedEvent?.severity"></span></div>
                         <div><span class="text-gray-500">IP:</span> <span class="font-mono" x-text="selectedEvent?.ip_address"></span></div>
                         <div><span class="text-gray-500">Korisnik:</span> <span x-text="selectedEvent?.user_type || 'guest'"></span></div>
-                        <div><span class="text-gray-500">Tenant ID:</span> <span class="font-mono" x-text="selectedEvent?.tenant_id || '-'"></span></div>
+                        <div><span class="text-gray-500">Tenant:</span> <span class="font-mono" x-text="selectedEvent?.tenant_id ? '#' + selectedEvent.tenant_id : '-'"></span> <span x-show="selectedEvent?.tenant_name" class="text-gray-700" x-text="'(' + (selectedEvent?.tenant_name || '') + ')'"></span></div>
                         <div><span class="text-gray-500">User ID:</span> <span class="font-mono" x-text="selectedEvent?.user_id || '-'"></span></div>
                         <div><span class="text-gray-500">Endpoint:</span> <span x-text="selectedEvent?.endpoint"></span></div>
                         <div class="col-span-2"><span class="text-gray-500">User Agent:</span> <span class="text-xs" x-text="selectedEvent?.user_agent"></span></div>

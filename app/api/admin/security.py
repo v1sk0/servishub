@@ -92,8 +92,23 @@ def list_security_events():
     # Paginate
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
+    # Dohvati tenant imena za sve evente
+    from app.models import Tenant
+    tenant_ids = list(set([e.tenant_id for e in pagination.items if e.tenant_id]))
+    tenant_names = {}
+    if tenant_ids:
+        tenants = Tenant.query.filter(Tenant.id.in_(tenant_ids)).all()
+        tenant_names = {t.id: t.name for t in tenants}
+
+    # Dodaj tenant_name u svaki event
+    events_with_names = []
+    for e in pagination.items:
+        event_dict = e.to_dict()
+        event_dict['tenant_name'] = tenant_names.get(e.tenant_id) if e.tenant_id else None
+        events_with_names.append(event_dict)
+
     return jsonify({
-        'events': [e.to_dict() for e in pagination.items],
+        'events': events_with_names,
         'pagination': {
             'page': pagination.page,
             'per_page': pagination.per_page,
