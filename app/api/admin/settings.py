@@ -149,7 +149,7 @@ def update_packages():
 # =============================================================================
 
 class UpdateCompanyRequest(BaseModel):
-    """Request za azuriranje podataka o firmi."""
+    """Request za azuriranje podataka o firmi (ukljucuje i social za landing)."""
     company_name: Optional[str] = None
     company_address: Optional[str] = None
     company_city: Optional[str] = None
@@ -162,6 +162,12 @@ class UpdateCompanyRequest(BaseModel):
     company_website: Optional[str] = None
     company_bank_name: Optional[str] = None
     company_bank_account: Optional[str] = None
+    # Social media za landing page
+    social_twitter: Optional[str] = None
+    social_facebook: Optional[str] = None
+    social_instagram: Optional[str] = None
+    social_linkedin: Optional[str] = None
+    social_youtube: Optional[str] = None
 
 
 @bp.route('/company', methods=['GET'])

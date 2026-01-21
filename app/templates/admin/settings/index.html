@@ -513,6 +513,52 @@
                                     </div>
                                 </div>
 
+                                <!-- Social Media Section -->
+                                <div class="border-t border-gray-200 pt-4 mt-2">
+                                    <h4 class="text-sm font-medium text-gray-900 mb-3">Drustvene mreze (za landing page)</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <!-- Facebook -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Facebook</label>
+                                            <input type="url" x-model="companyForm.social_facebook"
+                                                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                                   placeholder="https://facebook.com/servishub">
+                                        </div>
+
+                                        <!-- Instagram -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
+                                            <input type="url" x-model="companyForm.social_instagram"
+                                                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                                   placeholder="https://instagram.com/servishub">
+                                        </div>
+
+                                        <!-- LinkedIn -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
+                                            <input type="url" x-model="companyForm.social_linkedin"
+                                                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                                   placeholder="https://linkedin.com/company/servishub">
+                                        </div>
+
+                                        <!-- Twitter/X -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Twitter/X</label>
+                                            <input type="url" x-model="companyForm.social_twitter"
+                                                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                                   placeholder="https://x.com/servishub">
+                                        </div>
+
+                                        <!-- YouTube -->
+                                        <div class="md:col-span-2">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">YouTube</label>
+                                            <input type="url" x-model="companyForm.social_youtube"
+                                                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                                   placeholder="https://youtube.com/@servishub">
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                                     <button type="button" @click="showCompanyModal = false"
                                             class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
@@ -594,7 +640,13 @@ function settingsPage() {
             email: '',
             website: '',
             bank_name: '',
-            bank_account: ''
+            bank_account: '',
+            // Social media links
+            social_twitter: '',
+            social_facebook: '',
+            social_instagram: '',
+            social_linkedin: '',
+            social_youtube: ''
         },
         companyForm: {
             company_name: '',
@@ -608,7 +660,13 @@ function settingsPage() {
             company_email: '',
             company_website: '',
             company_bank_name: '',
-            company_bank_account: ''
+            company_bank_account: '',
+            // Social media links
+            social_twitter: '',
+            social_facebook: '',
+            social_instagram: '',
+            social_linkedin: '',
+            social_youtube: ''
         },
         companyLoading: true,
         companySaving: false,
@@ -848,7 +906,13 @@ function settingsPage() {
                 company_email: this.company.email || '',
                 company_website: this.company.website || '',
                 company_bank_name: this.company.bank_name || '',
-                company_bank_account: this.company.bank_account || ''
+                company_bank_account: this.company.bank_account || '',
+                // Social media
+                social_twitter: this.company.social_twitter || '',
+                social_facebook: this.company.social_facebook || '',
+                social_instagram: this.company.social_instagram || '',
+                social_linkedin: this.company.social_linkedin || '',
+                social_youtube: this.company.social_youtube || ''
             };
             this.showCompanyModal = true;
         },

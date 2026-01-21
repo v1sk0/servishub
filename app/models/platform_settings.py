@@ -48,6 +48,20 @@ class PlatformSettings(db.Model):
     company_bank_name = db.Column(db.String(100), default='')
     company_bank_account = db.Column(db.String(50), default='')  # Broj računa
 
+    # =========================================================================
+    # Kontakt podaci za landing page
+    # =========================================================================
+    contact_email = db.Column(db.String(100), default='')  # Email za kontakt na landing page
+    contact_phone = db.Column(db.String(50), default='')  # Telefon za kontakt na landing page
+    contact_location = db.Column(db.String(200), default='')  # Lokacija (npr. "Beograd, Srbija")
+
+    # Social media linkovi
+    social_twitter = db.Column(db.String(255), default='')
+    social_facebook = db.Column(db.String(255), default='')
+    social_instagram = db.Column(db.String(255), default='')
+    social_linkedin = db.Column(db.String(255), default='')
+    social_youtube = db.Column(db.String(255), default='')
+
     # Timestamps
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
@@ -88,11 +102,14 @@ class PlatformSettings(db.Model):
             'base_price', 'location_price', 'currency',
             'trial_days', 'demo_days', 'grace_period_days',
             'default_commission',
-            # Company data
+            # Company data (includes social for landing page)
             'company_name', 'company_address', 'company_city',
             'company_postal_code', 'company_country', 'company_pib',
             'company_mb', 'company_phone', 'company_email',
-            'company_website', 'company_bank_name', 'company_bank_account'
+            'company_website', 'company_bank_name', 'company_bank_account',
+            # Social media (koristi se na landing page)
+            'social_twitter', 'social_facebook', 'social_instagram',
+            'social_linkedin', 'social_youtube'
         ]
 
         for field in allowed_fields:
@@ -127,7 +144,7 @@ class PlatformSettings(db.Model):
         }
 
     def get_company_data(self):
-        """Vraca podatke o firmi ServisHub."""
+        """Vraca podatke o firmi ServisHub (ukljucuje i social za landing)."""
         return {
             'name': self.company_name or 'ServisHub DOO',
             'address': self.company_address or '',
@@ -140,7 +157,13 @@ class PlatformSettings(db.Model):
             'email': self.company_email or '',
             'website': self.company_website or '',
             'bank_name': self.company_bank_name or '',
-            'bank_account': self.company_bank_account or ''
+            'bank_account': self.company_bank_account or '',
+            # Social media za landing page
+            'social_twitter': self.social_twitter or '',
+            'social_facebook': self.social_facebook or '',
+            'social_instagram': self.social_instagram or '',
+            'social_linkedin': self.social_linkedin or '',
+            'social_youtube': self.social_youtube or ''
         }
 
     @classmethod
@@ -151,3 +174,29 @@ class PlatformSettings(db.Model):
         """
         settings = cls.get_settings()
         return settings.get_company_data()
+
+    def get_contact_data(self):
+        """
+        Vraca kontakt podatke za landing page.
+        Koristi company_* polja direktno.
+        """
+        return {
+            'email': self.company_email or '',
+            'phone': self.company_phone or '',
+            'location': f"{self.company_city or 'Beograd'}, {self.company_country or 'Srbija'}",
+            'social': {
+                'twitter': self.social_twitter or '',
+                'facebook': self.social_facebook or '',
+                'instagram': self.social_instagram or '',
+                'linkedin': self.social_linkedin or '',
+                'youtube': self.social_youtube or ''
+            }
+        }
+
+    @classmethod
+    def get_landing_contact(cls):
+        """
+        Staticka metoda za dobijanje kontakt podataka za landing page.
+        """
+        settings = cls.get_settings()
+        return settings.get_contact_data()

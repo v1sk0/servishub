@@ -30,5 +30,6 @@ def get_pricing():
         'base_price': float(settings.base_price) if settings.base_price else 3600.0,
         'location_price': float(settings.location_price) if settings.location_price else 1800.0,
         'currency': settings.currency or 'RSD',
-        'trial_days': settings.trial_days or 90
+        'trial_days': settings.trial_days or 90,
+        'contact': settings.get_contact_data()
     })
