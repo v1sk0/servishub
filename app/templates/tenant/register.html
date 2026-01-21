@@ -2,8 +2,28 @@
 
 {% block title %}Registracija - ServisHub{% endblock %}
 
+{% block head %}
+<style>
+    /* Force light theme colors for public registration page */
+    .public-page .text-gray-900 { color: #111827 !important; }
+    .public-page .text-gray-800 { color: #1f2937 !important; }
+    .public-page .text-gray-700 { color: #374151 !important; }
+    .public-page .text-gray-600 { color: #4b5563 !important; }
+    .public-page .text-gray-500 { color: #6b7280 !important; }
+    .public-page .bg-gray-50 { background-color: #f9fafb !important; }
+    .public-page .bg-white { background-color: #ffffff !important; }
+    .public-page .border-gray-300 { border-color: #d1d5db !important; }
+    .public-page input, .public-page select, .public-page textarea {
+        background-color: #ffffff !important;
+        color: #111827 !important;
+        border-color: #d1d5db !important;
+    }
+    .public-page label { color: #374151 !important; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8" x-data="registerPage()">
+<div class="public-page min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8" x-data="registerPage()">
     <div class="max-w-lg w-full space-y-8">
         <div>
             <div class="flex justify-center">
