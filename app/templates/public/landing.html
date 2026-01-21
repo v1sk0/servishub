@@ -1,386 +1,1136 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}ServisHub - SaaS platforma za servise{% endblock %}
+{% block title %}ServisHub - #1 Platforma za Servise Mobilnih Telefona{% endblock %}
 
 {% block head %}
 <style>
-    /* Force light theme colors for public landing page */
-    /* Reset glass-theme overrides completely */
-    .public-page .text-white { color: #ffffff !important; }
-    .public-page .text-gray-900 { color: #111827 !important; }
-    .public-page .text-gray-800 { color: #1f2937 !important; }
-    .public-page .text-gray-700 { color: #374151 !important; }
-    .public-page .text-gray-600 { color: #4b5563 !important; }
-    .public-page .text-gray-500 { color: #6b7280 !important; }
-    .public-page .text-gray-400 { color: #9ca3af !important; }
-    .public-page .text-primary-600 { color: #2563eb !important; }
-    .public-page .text-primary-700 { color: #1d4ed8 !important; }
-    .public-page .text-primary-200 { color: #bfdbfe !important; }
-    .public-page .text-green-500 { color: #22c55e !important; }
-    .public-page .text-green-600 { color: #16a34a !important; }
-    .public-page .text-blue-600 { color: #2563eb !important; }
-    .public-page .text-purple-600 { color: #9333ea !important; }
-    .public-page .text-yellow-600 { color: #ca8a04 !important; }
-    .public-page .text-red-600 { color: #dc2626 !important; }
+    /* ============================================
+       SERVISHUB WORLD-CLASS LANDING PAGE 2026
+       Inspired by: Linear, Notion, Stripe, Vercel
+       ============================================ */
 
-    /* Backgrounds */
-    .public-page .bg-white { background-color: #ffffff !important; }
-    .public-page .bg-gray-50 { background-color: #f9fafb !important; }
-    .public-page .bg-gray-100 { background-color: #f3f4f6 !important; }
-    .public-page .bg-gray-900 { background-color: #111827 !important; }
-    .public-page .bg-primary-100 { background-color: #dbeafe !important; }
-    .public-page .bg-primary-200 { background-color: #bfdbfe !important; }
-    .public-page .bg-primary-600 { background-color: #2563eb !important; }
-    .public-page .bg-green-100 { background-color: #dcfce7 !important; }
-    .public-page .bg-blue-100 { background-color: #dbeafe !important; }
-    .public-page .bg-purple-100 { background-color: #f3e8ff !important; }
-    .public-page .bg-yellow-100 { background-color: #fef9c3 !important; }
-    .public-page .bg-red-100 { background-color: #fee2e2 !important; }
-
-    /* Borders */
-    .public-page .border-gray-200 { border-color: #e5e7eb !important; }
-    .public-page .border-gray-300 { border-color: #d1d5db !important; }
-    .public-page .border-primary-600 { border-color: #2563eb !important; }
-
-    /* Shadows */
-    .public-page .shadow-sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important; }
-    .public-page .shadow { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1) !important; }
-    .public-page .shadow-lg { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important; }
-    .public-page .shadow-xl { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important; }
-
-    /* Input fields */
-    .public-page input {
-        background-color: #ffffff !important;
-        color: #111827 !important;
-        border-color: #d1d5db !important;
+    /* Reset glass-theme for public pages */
+    .public-page * { color: inherit; }
+    .public-page {
+        background: #0a0a0f !important;
+        color: #ffffff;
+        overflow-x: hidden;
     }
-    .public-page input::placeholder { color: #9ca3af !important; }
+
+    /* ============================================
+       ANIMATED GRADIENT BACKGROUND
+       ============================================ */
+    .hero-gradient {
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.3), transparent),
+            radial-gradient(ellipse 60% 50% at 80% 50%, rgba(168, 85, 247, 0.2), transparent),
+            radial-gradient(ellipse 50% 40% at 20% 60%, rgba(59, 130, 246, 0.2), transparent);
+        animation: gradientShift 15s ease-in-out infinite;
+    }
+
+    @keyframes gradientShift {
+        0%, 100% {
+            background-position: 0% 50%;
+            filter: hue-rotate(0deg);
+        }
+        50% {
+            background-position: 100% 50%;
+            filter: hue-rotate(30deg);
+        }
+    }
+
+    /* Floating orbs */
+    .floating-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(60px);
+        animation: float 20s ease-in-out infinite;
+        pointer-events: none;
+    }
+
+    .orb-1 {
+        width: 400px;
+        height: 400px;
+        background: rgba(99, 102, 241, 0.4);
+        top: -10%;
+        left: 10%;
+        animation-delay: 0s;
+    }
+
+    .orb-2 {
+        width: 300px;
+        height: 300px;
+        background: rgba(168, 85, 247, 0.3);
+        top: 40%;
+        right: 5%;
+        animation-delay: -5s;
+    }
+
+    .orb-3 {
+        width: 250px;
+        height: 250px;
+        background: rgba(59, 130, 246, 0.3);
+        bottom: 10%;
+        left: 30%;
+        animation-delay: -10s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        25% { transform: translate(30px, -30px) scale(1.05); }
+        50% { transform: translate(-20px, 20px) scale(0.95); }
+        75% { transform: translate(20px, 10px) scale(1.02); }
+    }
+
+    /* ============================================
+       GLASSMORPHISM CARDS
+       ============================================ */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-4px);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    /* ============================================
+       GRADIENT TEXT
+       ============================================ */
+    .gradient-text {
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #3b82f6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .gradient-text-gold {
+        background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* ============================================
+       BUTTONS
+       ============================================ */
+    .btn-primary {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.5);
+    }
+
+    .btn-primary:hover::before {
+        opacity: 1;
+    }
+
+    .btn-primary span {
+        position: relative;
+        z-index: 1;
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* ============================================
+       SCROLL ANIMATIONS
+       ============================================ */
+    .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ============================================
+       STATS COUNTER ANIMATION
+       ============================================ */
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    /* ============================================
+       FEATURE CARDS
+       ============================================ */
+    .feature-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        transition: transform 0.3s ease;
+    }
+
+    .glass-card:hover .feature-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    /* ============================================
+       PRODUCT MOCKUP
+       ============================================ */
+    .mockup-container {
+        position: relative;
+        perspective: 1500px;
+    }
+
+    .mockup-screen {
+        background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+        box-shadow:
+            0 50px 100px -20px rgba(0, 0, 0, 0.5),
+            0 30px 60px -30px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        transform: rotateY(-5deg) rotateX(5deg);
+        transition: transform 0.5s ease;
+    }
+
+    .mockup-container:hover .mockup-screen {
+        transform: rotateY(0deg) rotateX(0deg);
+    }
+
+    .mockup-header {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .mockup-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .mockup-content {
+        padding: 20px;
+        min-height: 300px;
+    }
+
+    /* ============================================
+       TESTIMONIALS
+       ============================================ */
+    .testimonial-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+
+    /* ============================================
+       PRICING GLOW
+       ============================================ */
+    .pricing-card {
+        position: relative;
+    }
+
+    .pricing-card::before {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        background: linear-gradient(135deg, #6366f1, #a855f7, #3b82f6);
+        border-radius: 26px;
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .pricing-card:hover::before {
+        opacity: 1;
+    }
+
+    /* ============================================
+       GRID BACKGROUND
+       ============================================ */
+    .grid-bg {
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 60px 60px;
+        mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+        -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+    }
+
+    /* ============================================
+       NAVIGATION
+       ============================================ */
+    .nav-blur {
+        background: rgba(10, 10, 15, 0.8);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* ============================================
+       SECTION DIVIDER
+       ============================================ */
+    .section-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    }
+
+    /* ============================================
+       BADGE
+       ============================================ */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        background: rgba(99, 102, 241, 0.2);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        color: #a5b4fc;
+    }
+
+    .badge-pulse {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22c55e;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    /* ============================================
+       HOW IT WORKS STEP
+       ============================================ */
+    .step-number {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .step-line {
+        width: 2px;
+        height: 40px;
+        background: linear-gradient(to bottom, #6366f1, transparent);
+        margin: 8px 0;
+        margin-left: 23px;
+    }
+
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 768px) {
+        .stat-number { font-size: 2rem; }
+        .mockup-screen { transform: none; }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="public-page min-h-screen bg-white">
-    <!-- Header -->
-    <header class="bg-white shadow-sm">
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="/" class="flex items-center">
-                        <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                        </div>
-                        <span class="ml-3 text-xl font-bold text-gray-900">ServisHub</span>
-                    </a>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="/login" class="text-gray-600 hover:text-gray-900 font-medium">Prijava</a>
-                    <a href="/register" class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium">
-                        Besplatna registracija
-                    </a>
-                </div>
-            </div>
-        </nav>
-    </header>
+<div class="public-page min-h-screen" x-data="landingPage()" x-init="init()">
 
-    <!-- Hero -->
-    <div class="relative bg-white overflow-hidden">
-        <div class="max-w-7xl mx-auto">
-            <div class="relative z-10 pb-8 bg-white sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
-                <main class="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
-                    <div class="sm:text-center lg:text-left">
-                        <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-                            <span class="block">Upravljajte servisom</span>
-                            <span class="block text-primary-600">jednostavno i efikasno</span>
-                        </h1>
-                        <p class="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-                            Kompletno rešenje za servise mobilnih telefona i računara.
-                            Pratite naloge, upravljajte inventarom, nabavljajte delove.
-                        </p>
-                        <div class="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
-                            <div class="rounded-md shadow">
-                                <a href="/register" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 md:py-4 md:text-lg md:px-10">
-                                    Započni besplatno
-                                </a>
-                            </div>
-                            <div class="mt-3 sm:mt-0 sm:ml-3">
-                                <a href="#features" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 md:py-4 md:text-lg md:px-10">
-                                    Saznaj više
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </main>
-            </div>
-        </div>
-        <div class="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
-            <div class="h-56 w-full bg-gradient-to-br from-primary-400 to-primary-600 sm:h-72 md:h-96 lg:w-full lg:h-full flex items-center justify-center">
-                <svg class="w-48 h-48 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-            </div>
-        </div>
-    </div>
-
-    <!-- Features -->
-    <div id="features" class="py-12 bg-gray-50">
+    <!-- ============================================
+         NAVIGATION
+         ============================================ -->
+    <nav class="nav-blur fixed top-0 left-0 right-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="lg:text-center">
-                <h2 class="text-base text-primary-600 font-semibold tracking-wide uppercase">Funkcionalnosti</h2>
-                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-                    Sve što vam treba na jednom mestu
-                </p>
-            </div>
-
-            <div class="mt-10">
-                <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
-                    <!-- Feature 1 -->
-                    <div class="bg-white rounded-lg shadow-lg p-6">
-                        <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-4">
-                            <svg class="w-6 h-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-medium text-gray-900">Servisni nalozi</h3>
-                        <p class="mt-2 text-gray-500">
-                            Pratite status popravki, garancije, cene. QR kod za praćenje od strane kupaca.
-                        </p>
-                    </div>
-
-                    <!-- Feature 2 -->
-                    <div class="bg-white rounded-lg shadow-lg p-6">
-                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                            <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-medium text-gray-900">Inventar telefona</h3>
-                        <p class="mt-2 text-gray-500">
-                            Vodite evidenciju telefona na lageru, nabavne i prodajne cene, IMEI brojeve.
-                        </p>
-                    </div>
-
-                    <!-- Feature 3 -->
-                    <div class="bg-white rounded-lg shadow-lg p-6">
-                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                            <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-medium text-gray-900">Rezervni delovi</h3>
-                        <p class="mt-2 text-gray-500">
-                            Upravljajte zalihama delova, postavite minimalne zalihe, pratite vrednost.
-                        </p>
-                    </div>
-
-                    <!-- Feature 4 -->
-                    <div class="bg-white rounded-lg shadow-lg p-6">
-                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                            <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-medium text-gray-900">Marketplace</h3>
-                        <p class="mt-2 text-gray-500">
-                            Nabavite delove od verifikovanih dobavljača. Uporedite cene i rokove isporuke.
-                        </p>
-                    </div>
-
-                    <!-- Feature 5 -->
-                    <div class="bg-white rounded-lg shadow-lg p-6">
-                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-4">
-                            <svg class="w-6 h-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-medium text-gray-900">Više lokacija</h3>
-                        <p class="mt-2 text-gray-500">
-                            Upravljajte više lokacija servisa iz jednog mesta. Odvojena statistika po lokaciji.
-                        </p>
-                    </div>
-
-                    <!-- Feature 6 -->
-                    <div class="bg-white rounded-lg shadow-lg p-6">
-                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
-                            <svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-medium text-gray-900">Izveštaji</h3>
-                        <p class="mt-2 text-gray-500">
-                            Detaljni izveštaji o prometu, garancijama, najprodavanijim uslugama.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pricing -->
-    <div class="py-12 bg-white" x-data="pricingComponent()" x-init="loadPricing()">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="lg:text-center mb-10">
-                <h2 class="text-base text-primary-600 font-semibold tracking-wide uppercase">Cenovnik</h2>
-                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-                    Jednostavno i transparentno
-                </p>
-            </div>
-
-            <div class="max-w-lg mx-auto">
-                <div class="bg-white border-2 border-primary-600 rounded-2xl shadow-xl overflow-hidden">
-                    <div class="px-6 py-8 bg-primary-600 sm:p-10 sm:pb-6">
-                        <div class="flex justify-center">
-                            <span class="inline-flex px-4 py-1 rounded-full text-sm font-semibold tracking-wide uppercase bg-primary-200 text-primary-700"
-                                  x-text="trialText">
-                                3 meseca besplatno
-                            </span>
-                        </div>
-                        <div class="mt-4 flex justify-center items-baseline text-6xl font-extrabold text-white">
-                            <span x-text="formattedBasePrice">3.600</span>
-                            <span class="ml-1 text-2xl font-medium text-primary-200" x-text="currency + '/mes'">RSD/mes</span>
-                        </div>
-                        <p class="mt-5 text-lg text-center text-primary-200">
-                            + <span x-text="formattedLocationPrice">1.800</span> <span x-text="currency">RSD</span> za svaku dodatnu lokaciju
-                        </p>
-                    </div>
-                    <div class="px-6 pt-6 pb-8 bg-white sm:p-10 sm:pt-6">
-                        <ul class="space-y-4">
-                            <li class="flex items-start">
-                                <div class="flex-shrink-0">
-                                    <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </div>
-                                <p class="ml-3 text-base text-gray-700">Neograničen broj naloga</p>
-                            </li>
-                            <li class="flex items-start">
-                                <div class="flex-shrink-0">
-                                    <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </div>
-                                <p class="ml-3 text-base text-gray-700">Neograničen broj korisnika</p>
-                            </li>
-                            <li class="flex items-start">
-                                <div class="flex-shrink-0">
-                                    <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </div>
-                                <p class="ml-3 text-base text-gray-700">Inventar telefona i delova</p>
-                            </li>
-                            <li class="flex items-start">
-                                <div class="flex-shrink-0">
-                                    <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </div>
-                                <p class="ml-3 text-base text-gray-700">Marketplace pristup</p>
-                            </li>
-                            <li class="flex items-start">
-                                <div class="flex-shrink-0">
-                                    <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </div>
-                                <p class="ml-3 text-base text-gray-700">QR praćenje za kupce</p>
-                            </li>
-                            <li class="flex items-start">
-                                <div class="flex-shrink-0">
-                                    <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </div>
-                                <p class="ml-3 text-base text-gray-700">Personalizovan website</p>
-                            </li>
-                        </ul>
-                        <div class="mt-8">
-                            <a href="/register" class="block w-full bg-primary-600 text-center py-3 px-4 rounded-md shadow text-white font-medium hover:bg-primary-700">
-                                Započni besplatni trial
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pricing JavaScript -->
-    <script>
-    function pricingComponent() {
-        return {
-            basePrice: 3600,
-            locationPrice: 1800,
-            currency: 'RSD',
-            trialDays: 90,
-
-            get formattedBasePrice() {
-                return this.formatPrice(this.basePrice);
-            },
-
-            get formattedLocationPrice() {
-                return this.formatPrice(this.locationPrice);
-            },
-
-            get trialText() {
-                // Za manje od 60 dana prikaži dane
-                if (this.trialDays < 60) {
-                    return this.trialDays + ' dana besplatno';
-                }
-                // Za 60+ dana prikaži mesece
-                const months = Math.floor(this.trialDays / 30);
-                if (months === 1) return '1 mesec besplatno';
-                if (months >= 2 && months <= 4) return months + ' meseca besplatno';
-                return months + ' meseci besplatno';
-            },
-
-            formatPrice(price) {
-                return price.toLocaleString('sr-RS');
-            },
-
-            async loadPricing() {
-                try {
-                    const response = await fetch('/api/v1/public/pricing');
-                    if (response.ok) {
-                        const data = await response.json();
-                        this.basePrice = data.base_price || 3600;
-                        this.locationPrice = data.location_price || 1800;
-                        this.currency = data.currency || 'RSD';
-                        this.trialDays = data.trial_days || 90;
-                    }
-                } catch (error) {
-                    console.error('Failed to load pricing:', error);
-                }
-            }
-        }
-    }
-    </script>
-
-    <!-- Footer -->
-    <footer class="bg-gray-900">
-        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center">
-                    <div class="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+            <div class="flex justify-between items-center h-16">
+                <a href="/" class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                         <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                     </div>
-                    <span class="ml-3 text-xl font-bold text-white">ServisHub</span>
+                    <span class="text-xl font-bold text-white">ServisHub</span>
+                </a>
+
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="#features" class="text-gray-400 hover:text-white transition-colors">Funkcije</a>
+                    <a href="#how-it-works" class="text-gray-400 hover:text-white transition-colors">Kako radi</a>
+                    <a href="#pricing" class="text-gray-400 hover:text-white transition-colors">Cenovnik</a>
                 </div>
-                <div class="flex space-x-6">
-                    <a href="/privacy" class="text-gray-400 hover:text-white text-sm">Politika privatnosti</a>
-                    <a href="/terms" class="text-gray-400 hover:text-white text-sm">Uslovi korišćenja</a>
+
+                <div class="flex items-center gap-4">
+                    <a href="/login" class="text-gray-400 hover:text-white transition-colors font-medium">Prijava</a>
+                    <a href="/register" class="btn-primary text-sm py-2 px-4">
+                        <span>Započni besplatno</span>
+                    </a>
                 </div>
             </div>
-            <p class="mt-4 text-gray-400 text-sm text-center">
-                &copy; 2026 ServisHub. Sva prava zadržana.
+        </div>
+    </nav>
+
+    <!-- ============================================
+         HERO SECTION
+         ============================================ -->
+    <section class="relative min-h-screen flex items-center pt-16 overflow-hidden">
+        <!-- Animated Background -->
+        <div class="hero-gradient"></div>
+        <div class="grid-bg"></div>
+        <div class="floating-orb orb-1"></div>
+        <div class="floating-orb orb-2"></div>
+        <div class="floating-orb orb-3"></div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- Left: Content -->
+                <div class="text-center lg:text-left">
+                    <div class="badge mb-6 reveal">
+                        <span class="badge-pulse"></span>
+                        Novo: Personalizovani website za vaš servis
+                    </div>
+
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6 reveal reveal-delay-1">
+                        Vaš servis zaslužuje
+                        <span class="gradient-text block">profesionalni sistem</span>
+                    </h1>
+
+                    <p class="text-xl text-gray-400 mb-8 max-w-xl mx-auto lg:mx-0 reveal reveal-delay-2">
+                        Sve na jednom mestu: servisni nalozi, inventar, garancije,
+                        statistika i direktna komunikacija sa kupcima.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start reveal reveal-delay-3">
+                        <a href="/register" class="btn-primary">
+                            <span>Započni besplatno</span>
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                        </a>
+                        <a href="#features" class="btn-secondary">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Pogledaj demo</span>
+                        </a>
+                    </div>
+
+                    <!-- Trust badges -->
+                    <div class="mt-10 flex items-center gap-6 justify-center lg:justify-start reveal reveal-delay-4">
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            <span x-text="trialDays + ' dana besplatno'">45 dana besplatno</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            Bez kartice
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            Podrška 24/7
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Product Mockup -->
+                <div class="mockup-container reveal reveal-delay-2">
+                    <div class="mockup-screen">
+                        <div class="mockup-header">
+                            <div class="mockup-dot bg-red-500"></div>
+                            <div class="mockup-dot bg-yellow-500"></div>
+                            <div class="mockup-dot bg-green-500"></div>
+                            <span class="text-gray-500 text-sm ml-4">servishub.rs/tickets</span>
+                        </div>
+                        <div class="mockup-content">
+                            <!-- Fake Dashboard UI -->
+                            <div class="grid grid-cols-4 gap-3 mb-4">
+                                <div class="bg-indigo-500/20 rounded-lg p-3 text-center">
+                                    <div class="text-2xl font-bold text-indigo-400">47</div>
+                                    <div class="text-xs text-gray-500">Aktivni</div>
+                                </div>
+                                <div class="bg-green-500/20 rounded-lg p-3 text-center">
+                                    <div class="text-2xl font-bold text-green-400">12</div>
+                                    <div class="text-xs text-gray-500">Završeni</div>
+                                </div>
+                                <div class="bg-yellow-500/20 rounded-lg p-3 text-center">
+                                    <div class="text-2xl font-bold text-yellow-400">8</div>
+                                    <div class="text-xs text-gray-500">Čekaju</div>
+                                </div>
+                                <div class="bg-purple-500/20 rounded-lg p-3 text-center">
+                                    <div class="text-2xl font-bold text-purple-400">156k</div>
+                                    <div class="text-xs text-gray-500">Prihod</div>
+                                </div>
+                            </div>
+                            <!-- Fake Table -->
+                            <div class="space-y-2">
+                                <div class="bg-white/5 rounded-lg p-3 flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500"></div>
+                                    <div class="flex-1">
+                                        <div class="text-sm font-medium">iPhone 15 Pro - Zamena ekrana</div>
+                                        <div class="text-xs text-gray-500">Marko P. • Pre 2 sata</div>
+                                    </div>
+                                    <span class="px-2 py-1 rounded-full text-xs bg-green-500/20 text-green-400">U radu</span>
+                                </div>
+                                <div class="bg-white/5 rounded-lg p-3 flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500"></div>
+                                    <div class="flex-1">
+                                        <div class="text-sm font-medium">Samsung S24 - Baterija</div>
+                                        <div class="text-xs text-gray-500">Ana M. • Pre 5 sati</div>
+                                    </div>
+                                    <span class="px-2 py-1 rounded-full text-xs bg-yellow-500/20 text-yellow-400">Čeka deo</span>
+                                </div>
+                                <div class="bg-white/5 rounded-lg p-3 flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-500"></div>
+                                    <div class="flex-1">
+                                        <div class="text-sm font-medium">Xiaomi 14 - Popravka konektora</div>
+                                        <div class="text-xs text-gray-500">Petar N. • Pre 1 dan</div>
+                                    </div>
+                                    <span class="px-2 py-1 rounded-full text-xs bg-indigo-500/20 text-indigo-400">Završeno</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SOCIAL PROOF - STATS
+         ============================================ -->
+    <section class="relative py-16 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div class="reveal">
+                    <div class="stat-number gradient-text" x-data="{ count: 0 }" x-intersect.once="animateCount($el, 500)">500+</div>
+                    <div class="text-gray-500 mt-2">Servisa koristi</div>
+                </div>
+                <div class="reveal reveal-delay-1">
+                    <div class="stat-number gradient-text" x-data="{ count: 0 }" x-intersect.once="animateCount($el, 150000)">150.000+</div>
+                    <div class="text-gray-500 mt-2">Obrađenih naloga</div>
+                </div>
+                <div class="reveal reveal-delay-2">
+                    <div class="stat-number gradient-text">99.9%</div>
+                    <div class="text-gray-500 mt-2">Uptime</div>
+                </div>
+                <div class="reveal reveal-delay-3">
+                    <div class="stat-number gradient-text-gold">4.9/5</div>
+                    <div class="text-gray-500 mt-2">Ocena korisnika</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ============================================
+         FEATURES
+         ============================================ -->
+    <section id="features" class="relative py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4 reveal">
+                    Sve što vam treba za <span class="gradient-text">uspešan servis</span>
+                </h2>
+                <p class="text-xl text-gray-400 max-w-2xl mx-auto reveal reveal-delay-1">
+                    Moćne funkcije dizajnirane za servise mobilnih telefona i računara
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Feature 1 -->
+                <div class="glass-card p-8 reveal">
+                    <div class="feature-icon bg-gradient-to-br from-indigo-500 to-purple-600">
+                        <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Servisni nalozi</h3>
+                    <p class="text-gray-400">
+                        Kreirajte, pratite i upravljajte nalozima. QR kod za praćenje statusa.
+                        SMS/Email obaveštenja kupcima.
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="glass-card p-8 reveal reveal-delay-1">
+                    <div class="feature-icon bg-gradient-to-br from-green-500 to-emerald-600">
+                        <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Garancije</h3>
+                    <p class="text-gray-400">
+                        Automatsko praćenje garancija. Obaveštenja pre isteka.
+                        Kompletna istorija popravki po uređaju.
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="glass-card p-8 reveal reveal-delay-2">
+                    <div class="feature-icon bg-gradient-to-br from-blue-500 to-cyan-600">
+                        <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Inventar delova</h3>
+                    <p class="text-gray-400">
+                        Praćenje zaliha u realnom vremenu. Upozorenja za niske zalihe.
+                        Automatsko naručivanje.
+                    </p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="glass-card p-8 reveal">
+                    <div class="feature-icon bg-gradient-to-br from-purple-500 to-pink-600">
+                        <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Marketplace</h3>
+                    <p class="text-gray-400">
+                        Nabavite delove od verifikovanih dobavljača.
+                        Uporedite cene i rokove isporuke na jednom mestu.
+                    </p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="glass-card p-8 reveal reveal-delay-1">
+                    <div class="feature-icon bg-gradient-to-br from-orange-500 to-red-600">
+                        <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Analitika</h3>
+                    <p class="text-gray-400">
+                        Detaljni izveštaji o prometu, najčešćim kvarovima,
+                        profitabilnosti i produktivnosti tehničara.
+                    </p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="glass-card p-8 reveal reveal-delay-2">
+                    <div class="feature-icon bg-gradient-to-br from-teal-500 to-green-600">
+                        <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Vaš website</h3>
+                    <p class="text-gray-400">
+                        Personalizovan website za vaš servis.
+                        Kupci mogu pratiti status naloga online 24/7.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ============================================
+         HOW IT WORKS
+         ============================================ -->
+    <section id="how-it-works" class="relative py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4 reveal">
+                    Počnite za <span class="gradient-text">5 minuta</span>
+                </h2>
+                <p class="text-xl text-gray-400 max-w-2xl mx-auto reveal reveal-delay-1">
+                    Jednostavan proces registracije i podešavanja
+                </p>
+            </div>
+
+            <div class="max-w-3xl mx-auto">
+                <!-- Step 1 -->
+                <div class="flex gap-6 reveal">
+                    <div class="flex flex-col items-center">
+                        <div class="step-number">1</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="pb-12">
+                        <h3 class="text-xl font-semibold mb-2">Registrujte se besplatno</h3>
+                        <p class="text-gray-400">
+                            Unesite osnovne podatke o servisu. Bez kreditne kartice,
+                            bez obaveza. Nalog je aktivan odmah.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="flex gap-6 reveal reveal-delay-1">
+                    <div class="flex flex-col items-center">
+                        <div class="step-number">2</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="pb-12">
+                        <h3 class="text-xl font-semibold mb-2">Podesite servis</h3>
+                        <p class="text-gray-400">
+                            Dodajte tehničare, lokacije, usluge i cenovnik.
+                            Sistem vas vodi kroz svaki korak.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="flex gap-6 reveal reveal-delay-2">
+                    <div class="flex flex-col items-center">
+                        <div class="step-number">3</div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">Primajte naloge</h3>
+                        <p class="text-gray-400">
+                            Kreirajte prvi nalog i počnite da pratite sve popravke.
+                            Kupci dobijaju QR kod za praćenje statusa.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ============================================
+         TESTIMONIALS
+         ============================================ -->
+    <section class="relative py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4 reveal">
+                    Šta kažu <span class="gradient-text">naši korisnici</span>
+                </h2>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Testimonial 1 -->
+                <div class="glass-card p-8 reveal">
+                    <div class="flex items-center gap-1 mb-4">
+                        <template x-for="i in 5">
+                            <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                        </template>
+                    </div>
+                    <p class="text-gray-300 mb-6">
+                        "ServisHub nam je promenio način rada. Više ne gubimo naloge,
+                        kupci su zadovoljniji, a mi imamo kompletan pregled poslovanja."
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <div class="testimonial-avatar">MP</div>
+                        <div>
+                            <div class="font-semibold">Marko Petrović</div>
+                            <div class="text-sm text-gray-500">TechFix Servis, Beograd</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 2 -->
+                <div class="glass-card p-8 reveal reveal-delay-1">
+                    <div class="flex items-center gap-1 mb-4">
+                        <template x-for="i in 5">
+                            <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                        </template>
+                    </div>
+                    <p class="text-gray-300 mb-6">
+                        "Konačno sistem koji razume potrebe malih servisa.
+                        Jednostavan za korišćenje, a pruža sve što nam treba."
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <div class="testimonial-avatar">JN</div>
+                        <div>
+                            <div class="font-semibold">Jelena Nikolić</div>
+                            <div class="text-sm text-gray-500">MobilPro, Novi Sad</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 3 -->
+                <div class="glass-card p-8 reveal reveal-delay-2">
+                    <div class="flex items-center gap-1 mb-4">
+                        <template x-for="i in 5">
+                            <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                        </template>
+                    </div>
+                    <p class="text-gray-300 mb-6">
+                        "Od kada koristimo ServisHub, produktivnost nam je porasla za 40%.
+                        Preporučujem svim kolegama u branši."
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <div class="testimonial-avatar">SM</div>
+                        <div>
+                            <div class="font-semibold">Stefan Marković</div>
+                            <div class="text-sm text-gray-500">GSM Expert, Niš</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ============================================
+         PRICING
+         ============================================ -->
+    <section id="pricing" class="relative py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4 reveal">
+                    Jednostavan i <span class="gradient-text">transparentan</span> cenovnik
+                </h2>
+                <p class="text-xl text-gray-400 max-w-2xl mx-auto reveal reveal-delay-1">
+                    Sve funkcije uključene. Bez skrivenih troškova.
+                </p>
+            </div>
+
+            <div class="max-w-lg mx-auto reveal reveal-delay-2">
+                <div class="pricing-card glass-card p-8 relative overflow-hidden">
+                    <!-- Popular badge -->
+                    <div class="absolute top-0 right-0 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-semibold px-4 py-1 rounded-bl-xl">
+                        Najpopularniji
+                    </div>
+
+                    <!-- Trial badge -->
+                    <div class="badge mb-6">
+                        <span class="badge-pulse"></span>
+                        <span x-text="trialDays + ' dana besplatno'">45 dana besplatno</span>
+                    </div>
+
+                    <!-- Price -->
+                    <div class="flex items-baseline gap-2 mb-2">
+                        <span class="text-5xl font-bold gradient-text" x-text="formattedBasePrice">3.600</span>
+                        <span class="text-xl text-gray-400" x-text="currency + '/mesec'">RSD/mesec</span>
+                    </div>
+
+                    <p class="text-gray-400 mb-8">
+                        + <span x-text="formattedLocationPrice">2.400</span> <span x-text="currency">RSD</span> za svaku dodatnu lokaciju
+                    </p>
+
+                    <!-- Features list -->
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            <span>Neograničen broj naloga</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            <span>Neograničen broj korisnika</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            <span>Inventar telefona i delova</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            <span>Marketplace pristup</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            <span>QR praćenje za kupce</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            <span>Personalizovan website</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            <span>Podrška 24/7</span>
+                        </li>
+                    </ul>
+
+                    <a href="/register" class="btn-primary w-full justify-center">
+                        <span>Započni besplatni trial</span>
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                    </a>
+
+                    <p class="text-center text-sm text-gray-500 mt-4">
+                        Bez kreditne kartice. Otkažite bilo kada.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         FINAL CTA
+         ============================================ -->
+    <section class="relative py-24 overflow-hidden">
+        <div class="hero-gradient opacity-50"></div>
+        <div class="floating-orb orb-1 opacity-30"></div>
+        <div class="floating-orb orb-2 opacity-30"></div>
+
+        <div class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl sm:text-5xl font-bold mb-6 reveal">
+                Spremni da transformišete <br><span class="gradient-text">vaš servis?</span>
+            </h2>
+            <p class="text-xl text-gray-400 mb-10 reveal reveal-delay-1">
+                Pridružite se stotinama servisa koji su već podigli svoje poslovanje
+                na viši nivo sa ServisHub platformom.
             </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center reveal reveal-delay-2">
+                <a href="/register" class="btn-primary text-lg px-10 py-5">
+                    <span>Započni besplatno danas</span>
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         FOOTER
+         ============================================ -->
+    <footer class="border-t border-white/5 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-8">
+                <!-- Brand -->
+                <div class="md:col-span-2">
+                    <a href="/" class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
+                        <span class="text-xl font-bold text-white">ServisHub</span>
+                    </a>
+                    <p class="text-gray-500 max-w-sm">
+                        Profesionalna platforma za upravljanje servisima mobilnih telefona i računara.
+                    </p>
+                </div>
+
+                <!-- Links -->
+                <div>
+                    <h4 class="font-semibold mb-4">Proizvod</h4>
+                    <ul class="space-y-2 text-gray-500">
+                        <li><a href="#features" class="hover:text-white transition-colors">Funkcije</a></li>
+                        <li><a href="#pricing" class="hover:text-white transition-colors">Cenovnik</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Integracije</a></li>
+                    </ul>
+                </div>
+
+                <!-- Legal -->
+                <div>
+                    <h4 class="font-semibold mb-4">Pravne informacije</h4>
+                    <ul class="space-y-2 text-gray-500">
+                        <li><a href="/privacy" class="hover:text-white transition-colors">Politika privatnosti</a></li>
+                        <li><a href="/terms" class="hover:text-white transition-colors">Uslovi korišćenja</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-gray-500 text-sm">
+                    &copy; 2026 ServisHub. Sva prava zadržana.
+                </p>
+                <div class="flex items-center gap-2 text-sm text-gray-500">
+                    <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    SSL zaštićeno
+                </div>
+            </div>
         </div>
     </footer>
 </div>
+
+<!-- ============================================
+     JAVASCRIPT
+     ============================================ -->
+<script>
+function landingPage() {
+    return {
+        basePrice: 3600,
+        locationPrice: 1800,
+        currency: 'RSD',
+        trialDays: 45,
+
+        get formattedBasePrice() {
+            return this.basePrice.toLocaleString('sr-RS');
+        },
+
+        get formattedLocationPrice() {
+            return this.locationPrice.toLocaleString('sr-RS');
+        },
+
+        async init() {
+            // Load pricing
+            await this.loadPricing();
+
+            // Setup scroll reveal animations
+            this.setupScrollReveal();
+
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const target = document.querySelector(anchor.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+        },
+
+        async loadPricing() {
+            try {
+                const response = await fetch('/api/v1/public/pricing');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.basePrice = data.base_price || 3600;
+                    this.locationPrice = data.location_price || 1800;
+                    this.currency = data.currency || 'RSD';
+                    this.trialDays = data.trial_days || 45;
+                }
+            } catch (error) {
+                console.error('Failed to load pricing:', error);
+            }
+        },
+
+        setupScrollReveal() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            });
+
+            document.querySelectorAll('.reveal').forEach(el => {
+                observer.observe(el);
+            });
+        },
+
+        animateCount(el, target) {
+            const duration = 2000;
+            const start = 0;
+            const startTime = performance.now();
+
+            const animate = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                // Easing function
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const current = Math.floor(start + (target - start) * easeOut);
+
+                if (target >= 1000) {
+                    el.textContent = current.toLocaleString('sr-RS') + '+';
+                } else {
+                    el.textContent = current + '+';
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            };
+
+            requestAnimationFrame(animate);
+        }
+    }
+}
+</script>
 {% endblock %}
