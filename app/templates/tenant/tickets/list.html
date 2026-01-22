@@ -960,7 +960,7 @@
                 <thead>
                     <tr>
                         <th>Br.</th>
-                        <th>Datum</th>
+                        <th>Završen</th>
                         <th>Klijent</th>
                         <th>Uredjaj</th>
                         <th>Cena</th>
@@ -974,7 +974,7 @@
                             <td>
                                 <span class="cell-link" @click="viewTicket(ticket)" x-text="'#' + ticket.ticket_number_formatted"></span>
                             </td>
-                            <td x-text="formatDate(ticket.created_at)"></td>
+                            <td x-text="formatDate(ticket.ready_at || ticket.created_at)"></td>
                             <td>
                                 <div class="cell-primary" x-text="ticket.customer_name"></div>
                                 <div class="cell-muted" x-text="ticket.customer_phone || '-'"></div>
