@@ -865,7 +865,7 @@
                         <th>Datum</th>
                         <th>Klijent</th>
                         <th>Uredjaj</th>
-                        <th>Opis</th>
+                        <th>Opis kvara</th>
                         <th>Stanje</th>
                         <th>Cena</th>
                         <th>Trajanje</th>
@@ -964,6 +964,7 @@
                         <th>Klijent</th>
                         <th>Uredjaj</th>
                         <th>Opis kvara</th>
+                        <th>Stanje</th>
                         <th>Cena</th>
                         <th>Čeka preuz.</th>
                         <th>Akcije</th>
@@ -981,8 +982,16 @@
                                 <div class="cell-muted" x-text="ticket.customer_phone || '-'"></div>
                             </td>
                             <td x-text="ticket.brand + ' ' + ticket.model"></td>
+                            <td style="max-width: 150px;">
+                                <span x-text="(ticket.problem_description || '-').substring(0, 40) + (ticket.problem_description && ticket.problem_description.length > 40 ? '...' : '')"></span>
+                            </td>
                             <td>
-                                <div class="cell-muted" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" x-text="ticket.problem_description || '-'"></div>
+                                <template x-if="ticket.device_condition_grade">
+                                    <span class="grade-badge" :class="'grade-' + ticket.device_condition_grade" x-text="ticket.device_condition_grade"></span>
+                                </template>
+                                <template x-if="!ticket.device_condition_grade">
+                                    <span>-</span>
+                                </template>
                             </td>
                             <td>
                                 <span class="cell-primary" x-text="formatPrice(ticket.final_price || ticket.estimated_price)"></span>
