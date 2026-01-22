@@ -1462,11 +1462,144 @@
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                         Štampaj
                     </button>
-                    <button class="btn-primary" @click="editTicket(detailTicket)">
+                    <button class="btn-primary" @click="openEditModal(detailTicket)">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                         Uredi
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Ticket Modal -->
+    <div x-show="showEditModal" x-cloak class="modal-overlay" @click.self="showEditModal = false" style="z-index: 70;">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);">
+                <h3 style="color: white;">Izmena naloga #<span x-text="editTicket?.ticket_number_formatted"></span></h3>
+                <button class="modal-close" @click="showEditModal = false" style="color: rgba(255,255,255,0.7);">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Customer Info Section -->
+                <div class="form-section-title">Podaci o kupcu</div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="form-group">
+                        <label class="form-label">Ime i prezime *</label>
+                        <input type="text" x-model="editForm.customer_name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Telefon</label>
+                        <input type="tel" x-model="editForm.customer_phone" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" x-model="editForm.customer_email" class="form-input">
+                    </div>
+                </div>
+
+                <!-- Device Info Section -->
+                <div class="form-section-title">Podaci o uređaju</div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div class="form-group">
+                        <label class="form-label">Tip uređaja</label>
+                        <select x-model="editForm.device_type" class="form-input">
+                            <option value="phone">Telefon</option>
+                            <option value="tablet">Tablet</option>
+                            <option value="laptop">Laptop</option>
+                            <option value="console">Konzola</option>
+                            <option value="other">Ostalo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Marka *</label>
+                        <input type="text" x-model="editForm.brand" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Model *</label>
+                        <input type="text" x-model="editForm.model" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">IMEI / Serijski</label>
+                        <input type="text" x-model="editForm.imei" class="form-input">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                    <div class="form-group">
+                        <label class="form-label">Stanje (A/B/C)</label>
+                        <select x-model="editForm.device_condition_grade" class="form-input">
+                            <option value="">-</option>
+                            <option value="A">A - Odlično</option>
+                            <option value="B">B - Dobro</option>
+                            <option value="C">C - Loše</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Uređaj ne radi</label>
+                        <select x-model="editForm.device_not_working" class="form-input">
+                            <option :value="false">Ne</option>
+                            <option :value="true">Da</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Lozinka uređaja</label>
+                        <input type="text" x-model="editForm.device_password" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group mb-4">
+                    <label class="form-label">Napomena o stanju</label>
+                    <input type="text" x-model="editForm.device_condition_notes" class="form-input">
+                </div>
+
+                <!-- Problem Section -->
+                <div class="form-section-title">Opis problema i rešenje</div>
+                <div class="form-group mb-4">
+                    <label class="form-label">Opis problema *</label>
+                    <textarea x-model="editForm.problem_description" rows="2" class="form-input" required></textarea>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="form-group">
+                        <label class="form-label">Dijagnoza</label>
+                        <textarea x-model="editForm.diagnosis" rows="2" class="form-input"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Rešenje</label>
+                        <textarea x-model="editForm.resolution" rows="2" class="form-input"></textarea>
+                    </div>
+                </div>
+
+                <!-- Pricing Section -->
+                <div class="form-section-title">Cena i garancija</div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="form-group">
+                        <label class="form-label">Procenjena cena</label>
+                        <input type="number" x-model="editForm.estimated_price" step="0.01" min="0" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Konačna cena</label>
+                        <input type="number" x-model="editForm.final_price" step="0.01" min="0" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Valuta</label>
+                        <select x-model="editForm.currency" class="form-input">
+                            <option value="RSD">RSD</option>
+                            <option value="EUR">EUR</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Garancija (dani)</label>
+                        <input type="number" x-model="editForm.warranty_days" min="0" class="form-input">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @click="showEditModal = false">Otkaži</button>
+                <button class="btn-primary" @click="saveEditedTicket()" :disabled="savingEdit">
+                    <span x-show="!savingEdit">Sačuvaj izmene</span>
+                    <span x-show="savingEdit">Čuvanje...</span>
+                </button>
             </div>
         </div>
     </div>
@@ -1583,6 +1716,31 @@ function ticketsPage() {
         showDetailModal: false,
         detailTicket: null,
 
+        // Edit modal state
+        showEditModal: false,
+        editTicket: null,
+        savingEdit: false,
+        editForm: {
+            customer_name: '',
+            customer_phone: '',
+            customer_email: '',
+            device_type: 'phone',
+            brand: '',
+            model: '',
+            imei: '',
+            device_condition_grade: '',
+            device_condition_notes: '',
+            device_not_working: false,
+            device_password: '',
+            problem_description: '',
+            diagnosis: '',
+            resolution: '',
+            estimated_price: null,
+            final_price: null,
+            currency: 'RSD',
+            warranty_days: 30
+        },
+
         async init() {
             await this.loadLocations();
             await this.loadAllTickets();
@@ -1651,8 +1809,60 @@ function ticketsPage() {
             this.showDetailModal = true;
         },
 
-        editTicket(ticket) {
-            window.location.href = '/tickets/' + ticket.id;
+        openEditModal(ticket) {
+            this.editTicket = ticket;
+            // Populate form with ticket data
+            this.editForm = {
+                customer_name: ticket.customer_name || '',
+                customer_phone: ticket.customer_phone || '',
+                customer_email: ticket.customer_email || '',
+                device_type: ticket.device_type || 'phone',
+                brand: ticket.brand || '',
+                model: ticket.model || '',
+                imei: ticket.imei || '',
+                device_condition_grade: ticket.device_condition_grade || '',
+                device_condition_notes: ticket.device_condition_notes || '',
+                device_not_working: ticket.device_not_working || false,
+                device_password: ticket.device_password || '',
+                problem_description: ticket.problem_description || '',
+                diagnosis: ticket.diagnosis || '',
+                resolution: ticket.resolution || '',
+                estimated_price: ticket.estimated_price || null,
+                final_price: ticket.final_price || null,
+                currency: ticket.currency || 'RSD',
+                warranty_days: ticket.warranty_days || 30
+            };
+            this.showDetailModal = false;
+            this.showEditModal = true;
+        },
+
+        async saveEditedTicket() {
+            if (!this.editTicket) return;
+            if (!this.editForm.customer_name || !this.editForm.brand || !this.editForm.model || !this.editForm.problem_description) {
+                alert('Popunite obavezna polja: ime, marka, model i opis problema');
+                return;
+            }
+
+            this.savingEdit = true;
+            try {
+                const r = await api('/api/v1/tickets/' + this.editTicket.id, {
+                    method: 'PUT',
+                    body: JSON.stringify(this.editForm)
+                });
+                if (r.ok) {
+                    this.showEditModal = false;
+                    await this.loadAllTickets();
+                    showToast('Nalog sačuvan', 'success');
+                } else {
+                    const err = await r.json();
+                    alert(err.message || 'Greška pri čuvanju');
+                }
+            } catch (e) {
+                console.error('Failed to save ticket:', e);
+                alert('Greška pri čuvanju');
+            } finally {
+                this.savingEdit = false;
+            }
         },
 
         getDeviceTypeLabel(type) {
