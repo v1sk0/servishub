@@ -61,12 +61,6 @@ def tickets_detail(ticket_id):
     return render_template('tenant/tickets/detail.html', ticket_id=ticket_id)
 
 
-@bp.route('/tickets/<int:ticket_id>/edit')
-def tickets_edit(ticket_id):
-    """Izmena servisnog naloga."""
-    return render_template('tenant/tickets/edit.html', ticket_id=ticket_id)
-
-
 @bp.route('/tickets/<int:ticket_id>/print')
 def tickets_print(ticket_id):
     """Stampanje servisnog naloga (A4, 2 kopije)."""
