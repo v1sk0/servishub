@@ -829,6 +829,12 @@
         <div class="stat-card blue" @click="setFilter('open')">
             <div class="stat-value" x-text="stats.open_tickets || 0"></div>
             <div class="stat-label">Otvoreni</div>
+            <template x-if="canViewRevenue && (stats.open_rsd > 0 || stats.open_eur > 0)">
+                <div class="stat-revenue" style="margin-top: 0.5rem; font-size: 0.7rem; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 0.5rem;">
+                    <div x-show="stats.open_rsd > 0"><span x-text="stats.open_rsd?.toLocaleString('sr-RS')"></span> RSD</div>
+                    <div x-show="stats.open_eur > 0"><span x-text="stats.open_eur?.toLocaleString('sr-RS')"></span> EUR</div>
+                </div>
+            </template>
         </div>
         <div class="stat-card green" @click="setFilter('closed')">
             <div class="stat-value" x-text="stats.closed_tickets || 0"></div>
@@ -837,6 +843,12 @@
         <div class="stat-card yellow" @click="setFilter('ready')">
             <div class="stat-value" x-text="stats.ready_tickets || 0"></div>
             <div class="stat-label">Za naplatu</div>
+            <template x-if="canViewRevenue && (stats.ready_rsd > 0 || stats.ready_eur > 0)">
+                <div class="stat-revenue" style="margin-top: 0.5rem; font-size: 0.7rem; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 0.5rem;">
+                    <div x-show="stats.ready_rsd > 0"><span x-text="stats.ready_rsd?.toLocaleString('sr-RS')"></span> RSD</div>
+                    <div x-show="stats.ready_eur > 0"><span x-text="stats.ready_eur?.toLocaleString('sr-RS')"></span> EUR</div>
+                </div>
+            </template>
         </div>
         <div class="stat-card purple" @click="window.location.href='/tickets/warranties'">
             <div class="stat-value" x-text="stats.active_warranties || 0"></div>
@@ -1862,6 +1874,7 @@ function ticketsPage() {
         stats: {},
         locations: [],
         currentUserName: '',
+        canViewRevenue: false,
         filters: {
             search: '',
             location_id: ''
@@ -1951,6 +1964,7 @@ function ticketsPage() {
                 if (r.ok) {
                     const data = await r.json();
                     this.currentUserName = data.user?.full_name || data.user?.email || '';
+                    this.canViewRevenue = data.user?.can_view_revenue || false;
                 }
             } catch (e) {
                 console.error('Failed to load user info:', e);
@@ -1984,6 +1998,18 @@ function ticketsPage() {
                     this.openTickets = tickets.filter(t => t.status === 'RECEIVED' || t.status === 'IN_PROGRESS' || t.status === 'DIAGNOSED');
                     this.pendingTickets = tickets.filter(t => t.status === 'READY');
 
+                    // Calculate totals by currency for open tickets
+                    const openRSD = this.openTickets.filter(t => (t.currency || 'RSD') === 'RSD')
+                        .reduce((sum, t) => sum + (t.final_price || t.estimated_price || 0), 0);
+                    const openEUR = this.openTickets.filter(t => t.currency === 'EUR')
+                        .reduce((sum, t) => sum + (t.final_price || t.estimated_price || 0), 0);
+
+                    // Calculate totals by currency for ready/pending tickets
+                    const readyRSD = this.pendingTickets.filter(t => (t.currency || 'RSD') === 'RSD')
+                        .reduce((sum, t) => sum + (t.final_price || t.estimated_price || 0), 0);
+                    const readyEUR = this.pendingTickets.filter(t => t.currency === 'EUR')
+                        .reduce((sum, t) => sum + (t.final_price || t.estimated_price || 0), 0);
+
                     this.stats = {
                         open_tickets: this.openTickets.length,
                         closed_tickets: tickets.filter(t => t.status === 'DELIVERED').length,
@@ -1992,7 +2018,11 @@ function ticketsPage() {
                         today_tickets: tickets.filter(t => {
                             const today = new Date().toDateString();
                             return new Date(t.created_at).toDateString() === today;
-                        }).length
+                        }).length,
+                        open_rsd: openRSD,
+                        open_eur: openEUR,
+                        ready_rsd: readyRSD,
+                        ready_eur: readyEUR
                     };
                 }
             } catch (e) {

@@ -77,6 +77,9 @@ class TenantUser(db.Model):
     # Status
     is_active = db.Column(db.Boolean, default=True, nullable=False)
 
+    # Permissions
+    can_view_revenue = db.Column(db.Boolean, default=False, nullable=False)  # Pregled prihoda u widgetima
+
     # Pracenje aktivnosti
     last_login_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

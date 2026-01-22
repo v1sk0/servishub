@@ -20,7 +20,7 @@ from ..schemas.auth import (
 from ..middleware.auth import jwt_required, tenant_required
 from ...services.auth_service import auth_service, AuthError
 from ...services.security_service import rate_limit, RateLimits, SecurityEventLogger
-from ...models import ServiceLocation
+from ...models import ServiceLocation, UserRole
 from ...extensions import db
 
 # Blueprint za auth endpoints
@@ -312,6 +312,9 @@ def me():
         ServiceLocation.is_active == True
     ).all()
 
+    # OWNER and ADMIN always have revenue view permission
+    can_view_revenue = user.can_view_revenue or user.role in (UserRole.OWNER, UserRole.ADMIN)
+
     return jsonify({
         'user': {
             'id': user.id,
@@ -320,7 +323,8 @@ def me():
             'prezime': user.prezime,
             'full_name': user.full_name,
             'role': user.role.value,
-            'is_active': user.is_active
+            'is_active': user.is_active,
+            'can_view_revenue': can_view_revenue
         },
         'tenant': {
             'id': tenant.id,
