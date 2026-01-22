@@ -128,33 +128,67 @@
     .grade-B { background: linear-gradient(135deg, #eab308, #ca8a04); color: #000; }
     .grade-C { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
 
-    /* Light theme duration bar - Dolce Vita animated stripes */
+    /* Light theme duration bar - Dolce Vita animated stripes (exact copy) */
     @keyframes stripes-move {
         0% { background-position: 0 0; }
         100% { background-position: 40px 0; }
     }
-    .duration-bar { position: relative; height: 24px; background: #e8eaed; border-radius: 12px; overflow: hidden; min-width: 100px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+    .duration-bar {
+        position: relative;
+        height: 24px;
+        background: #e8eaed;
+        border-radius: 12px;
+        overflow: hidden;
+        min-width: 100px;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
     .duration-fill {
         height: 100%;
         border-radius: 12px;
         transition: width 0.3s ease;
         background-size: 40px 40px;
-        animation: stripes-move 1s linear infinite;
-        min-width: 10%;
+        animation: stripes-move 1.5s linear infinite;
     }
     .duration-fill.green {
         background-color: #34a853;
-        background-image: linear-gradient(45deg, rgba(255,255,255,0.2) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.2) 75%, transparent 75%, transparent);
+        background-image: linear-gradient(
+            135deg,
+            rgba(255,255,255,0.15) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255,255,255,0.15) 50%,
+            rgba(255,255,255,0.15) 75%,
+            transparent 75%,
+            transparent
+        );
         box-shadow: 0 0 12px rgba(52, 168, 83, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
     }
     .duration-fill.yellow {
         background-color: #f9ab00;
-        background-image: linear-gradient(45deg, rgba(255,255,255,0.2) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.2) 75%, transparent 75%, transparent);
+        background-image: linear-gradient(
+            135deg,
+            rgba(255,255,255,0.15) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255,255,255,0.15) 50%,
+            rgba(255,255,255,0.15) 75%,
+            transparent 75%,
+            transparent
+        );
         box-shadow: 0 0 12px rgba(249, 171, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
     }
     .duration-fill.red {
         background-color: #ea4335;
-        background-image: linear-gradient(45deg, rgba(255,255,255,0.2) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.2) 75%, transparent 75%, transparent);
+        background-image: linear-gradient(
+            135deg,
+            rgba(255,255,255,0.15) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255,255,255,0.15) 50%,
+            rgba(255,255,255,0.15) 75%,
+            transparent 75%,
+            transparent
+        );
         box-shadow: 0 0 12px rgba(234, 67, 53, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
     }
     .duration-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.75rem; font-weight: 600; color: #202124; white-space: nowrap; text-shadow: 0 0 2px rgba(255,255,255,0.8); }
