@@ -1377,7 +1377,7 @@
 
     <!-- Ticket Detail Modal -->
     <div x-show="showDetailModal" x-cloak class="detail-modal-overlay" @click.self="showDetailModal = false">
-        <div class="detail-modal-content">
+        <div class="detail-modal-content" @click.stop>
             <div class="detail-modal-header">
                 <div>
                     <div class="ticket-nr" x-text="'#' + detailTicket?.ticket_number_formatted"></div>
@@ -1562,7 +1562,7 @@
 
     <!-- Edit Ticket Modal -->
     <div x-show="showEditModal" x-cloak class="modal-overlay" @click.self="showEditModal = false" style="z-index: 70;">
-        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-content" @click.stop style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
             <div class="modal-header" style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);">
                 <h3 style="color: white;">Izmena naloga #<span x-text="editTicket?.ticket_number_formatted"></span></h3>
                 <button class="modal-close" @click="showEditModal = false" style="color: rgba(255,255,255,0.7);">
