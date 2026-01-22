@@ -1980,6 +1980,12 @@ function ticketsPage() {
                 return;
             }
 
+            // Confirmation dialog
+            if (!confirm('Da li ste sigurni da želite da sačuvate izmenu?')) {
+                this.cancelEdit();
+                return;
+            }
+
             this.savingInline = true;
             try {
                 const r = await api('/api/v1/tickets/' + this.detailTicket.id, {
