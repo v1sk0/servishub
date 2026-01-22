@@ -581,7 +581,7 @@ function trackPage(token) {
                 {
                     id: 3,
                     label: 'Preuzet',
-                    sublabel: 'Garancija aktivna',
+                    sublabel: stepIndex >= 2 ? 'Garancija aktivna' : 'Garancija kreće od preuzimanja',
                     isCompleted: stepIndex >= 2,
                     isCurrent: stepIndex === 2
                 }
@@ -666,7 +666,7 @@ function trackPage(token) {
                 'DIAGNOSED': 'Tehničar je pregledao uređaj i utvrdio kvar',
                 'IN_PROGRESS': 'Tehničar trenutno radi na popravci vašeg uređaja',
                 'WAITING_PARTS': 'Čekamo potrebne delove za popravku',
-                'READY': 'Popravka je završena! Možete preuzeti uređaj',
+                'READY': 'Popravka je završena! Garancija kreće od preuzimanja uređaja.',
                 'DELIVERED': 'Uređaj je preuzet. Garancija je aktivna!',
                 'CANCELLED': 'Servisni nalog je otkazan'
             };
