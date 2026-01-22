@@ -2348,12 +2348,15 @@ function ticketsPage() {
             return Math.min(100, (days / 30) * 100);
         },
 
-        // Pending tickets - days waiting for pickup
+        // Pending tickets - days waiting for pickup (uses updated_at for READY status)
         getDaysWaiting(ticket) {
-            if (!ticket.closed_at) return 0;
-            const closed = new Date(ticket.closed_at);
+            // For READY tickets, use updated_at (when status changed to READY)
+            // For DELIVERED tickets, use closed_at
+            const waitingSince = ticket.status === 'READY' ? ticket.updated_at : ticket.closed_at;
+            if (!waitingSince) return 0;
+            const startDate = new Date(waitingSince);
             const now = new Date();
-            return Math.floor((now - closed) / (1000 * 60 * 60 * 24));
+            return Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
         },
 
         getWaitingDurationClass(ticket) {
