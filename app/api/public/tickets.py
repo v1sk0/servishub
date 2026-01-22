@@ -6,7 +6,7 @@ Endpointi:
 - GET /track/:token/history - Istorija promena statusa
 
 Token može biti:
-- 64-karakterni hex string (access_token) - generisan prilikom kreiranja naloga
+- access_token (~43 karaktera, URL-safe base64) - generisan prilikom kreiranja naloga
 - Broj naloga u formatu "SRV-XXXX" ili samo broj "XXXX" - traži se po tenant_id
 
 Ne zahteva autentifikaciju ali je rate-limited.
@@ -42,7 +42,7 @@ def _parse_ticket_identifier(identifier):
     Parsira identifikator naloga i vraća tip i vrednost.
 
     Formati:
-    - 64-karakterni string: access_token
+    - access_token (secrets.token_urlsafe(32) = ~43 karaktera)
     - "SRV-0003" ili "srv-0003": ticket_number = 3
     - "3" ili "0003": ticket_number = 3
 
@@ -54,9 +54,12 @@ def _parse_ticket_identifier(identifier):
 
     identifier = identifier.strip()
 
-    # 64-karakterni access_token
-    if len(identifier) == 64:
-        return 'token', identifier
+    # access_token - secrets.token_urlsafe(32) generiše ~43 karaktera
+    # Prihvatamo tokene između 40-50 karaktera koji su URL-safe base64
+    if 40 <= len(identifier) <= 50:
+        # Proveri da li je validan URL-safe base64 format
+        if re.match(r'^[A-Za-z0-9_-]+$', identifier):
+            return 'token', identifier
 
     # Format SRV-XXXX (case insensitive)
     srv_match = re.match(r'^SRV-?(\d+)$', identifier, re.IGNORECASE)
@@ -78,7 +81,7 @@ def track_ticket(token):
     Prati status servisnog naloga putem tokena ili broja naloga.
 
     Token može biti:
-    - 64-karakterni access_token (iz QR koda, SMS-a ili email-a)
+    - access_token (~43 karaktera, iz QR koda, SMS-a ili email-a)
     - Broj naloga u formatu "SRV-0003" ili samo "3"
 
     Ako se koristi broj naloga, potreban je tenant_id parametar
@@ -251,7 +254,8 @@ def get_qr_data(token):
     Frontend koristi ove podatke da generiše QR kod koji kupac
     može skenirati da prati status.
     """
-    if not token or len(token) != 64:
+    # access_token je ~43 karaktera (URL-safe base64)
+    if not token or not (40 <= len(token) <= 50) or not re.match(r'^[A-Za-z0-9_-]+$', token):
         return {'error': 'Invalid token'}, 400
 
     ticket = ServiceTicket.query.filter_by(access_token=token).first()
@@ -278,7 +282,8 @@ def get_receipt_data(token):
 
     Koristi se za generisanje PDF potvrde sa QR kodom.
     """
-    if not token or len(token) != 64:
+    # access_token je ~43 karaktera (URL-safe base64)
+    if not token or not (40 <= len(token) <= 50) or not re.match(r'^[A-Za-z0-9_-]+$', token):
         return {'error': 'Invalid token'}, 400
 
     ticket = ServiceTicket.query.filter_by(access_token=token).first()
