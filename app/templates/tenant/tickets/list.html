@@ -1404,6 +1404,10 @@
                             <span class="detail-value large price" x-text="formatPriceDisplay(detailTicket?.final_price || detailTicket?.estimated_price, detailTicket?.currency)"></span>
                         </div>
                         <div class="detail-item">
+                            <span class="detail-label">Status</span>
+                            <span class="detail-status-badge" :class="getStatusClass(detailTicket?.status)" x-text="getStatusLabel(detailTicket?.status)"></span>
+                        </div>
+                        <div class="detail-item">
                             <span class="detail-label">Serviser</span>
                             <span class="detail-value" x-text="detailTicket?.assigned_technician_name || '-'"></span>
                         </div>

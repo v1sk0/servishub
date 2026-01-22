@@ -92,22 +92,13 @@
             <div class="lg:col-span-2 space-y-6">
                 <!-- Status Card -->
                 <div class="bg-white shadow rounded-lg p-6">
-                    <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center justify-between">
                         <h3 class="text-lg font-medium text-gray-900">Status naloga</h3>
                         <span class="px-3 py-1 text-sm font-semibold rounded-full"
                               :class="getStatusClass(ticket.status)"
                               x-text="statusLabels[ticket.status]"></span>
                     </div>
-                    <div class="flex gap-2 flex-wrap">
-                        <template x-for="status in availableStatuses" :key="status.value">
-                            <button @click="changeStatus(status.value)"
-                                    :disabled="ticket.status === status.value || updating"
-                                    :class="ticket.status === status.value ? 'ring-2 ring-primary-500' : ''"
-                                    class="px-3 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50">
-                                <span x-text="status.label"></span>
-                            </button>
-                        </template>
-                    </div>
+                    <p class="mt-2 text-sm text-gray-500">Status se menja kroz workflow u listi naloga (Završi, Naplati)</p>
                 </div>
 
                 <!-- Device Info -->
