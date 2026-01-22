@@ -146,8 +146,21 @@
         height: 100%;
         border-radius: 12px;
         transition: width 0.3s ease;
-        background-size: 40px 40px;
-        animation: stripes-move 1.5s linear infinite;
+        background-size: 40px 40px !important;
+        animation: stripes-move 1.5s linear infinite !important;
+        min-width: 10%;
+        /* Default stripes (fallback) */
+        background-color: #34a853;
+        background-image: linear-gradient(
+            135deg,
+            rgba(255,255,255,0.15) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255,255,255,0.15) 50%,
+            rgba(255,255,255,0.15) 75%,
+            transparent 75%,
+            transparent
+        );
     }
     .duration-fill.green {
         background-color: #34a853;
@@ -2393,7 +2406,8 @@ function ticketsPage() {
 
         getDurationPercent(ticket) {
             const days = this.getDaysOpen(ticket);
-            return Math.min(100, (days / 30) * 100);
+            // Min 10% to always show animated bar (like Dolce Vita)
+            return Math.max(10, Math.min(100, (days / 30) * 100));
         },
 
         // Pending tickets - days waiting for pickup
@@ -2416,7 +2430,8 @@ function ticketsPage() {
 
         getWaitingDurationPercent(ticket) {
             const days = this.getDaysWaiting(ticket);
-            return Math.min(100, (days / 30) * 100);
+            // Min 10% to always show animated bar (like Dolce Vita)
+            return Math.max(10, Math.min(100, (days / 30) * 100));
         },
 
         formatDate(dateStr) {
