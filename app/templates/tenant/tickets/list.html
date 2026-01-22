@@ -1756,61 +1756,47 @@
     </div>
 
     <!-- Edit Confirmation Modal -->
-    <div x-show="showEditConfirmModal" x-cloak class="detail-modal-overlay" @click.self="cancelEditConfirm()" style="z-index: 1100;">
-        <div class="detail-modal-content" style="max-width: 420px;" @click.stop>
-            <div class="detail-modal-header" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
-                <div>
-                    <div class="ticket-nr" style="font-size: 1.125rem; display: flex; align-items: center; gap: 0.5rem;">
-                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                        Potvrda izmene
-                    </div>
-                    <div class="ticket-device" x-text="'Nalog #' + detailTicket?.ticket_number_formatted"></div>
-                </div>
-                <button class="detail-modal-close" @click="cancelEditConfirm()">&times;</button>
+    <div x-show="showEditConfirmModal" x-cloak class="modal-overlay" @click.self="cancelEditConfirm()" style="z-index: 1100;">
+        <div class="modal-content" style="max-width: 380px;" @click.stop>
+            <div class="modal-header" style="background: linear-gradient(135deg, #3b82f6, #6366f1); padding: 1rem 1.25rem;">
+                <h3 style="color: white; font-size: 1rem; margin: 0;">Potvrda izmene</h3>
+                <button class="modal-close" @click="cancelEditConfirm()" style="color: rgba(255,255,255,0.8);">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
-            <div class="detail-modal-body" style="padding: 1.25rem;">
-                <!-- Field being edited -->
-                <div style="text-align: center; margin-bottom: 1.25rem;">
-                    <span style="display: inline-block; background: linear-gradient(135deg, #ede9fe, #e0e7ff); color: #5b21b6; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">
-                        <span x-text="getFieldLabel(editConfirmField)"></span>
-                    </span>
-                </div>
-
-                <!-- Comparison cards -->
-                <div style="display: flex; gap: 0.75rem; margin-bottom: 1.25rem;">
-                    <!-- Old value -->
-                    <div style="flex: 1; background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 1px solid #fecaca; border-radius: 12px; padding: 1rem; text-align: center;">
-                        <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #b91c1c; font-weight: 600; margin-bottom: 0.5rem;">Stara vrednost</div>
-                        <div style="color: #991b1b; font-size: 1rem; font-weight: 500; word-break: break-word; text-decoration: line-through; opacity: 0.8;" x-text="formatEditValue(editConfirmField, editConfirmOldValue)"></div>
+            <div class="modal-body" style="padding: 1.25rem;">
+                <!-- Change info -->
+                <div style="background: #f8fafc; border-radius: 8px; padding: 0.875rem; margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b; font-size: 0.75rem;">Polje</span>
+                        <span style="color: #1e293b; font-weight: 600; font-size: 0.875rem;" x-text="getFieldLabel(editConfirmField)"></span>
                     </div>
-
-                    <!-- Arrow -->
-                    <div style="display: flex; align-items: center; color: #8b5cf6;">
-                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="color: #ef4444; font-size: 0.75rem;">Staro</span>
+                        <span style="color: #991b1b; font-size: 0.875rem; text-decoration: line-through;" x-text="formatEditValue(editConfirmField, editConfirmOldValue)"></span>
                     </div>
-
-                    <!-- New value -->
-                    <div style="flex: 1; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0; border-radius: 12px; padding: 1rem; text-align: center;">
-                        <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #15803d; font-weight: 600; margin-bottom: 0.5rem;">Nova vrednost</div>
-                        <div style="color: #166534; font-size: 1rem; font-weight: 600; word-break: break-word;" x-text="formatEditValue(editConfirmField, editConfirmNewValue)"></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #22c55e; font-size: 0.75rem;">Novo</span>
+                        <span style="color: #166534; font-weight: 600; font-size: 0.875rem;" x-text="formatEditValue(editConfirmField, editConfirmNewValue)"></span>
                     </div>
                 </div>
 
-                <!-- Confirmation text -->
+                <!-- User info -->
+                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.625rem; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; margin-bottom: 1rem;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px; color: #d97706; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span style="color: #92400e; font-size: 0.75rem;">Izmena će biti evidentirana na vaše ime</span>
+                </div>
+
                 <p style="text-align: center; color: #64748b; font-size: 0.813rem; margin: 0;">
-                    Da li ste sigurni da želite da sačuvate ovu izmenu?
+                    Da li ste sigurni?
                 </p>
             </div>
-            <div class="detail-modal-footer" style="background: #f8fafc; border-top: 1px solid #e2e8f0;">
-                <div class="btn-group">
-                    <button class="btn-secondary" @click="cancelEditConfirm()" style="padding: 0.625rem 1.25rem;">Otkaži</button>
-                </div>
-                <div class="btn-group">
-                    <button class="btn-primary" @click="confirmEditSave()" style="background: linear-gradient(135deg, #22c55e, #16a34a); padding: 0.625rem 1.25rem; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);">
-                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Sačuvaj
-                    </button>
-                </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.875rem 1.25rem; background: #f8fafc;">
+                <button class="btn-secondary" @click="cancelEditConfirm()">Otkaži</button>
+                <button class="btn-primary" @click="confirmEditSave()" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    Sačuvaj
+                </button>
             </div>
         </div>
     </div>
