@@ -139,7 +139,8 @@
         border-radius: 12px;
         transition: width 0.3s ease;
         background-size: 40px 40px;
-        animation: stripes-move 1.5s linear infinite;
+        animation: stripes-move 1s linear infinite;
+        min-width: 10%;
     }
     .duration-fill.green {
         background-color: #34a853;
@@ -918,7 +919,7 @@
     <!-- Pending payment tickets table -->
     <div class="glass-table-container">
         <div class="glass-table-header pending">
-            <h3>Čeka naplatu (<span x-text="pendingTickets.length"></span>)</h3>
+            <h3>Čeka preuzimanje (<span x-text="pendingTickets.length"></span>)</h3>
         </div>
         <div class="overflow-x-auto">
             <table class="glass-table">
@@ -929,7 +930,7 @@
                         <th>Klijent</th>
                         <th>Uredjaj</th>
                         <th>Cena</th>
-                        <th>Čeka</th>
+                        <th>Čeka preuz.</th>
                         <th>Akcije</th>
                     </tr>
                 </thead>
