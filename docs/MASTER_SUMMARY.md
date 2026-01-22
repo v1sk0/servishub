@@ -1,6 +1,6 @@
 # ServisHub - Master Summary
 
-> Poslednje ažuriranje: 19. Januar 2026 (v173)
+> Poslednje ažuriranje: 21. Januar 2026 (v240)
 
 ---
 
@@ -338,6 +338,43 @@ Sve važne akcije se loguju:
 - CREATE, UPDATE, DELETE
 - VERIFY, REJECT (KYC)
 - BLOCK, UNBLOCK (tenant)
+
+### 6.5 Security Event Logging (v239-v240)
+
+**Lokacija:** `app/services/security_service.py`, `app/models/security_event.py`
+
+Kompletan sistem za logovanje bezbednosnih dogadjaja sa tenant tracking-om:
+
+```python
+class SecurityEvent(db.Model):
+    event_type = db.Column(db.String(50), index=True)   # login_success, oauth_failed...
+    severity = db.Column(db.String(20))                  # info, warning, error, critical
+    user_id = db.Column(db.Integer, nullable=True)
+    tenant_id = db.Column(db.Integer, index=True)        # Multi-tenant tracking
+    ip_address = db.Column(db.String(45), index=True)
+    created_at = db.Column(db.DateTime(timezone=True))
+```
+
+**Svrha:**
+- Detekcija brute-force napada
+- Monitoring rate limit prekoracenja
+- Analiza bezbednosti po tenantu (servisu)
+- Pregled u Admin Panel (`/admin/security/events`)
+
+**Eventi koji se loguju:**
+| Event | Opis |
+|-------|------|
+| `login_success` | Uspesna prijava (email/OAuth) |
+| `login_failed` | Neuspesna prijava |
+| `logout` | Odjava korisnika |
+| `oauth_*` | OAuth flow eventi |
+| `rate_limit_exceeded` | Prekoracen rate limit |
+| `brute_force_detected` | Detektovan napad |
+
+**Admin Panel Features:**
+- Filtriranje po IP, tenant_id, event_type, severity
+- Statistike: top IP adrese, failed logins, rate limits
+- Prikaz tenant imena pored ID-a
 
 ---
 

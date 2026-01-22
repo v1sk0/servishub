@@ -191,6 +191,9 @@ function loginForm() {
                     case 'network':
                         this.error = 'Greška u komunikaciji sa Google servisom.';
                         break;
+                    case 'session_expired':
+                        this.error = 'Sesija je istekla. Molimo pokušajte ponovo.';
+                        break;
                     default:
                         this.error = 'Greška pri prijavi.';
                 }

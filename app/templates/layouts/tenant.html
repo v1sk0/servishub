@@ -551,13 +551,24 @@ function tenantApp() {
 
             if (authMethod === 'oauth') {
                 // Preuzmi tokene sigurno iz sesije (ne iz URL-a)
+                // VAZNO: credentials: 'include' je OBAVEZAN da bi se poslao session cookie!
                 try {
-                    const response = await fetch('/api/v1/auth/google/tokens');
+                    const response = await fetch('/api/v1/auth/google/tokens', {
+                        credentials: 'include'  // Salje session cookie sa zahtevom
+                    });
                     if (response.ok) {
                         const data = await response.json();
                         localStorage.setItem('access_token', data.access_token);
                         if (data.refresh_token) {
                             localStorage.setItem('refresh_token', data.refresh_token);
+                        }
+                        console.log('OAuth tokens retrieved successfully');
+                    } else {
+                        console.error('OAuth token fetch failed, status:', response.status);
+                        // Ako nema tokena u sesiji, redirect na login
+                        if (response.status === 404) {
+                            window.location.href = '/login?error=session_expired';
+                            return;
                         }
                     }
                 } catch (e) {

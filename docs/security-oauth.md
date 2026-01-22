@@ -504,6 +504,21 @@ curl -I "https://servicehubdolce-4c283dce32e9.herokuapp.com/login"
 
 ## 12. Changelog
 
+### v1.2 (21.01.2026)
+- ✅ Dodat Security Event Logging za OAuth tokove
+- ✅ Implementiran tenant_id tracking za multi-tenant security
+- ✅ OAuth login/logout se sada loguje sa tenant_id u security_event tabeli
+- ✅ Admin panel podržava filtriranje OAuth eventova po tenantu
+
+**Novi eventi koji se loguju:**
+| Event | Opis |
+|-------|------|
+| `oauth_started` | Pokrenut OAuth flow |
+| `oauth_success` | Uspešna OAuth prijava (sa tenant_id) |
+| `oauth_failed` | Neuspešna OAuth prijava |
+| `oauth_csrf_invalid` | Nevažeći CSRF state |
+| `oauth_pkce_invalid` | Nevažeći PKCE verifier |
+
 ### v1.1 (16.01.2026)
 - ✅ Dodat PKCE (Proof Key for Code Exchange) - SHA256 metod
 - ✅ Dodat nonce parametar za replay protection

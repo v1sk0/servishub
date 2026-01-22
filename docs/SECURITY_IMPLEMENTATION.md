@@ -386,9 +386,211 @@ def invalidate_public_site_cache(tenant_id=None, slug=None, domain=None):
 
 ---
 
-## 8. Error Handling
+## 8. Security Event Logging
 
-### 8.1 Error Message Security
+### 8.1 Pregled Sistema
+
+**Lokacija:** `app/services/security_service.py`, `app/models/security_event.py`
+
+ServisHub implementira kompletan sistem za logovanje bezbednosnih dogadjaja koji omogucava:
+- Pracenje svih auth aktivnosti (login, logout, OAuth)
+- Detekciju brute-force napada
+- Monitoring rate limit prekoracenja
+- Pracenje po tenant-u (servisu) za multi-tenant security
+- Pregled u admin panelu sa filterima
+
+### 8.2 SecurityEvent Model
+
+```python
+class SecurityEvent(db.Model):
+    """Bezbednosni dogadjaj sacuvan u bazi."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    event_type = db.Column(db.String(50), nullable=False, index=True)
+    severity = db.Column(db.String(20), nullable=False, default='info')
+
+    # Ko je izvrsio akciju
+    user_id = db.Column(db.Integer, nullable=True, index=True)
+    user_type = db.Column(db.String(20), nullable=True)  # 'tenant_user', 'admin', 'guest'
+    email_hash = db.Column(db.String(64), nullable=True)  # SHA256 hash za privatnost
+
+    # Tenant tracking - NOVO (v239)
+    tenant_id = db.Column(db.Integer, nullable=True, index=True)
+
+    # IP i User Agent
+    ip_address = db.Column(db.String(45), nullable=True, index=True)
+    user_agent = db.Column(db.String(500), nullable=True)
+
+    # Request info
+    endpoint = db.Column(db.String(200), nullable=True)
+    method = db.Column(db.String(10), nullable=True)
+    details = db.Column(db.Text, nullable=True)  # JSON string
+
+    created_at = db.Column(db.DateTime(timezone=True), index=True)
+```
+
+### 8.3 Tipovi Dogadjaja (SecurityEventType)
+
+| Tip | Opis | Severity |
+|-----|------|----------|
+| `login_success` | Uspesna prijava | info |
+| `login_failed` | Neuspesna prijava | warning |
+| `login_locked` | Nalog zakljucan | error |
+| `logout` | Odjava korisnika | info |
+| `oauth_started` | Pokrenut OAuth flow | info |
+| `oauth_success` | Uspesna OAuth prijava | info |
+| `oauth_failed` | Neuspesna OAuth prijava | warning |
+| `oauth_csrf_invalid` | Nevazeci CSRF state | warning |
+| `oauth_pkce_invalid` | Nevazeci PKCE verifier | warning |
+| `token_refresh` | Osvezavanje tokena | info |
+| `token_invalid` | Nevazeci token | warning |
+| `token_expired` | Istekao token | info |
+| `rate_limit_exceeded` | Prekoracen rate limit | warning |
+| `2fa_setup` | Podesavanje 2FA | info |
+| `2fa_enabled` | 2FA aktiviran | info |
+| `2fa_verified` | 2FA verifikovan | info |
+| `2fa_failed` | Neuspesna 2FA verifikacija | warning |
+| `brute_force_detected` | Detektovan brute-force napad | critical |
+| `admin_login_success` | Admin prijava uspesna | info |
+| `admin_login_failed` | Admin prijava neuspesna | warning |
+
+### 8.4 SecurityEventLogger Servis
+
+```python
+class SecurityEventLogger:
+    """Logger za bezbednosne dogadjaje."""
+
+    @classmethod
+    def log_event(cls, event_type: str, details: dict = None,
+                  user_id: int = None, email: str = None,
+                  level: str = 'info', user_type: str = None,
+                  tenant_id: int = None,  # NOVO - pracenje po tenantu
+                  save_to_db: bool = True) -> None:
+        """
+        Loguje bezbednosni dogadjaj.
+
+        - Loguje u konzolu (strukturirani JSON format)
+        - Cuva u bazu za pregled u admin panelu
+        - Hashira email za privatnost
+        """
+
+    # Pomocne metode
+    @classmethod
+    def log_login_success(cls, user_id, email, auth_method='email',
+                          tenant_id=None, user_type='tenant_user')
+
+    @classmethod
+    def log_login_failed(cls, email, reason='invalid_credentials',
+                         tenant_id=None)
+
+    @classmethod
+    def log_tenant_register(cls, tenant_id, email, company_name)
+
+    @classmethod
+    def log_tenant_logout(cls, user_id, email, tenant_id)
+
+    @classmethod
+    def log_oauth_event(cls, event_type, email=None, error=None)
+
+    @classmethod
+    def log_rate_limit(cls, endpoint, limit)
+
+    @classmethod
+    def log_admin_login(cls, admin_id, email, success)
+```
+
+### 8.5 Tenant Security Tracking (v239)
+
+**Problem:** U multi-tenant okruzenju, potrebno je pratiti bezbednosne dogadjaje po servisu (tenantu) da bi se:
+- Detektovali napadi na specificni servis
+- Analizirala aktivnost po tenantu
+- Izolovali problematicni korisnici po servisu
+
+**Resenje:**
+
+```python
+# Logovanje tenant login-a (auth.py)
+SecurityEventLogger.log_login_success(
+    user_id=user.id,
+    email=user.email,
+    auth_method='email',
+    tenant_id=tenant.id,    # Povezuje event sa servisom
+    user_type='tenant_user'
+)
+
+# Logovanje tenant registracije
+SecurityEventLogger.log_tenant_register(
+    tenant_id=tenant.id,
+    email=user.email,
+    company_name=tenant.name
+)
+
+# Logovanje tenant logout-a
+SecurityEventLogger.log_tenant_logout(
+    user_id=g.current_user_id,
+    email=email,
+    tenant_id=tenant_id
+)
+```
+
+**Gde se loguje tenant_id:**
+- Login (email i OAuth)
+- Registracija novog servisa
+- Logout
+- Neuspesni login pokusaji
+
+### 8.6 Admin Panel - Security Events UI
+
+**Lokacija:** `/admin/security/events`
+
+**Features:**
+- Lista svih security eventova sa paginacijom
+- Filteri:
+  - Tip dogadjaja
+  - Ozbiljnost (severity)
+  - IP adresa
+  - Korisnik ID
+  - Tenant ID
+  - User type (admin/tenant_user/guest)
+  - Period (poslednja 24h/48h/7d)
+- Klik na IP - filtrira po toj IP adresi
+- Klik na Tenant ID - filtrira po tom servisu
+- Prikaz tenant imena pored ID-a (v240)
+
+**Statistike:**
+- Ukupno eventova u periodu
+- Failed logins
+- Rate limit violations
+- Unique IP adrese
+- Top 10 IP adresa po aktivnosti
+
+### 8.7 Cleanup i Retencija
+
+```python
+# Brisanje starih eventova (admin samo)
+SecurityEvent.cleanup_old_events(days=90)
+
+# Minimum 30 dana retencija (API validacija)
+if days < 30:
+    return error('Minimum period za brisanje je 30 dana')
+```
+
+### 8.8 Database Migracija
+
+```python
+# migrations/versions/s0t1u2v3w4x5_add_tenant_id_to_security_event.py
+def upgrade():
+    op.add_column('security_event',
+                  sa.Column('tenant_id', sa.Integer(), nullable=True))
+    op.create_index('ix_security_event_tenant_id',
+                    'security_event', ['tenant_id'])
+```
+
+---
+
+## 9. Error Handling
+
+### 9.1 Error Message Security
 
 **NE otkrivaj:**
 - Detalje o infrastrukturi
@@ -404,7 +606,7 @@ return {'error': 'User darko@example.com not found in database tenant_5'}
 return {'error': 'Not found'}, 404
 ```
 
-### 8.2 Logging
+### 9.2 Logging
 
 ```python
 import logging
@@ -416,9 +618,9 @@ logger.warning(f'Invalid domain verification attempt: {domain}')
 
 ---
 
-## 9. Security Headers
+## 10. Security Headers
 
-### 9.1 Preporuceni Headers
+### 10.1 Preporuceni Headers
 
 ```python
 @app.after_request
@@ -431,7 +633,7 @@ def add_security_headers(response):
     return response
 ```
 
-### 9.2 CORS za Public API
+### 10.2 CORS za Public API
 
 ```python
 # Dozvoli pristup sa bilo kog origina za public API
@@ -446,9 +648,9 @@ def add_cors_headers(response):
 
 ---
 
-## 10. Dependency Security
+## 11. Dependency Security
 
-### 10.1 Koriscene Biblioteke
+### 11.1 Koriscene Biblioteke
 
 | Biblioteka | Verzija | Svrha | Security Napomene |
 |------------|---------|-------|-------------------|
@@ -457,7 +659,7 @@ def add_cors_headers(response):
 | dnspython | 2.4.x | DNS lookup | Timeout konfigurisan |
 | bleach | (ako se koristi) | HTML sanitization | Alternativa nasoj implementaciji |
 
-### 10.2 Preporuke
+### 11.2 Preporuke
 
 1. Redovno pokretati `pip audit` ili `safety check`
 2. Azurirati dependencies mesecno
@@ -465,7 +667,7 @@ def add_cors_headers(response):
 
 ---
 
-## 11. Security Checklist
+## 12. Security Checklist
 
 ### Pre Deploymenta
 
@@ -476,25 +678,35 @@ def add_cors_headers(response):
 - [ ] Tenant isolation proveren u svim query-jima
 - [ ] Error poruke ne otkrivaju osetljive informacije
 - [ ] Cache invalidation implementiran
+- [ ] Security eventi se loguju za sve auth operacije
 
 ### Periodicne Provere
 
 - [ ] Pregled logova za sumnjive aktivnosti
+- [ ] Pregled security eventova u admin panelu
 - [ ] Provera dependency vulnerabilities
 - [ ] Penetration testing (godisnje)
 - [ ] Code review za security-critical promene
 
 ---
 
-## 12. Incident Response
+## 13. Incident Response
 
 ### U slucaju Security Incidenta
 
 1. **Izolacija** - Onemoguciti pogodjen endpoint/funkcionalnost
-2. **Analiza** - Pregled logova, identifikacija uzroka
+2. **Analiza** - Pregled security eventova u admin panelu, identifikacija uzroka
 3. **Popravka** - Implementacija fix-a
 4. **Notifikacija** - Obavestiti pogodene korisnike (ako je potrebno)
 5. **Post-mortem** - Dokumentovati i unaprediti
+
+### Korisni Alati za Analizu
+
+- **Admin Panel Security Events** (`/admin/security/events`)
+  - Filter po IP adresi za analizu sumnjivih aktivnosti
+  - Filter po tenant_id za izolaciju napada na specificni servis
+  - Filter po event_type za pregled svih failed login pokusaja
+  - Statistike - top IP adrese, failed logins, rate limits
 
 ### Kontakt
 
@@ -506,4 +718,6 @@ Za prijavu sigurnosnih problema: security@servishub.rs
 
 | Verzija | Datum | Opis |
 |---------|-------|------|
+| 1.2 | 2026-01-21 | Dodato Security Event Logging sa tenant tracking (v239-v240) |
+| 1.1 | 2026-01-20 | Admin panel theme fixes, IP color in dark mode |
 | 1.0 | 2026-01-18 | Inicijalna dokumentacija |
