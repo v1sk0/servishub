@@ -195,6 +195,7 @@ class ServiceTicket(db.Model):
         onupdate=datetime.utcnow,
         nullable=False
     )
+    ready_at = db.Column(db.DateTime, nullable=True)  # Kada je nalog postao READY
 
     # Relacije
     tenant = db.relationship('Tenant', backref='tickets')
@@ -405,6 +406,7 @@ class ServiceTicket(db.Model):
             'location_id': self.location_id,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'ready_at': self.ready_at.isoformat() if self.ready_at else None,
             'closed_at': self.closed_at.isoformat() if self.closed_at else None,
             'access_token': self.access_token,
         }

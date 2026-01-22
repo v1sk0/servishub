@@ -2349,11 +2349,11 @@ function ticketsPage() {
             return Math.min(100, (days / 30) * 100);
         },
 
-        // Pending tickets - days waiting for pickup (uses updated_at for READY status)
+        // Pending tickets - days waiting for pickup
         getDaysWaiting(ticket) {
-            // For READY tickets, use updated_at (when status changed to READY)
-            // For DELIVERED tickets, use closed_at
-            const waitingSince = ticket.status === 'READY' ? ticket.updated_at : ticket.closed_at;
+            // Use ready_at (when status changed to READY)
+            // Fallback to created_at for old tickets without ready_at
+            const waitingSince = ticket.ready_at || ticket.created_at;
             if (!waitingSince) return 0;
             const startDate = new Date(waitingSince);
             const now = new Date();

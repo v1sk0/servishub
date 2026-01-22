@@ -389,6 +389,11 @@ def update_ticket_status(ticket_id):
             ticket.final_price = data.get('final_price')
         if data.get('currency'):
             ticket.currency = data.get('currency')
+    # Za READY status, postavi ready_at timestamp
+    elif new_status_enum == TicketStatus.READY and ticket.status != TicketStatus.READY:
+        from datetime import datetime
+        ticket.ready_at = datetime.utcnow()
+        ticket.status = new_status_enum
     else:
         ticket.status = new_status_enum
 
