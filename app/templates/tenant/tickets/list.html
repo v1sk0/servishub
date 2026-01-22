@@ -606,6 +606,65 @@
     .glass-theme .detail-status-badge.delivered { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
     .glass-theme .detail-status-badge.rejected { background: rgba(239, 68, 68, 0.2); color: #f87171; }
 
+    /* History section styles */
+    .history-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: transparent;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        color: #6b7280;
+        transition: all 0.2s;
+    }
+    .history-toggle:hover { background: #f3f4f6; border-color: #d1d5db; }
+    .history-toggle svg { width: 16px; height: 16px; }
+    .history-list { margin-top: 12px; }
+    .history-item {
+        padding: 12px;
+        background: #f9fafb;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        border-left: 3px solid #3b82f6;
+    }
+    .history-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    .history-item-action {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        background: #dbeafe;
+        color: #1e40af;
+        border-radius: 4px;
+    }
+    .history-change {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        font-size: 0.8rem;
+        margin-top: 4px;
+    }
+    .history-field { font-weight: 600; color: #374151; }
+    .history-old { color: #ef4444; text-decoration: line-through; }
+    .history-arrow { color: #9ca3af; margin: 0 4px; }
+    .history-new { color: #22c55e; }
+    .glass-theme .history-toggle { border-color: rgba(255,255,255,0.2); color: #94a3b8; }
+    .glass-theme .history-toggle:hover { background: rgba(255,255,255,0.05); }
+    .glass-theme .history-item { background: rgba(255,255,255,0.03); border-left-color: #60a5fa; }
+    .glass-theme .history-item-header { color: #94a3b8; }
+    .glass-theme .history-item-action { background: rgba(59,130,246,0.2); color: #60a5fa; }
+    .glass-theme .history-field { color: #f1f5f9; }
+
     @media (max-width: 640px) {
         .detail-grid { grid-template-columns: 1fr; }
         .detail-item.full-width { grid-column: span 1; }
@@ -1426,13 +1485,13 @@
                     </div>
                 </div>
 
-                <!-- Resolution Section (if completed) -->
-                <div class="detail-section" x-show="detailTicket?.resolution">
+                <!-- Notes Section (if has notes) -->
+                <div class="detail-section" x-show="detailTicket?.ticket_notes">
                     <div class="detail-section-title">
-                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        Rešenje
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        Napomene
                     </div>
-                    <div class="detail-comment-box" x-text="detailTicket?.resolution || '-'"></div>
+                    <div class="detail-comment-box" x-text="detailTicket?.ticket_notes || '-'"></div>
                 </div>
 
                 <!-- Warranty Section (if closed) -->
@@ -1450,6 +1509,36 @@
                             <span class="detail-label">Preostalo dana</span>
                             <span class="detail-value" x-text="getWarrantyRemaining(detailTicket)"></span>
                         </div>
+                    </div>
+                </div>
+
+                <!-- History Section -->
+                <div class="detail-section">
+                    <button class="history-toggle" @click="toggleHistory(detailTicket?.id)">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span x-text="showHistory ? 'Sakrij istoriju promena' : 'Prikaži istoriju promena'"></span>
+                        <svg x-show="loadingHistory" class="animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    </button>
+                    <div class="history-list" x-show="showHistory && ticketHistory.length > 0">
+                        <template x-for="item in ticketHistory" :key="item.id">
+                            <div class="history-item">
+                                <div class="history-item-header">
+                                    <span class="history-item-action" x-text="item.action"></span>
+                                    <span x-text="item.user_email + ' • ' + formatDateTime(item.created_at)"></span>
+                                </div>
+                                <template x-for="(change, field) in item.changes" :key="field">
+                                    <div class="history-change" x-show="field !== 'updated_at'">
+                                        <span class="history-field" x-text="getFieldLabel(field) + ':'"></span>
+                                        <span class="history-old" x-text="change.old || '(prazno)'"></span>
+                                        <span class="history-arrow">→</span>
+                                        <span class="history-new" x-text="change.new || '(prazno)'"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <div x-show="showHistory && ticketHistory.length === 0 && !loadingHistory" class="text-center text-gray-500 text-sm py-4">
+                        Nema zabeleženih promena
                     </div>
                 </div>
             </div>
@@ -1526,7 +1615,7 @@
                         <input type="text" x-model="editForm.imei" class="form-input">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                <div class="grid grid-cols-2 gap-4 mb-4">
                     <div class="form-group">
                         <label class="form-label">Stanje (A/B/C)</label>
                         <select x-model="editForm.device_condition_grade" class="form-input">
@@ -1543,10 +1632,6 @@
                             <option :value="true">Da</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Lozinka uređaja</label>
-                        <input type="text" x-model="editForm.device_password" class="form-input">
-                    </div>
                 </div>
                 <div class="form-group mb-4">
                     <label class="form-label">Napomena o stanju</label>
@@ -1554,20 +1639,14 @@
                 </div>
 
                 <!-- Problem Section -->
-                <div class="form-section-title">Opis problema i rešenje</div>
+                <div class="form-section-title">Opis problema</div>
                 <div class="form-group mb-4">
                     <label class="form-label">Opis problema *</label>
                     <textarea x-model="editForm.problem_description" rows="2" class="form-input" required></textarea>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div class="form-group">
-                        <label class="form-label">Dijagnoza</label>
-                        <textarea x-model="editForm.diagnosis" rows="2" class="form-input"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Rešenje</label>
-                        <textarea x-model="editForm.resolution" rows="2" class="form-input"></textarea>
-                    </div>
+                <div class="form-group mb-4">
+                    <label class="form-label">Napomene</label>
+                    <textarea x-model="editForm.ticket_notes" rows="2" class="form-input" placeholder="Dodatne napomene, šifra uređaja, posebni zahtevi..."></textarea>
                 </div>
 
                 <!-- Pricing Section -->
@@ -1716,6 +1795,11 @@ function ticketsPage() {
         showDetailModal: false,
         detailTicket: null,
 
+        // History state
+        showHistory: false,
+        loadingHistory: false,
+        ticketHistory: [],
+
         // Edit modal state
         showEditModal: false,
         editTicket: null,
@@ -1731,10 +1815,8 @@ function ticketsPage() {
             device_condition_grade: '',
             device_condition_notes: '',
             device_not_working: false,
-            device_password: '',
             problem_description: '',
-            diagnosis: '',
-            resolution: '',
+            ticket_notes: '',
             estimated_price: null,
             final_price: null,
             currency: 'RSD',
@@ -1806,7 +1888,54 @@ function ticketsPage() {
 
         viewTicket(ticket) {
             this.detailTicket = ticket;
+            this.showHistory = false;
+            this.ticketHistory = [];
             this.showDetailModal = true;
+        },
+
+        async toggleHistory(ticketId) {
+            if (this.showHistory) {
+                this.showHistory = false;
+                return;
+            }
+
+            this.loadingHistory = true;
+            try {
+                const r = await api('/api/v1/tickets/' + ticketId + '/history');
+                if (r.ok) {
+                    const data = await r.json();
+                    this.ticketHistory = data.items || [];
+                }
+            } catch (e) {
+                console.error('Failed to load history:', e);
+            } finally {
+                this.loadingHistory = false;
+                this.showHistory = true;
+            }
+        },
+
+        getFieldLabel(field) {
+            const labels = {
+                'customer_name': 'Ime',
+                'customer_phone': 'Telefon',
+                'customer_email': 'Email',
+                'brand': 'Marka',
+                'model': 'Model',
+                'imei': 'IMEI',
+                'device_type': 'Tip uređaja',
+                'device_condition_grade': 'Ocena stanja',
+                'device_condition_notes': 'Napomena o stanju',
+                'device_not_working': 'Ne radi',
+                'problem_description': 'Opis problema',
+                'ticket_notes': 'Napomene',
+                'estimated_price': 'Procenjena cena',
+                'final_price': 'Konačna cena',
+                'currency': 'Valuta',
+                'warranty_days': 'Garancija',
+                'status': 'Status',
+                'priority': 'Prioritet'
+            };
+            return labels[field] || field;
         },
 
         openEditModal(ticket) {
@@ -1823,10 +1952,8 @@ function ticketsPage() {
                 device_condition_grade: ticket.device_condition_grade || '',
                 device_condition_notes: ticket.device_condition_notes || '',
                 device_not_working: ticket.device_not_working || false,
-                device_password: ticket.device_password || '',
                 problem_description: ticket.problem_description || '',
-                diagnosis: ticket.diagnosis || '',
-                resolution: ticket.resolution || '',
+                ticket_notes: ticket.ticket_notes || '',
                 estimated_price: ticket.estimated_price || null,
                 final_price: ticket.final_price || null,
                 currency: ticket.currency || 'RSD',
