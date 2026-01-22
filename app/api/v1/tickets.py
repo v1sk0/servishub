@@ -15,7 +15,7 @@ from ..middleware.auth import jwt_required, tenant_required, location_access_req
 from ...extensions import db
 from ...models import (
     ServiceTicket, TicketStatus, TicketPriority, TicketNotificationLog,
-    get_next_ticket_number, AuditLog, AuditAction
+    get_next_ticket_number, AuditLog, AuditAction, TenantUser
 )
 from datetime import timezone as tz
 import json
@@ -489,6 +489,13 @@ def get_ticket_history(ticket_id):
         entity_id=ticket_id
     ).order_by(AuditLog.created_at.desc()).limit(50).all()
 
+    # Dohvati imena korisnika
+    user_ids = [log.user_id for log in logs if log.user_id]
+    user_names = {}
+    if user_ids:
+        users = TenantUser.query.filter(TenantUser.id.in_(user_ids)).all()
+        user_names = {u.id: u.full_name for u in users}
+
     return jsonify({
         'items': [
             {
@@ -496,6 +503,7 @@ def get_ticket_history(ticket_id):
                 'action': log.action.value,
                 'changes': log.changes_json,
                 'user_email': log.user_email,
+                'user_name': user_names.get(log.user_id, log.user_email) if log.user_id else log.user_email,
                 'created_at': log.created_at.isoformat()
             }
             for log in logs

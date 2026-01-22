@@ -1723,7 +1723,7 @@
                             <div class="history-item">
                                 <div class="history-item-header">
                                     <span class="history-item-action" x-text="item.action"></span>
-                                    <span x-text="item.user_email + ' • ' + formatDateTime(item.created_at)"></span>
+                                    <span x-text="(item.user_name || item.user_email) + ' • ' + formatDateTime(item.created_at)"></span>
                                 </div>
                                 <template x-for="(change, field) in item.changes" :key="field">
                                     <div class="history-change" x-show="field !== 'updated_at'">
