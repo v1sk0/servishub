@@ -536,6 +536,88 @@
     }
     .detail-value.large { font-size: 1.125rem; font-weight: 600; }
     .detail-value.price { color: #22c55e; }
+
+    /* Inline edit styles */
+    .editable-field {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        margin: -0.25rem -0.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .editable-field:hover { background: rgba(59, 130, 246, 0.08); }
+    .editable-field .edit-icon {
+        opacity: 0;
+        color: #3b82f6;
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+        transition: opacity 0.15s;
+    }
+    .editable-field:hover .edit-icon { opacity: 1; }
+    .editable-field .field-value { flex: 1; }
+    .editable-field.editing { background: transparent; cursor: default; }
+    .editable-field.editing:hover { background: transparent; }
+    .editable-field.editing .edit-icon { display: none; }
+    .inline-input {
+        width: 100%;
+        padding: 0.375rem 0.5rem;
+        border: 2px solid #3b82f6;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #1e293b;
+        background: white;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    .inline-input:focus { border-color: #2563eb; }
+    .inline-input.large { font-size: 1.125rem; font-weight: 600; }
+    .inline-textarea {
+        width: 100%;
+        padding: 0.5rem;
+        border: 2px solid #3b82f6;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        color: #1e293b;
+        background: white;
+        outline: none;
+        resize: vertical;
+        min-height: 60px;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    .save-indicator {
+        position: absolute;
+        right: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #22c55e;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .save-indicator.show { opacity: 1; }
+
+    /* Glass theme inline edit */
+    .glass-theme .editable-field:hover { background: rgba(255, 255, 255, 0.05); }
+    .glass-theme .editable-field .edit-icon { color: #60a5fa; }
+    .glass-theme .inline-input {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: #60a5fa;
+        color: #f1f5f9;
+    }
+    .glass-theme .inline-textarea {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: #60a5fa;
+        color: #f1f5f9;
+    }
     .detail-comment-box {
         background: white;
         border: 1px solid #e2e8f0;
@@ -1395,19 +1477,39 @@
                     <div class="detail-grid">
                         <div class="detail-item">
                             <span class="detail-label">Ime i prezime</span>
-                            <span class="detail-value" x-text="detailTicket?.customer_name || '-'"></span>
+                            <div class="editable-field" :class="{ editing: editingField === 'customer_name' }" @click="startEdit('customer_name')">
+                                <template x-if="editingField !== 'customer_name'">
+                                    <span class="field-value detail-value" x-text="detailTicket?.customer_name || '-'"></span>
+                                </template>
+                                <template x-if="editingField === 'customer_name'">
+                                    <input type="text" class="inline-input" x-model="inlineEditValue" @blur="saveInlineEdit('customer_name')" @keydown.enter="saveInlineEdit('customer_name')" @keydown.escape="cancelEdit()" x-ref="inlineInput">
+                                </template>
+                                <svg class="edit-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </div>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Kontakt</span>
-                            <span class="detail-value" x-text="detailTicket?.customer_phone || '-'"></span>
+                            <div class="editable-field" :class="{ editing: editingField === 'customer_phone' }" @click="startEdit('customer_phone')">
+                                <template x-if="editingField !== 'customer_phone'">
+                                    <span class="field-value detail-value" x-text="detailTicket?.customer_phone || '-'"></span>
+                                </template>
+                                <template x-if="editingField === 'customer_phone'">
+                                    <input type="tel" class="inline-input" x-model="inlineEditValue" @blur="saveInlineEdit('customer_phone')" @keydown.enter="saveInlineEdit('customer_phone')" @keydown.escape="cancelEdit()">
+                                </template>
+                                <svg class="edit-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </div>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Email</span>
-                            <span class="detail-value" x-text="detailTicket?.customer_email || '-'"></span>
-                        </div>
-                        <div class="detail-item" x-show="detailTicket?.customer_company_name">
-                            <span class="detail-label">Firma</span>
-                            <span class="detail-value" x-text="detailTicket?.customer_company_name || '-'"></span>
+                            <div class="editable-field" :class="{ editing: editingField === 'customer_email' }" @click="startEdit('customer_email')">
+                                <template x-if="editingField !== 'customer_email'">
+                                    <span class="field-value detail-value" x-text="detailTicket?.customer_email || '-'"></span>
+                                </template>
+                                <template x-if="editingField === 'customer_email'">
+                                    <input type="email" class="inline-input" x-model="inlineEditValue" @blur="saveInlineEdit('customer_email')" @keydown.enter="saveInlineEdit('customer_email')" @keydown.escape="cancelEdit()">
+                                </template>
+                                <svg class="edit-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1420,24 +1522,44 @@
                     </div>
                     <div class="detail-grid">
                         <div class="detail-item">
-                            <span class="detail-label">Kategorija</span>
-                            <span class="detail-value" x-text="getDeviceTypeLabel(detailTicket?.device_type)"></span>
+                            <span class="detail-label">Marka</span>
+                            <div class="editable-field" :class="{ editing: editingField === 'brand' }" @click="startEdit('brand')">
+                                <template x-if="editingField !== 'brand'">
+                                    <span class="field-value detail-value" x-text="detailTicket?.brand || '-'"></span>
+                                </template>
+                                <template x-if="editingField === 'brand'">
+                                    <input type="text" class="inline-input" x-model="inlineEditValue" @blur="saveInlineEdit('brand')" @keydown.enter="saveInlineEdit('brand')" @keydown.escape="cancelEdit()">
+                                </template>
+                                <svg class="edit-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Model</span>
+                            <div class="editable-field" :class="{ editing: editingField === 'model' }" @click="startEdit('model')">
+                                <template x-if="editingField !== 'model'">
+                                    <span class="field-value detail-value" x-text="detailTicket?.model || '-'"></span>
+                                </template>
+                                <template x-if="editingField === 'model'">
+                                    <input type="text" class="inline-input" x-model="inlineEditValue" @blur="saveInlineEdit('model')" @keydown.enter="saveInlineEdit('model')" @keydown.escape="cancelEdit()">
+                                </template>
+                                <svg class="edit-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </div>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">IMEI / Serijski</span>
-                            <span class="detail-value" x-text="detailTicket?.imei || '-'"></span>
+                            <div class="editable-field" :class="{ editing: editingField === 'imei' }" @click="startEdit('imei')">
+                                <template x-if="editingField !== 'imei'">
+                                    <span class="field-value detail-value" x-text="detailTicket?.imei || '-'"></span>
+                                </template>
+                                <template x-if="editingField === 'imei'">
+                                    <input type="text" class="inline-input" x-model="inlineEditValue" @blur="saveInlineEdit('imei')" @keydown.enter="saveInlineEdit('imei')" @keydown.escape="cancelEdit()">
+                                </template>
+                                <svg class="edit-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </div>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Stanje pri prijemu</span>
                             <span class="detail-value" x-text="getGradeLabel(detailTicket?.device_condition_grade)"></span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Uređaj radi</span>
-                            <span class="detail-value" x-text="detailTicket?.device_not_working ? 'Ne' : 'Da'"></span>
-                        </div>
-                        <div class="detail-item full-width" x-show="detailTicket?.device_condition_notes">
-                            <span class="detail-label">Napomena o stanju</span>
-                            <span class="detail-value" x-text="detailTicket?.device_condition_notes || '-'"></span>
                         </div>
                     </div>
                 </div>
@@ -1448,7 +1570,15 @@
                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                         Opis problema
                     </div>
-                    <div class="detail-comment-box" x-text="detailTicket?.problem_description || '-'"></div>
+                    <div class="editable-field" :class="{ editing: editingField === 'problem_description' }" @click="startEdit('problem_description')" style="margin: 0;">
+                        <template x-if="editingField !== 'problem_description'">
+                            <div class="detail-comment-box field-value" x-text="detailTicket?.problem_description || '-'" style="flex: 1;"></div>
+                        </template>
+                        <template x-if="editingField === 'problem_description'">
+                            <textarea class="inline-textarea" x-model="inlineEditValue" @blur="saveInlineEdit('problem_description')" @keydown.escape="cancelEdit()" rows="3"></textarea>
+                        </template>
+                        <svg class="edit-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="align-self: flex-start; margin-top: 0.75rem;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                    </div>
                 </div>
 
                 <!-- Service Section -->
@@ -1460,7 +1590,15 @@
                     <div class="detail-grid">
                         <div class="detail-item">
                             <span class="detail-label">Cena</span>
-                            <span class="detail-value large price" x-text="formatPriceDisplay(detailTicket?.final_price || detailTicket?.estimated_price, detailTicket?.currency)"></span>
+                            <div class="editable-field" :class="{ editing: editingField === 'final_price' }" @click="startEdit('final_price')">
+                                <template x-if="editingField !== 'final_price'">
+                                    <span class="field-value detail-value large price" x-text="formatPriceDisplay(detailTicket?.final_price || detailTicket?.estimated_price, detailTicket?.currency)"></span>
+                                </template>
+                                <template x-if="editingField === 'final_price'">
+                                    <input type="number" class="inline-input large" x-model="inlineEditValue" @blur="saveInlineEdit('final_price')" @keydown.enter="saveInlineEdit('final_price')" @keydown.escape="cancelEdit()" step="0.01" min="0">
+                                </template>
+                                <svg class="edit-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </div>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Status</span>
@@ -1550,10 +1688,6 @@
                     <button class="btn-secondary" @click="printTicket(detailTicket)">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                         Štampaj
-                    </button>
-                    <button class="btn-primary" @click="openEditModal(detailTicket)">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                        Uredi
                     </button>
                 </div>
             </div>
@@ -1800,6 +1934,11 @@ function ticketsPage() {
         loadingHistory: false,
         ticketHistory: [],
 
+        // Inline edit state
+        editingField: null,
+        inlineEditValue: '',
+        savingInline: false,
+
         // Edit modal state
         showEditModal: false,
         editTicket: null,
@@ -1890,7 +2029,73 @@ function ticketsPage() {
             this.detailTicket = ticket;
             this.showHistory = false;
             this.ticketHistory = [];
+            this.editingField = null;
             this.showDetailModal = true;
+        },
+
+        startEdit(field) {
+            if (this.editingField === field) return;
+            if (this.savingInline) return;
+
+            this.editingField = field;
+            this.inlineEditValue = this.detailTicket?.[field] || '';
+
+            // Focus input after Alpine updates DOM
+            this.$nextTick(() => {
+                const input = this.$el.querySelector('.inline-input, .inline-textarea');
+                if (input) input.focus();
+            });
+        },
+
+        cancelEdit() {
+            this.editingField = null;
+            this.inlineEditValue = '';
+        },
+
+        async saveInlineEdit(field) {
+            if (!this.detailTicket || this.savingInline) return;
+
+            const oldValue = this.detailTicket[field];
+            const newValue = this.inlineEditValue;
+
+            // If value hasn't changed, just cancel
+            if (oldValue === newValue || (!oldValue && !newValue)) {
+                this.cancelEdit();
+                return;
+            }
+
+            this.savingInline = true;
+            try {
+                const r = await api('/api/v1/tickets/' + this.detailTicket.id, {
+                    method: 'PUT',
+                    body: JSON.stringify({ [field]: newValue })
+                });
+
+                if (r.ok) {
+                    // Update local ticket data
+                    this.detailTicket[field] = newValue;
+
+                    // Also update in the tickets lists
+                    const updateInList = (list) => {
+                        const idx = list.findIndex(t => t.id === this.detailTicket.id);
+                        if (idx !== -1) list[idx][field] = newValue;
+                    };
+                    updateInList(this.openTickets);
+                    updateInList(this.pendingTickets);
+
+                    showToast('Sačuvano', 'success');
+                } else {
+                    const err = await r.json();
+                    showToast(err.message || 'Greška pri čuvanju', 'error');
+                }
+            } catch (e) {
+                console.error('Failed to save:', e);
+                showToast('Greška pri čuvanju', 'error');
+            } finally {
+                this.savingInline = false;
+                this.editingField = null;
+                this.inlineEditValue = '';
+            }
         },
 
         async toggleHistory(ticketId) {
