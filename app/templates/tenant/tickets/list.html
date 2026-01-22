@@ -1755,6 +1755,46 @@
         </div>
     </div>
 
+    <!-- Edit Confirmation Modal -->
+    <div x-show="showEditConfirmModal" x-cloak class="modal-overlay" @click.self="cancelEditConfirm()" style="z-index: 1100;">
+        <div class="modal-content" style="max-width: 420px;" @click.stop>
+            <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <h3 style="color: white;">Potvrda izmene</h3>
+                <button class="modal-close" @click="cancelEditConfirm()" style="color: rgba(255,255,255,0.7);">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <p style="margin-bottom: 1rem; color: #64748b; font-size: 0.875rem;">
+                    Da li ste sigurni da želite da sačuvate ovu izmenu?
+                </p>
+                <div style="background: #f8fafc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                    <div style="font-weight: 600; color: #334155; margin-bottom: 0.75rem; font-size: 0.875rem;">
+                        Polje: <span x-text="getFieldLabel(editConfirmField)" style="color: #3b82f6;"></span>
+                    </div>
+                    <div style="display: grid; gap: 0.5rem;">
+                        <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                            <span style="color: #ef4444; font-weight: 500; min-width: 50px; font-size: 0.813rem;">Staro:</span>
+                            <span style="color: #64748b; word-break: break-word; font-size: 0.875rem;" x-text="editConfirmOldValue || '-'"></span>
+                        </div>
+                        <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                            <span style="color: #22c55e; font-weight: 500; min-width: 50px; font-size: 0.813rem;">Novo:</span>
+                            <span style="color: #1e293b; font-weight: 500; word-break: break-word; font-size: 0.875rem;" x-text="editConfirmNewValue || '-'"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button class="btn-secondary" @click="cancelEditConfirm()">Otkaži</button>
+                <button class="btn-primary" @click="confirmEditSave()" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    Sačuvaj izmenu
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -1868,6 +1908,12 @@ function ticketsPage() {
         showDetailModal: false,
         detailTicket: null,
 
+        // Edit confirmation modal state
+        showEditConfirmModal: false,
+        editConfirmField: null,
+        editConfirmOldValue: null,
+        editConfirmNewValue: null,
+
         // History state
         showHistory: false,
         loadingHistory: false,
@@ -1980,12 +2026,28 @@ function ticketsPage() {
                 return;
             }
 
-            // Confirmation dialog
-            if (!confirm('Da li ste sigurni da želite da sačuvate izmenu?')) {
-                this.cancelEdit();
-                return;
-            }
+            // Show confirmation modal
+            this.editConfirmField = field;
+            this.editConfirmOldValue = oldValue;
+            this.editConfirmNewValue = newValue;
+            this.showEditConfirmModal = true;
+        },
 
+        cancelEditConfirm() {
+            this.showEditConfirmModal = false;
+            this.editConfirmField = null;
+            this.editConfirmOldValue = null;
+            this.editConfirmNewValue = null;
+            this.cancelEdit();
+        },
+
+        async confirmEditSave() {
+            if (!this.detailTicket || this.savingInline) return;
+
+            const field = this.editConfirmField;
+            const newValue = this.editConfirmNewValue;
+
+            this.showEditConfirmModal = false;
             this.savingInline = true;
             try {
                 const r = await api('/api/v1/tickets/' + this.detailTicket.id, {
