@@ -1,6 +1,54 @@
 {% extends "layouts/base.html" %}
 
 {% block head %}
+<!--
+    KRITIČNO: OAuth Token Handler
+    Koristi sinhroni XMLHttpRequest da blokira SVE dok se tokeni ne preuzmu.
+    Ovo garantuje da Alpine.js neće početi pre nego što su tokeni spremni.
+-->
+<script>
+(function() {
+    'use strict';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const authMethod = urlParams.get('auth');
+
+    if (authMethod === 'oauth') {
+        console.log('[OAuth] Detected auth=oauth, fetching tokens synchronously...');
+
+        // SINHRONI XMLHttpRequest - blokira sve dok se ne završi
+        // Ovo je namerno sinhrono jer moramo da završimo pre Alpine.js
+        try {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', '/api/v1/auth/google/tokens', false);  // false = sinhrono
+            xhr.withCredentials = true;  // Šalje session cookie
+            xhr.send();
+
+            if (xhr.status === 200) {
+                const data = JSON.parse(xhr.responseText);
+                console.log('[OAuth] Tokens received, saving...');
+
+                localStorage.setItem('access_token', data.access_token);
+                if (data.refresh_token) {
+                    localStorage.setItem('refresh_token', data.refresh_token);
+                }
+
+                console.log('[OAuth] Tokens saved! Redirecting...');
+                // Redirect odmah - ovo će prekinuti učitavanje stranice
+                window.location.replace(window.location.pathname);
+                // Nikada ne dolazi ovde jer se stranica reload-uje
+            } else {
+                console.error('[OAuth] Token fetch failed:', xhr.status);
+                window.location.replace('/login?error=oauth_token_' + xhr.status);
+            }
+        } catch (e) {
+            console.error('[OAuth] Exception:', e);
+            window.location.replace('/login?error=oauth_exception');
+        }
+    }
+})();
+</script>
+
 <style>
     /* ========================================
        LIGHT THEME (Default)
@@ -545,43 +593,8 @@ function tenantApp() {
         sidebarOpen: false,
 
         async init() {
-            // Proveri da li dolazi sa OAuth-a
-            const urlParams = new URLSearchParams(window.location.search);
-            const authMethod = urlParams.get('auth');
-
-            if (authMethod === 'oauth') {
-                // Preuzmi tokene sigurno iz sesije (ne iz URL-a)
-                // VAZNO: credentials: 'include' je OBAVEZAN da bi se poslao session cookie!
-                try {
-                    const response = await fetch('/api/v1/auth/google/tokens', {
-                        credentials: 'include'  // Salje session cookie sa zahtevom
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        localStorage.setItem('access_token', data.access_token);
-                        if (data.refresh_token) {
-                            localStorage.setItem('refresh_token', data.refresh_token);
-                        }
-                        console.log('OAuth tokens retrieved successfully');
-                        // Reload stranicu bez auth parametra - ovo garantuje da
-                        // sve komponente koriste ispravne tokene iz localStorage
-                        window.location.href = window.location.pathname;
-                        return;  // Zaustavi dalje izvrsavanje
-                    } else {
-                        console.error('OAuth token fetch failed, status:', response.status);
-                        // Ako nema tokena u sesiji, redirect na login
-                        if (response.status === 404) {
-                            window.location.href = '/login?error=session_expired';
-                            return;
-                        }
-                    }
-                } catch (e) {
-                    console.error('Failed to fetch OAuth tokens:', e);
-                }
-                // Ocisti URL parametre samo ako nije uspeo redirect
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-
+            // OAuth se sada obradjuje sinhrono u <head> pre Alpine.js
+            // Ovde samo ucitavamo korisnika
             await this.loadUser();
         },
 
