@@ -6,7 +6,7 @@ za import iz app.models.
 """
 
 from .tenant import Tenant, ServiceLocation, TenantStatus
-from .user import TenantUser, UserLocation, UserRole
+from .user import TenantUser, UserLocation, UserRole, TipUgovora, TipPlate
 # Alias za kompatibilnost
 User = TenantUser
 from .admin import PlatformAdmin, AdminRole
@@ -34,6 +34,8 @@ __all__ = [
     'User',
     'UserLocation',
     'UserRole',
+    'TipUgovora',
+    'TipPlate',
     # Admin modeli
     'PlatformAdmin',
     'AdminRole',
