@@ -108,8 +108,8 @@
                         </a>
                     </li>
 
-                    <!-- Tim -->
-                    <li>
+                    <!-- Tim (samo za admina) -->
+                    <li x-show="isAdmin()">
                         <a href="/team"
                            class="nav-item group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6"
                            :class="{ 'active': window.location.pathname.startsWith('/team') }">
@@ -226,6 +226,7 @@ function sidebarData() {
         totalDays: 30,
         locationCount: 1,
         tenantName: '',
+        userRole: '',
 
         async init() {
             await Promise.all([
@@ -240,10 +241,16 @@ function sidebarData() {
                 if (res.ok) {
                     const data = await res.json();
                     this.tenantName = data.tenant?.name || 'Servis';
+                    this.userRole = data.user?.role || '';
                 }
             } catch (e) {
                 console.error('Failed to load tenant name:', e);
             }
+        },
+
+        isAdmin() {
+            const adminRoles = ['OWNER', 'ADMIN', 'MANAGER'];
+            return adminRoles.includes(this.userRole);
         },
 
         async loadSubscriptionStatus() {

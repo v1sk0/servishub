@@ -90,7 +90,12 @@ class PasswordReset(BaseModel):
 @bp.route('', methods=['GET'])
 @jwt_required
 def list_users():
-    """List all users for tenant"""
+    """List all users for tenant (admin only)"""
+    # Check if current user is admin
+    current_user = TenantUser.query.get(g.user_id)
+    if not current_user or current_user.role.value not in ['OWNER', 'ADMIN', 'MANAGER']:
+        return {'error': 'Nemate pristup timu'}, 403
+
     include_inactive = request.args.get('include_inactive', 'false').lower() == 'true'
     role_filter = request.args.get('role')
     location_id = request.args.get('location_id', type=int)
@@ -155,6 +160,17 @@ def list_users():
 @jwt_required
 def get_user(user_id):
     """Get single user details"""
+    # Check permissions - non-admins can only see their own profile
+    current_user = TenantUser.query.get(g.user_id)
+    if not current_user:
+        return {'error': 'Unauthorized'}, 401
+
+    is_admin = current_user.role.value in ['OWNER', 'ADMIN', 'MANAGER']
+    is_self = user_id == g.user_id
+
+    if not is_admin and not is_self:
+        return {'error': 'Nemate pristup ovom profilu'}, 403
+
     user = TenantUser.query.filter_by(
         id=user_id,
         tenant_id=g.tenant_id
@@ -315,10 +331,15 @@ def create_user():
 @bp.route('/<int:user_id>', methods=['PUT'])
 @jwt_required
 def update_user(user_id):
-    """Update user"""
+    """Update user (admin only)"""
     current_user = TenantUser.query.get(g.user_id)
     if not current_user:
         return {'error': 'Unauthorized'}, 401
+
+    # Only admins can update user profiles
+    is_admin = current_user.role.value in ['OWNER', 'ADMIN', 'MANAGER']
+    if not is_admin:
+        return {'error': 'Nemate pristup izmeni profila'}, 403
 
     user = TenantUser.query.filter_by(
         id=user_id,
@@ -327,13 +348,6 @@ def update_user(user_id):
 
     if not user:
         return {'error': 'User not found'}, 404
-
-    # Check permissions
-    is_self = user_id == g.user_id
-    is_admin = current_user.role.value in ['OWNER', 'ADMIN']
-
-    if not is_self and not is_admin:
-        return {'error': 'Permission denied'}, 403
 
     try:
         data = UserUpdate(**request.json)
@@ -397,7 +411,7 @@ def update_user(user_id):
 
         if data.is_active is not None:
             # Can't deactivate yourself
-            if not data.is_active and is_self:
+            if not data.is_active and user_id == g.user_id:
                 return {'error': 'Cannot deactivate yourself'}, 400
             # Can't deactivate owner
             if not data.is_active and user.role == UserRole.OWNER:
