@@ -563,6 +563,10 @@ function tenantApp() {
                             localStorage.setItem('refresh_token', data.refresh_token);
                         }
                         console.log('OAuth tokens retrieved successfully');
+                        // Reload stranicu bez auth parametra - ovo garantuje da
+                        // sve komponente koriste ispravne tokene iz localStorage
+                        window.location.href = window.location.pathname;
+                        return;  // Zaustavi dalje izvrsavanje
                     } else {
                         console.error('OAuth token fetch failed, status:', response.status);
                         // Ako nema tokena u sesiji, redirect na login
@@ -574,7 +578,7 @@ function tenantApp() {
                 } catch (e) {
                     console.error('Failed to fetch OAuth tokens:', e);
                 }
-                // Ocisti URL parametre
+                // Ocisti URL parametre samo ako nije uspeo redirect
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
 
