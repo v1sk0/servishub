@@ -1240,3 +1240,35 @@ def get_company_by_pib(pib):
         'success': True,
         'company': company.to_dict()
     }), 200
+
+
+@bp.route('/check-pib/<pib>', methods=['GET'])
+def check_pib_exists(pib):
+    """
+    Proverava da li PIB vec postoji u bazi (registrovan servis).
+
+    Koristi se tokom registracije za real-time validaciju.
+
+    Args:
+        pib: Poreski identifikacioni broj (9 cifara)
+
+    Returns:
+        JSON sa exists: true/false
+    """
+    from ...models import Tenant
+
+    # Validiraj PIB
+    pib = pib.strip()
+    if not pib.isdigit() or len(pib) != 9:
+        return jsonify({
+            'error': 'Invalid PIB',
+            'message': 'PIB mora imati tačno 9 cifara.'
+        }), 400
+
+    # Proveri u bazi
+    existing = Tenant.query.filter_by(pib=pib).first()
+
+    return jsonify({
+        'exists': existing is not None,
+        'pib': pib
+    }), 200

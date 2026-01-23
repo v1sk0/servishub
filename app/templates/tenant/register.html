@@ -103,13 +103,13 @@
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="pib" class="block text-sm font-medium text-gray-700">PIB *</label>
+                        <label for="pib" class="block text-sm font-medium text-gray-700">PIB <span class="text-gray-400 font-normal">(opciono)</span></label>
                         <div class="relative">
                             <input type="text" id="pib" x-model="form.pib" maxlength="9"
                                    @input="filterDigitsOnly('pib'); clearFieldError('pib'); onPibInput()"
                                    placeholder="123456789"
                                    class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                                   :class="fieldErrors.pib ? 'border-red-500 bg-red-50' : (aprCompanyFound ? 'border-green-500 bg-green-50' : (loadingApr ? 'border-yellow-500' : 'border-gray-300'))">
+                                   :class="fieldErrors.pib ? 'border-red-500 bg-red-50' : (pibExists ? 'border-red-500 bg-red-50' : (aprCompanyFound ? 'border-green-500 bg-green-50' : (loadingApr ? 'border-yellow-500' : 'border-gray-300')))">
                             <!-- Loading indicator -->
                             <div x-show="loadingApr" class="absolute right-2 top-1/2 transform -translate-y-1/2 mt-0.5">
                                 <svg class="animate-spin h-5 w-5 text-primary-500" fill="none" viewBox="0 0 24 24">
@@ -118,13 +118,20 @@
                                 </svg>
                             </div>
                             <!-- Success checkmark -->
-                            <div x-show="aprCompanyFound && !loadingApr" class="absolute right-2 top-1/2 transform -translate-y-1/2 mt-0.5">
+                            <div x-show="aprCompanyFound && !loadingApr && !pibExists" class="absolute right-2 top-1/2 transform -translate-y-1/2 mt-0.5">
                                 <svg class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
+                            <!-- Error X icon -->
+                            <div x-show="pibExists && !loadingApr" class="absolute right-2 top-1/2 transform -translate-y-1/2 mt-0.5">
+                                <svg class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </div>
                         </div>
-                        <p x-show="aprCompanyFound" class="mt-1 text-xs text-green-600">Podaci automatski popunjeni iz APR-a</p>
+                        <p x-show="aprCompanyFound && !pibExists" class="mt-1 text-xs text-green-600">Podaci automatski popunjeni iz APR-a</p>
+                        <p x-show="pibExists" class="mt-1 text-xs text-red-600">Servis sa ovim PIB-om je već registrovan</p>
                     </div>
                     <div>
                         <label for="maticni_broj" class="block text-sm font-medium text-gray-700">Matični broj</label>
@@ -568,8 +575,7 @@
                 </div>
                 <div class="ml-3">
                     <p class="text-sm text-blue-700">
-                        <strong>7 dana DEMO!</strong> Pun pristup svim funkcijama odmah nakon registracije.
-                        Nakon toga, admin aktivira 60 dana FREE trial.
+                        <strong>🎁 PROMO!</strong> 2 meseca potpuno besplatno sa punim pristupom svim funkcijama.
                     </p>
                 </div>
             </div>
@@ -634,6 +640,7 @@ window.registerPage = function() {
         loadingApr: false,
         aprCompanyFound: false,
         aprLookupTimeout: null,
+        pibExists: false,  // Da li PIB vec postoji u bazi
 
         // Field validation errors
         fieldErrors: {},
@@ -1246,8 +1253,9 @@ window.registerPage = function() {
 
         // APR funkcije za automatsko popunjavanje podataka o firmi
         onPibInput() {
-            // Reset APR status kad se menja PIB
+            // Reset statusa kad se menja PIB
             this.aprCompanyFound = false;
+            this.pibExists = false;
 
             // Cisti prethodni timeout
             if (this.aprLookupTimeout) {
@@ -1259,8 +1267,34 @@ window.registerPage = function() {
             if (pib.length === 9) {
                 // Debounce - sacekaj 500ms pre pretrage
                 this.aprLookupTimeout = setTimeout(() => {
-                    this.fetchCompanyFromApr(pib);
+                    this.checkPibAndFetchApr(pib);
                 }, 500);
+            }
+        },
+
+        async checkPibAndFetchApr(pib) {
+            console.log('[PIB Check] Checking if PIB exists:', pib);
+            this.loadingApr = true;
+            this.pibExists = false;
+
+            try {
+                // Prvo proveri da li PIB vec postoji u bazi
+                const checkResponse = await fetch(`/api/v1/auth/check-pib/${pib}`);
+                const checkData = await checkResponse.json();
+
+                if (checkResponse.ok && checkData.exists) {
+                    console.log('[PIB Check] PIB already exists in database');
+                    this.pibExists = true;
+                    this.loadingApr = false;
+                    return;  // Ne preuzimaj iz APR-a ako vec postoji
+                }
+
+                // Ako ne postoji, preuzmi podatke iz APR-a
+                await this.fetchCompanyFromApr(pib);
+            } catch (e) {
+                console.error('[PIB Check] Error:', e);
+                // Nastavi sa APR pretragom i ako provera ne uspe
+                await this.fetchCompanyFromApr(pib);
             }
         },
 
@@ -1321,10 +1355,9 @@ window.registerPage = function() {
                 this.fieldErrors = {};
                 let hasErrors = false;
 
-                // Proveri obavezna polja (postanski broj nije obavezan)
+                // Proveri obavezna polja (PIB i postanski broj nisu obavezni)
                 const requiredFields = {
                     'company_name': 'Naziv firme',
-                    'pib': 'PIB',
                     'adresa_sedista': 'Adresa sedišta',
                     'company_city': 'Grad',
                     'company_phone': 'Telefon firme',
@@ -1338,9 +1371,15 @@ window.registerPage = function() {
                     }
                 }
 
-                // Validiraj PIB format (9 cifara)
+                // Validiraj PIB format ako je unet (9 cifara)
                 if (this.form.pib && !/^\d{9}$/.test(this.form.pib)) {
                     this.fieldErrors['pib'] = 'PIB mora imati tačno 9 cifara';
+                    hasErrors = true;
+                }
+
+                // Proveri da li PIB vec postoji
+                if (this.pibExists) {
+                    this.fieldErrors['pib'] = 'Servis sa ovim PIB-om je već registrovan';
                     hasErrors = true;
                 }
 
@@ -1439,7 +1478,7 @@ window.registerPage = function() {
 
                 if (response.ok) {
                     // Show success and redirect
-                    alert('Registracija uspešna! Imate 7 dana DEMO perioda.');
+                    alert('Registracija uspešna! Imate 2 meseca potpuno besplatno.');
                     window.location.href = '/login';
                 } else {
                     this.error = data.message || data.details?.[0]?.msg || 'Greška pri registraciji';

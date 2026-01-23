@@ -26,7 +26,7 @@ class RegisterRequest(BaseModel):
     """
     # Podaci preduzeca (Korak 1)
     company_name: str = Field(..., min_length=2, max_length=200, description="Naziv preduzeca")
-    pib: str = Field(..., min_length=9, max_length=9, description="PIB (9 cifara)")
+    pib: Optional[str] = Field(None, max_length=9, description="PIB (9 cifara) - opciono")
     maticni_broj: Optional[str] = Field(None, max_length=8, description="Maticni broj (8 cifara)")
     adresa_sedista: str = Field(..., max_length=300, description="Adresa sedista")
     company_city: str = Field(..., min_length=2, max_length=100, description="Grad firme")
@@ -84,12 +84,13 @@ class RegisterRequest(BaseModel):
     @field_validator('pib')
     @classmethod
     def validate_pib(cls, v):
-        """PIB mora biti 9 cifara (srpski format)."""
-        if v is not None:
+        """PIB mora biti 9 cifara (srpski format) ako je unet."""
+        if v is not None and v.strip():
             v = v.strip()
             if not re.match(r'^\d{9}$', v):
                 raise ValueError('PIB mora imati tacno 9 cifara')
-        return v
+            return v
+        return None
 
     @field_validator('maticni_broj')
     @classmethod
