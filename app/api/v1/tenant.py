@@ -205,6 +205,68 @@ def update_profile():
     return {'message': 'Profile updated', 'tenant_id': tenant.id}
 
 
+@bp.route('/login-info', methods=['GET'])
+@jwt_required
+def get_login_info():
+    """
+    Vraća informacije o login URL-u za zaposlene.
+
+    Ovo je privatni link koji owner deli sa zaposlenima.
+    Samo OWNER i ADMIN mogu da vide ovaj endpoint.
+    """
+    user = TenantUser.query.get(g.user_id)
+    if not user or user.role.value not in ['OWNER', 'ADMIN']:
+        return {'error': 'Admin access required'}, 403
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    # Generiši pun URL za login zaposlenih
+    base_url = f'https://{tenant.slug}.servishub.rs'
+    login_url = f'{base_url}/login/{tenant.login_secret}'
+
+    return {
+        'login_url': login_url,
+        'login_secret': tenant.login_secret,
+        'tenant_name': tenant.name,
+        'tenant_slug': tenant.slug
+    }
+
+
+@bp.route('/login-info/regenerate', methods=['POST'])
+@jwt_required
+def regenerate_login_secret():
+    """
+    Generiše novi login_secret (stari prestaje da važi).
+
+    Samo OWNER može da regeneriše secret.
+    PAŽNJA: Svi stari linkovi prestaju da rade!
+    """
+    user = TenantUser.query.get(g.user_id)
+    if not user or user.role.value != 'OWNER':
+        return {'error': 'Owner access required'}, 403
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    # Generiši novi secret
+    tenant.login_secret = secrets.token_urlsafe(16)
+    tenant.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    # Generiši novi URL
+    base_url = f'https://{tenant.slug}.servishub.rs'
+    login_url = f'{base_url}/login/{tenant.login_secret}'
+
+    return {
+        'message': 'Login link regenerisan. Stari link više ne važi.',
+        'login_url': login_url,
+        'login_secret': tenant.login_secret
+    }
+
+
 @bp.route('/settings', methods=['GET'])
 @jwt_required
 def get_settings():

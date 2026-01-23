@@ -161,8 +161,13 @@ class AuthService:
             # Kreiraj owner korisnika
             # Prazan string za google_id tretiramo kao None
             actual_google_id = google_id if google_id else None
+
+            # Generiši username iz email-a (pre @)
+            owner_username = owner_email.split('@')[0].lower()
+
             owner = TenantUser(
                 tenant_id=tenant.id,
+                username=owner_username,
                 email=owner_email,
                 ime=owner_ime,
                 prezime=owner_prezime,
@@ -299,6 +304,106 @@ class AuthService:
             entity_id=user.id,
             action=AuditAction.LOGIN,
             changes={'email': email},
+            tenant_id=tenant.id
+        )
+        db.session.commit()
+
+        tokens = {
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'expires_in': int(current_app.config['JWT_ACCESS_TOKEN_EXPIRES'].total_seconds())
+        }
+
+        return user, tenant, tokens
+
+    def tenant_login(self, tenant_id: int, identifier: str, password: str) -> Tuple[TenantUser, Tenant, dict]:
+        """
+        Login korisnika unutar specifičnog tenanta.
+
+        Za razliku od globalnog login(), ovaj metod traži korisnika
+        samo unutar navedenog tenanta po username-u ili email-u.
+
+        Args:
+            tenant_id: ID tenanta (dobijen iz login_secret)
+            identifier: Username ILI email korisnika
+            password: Lozinka
+
+        Returns:
+            Tuple (user, tenant, tokens)
+
+        Raises:
+            AuthError: Ako kredencijali nisu ispravni
+        """
+        # Prvo probaj po username
+        user = TenantUser.query.filter_by(
+            tenant_id=tenant_id,
+            username=identifier
+        ).first()
+
+        # Ako nije nadjen po username, probaj po email
+        if not user:
+            user = TenantUser.query.filter_by(
+                tenant_id=tenant_id,
+                email=identifier
+            ).first()
+
+        if not user:
+            AuditLog.log(
+                entity_type='auth',
+                entity_id=0,
+                action=AuditAction.LOGIN_FAILED,
+                changes={'identifier': identifier, 'reason': 'user_not_found', 'tenant_id': tenant_id},
+                tenant_id=tenant_id
+            )
+            db.session.commit()
+            raise AuthError('Pogrešan username/email ili lozinka', 401)
+
+        if not user.check_password(password):
+            AuditLog.log(
+                entity_type='auth',
+                entity_id=user.id,
+                action=AuditAction.LOGIN_FAILED,
+                changes={'identifier': identifier, 'reason': 'wrong_password'},
+                tenant_id=tenant_id
+            )
+            db.session.commit()
+            raise AuthError('Pogrešan username/email ili lozinka', 401)
+
+        if not user.is_active:
+            raise AuthError('Korisnički nalog nije aktivan', 403)
+
+        # Dohvati tenant
+        tenant = Tenant.query.get(tenant_id)
+        if not tenant:
+            raise AuthError('Preduzeće nije pronađeno', 403)
+
+        # Proveri status tenanta
+        if tenant.status == TenantStatus.SUSPENDED:
+            raise AuthError('Vaš nalog je suspendovan. Kontaktirajte podršku.', 403)
+
+        if tenant.status == TenantStatus.CANCELLED:
+            raise AuthError('Vaš nalog je otkazan.', 403)
+
+        # Kreiraj tokene
+        access_token = create_access_token(
+            user_id=user.id,
+            tenant_id=tenant.id,
+            role=user.role.value
+        )
+        refresh_token = create_refresh_token(
+            user_id=user.id,
+            tenant_id=tenant.id
+        )
+
+        # Azuriraj last login
+        user.update_last_login()
+
+        # Loguj uspesno logovanje
+        AuditLog.log(
+            entity_type='auth',
+            entity_id=user.id,
+            action=AuditAction.LOGIN,
+            changes={'identifier': identifier, 'method': 'tenant_login'},
             tenant_id=tenant.id
         )
         db.session.commit()

@@ -15,8 +15,9 @@ bp = Blueprint('users', __name__, url_prefix='/users')
 # ============== Pydantic Schemas ==============
 
 class UserCreate(BaseModel):
-    email: EmailStr
+    username: str = Field(..., min_length=3, max_length=50)  # Obavezno za login
     password: str = Field(..., min_length=6)
+    email: Optional[EmailStr] = None  # Opciono - za notifikacije
     ime: str = Field(..., min_length=2, max_length=50)
     prezime: str = Field(..., min_length=2, max_length=50)
     phone: Optional[str] = Field(None, max_length=30)
@@ -89,6 +90,7 @@ def list_users():
 
         result.append({
             'id': user.id,
+            'username': user.username,
             'email': user.email,
             'ime': user.ime,
             'prezime': user.prezime,
@@ -134,6 +136,7 @@ def get_user(user_id):
 
     return {
         'id': user.id,
+        'username': user.username,
         'email': user.email,
         'ime': user.ime,
         'prezime': user.prezime,
@@ -159,14 +162,23 @@ def create_user():
     except Exception as e:
         return {'error': str(e)}, 400
 
-    # Check email uniqueness within tenant
+    # Check username uniqueness within tenant
     existing = TenantUser.query.filter_by(
         tenant_id=g.tenant_id,
-        email=data.email
+        username=data.username
     ).first()
 
     if existing:
-        return {'error': 'Email already exists in this tenant'}, 400
+        return {'error': 'Korisničko ime već postoji'}, 400
+
+    # Check email uniqueness within tenant (if provided)
+    if data.email:
+        existing_email = TenantUser.query.filter_by(
+            tenant_id=g.tenant_id,
+            email=data.email
+        ).first()
+        if existing_email:
+            return {'error': 'Email već postoji'}, 400
 
     # Validate role
     try:
@@ -180,7 +192,8 @@ def create_user():
 
     user = TenantUser(
         tenant_id=g.tenant_id,
-        email=data.email,
+        username=data.username,
+        email=data.email,  # Može biti None
         ime=data.ime,
         prezime=data.prezime,
         phone=data.phone,
@@ -332,6 +345,7 @@ def get_current_user():
 
     return {
         'id': user.id,
+        'username': user.username,
         'email': user.email,
         'ime': user.ime,
         'prezime': user.prezime,

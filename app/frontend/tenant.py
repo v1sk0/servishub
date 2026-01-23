@@ -5,11 +5,31 @@ Sve stranice zahtevaju autentifikaciju putem JWT tokena
 koji se proverava na frontendu (JavaScript).
 """
 
-from flask import render_template
+from flask import render_template, abort
 from . import bp
+from ..models import Tenant
 
 
 # ============== Auth Pages ==============
+
+@bp.route('/login/<secret>')
+def employee_login(secret):
+    """
+    Privatna login stranica za zaposlene tenanta.
+
+    Ova stranica je dostupna samo preko tajnog URL-a koji owner
+    deli sa svojim zaposlenima. Svaki tenant ima jedinstven secret.
+    """
+    tenant = Tenant.query.filter_by(login_secret=secret).first()
+
+    if not tenant:
+        abort(404)  # Ne odaj da stranica postoji
+
+    if not tenant.is_active:
+        abort(403)
+
+    return render_template('tenant/employee_login.html', tenant=tenant)
+
 
 @bp.route('/login')
 def login():

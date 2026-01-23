@@ -59,6 +59,9 @@ class Tenant(db.Model):
     telefon = db.Column(db.String(30))                # Kontakt telefon
     bank_account = db.Column(db.String(50))           # Bankovni racun (XXX-XXXXXXXXX-XX)
 
+    # Login za zaposlene - tajni URL segment
+    login_secret = db.Column(db.String(32), unique=True, nullable=False)  # Tajni kod za login stranicu
+
     # Status i pretplata
     status = db.Column(
         db.Enum(TenantStatus),
@@ -389,12 +392,19 @@ class ServiceLocation(db.Model):
         return f'<ServiceLocation {self.id}: {self.name}>'
 
 
-# Event listener: automatski generiši slug iz naziva preduzeca
+# Event listener: automatski generiši slug i login_secret
 @event.listens_for(Tenant, 'before_insert')
-def generate_tenant_slug(mapper, connection, target):
-    """Generiše slug iz naziva preduzeca pre insert-a."""
+def generate_tenant_defaults(mapper, connection, target):
+    """Generiše slug i login_secret pre insert-a."""
+    import secrets as sec
+
+    # Generiši slug iz naziva
     if not target.slug:
         base_slug = slugify(target.name, lowercase=True)
         # Proveri jedinstvenost i dodaj broj ako treba
         # TODO: Ovo treba refaktorisati da radi sa db sessionom
         target.slug = base_slug
+
+    # Generiši login_secret (tajni URL za prijavu zaposlenih)
+    if not target.login_secret:
+        target.login_secret = sec.token_urlsafe(16)  # 22 karaktera

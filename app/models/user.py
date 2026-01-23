@@ -49,9 +49,9 @@ class TenantUser(db.Model):
     )
 
     # Auth podaci
-    email = db.Column(db.String(100), nullable=False)  # Email za login (username)
-    username = db.Column(db.String(50))                 # Opciono korisnicko ime
-    password_hash = db.Column(db.String(200))           # Nullable za OAuth korisnike
+    username = db.Column(db.String(50), nullable=False)  # Username za login (obavezno)
+    email = db.Column(db.String(100), nullable=True)     # Email (opciono)
+    password_hash = db.Column(db.String(200))            # Nullable za OAuth korisnike
 
     # OAuth podaci
     google_id = db.Column(db.String(100), unique=True)  # Google OAuth ID
@@ -92,13 +92,14 @@ class TenantUser(db.Model):
         cascade='all, delete-orphan'
     )
 
-    # Unique constraint: email mora biti jedinstven unutar tenanta
+    # Unique constraints unutar tenanta
     __table_args__ = (
         db.UniqueConstraint('tenant_id', 'email', name='uq_tenant_user_email'),
+        db.UniqueConstraint('tenant_id', 'username', name='uq_tenant_user_username'),
     )
 
     def __repr__(self):
-        return f'<TenantUser {self.id}: {self.email}>'
+        return f'<TenantUser {self.id}: {self.username}>'
 
     @property
     def full_name(self):

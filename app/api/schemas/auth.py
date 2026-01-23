@@ -129,6 +129,13 @@ class LoginRequest(BaseModel):
     password: str = Field(..., min_length=1, description="Lozinka")
 
 
+class TenantLoginRequest(BaseModel):
+    """Schema za login korisnika unutar specifičnog tenanta."""
+    tenant_secret: str = Field(..., min_length=10, description="Tajni kod tenanta iz URL-a")
+    identifier: str = Field(..., min_length=1, description="Username ili email korisnika")
+    password: str = Field(..., min_length=1, description="Lozinka")
+
+
 class RefreshTokenRequest(BaseModel):
     """Schema za refresh tokena."""
     refresh_token: str = Field(..., description="Refresh token")

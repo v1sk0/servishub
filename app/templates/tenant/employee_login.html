@@ -1,0 +1,156 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Prijava - {{ tenant.name }}{% endblock %}
+
+{% block head %}
+<style>
+    /* Force light theme colors for public login page */
+    .public-page .text-white { color: #ffffff !important; }
+    .public-page .text-gray-900 { color: #111827 !important; }
+    .public-page .text-gray-800 { color: #1f2937 !important; }
+    .public-page .text-gray-700 { color: #374151 !important; }
+    .public-page .text-gray-600 { color: #4b5563 !important; }
+    .public-page .text-gray-500 { color: #6b7280 !important; }
+    .public-page .text-primary-600 { color: #2563eb !important; }
+    .public-page .text-primary-500 { color: #3b82f6 !important; }
+    .public-page .bg-white { background-color: #ffffff !important; }
+    .public-page .bg-gray-50 { background-color: #f9fafb !important; }
+    .public-page .bg-primary-600 { background-color: #2563eb !important; }
+    .public-page .border-gray-300 { border-color: #d1d5db !important; }
+    .public-page .shadow-xl { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important; }
+    .public-page input, .public-page select, .public-page textarea {
+        background-color: #ffffff !important;
+        color: #111827 !important;
+        border-color: #d1d5db !important;
+    }
+    .public-page input::placeholder { color: #9ca3af !important; }
+    .public-page label { color: #374151 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="public-page flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8" x-data="employeeLoginForm()">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <!-- Tenant branding -->
+        <div class="flex justify-center">
+            <div class="h-14 w-14 rounded-xl bg-primary-600 flex items-center justify-center">
+                <span class="text-2xl font-bold text-white">{{ tenant.name[:1].upper() }}</span>
+            </div>
+        </div>
+        <h2 class="mt-6 text-center text-2xl font-bold tracking-tight text-gray-900">
+            {{ tenant.name }}
+        </h2>
+        <p class="mt-2 text-center text-sm text-gray-600">
+            Prijava za zaposlene
+        </p>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow-xl sm:rounded-lg sm:px-10">
+            <form @submit.prevent="submit()" class="space-y-6">
+                <!-- Error message -->
+                <div x-show="error" x-cloak class="rounded-md bg-red-50 p-4">
+                    <div class="flex">
+                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                        </svg>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-red-800" x-text="error"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Username/Email -->
+                <div>
+                    <label for="identifier" class="block text-sm font-medium text-gray-700">
+                        Korisnicko ime ili email
+                    </label>
+                    <div class="mt-1">
+                        <input id="identifier" name="identifier" type="text" autocomplete="username" required
+                               x-model="form.identifier"
+                               placeholder="npr. marko.petrovic"
+                               class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">
+                        Lozinka
+                    </label>
+                    <div class="mt-1">
+                        <input id="password" name="password" type="password" autocomplete="current-password" required
+                               x-model="form.password"
+                               class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div>
+                    <button type="submit"
+                            :disabled="loading"
+                            class="flex w-full justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg x-show="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span x-text="loading ? 'Prijavljivanje...' : 'Prijavi se'"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer info -->
+        <p class="mt-6 text-center text-xs text-gray-500">
+            Ova stranica je samo za zaposlene {{ tenant.name }}.
+            <br>
+            Kontaktirajte svog menadžera ako nemate pristupne podatke.
+        </p>
+    </div>
+</div>
+
+<script>
+function employeeLoginForm() {
+    return {
+        form: {
+            identifier: '',
+            password: ''
+        },
+        loading: false,
+        error: null,
+        tenantSecret: '{{ tenant.login_secret }}',
+
+        async submit() {
+            this.loading = true;
+            this.error = null;
+
+            try {
+                const response = await fetch('/api/v1/auth/tenant-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tenant_secret: this.tenantSecret,
+                        identifier: this.form.identifier,
+                        password: this.form.password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('access_token', data.tokens.access_token);
+                    localStorage.setItem('refresh_token', data.tokens.refresh_token);
+                    window.location.href = '/dashboard';
+                } else {
+                    this.error = data.message || data.error || 'Greska pri prijavi';
+                }
+            } catch (e) {
+                this.error = 'Greska u komunikaciji sa serverom';
+            } finally {
+                this.loading = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

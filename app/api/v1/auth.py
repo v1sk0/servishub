@@ -13,14 +13,14 @@ from flask import Blueprint, request, jsonify, g
 from pydantic import ValidationError
 
 from ..schemas.auth import (
-    RegisterRequest, LoginRequest, RefreshTokenRequest,
+    RegisterRequest, LoginRequest, TenantLoginRequest, RefreshTokenRequest,
     ChangePasswordRequest, LoginResponse, RegisterResponse,
     MeResponse, UserResponse, TenantResponse, TokenResponse
 )
 from ..middleware.auth import jwt_required, tenant_required
 from ...services.auth_service import auth_service, AuthError
 from ...services.security_service import rate_limit, RateLimits, SecurityEventLogger
-from ...models import ServiceLocation, UserRole
+from ...models import ServiceLocation, UserRole, Tenant
 from ...extensions import db
 
 # Blueprint za auth endpoints
@@ -244,6 +244,102 @@ def login():
         # Log neuspesnu prijavu
         SecurityEventLogger.log_login_failed(
             email=data.email,
+            reason=e.message
+        )
+        return jsonify({
+            'error': 'Login Error',
+            'message': e.message
+        }), e.code
+
+
+@bp.route('/tenant-login', methods=['POST'])
+@rate_limit(**RateLimits.LOGIN)
+def tenant_login():
+    """
+    Login za zaposlene specifičnog tenanta.
+
+    Ovo je privatna login stranica za zaposlene koje je owner dodao.
+    URL sadrži tajni kod (login_secret) koji štiti od brute-force.
+
+    Request body:
+        - tenant_secret: Tajni kod tenanta (iz URL-a login stranice)
+        - identifier: Username ILI email korisnika
+        - password: Lozinka
+
+    Returns:
+        200: Uspešni login sa tokenima
+        401: Pogrešan username/email ili lozinka
+        403: Nalog nije aktivan ili tenant nije validan
+    """
+    try:
+        data = TenantLoginRequest(**request.get_json())
+    except ValidationError as e:
+        return jsonify({
+            'error': 'Validation Error',
+            'details': e.errors()
+        }), 400
+
+    # Pronađi tenant po login_secret
+    tenant = Tenant.query.filter_by(login_secret=data.tenant_secret).first()
+
+    if not tenant:
+        return jsonify({
+            'error': 'Access Denied',
+            'message': 'Nevažeći pristup'
+        }), 403
+
+    if not tenant.is_active:
+        return jsonify({
+            'error': 'Access Denied',
+            'message': 'Servis nije aktivan'
+        }), 403
+
+    try:
+        user, tenant, tokens = auth_service.tenant_login(
+            tenant_id=tenant.id,
+            identifier=data.identifier,
+            password=data.password
+        )
+
+        # Log uspešnu prijavu
+        SecurityEventLogger.log_login_success(
+            user_id=user.id,
+            email=user.email or user.username,
+            auth_method='tenant_login',
+            tenant_id=tenant.id,
+            user_type='tenant_user'
+        )
+
+        return jsonify({
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'ime': user.ime,
+                'prezime': user.prezime,
+                'full_name': user.full_name,
+                'role': user.role.value,
+                'is_active': user.is_active
+            },
+            'tenant': {
+                'id': tenant.id,
+                'slug': tenant.slug,
+                'name': tenant.name,
+                'email': tenant.email,
+                'status': tenant.status.value
+            },
+            'tokens': {
+                'access_token': tokens['access_token'],
+                'refresh_token': tokens['refresh_token'],
+                'token_type': 'Bearer',
+                'expires_in': tokens['expires_in']
+            }
+        }), 200
+
+    except AuthError as e:
+        # Log neuspešnu prijavu
+        SecurityEventLogger.log_login_failed(
+            email=data.identifier,
             reason=e.message
         )
         return jsonify({
