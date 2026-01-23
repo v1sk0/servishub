@@ -6,11 +6,34 @@ Instrukcije za Claude Code agente. **CITAJ OVO PRE BILO KAKVIH IZMENA.**
 
 ## RESUME POINT
 
-**v235** | 2026-01-21 | Backend 100% | Frontend 100%
+**v241** | 2026-01-23 | Backend 100% | Frontend 100%
 
-### Status: KOMPLETNO - Admin Settings Social Links
+### Status: KOMPLETNO - Role-Based Access Control + OAuth Fix
 
-**Poslednje izmene (v235):**
+**Poslednje izmene (v241):**
+
+**1. Role-Based Access Control za Tim:**
+- **Sidebar:** "Tim" link sakriven za TECHNICIAN i RECEPTIONIST
+  - Dodat `x-show="isAdmin()"` u tenant_sidebar.html
+  - Nova `isAdmin()` metoda proverava OWNER/ADMIN/MANAGER uloge
+- **API (users.py):** Zaštićeni team management endpoints
+  - `GET /users` - Samo admin role mogu videti listu
+  - `GET /users/:id` - Non-admin može videti samo svoj profil
+  - `PUT /users/:id` - Samo admin role mogu menjati profile
+
+**2. Google OAuth Login Fix (kritično):**
+- **Problem:** Race condition - Alpine.js komponente pokretale API pozive pre nego što su tokeni sačuvani
+- **Rešenje:** Sinhroni XMLHttpRequest u `<head>` sekciji tenant.html
+  - Blokira SVE učitavanje dok se tokeni ne preuzmu
+  - Izvršava se PRE Alpine.js inicijalizacije
+  - Redirect na čist URL nakon uspešnog preuzimanja
+
+**Izmenjeni fajlovi:**
+- `app/templates/components/tenant_sidebar.html`
+- `app/api/v1/users.py`
+- `app/templates/layouts/tenant.html`
+
+**Prethodne izmene (v235):**
 - **Admin Settings:** Social linkovi dodati u Company modal
   - Facebook, Instagram, LinkedIn, Twitter/X, YouTube
   - Koriste se na landing page u Contact sekciji
@@ -660,6 +683,7 @@ Landing Page (kontakt sekcija, social ikone)
 
 | Verzija | Datum | Izmene |
 |---------|-------|--------|
+| v241 | 2026-01-23 | **Security:** Role-based Tim visibility (sidebar), API zaštita team management endpoints, **OAuth Fix:** sinhroni token handling (race condition fix) |
 | v235 | 2026-01-21 | **Admin Settings:** Social linkovi u Company modal, landing page dinamicki kontakt |
 | v0.6.3 | 2026-01-19 | **Security:** Phone verification za ticket tracking, sprečen enumeration napad |
 | v0.6.2 | 2026-01-19 | **Public Site v2:** FAQ, Brendovi, Proces, WhatsApp, Status tracking, AOS animacije, Contact fallback |

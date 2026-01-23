@@ -1,6 +1,6 @@
 # ServisHub - Master Summary
 
-> Poslednje ažuriranje: 21. Januar 2026 (v240)
+> Poslednje ažuriranje: 23. Januar 2026 (v241)
 
 ---
 
@@ -729,6 +729,68 @@ if tenant.can_activate_trust:
 ---
 
 ## 14. Changelog
+
+### v241 (23. Januar 2026)
+
+**Role-Based Access Control za Tim:**
+
+**Problem:** Korisnici sa ulogom TECHNICIAN i RECEPTIONIST mogli su da vide "Tim" u sidebar-u i pristupe team management funkcijama.
+
+**Rešenja:**
+
+1. **Sidebar - Sakrivanje "Tim" linka:**
+   - Dodat `x-show="isAdmin()"` na "Tim" link u sidebar-u
+   - Nova `isAdmin()` metoda proverava da li je uloga OWNER, ADMIN ili MANAGER
+   - Dodato `userRole` state polje u `sidebarData()`
+
+2. **API Zaštita (users.py):**
+   - `GET /users` - Samo OWNER/ADMIN/MANAGER mogu videti listu
+   - `GET /users/:id` - Non-admin može videti samo svoj profil
+   - `PUT /users/:id` - Samo OWNER/ADMIN/MANAGER mogu menjati profile
+
+**Synchronous OAuth Token Handling (kritični fix):**
+
+**Problem:** Google OAuth login nije radio - posle Google autentifikacije, aplikacija je odmah izlazila. Race condition: Alpine.js komponente su pokretale API pozive pre nego što su OAuth tokeni sačuvani u localStorage.
+
+**Rešenje:**
+- Implementiran **sinhroni XMLHttpRequest** u `<head>` sekciji tenant.html
+- Blokira SVE učitavanje stranice dok se tokeni ne preuzmu
+- Izvršava se PRE nego što se Alpine.js inicijalizuje
+- Nakon uspešnog preuzimanja tokena, redirect na čist URL (bez ?auth=oauth)
+
+**Kod (tenant.html <head>):**
+```javascript
+(function() {
+    'use strict';
+    const urlParams = new URLSearchParams(window.location.search);
+    const authMethod = urlParams.get('auth');
+
+    if (authMethod === 'oauth') {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/v1/auth/google/tokens', false);  // false = sinhrono
+        xhr.withCredentials = true;
+        xhr.send();
+
+        if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            localStorage.setItem('access_token', data.access_token);
+            if (data.refresh_token) {
+                localStorage.setItem('refresh_token', data.refresh_token);
+            }
+            window.location.replace(window.location.pathname);
+        } else {
+            window.location.replace('/login?error=oauth_token_' + xhr.status);
+        }
+    }
+})();
+```
+
+**Izmenjeni fajlovi:**
+- `app/templates/components/tenant_sidebar.html` - role-based Tim visibility
+- `app/api/v1/users.py` - admin role checks za team management
+- `app/templates/layouts/tenant.html` - synchronous OAuth token handler
+
+---
 
 ### v173 (19. Januar 2026)
 

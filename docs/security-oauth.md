@@ -188,19 +188,45 @@ session['oauth_tokens'] = {
 return redirect(f'/dashboard?auth=oauth')
 ```
 
-**Frontend preuzimanje (tenant.html, linija 116-131):**
+**Frontend preuzimanje - SINHRONO (tenant.html, `<head>` sekcija):**
+
+> **KRITIČNO (v241):** Koristi se **sinhroni XMLHttpRequest** umesto async fetch.
+> Ovo blokira SVE učitavanje stranice dok se tokeni ne preuzmu,
+> sprečavajući race condition sa Alpine.js komponentama.
+
 ```javascript
-if (authMethod === 'oauth') {
-    const response = await fetch('/api/v1/auth/google/tokens');
-    if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('access_token', data.access_token);
-        if (data.refresh_token) {
-            localStorage.setItem('refresh_token', data.refresh_token);
+// U <head> - izvršava se PRE Alpine.js
+(function() {
+    'use strict';
+    const urlParams = new URLSearchParams(window.location.search);
+    const authMethod = urlParams.get('auth');
+
+    if (authMethod === 'oauth') {
+        console.log('[OAuth] Detected auth=oauth, fetching tokens synchronously...');
+        try {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', '/api/v1/auth/google/tokens', false);  // false = SINHRONO
+            xhr.withCredentials = true;
+            xhr.send();
+
+            if (xhr.status === 200) {
+                const data = JSON.parse(xhr.responseText);
+                localStorage.setItem('access_token', data.access_token);
+                if (data.refresh_token) {
+                    localStorage.setItem('refresh_token', data.refresh_token);
+                }
+                console.log('[OAuth] Tokens saved, redirecting...');
+                window.location.replace(window.location.pathname);
+            } else {
+                console.error('[OAuth] Failed to get tokens:', xhr.status);
+                window.location.replace('/login?error=oauth_token_' + xhr.status);
+            }
+        } catch (e) {
+            console.error('[OAuth] Exception:', e);
+            window.location.replace('/login?error=oauth_exception');
         }
     }
-    window.history.replaceState({}, document.title, window.location.pathname);
-}
+})();
 ```
 
 **Karakteristike:**
@@ -503,6 +529,43 @@ curl -I "https://servicehubdolce-4c283dce32e9.herokuapp.com/login"
 ---
 
 ## 12. Changelog
+
+### v1.3 (23.01.2026)
+
+**Kritični fix: Synchronous OAuth Token Handling**
+
+**Problem:**
+- Google OAuth login nije radio - posle Google autentifikacije, stranica bi se učitala i odmah izašla
+- Race condition: Alpine.js komponente (sidebar, navigation) pokretale API pozive (`/api/v1/auth/me`) pre nego što su OAuth tokeni sačuvani u localStorage
+- Asinhroni fetch u `x-init` nije garantovao da će se završiti pre drugih komponenti
+
+**Uzrok (Heroku logs):**
+```
+[OAuth] Tokens saved successfully
+[x-init sidebar] Starting loadTenantName
+[x-init sidebar] Calling /api/v1/auth/me
+401 Unauthorized - Token not found
+```
+
+**Rešenje:**
+- Implementiran **sinhroni XMLHttpRequest** u `<head>` sekciji tenant.html
+- Izvršava se PRE bilo kakvog JavaScript-a (uključujući Alpine.js)
+- Blokira renderovanje stranice dok se tokeni ne preuzmu
+- Nakon uspešnog preuzimanja, redirect na čist URL (bez `?auth=oauth`)
+
+**Zašto sinhroni XHR:**
+- `XMLHttpRequest` sa `async=false` je jedini način da se blokira JavaScript execution
+- `fetch()` je uvek asinhrona - ne može blokirati
+- `await` u `<head>` ne radi jer nije u async funkciji
+- Bez blokiranja, Alpine.js počinje inicijalizaciju pre nego što su tokeni spremni
+
+**Karakteristike rešenja:**
+- ✅ Tokeni su u localStorage PRE nego što Alpine.js počne
+- ✅ Sve komponente dobijaju validne tokene od starta
+- ✅ Nema race condition-a
+- ✅ Clean URL nakon redirect-a (bez `?auth=oauth` u history-ju)
+
+---
 
 ### v1.2 (21.01.2026)
 - ✅ Dodat Security Event Logging za OAuth tokove
