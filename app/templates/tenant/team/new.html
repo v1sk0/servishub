@@ -20,79 +20,79 @@
 
     <!-- Form -->
     <form @submit.prevent="saveUser" class="space-y-6">
-        <div class="bg-white shadow rounded-lg p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Osnovni podaci</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white shadow rounded-lg p-8">
+            <h3 class="text-2xl font-medium text-gray-900 mb-6">Osnovni podaci</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Ime *</label>
+                    <label class="block text-lg font-medium text-gray-700 mb-2">Ime *</label>
                     <input type="text" x-model="form.ime" required
-                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Prezime *</label>
+                    <label class="block text-lg font-medium text-gray-700 mb-2">Prezime *</label>
                     <input type="text" x-model="form.prezime" required
-                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <label class="block text-lg font-medium text-gray-700 mb-2">Email</label>
                     <input type="email" x-model="form.email"
-                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
-                    <p class="mt-1 text-xs text-gray-500">Opciono - za slanje notifikacija</p>
+                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4">
+                    <p class="mt-2 text-base text-gray-500">Opciono - za slanje notifikacija</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                    <label class="block text-lg font-medium text-gray-700 mb-2">Telefon</label>
                     <input type="tel" x-model="form.phone"
-                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4">
                 </div>
             </div>
         </div>
 
-        <div class="bg-white shadow rounded-lg p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Pristup</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white shadow rounded-lg p-8">
+            <h3 class="text-2xl font-medium text-gray-900 mb-6">Pristup</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Korisnicko ime *</label>
+                    <label class="block text-lg font-medium text-gray-700 mb-2">Korisnicko ime *</label>
                     <input type="text" x-model="form.username" required minlength="3"
                            placeholder="npr. marko.petrovic"
-                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
-                    <p class="mt-1 text-xs text-gray-500">Zaposleni ce koristiti ovo za prijavu</p>
+                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4">
+                    <p class="mt-2 text-base text-gray-500">Zaposleni ce koristiti ovo za prijavu</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Lozinka *</label>
-                    <input type="password" x-model="form.password" required minlength="6"
-                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
-                    <p class="mt-1 text-xs text-gray-500">Minimalno 6 karaktera</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Potvrdite lozinku *</label>
-                    <input type="password" x-model="form.password_confirm" required minlength="6"
-                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                           :class="{'border-red-500': form.password && form.password_confirm && form.password !== form.password_confirm}">
-                    <p class="mt-1 text-xs text-red-500" x-show="form.password && form.password_confirm && form.password !== form.password_confirm">
-                        Lozinke se ne poklapaju
-                    </p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Uloga *</label>
+                    <label class="block text-lg font-medium text-gray-700 mb-2">Uloga *</label>
                     <select x-model="form.role" required
-                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4">
                         <option value="TECHNICIAN">Tehnicar</option>
                         <option value="RECEPTIONIST">Prijem</option>
                         <option value="MANAGER">Menadzer</option>
                         <option value="ADMIN">Administrator</option>
                     </select>
                 </div>
+                <div class="md:col-span-2">
+                    <label class="block text-lg font-medium text-gray-700 mb-2">Lozinka *</label>
+                    <input type="password" x-model="form.password" required minlength="6"
+                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4">
+                    <p class="mt-2 text-base text-gray-500">Minimalno 6 karaktera</p>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-lg font-medium text-gray-700 mb-2">Potvrdite lozinku *</label>
+                    <input type="password" x-model="form.password_confirm" required minlength="6"
+                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4"
+                           :class="{'border-red-500': form.password && form.password_confirm && form.password !== form.password_confirm}">
+                    <p class="mt-2 text-base text-red-500" x-show="form.password && form.password_confirm && form.password !== form.password_confirm">
+                        Lozinke se ne poklapaju
+                    </p>
+                </div>
             </div>
 
             <!-- Login URL info -->
-            <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div class="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
                 <div class="flex">
-                    <svg class="h-5 w-5 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="h-8 w-8 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                     </svg>
-                    <div class="ml-3">
-                        <h4 class="text-sm font-medium text-blue-800">Link za prijavu zaposlenih</h4>
-                        <p class="mt-1 text-sm text-blue-700">
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-blue-800">Link za prijavu zaposlenih</h4>
+                        <p class="mt-2 text-base text-blue-700">
                             Podelite ovaj link sa zaposlenima za prijavu. Dostupan je u Podesavanjima.
                         </p>
                     </div>
@@ -100,28 +100,28 @@
             </div>
         </div>
 
-        <div class="bg-white shadow rounded-lg p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Lokacije</h3>
-            <p class="text-sm text-gray-500 mb-4">Izaberite lokacije kojima korisnik ima pristup</p>
-            <div class="space-y-2">
+        <div class="bg-white shadow rounded-lg p-8">
+            <h3 class="text-2xl font-medium text-gray-900 mb-6">Lokacije</h3>
+            <p class="text-base text-gray-500 mb-6">Izaberite lokacije kojima korisnik ima pristup</p>
+            <div class="space-y-4">
                 <template x-for="loc in locations" :key="loc.id">
                     <div class="flex items-center">
                         <input type="checkbox" :id="'loc_' + loc.id" :value="loc.id" x-model="form.location_ids"
-                               class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
-                        <label :for="'loc_' + loc.id" class="ml-2 block text-sm text-gray-900" x-text="loc.name"></label>
+                               class="h-6 w-6 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                        <label :for="'loc_' + loc.id" class="ml-4 block text-xl text-gray-900" x-text="loc.name"></label>
                     </div>
                 </template>
             </div>
         </div>
 
         <!-- Actions -->
-        <div class="flex justify-end gap-4">
+        <div class="flex justify-end gap-6">
             <a href="/team"
-               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+               class="px-8 py-4 text-xl font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
                 Otkazi
             </a>
             <button type="submit" :disabled="saving"
-                    class="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-500 disabled:opacity-50">
+                    class="px-8 py-4 text-xl font-medium text-white bg-primary-600 border border-transparent rounded-lg hover:bg-primary-500 disabled:opacity-50">
                 <span x-show="!saving">Dodaj clana</span>
                 <span x-show="saving">Dodavanje...</span>
             </button>
