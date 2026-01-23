@@ -3,11 +3,12 @@ Team Users Management API
 """
 from flask import Blueprint, request, g
 from app.extensions import db
-from app.models import TenantUser, UserRole, UserLocation, ServiceLocation
+from app.models import TenantUser, UserRole, UserLocation, ServiceLocation, TipUgovora, TipPlate
 from app.api.middleware.auth import jwt_required
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, date
+from decimal import Decimal
 
 bp = Blueprint('users', __name__, url_prefix='/users')
 
@@ -15,22 +16,64 @@ bp = Blueprint('users', __name__, url_prefix='/users')
 # ============== Pydantic Schemas ==============
 
 class UserCreate(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)  # Obavezno za login
+    # Login podaci
+    username: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=6)
-    email: Optional[EmailStr] = None  # Opciono - za notifikacije
+
+    # Osnovni podaci
     ime: str = Field(..., min_length=2, max_length=50)
     prezime: str = Field(..., min_length=2, max_length=50)
+    email: Optional[EmailStr] = None
     phone: Optional[str] = Field(None, max_length=30)
+    adresa: Optional[str] = Field(None, max_length=200)
+
+    # Dokumenta
+    broj_licne_karte: Optional[str] = Field(None, max_length=20)
+
+    # Radni odnos
+    pocetak_radnog_odnosa: Optional[str] = None  # ISO date string
+    ugovor_tip: Optional[str] = None  # NEODREDJENO, ODREDJENO
+    ugovor_trajanje_meseci: Optional[int] = Field(None, ge=1, le=120)
+
+    # Plata
+    plata_tip: Optional[str] = None  # FIKSNO, DNEVNICA
+    plata_iznos: Optional[float] = Field(None, ge=0)
+
+    # Napomena
+    napomena: Optional[str] = None
+
+    # Uloga i lokacije
     role: str = Field(default='TECHNICIAN')
     location_ids: Optional[List[int]] = None
 
 
 class UserUpdate(BaseModel):
+    # Osnovni podaci
     ime: Optional[str] = Field(None, min_length=2, max_length=50)
     prezime: Optional[str] = Field(None, min_length=2, max_length=50)
+    email: Optional[EmailStr] = None
     phone: Optional[str] = Field(None, max_length=30)
+    adresa: Optional[str] = Field(None, max_length=200)
+
+    # Dokumenta
+    broj_licne_karte: Optional[str] = Field(None, max_length=20)
+
+    # Radni odnos
+    pocetak_radnog_odnosa: Optional[str] = None
+    ugovor_tip: Optional[str] = None
+    ugovor_trajanje_meseci: Optional[int] = Field(None, ge=1, le=120)
+
+    # Plata
+    plata_tip: Optional[str] = None
+    plata_iznos: Optional[float] = Field(None, ge=0)
+
+    # Napomena
+    napomena: Optional[str] = None
+
+    # Status
     role: Optional[str] = None
     is_active: Optional[bool] = None
+    location_ids: Optional[List[int]] = None
 
 
 class PasswordChange(BaseModel):
@@ -141,6 +184,14 @@ def get_user(user_id):
         'ime': user.ime,
         'prezime': user.prezime,
         'phone': user.phone,
+        'adresa': user.adresa,
+        'broj_licne_karte': user.broj_licne_karte,
+        'pocetak_radnog_odnosa': user.pocetak_radnog_odnosa.isoformat() if user.pocetak_radnog_odnosa else None,
+        'ugovor_tip': user.ugovor_tip.value if user.ugovor_tip else None,
+        'ugovor_trajanje_meseci': user.ugovor_trajanje_meseci,
+        'plata_tip': user.plata_tip.value if user.plata_tip else None,
+        'plata_iznos': float(user.plata_iznos) if user.plata_iznos else None,
+        'napomena': user.napomena,
         'role': user.role.value,
         'is_active': user.is_active,
         'last_login_at': user.last_login_at.isoformat() if user.last_login_at else None,
@@ -190,13 +241,44 @@ def create_user():
     if role == UserRole.OWNER and current_user.role != UserRole.OWNER:
         return {'error': 'Only owner can create owner accounts'}, 403
 
+    # Parse date if provided
+    pocetak_radnog_odnosa = None
+    if data.pocetak_radnog_odnosa:
+        try:
+            pocetak_radnog_odnosa = datetime.strptime(data.pocetak_radnog_odnosa, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+
+    # Parse enums
+    ugovor_tip = None
+    if data.ugovor_tip:
+        try:
+            ugovor_tip = TipUgovora[data.ugovor_tip.upper()]
+        except KeyError:
+            pass
+
+    plata_tip = None
+    if data.plata_tip:
+        try:
+            plata_tip = TipPlate[data.plata_tip.upper()]
+        except KeyError:
+            pass
+
     user = TenantUser(
         tenant_id=g.tenant_id,
         username=data.username,
-        email=data.email,  # Može biti None
+        email=data.email,
         ime=data.ime,
         prezime=data.prezime,
         phone=data.phone,
+        adresa=data.adresa,
+        broj_licne_karte=data.broj_licne_karte,
+        pocetak_radnog_odnosa=pocetak_radnog_odnosa,
+        ugovor_tip=ugovor_tip,
+        ugovor_trajanje_meseci=data.ugovor_trajanje_meseci,
+        plata_tip=plata_tip,
+        plata_iznos=Decimal(str(data.plata_iznos)) if data.plata_iznos else None,
+        napomena=data.napomena,
         role=role,
         is_active=True
     )
@@ -258,16 +340,51 @@ def update_user(user_id):
     except Exception as e:
         return {'error': str(e)}, 400
 
-    # Update fields
+    # Update basic fields
     if data.ime is not None:
         user.ime = data.ime
     if data.prezime is not None:
         user.prezime = data.prezime
     if data.phone is not None:
         user.phone = data.phone
+    if data.email is not None:
+        user.email = data.email if data.email else None
+    if data.adresa is not None:
+        user.adresa = data.adresa
 
-    # Only admin can change role and active status
+    # Update dossier fields (only admin)
     if is_admin:
+        if data.broj_licne_karte is not None:
+            user.broj_licne_karte = data.broj_licne_karte
+
+        if data.pocetak_radnog_odnosa is not None:
+            try:
+                user.pocetak_radnog_odnosa = datetime.strptime(data.pocetak_radnog_odnosa, '%Y-%m-%d').date()
+            except ValueError:
+                user.pocetak_radnog_odnosa = None
+
+        if data.ugovor_tip is not None:
+            try:
+                user.ugovor_tip = TipUgovora[data.ugovor_tip.upper()] if data.ugovor_tip else None
+            except KeyError:
+                pass
+
+        if data.ugovor_trajanje_meseci is not None:
+            user.ugovor_trajanje_meseci = data.ugovor_trajanje_meseci
+
+        if data.plata_tip is not None:
+            try:
+                user.plata_tip = TipPlate[data.plata_tip.upper()] if data.plata_tip else None
+            except KeyError:
+                pass
+
+        if data.plata_iznos is not None:
+            user.plata_iznos = Decimal(str(data.plata_iznos)) if data.plata_iznos else None
+
+        if data.napomena is not None:
+            user.napomena = data.napomena
+
+        # Update role
         if data.role is not None:
             try:
                 new_role = UserRole[data.role.upper()]
@@ -286,6 +403,27 @@ def update_user(user_id):
             if not data.is_active and user.role == UserRole.OWNER:
                 return {'error': 'Cannot deactivate owner'}, 400
             user.is_active = data.is_active
+
+        # Update locations
+        if data.location_ids is not None:
+            # Remove existing locations
+            UserLocation.query.filter_by(user_id=user.id).delete()
+
+            # Add new locations
+            for loc_id in data.location_ids:
+                loc = ServiceLocation.query.filter_by(
+                    id=loc_id,
+                    tenant_id=g.tenant_id
+                ).first()
+                if loc:
+                    user_loc = UserLocation(
+                        user_id=user.id,
+                        location_id=loc_id,
+                        is_primary=len(data.location_ids) == 1,
+                        can_manage=user.role.value in ['OWNER', 'ADMIN', 'MANAGER'],
+                        is_active=True
+                    )
+                    db.session.add(user_loc)
 
     db.session.commit()
 

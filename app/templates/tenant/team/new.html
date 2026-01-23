@@ -1,129 +1,237 @@
 {% extends "layouts/tenant.html" %}
 
-{% block title %}Novi clan tima - ServisHub{% endblock %}
+{% block title %}Novi član tima - ServisHub{% endblock %}
 
 {% block page_content %}
 <div x-data="teamNewPage()" x-init="loadLocations()">
     <!-- Header -->
-    <div class="md:flex md:items-center md:justify-between mb-8">
-        <div class="min-w-0 flex-1">
-            <div class="flex items-center">
-                <a href="/team" class="mr-4 text-gray-400 hover:text-gray-600">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                </a>
-                <h2 class="text-2xl font-bold text-gray-900">Dodaj clana tima</h2>
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-4">
+            <a href="/team" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Dodaj člana tima</h1>
+                <p class="text-gray-600 mt-1">Popunite dosije novog zaposlenog</p>
             </div>
         </div>
     </div>
 
     <!-- Form -->
     <form @submit.prevent="saveUser" class="space-y-6">
-        <div class="bg-white shadow rounded-lg p-8">
-            <h3 class="text-2xl font-medium text-gray-900 mb-6">Osnovni podaci</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-lg font-medium text-gray-700 mb-2">Ime *</label>
-                    <input type="text" x-model="form.ime" required
-                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4">
-                </div>
-                <div>
-                    <label class="block text-lg font-medium text-gray-700 mb-2">Prezime *</label>
-                    <input type="text" x-model="form.prezime" required
-                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4">
-                </div>
-                <div>
-                    <label class="block text-lg font-medium text-gray-700 mb-2">Email</label>
-                    <input type="email" x-model="form.email"
-                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4">
-                    <p class="mt-2 text-base text-gray-500">Opciono - za slanje notifikacija</p>
-                </div>
-                <div>
-                    <label class="block text-lg font-medium text-gray-700 mb-2">Telefon</label>
-                    <input type="tel" x-model="form.phone"
-                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4">
+        <!-- Osnovni podaci -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-900">Osnovni podaci</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ime *</label>
+                        <input type="text" x-model="form.ime" required
+                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Prezime *</label>
+                        <input type="text" x-model="form.prezime" required
+                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" x-model="form.email"
+                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <p class="mt-1 text-xs text-gray-500">Opciono - za slanje notifikacija</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Telefon</label>
+                        <input type="tel" x-model="form.phone"
+                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Adresa stanovanja</label>
+                        <input type="text" x-model="form.adresa"
+                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Broj lične karte</label>
+                        <input type="text" x-model="form.broj_licne_karte"
+                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white shadow rounded-lg p-8">
-            <h3 class="text-2xl font-medium text-gray-900 mb-6">Pristup</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-lg font-medium text-gray-700 mb-2">Korisnicko ime *</label>
-                    <input type="text" x-model="form.username" required minlength="3"
-                           placeholder="npr. marko.petrovic"
-                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4">
-                    <p class="mt-2 text-base text-gray-500">Zaposleni ce koristiti ovo za prijavu</p>
-                </div>
-                <div>
-                    <label class="block text-lg font-medium text-gray-700 mb-2">Uloga *</label>
-                    <select x-model="form.role" required
-                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4">
-                        <option value="TECHNICIAN">Tehnicar</option>
-                        <option value="RECEPTIONIST">Prijem</option>
-                        <option value="MANAGER">Menadzer</option>
-                        <option value="ADMIN">Administrator</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-lg font-medium text-gray-700 mb-2">Lozinka *</label>
-                    <input type="password" x-model="form.password" required minlength="6"
-                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4">
-                    <p class="mt-2 text-base text-gray-500">Minimalno 6 karaktera</p>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-lg font-medium text-gray-700 mb-2">Potvrdite lozinku *</label>
-                    <input type="password" x-model="form.password_confirm" required minlength="6"
-                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-xl p-4"
-                           :class="{'border-red-500': form.password && form.password_confirm && form.password !== form.password_confirm}">
-                    <p class="mt-2 text-base text-red-500" x-show="form.password && form.password_confirm && form.password !== form.password_confirm">
-                        Lozinke se ne poklapaju
-                    </p>
+        <!-- Ugovor i zaposlenje -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-900">Ugovor i zaposlenje</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Uloga *</label>
+                        <select x-model="form.role" required
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="TECHNICIAN">Serviser</option>
+                            <option value="RECEPTIONIST">Recepcionar</option>
+                            <option value="MANAGER">Menadžer</option>
+                            <option value="ADMIN">Administrator</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Početak radnog odnosa</label>
+                        <input type="date" x-model="form.pocetak_radnog_odnosa"
+                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tip ugovora</label>
+                        <select x-model="form.ugovor_tip"
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">-- Izaberite --</option>
+                            <option value="NEODREDJENO">Na neodređeno</option>
+                            <option value="ODREDJENO">Na određeno</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Trajanje ugovora (meseci)</label>
+                        <input type="number" x-model="form.ugovor_trajanje_meseci" min="1" max="120"
+                               :disabled="form.ugovor_tip !== 'ODREDJENO'"
+                               :class="form.ugovor_tip !== 'ODREDJENO' ? 'bg-gray-100' : ''"
+                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <p class="mt-1 text-xs text-gray-500">Samo za ugovor na određeno</p>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Login URL info -->
-            <div class="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
-                <div class="flex">
-                    <svg class="h-8 w-8 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                    </svg>
-                    <div class="ml-4">
-                        <h4 class="text-lg font-medium text-blue-800">Link za prijavu zaposlenih</h4>
-                        <p class="mt-2 text-base text-blue-700">
-                            Podelite ovaj link sa zaposlenima za prijavu. Dostupan je u Podesavanjima.
+        <!-- Plata -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-900">Plata</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tip plate</label>
+                        <select x-model="form.plata_tip"
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">-- Izaberite --</option>
+                            <option value="FIKSNO">Fiksna mesečna plata</option>
+                            <option value="DNEVNICA">Dnevnica</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <span x-text="form.plata_tip === 'DNEVNICA' ? 'Iznos dnevnice (RSD)' : 'Iznos plate (RSD)'"></span>
+                        </label>
+                        <input type="number" x-model="form.plata_iznos" min="0" step="0.01"
+                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pristup sistemu -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-900">Pristup sistemu</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Korisničko ime *</label>
+                        <input type="text" x-model="form.username" required minlength="3"
+                               placeholder="npr. marko.petrovic"
+                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <p class="mt-1 text-xs text-gray-500">Zaposleni će koristiti ovo za prijavu</p>
+                    </div>
+                    <div></div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Lozinka *</label>
+                        <input type="password" x-model="form.password" required minlength="6"
+                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <p class="mt-1 text-xs text-gray-500">Minimalno 6 karaktera</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Potvrdite lozinku *</label>
+                        <input type="password" x-model="form.password_confirm" required minlength="6"
+                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                               :class="{'border-red-500 ring-red-500': form.password && form.password_confirm && form.password !== form.password_confirm}">
+                        <p class="mt-1 text-xs text-red-500" x-show="form.password && form.password_confirm && form.password !== form.password_confirm">
+                            Lozinke se ne poklapaju
                         </p>
                     </div>
                 </div>
+
+                <!-- Login URL info -->
+                <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <div>
+                            <h4 class="text-sm font-medium text-blue-800">Link za prijavu zaposlenih</h4>
+                            <p class="mt-1 text-sm text-blue-700">
+                                Podelite privatni link za prijavu sa zaposlenima. Dostupan je na stranici Tim.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="bg-white shadow rounded-lg p-8">
-            <h3 class="text-2xl font-medium text-gray-900 mb-6">Lokacije</h3>
-            <p class="text-base text-gray-500 mb-6">Izaberite lokacije kojima korisnik ima pristup</p>
-            <div class="space-y-4">
-                <template x-for="loc in locations" :key="loc.id">
-                    <div class="flex items-center">
-                        <input type="checkbox" :id="'loc_' + loc.id" :value="loc.id" x-model="form.location_ids"
-                               class="h-6 w-6 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
-                        <label :for="'loc_' + loc.id" class="ml-4 block text-xl text-gray-900" x-text="loc.name"></label>
+        <!-- Lokacije -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-900">Lokacije</h3>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-gray-500 mb-4">Izaberite lokacije kojima korisnik ima pristup</p>
+                <div class="space-y-3">
+                    <template x-for="loc in locations" :key="loc.id">
+                        <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" :id="'loc_' + loc.id" :value="loc.id" x-model="form.location_ids"
+                                   class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="text-gray-900" x-text="loc.name"></span>
+                        </label>
+                    </template>
+                    <div x-show="locations.length === 0" class="text-sm text-gray-500 italic">
+                        Nema definisanih lokacija
                     </div>
-                </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Napomena -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-900">Napomena</h3>
+            </div>
+            <div class="p-6">
+                <textarea x-model="form.napomena" rows="3"
+                          placeholder="Dodatne informacije o zaposlenom..."
+                          class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
             </div>
         </div>
 
         <!-- Actions -->
-        <div class="flex justify-end gap-6">
+        <div class="flex justify-end gap-4">
             <a href="/team"
-               class="px-8 py-4 text-xl font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                Otkazi
+               class="px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                Otkaži
             </a>
-            <button type="submit" :disabled="saving"
-                    class="px-8 py-4 text-xl font-medium text-white bg-primary-600 border border-transparent rounded-lg hover:bg-primary-500 disabled:opacity-50">
-                <span x-show="!saving">Dodaj clana</span>
-                <span x-show="saving">Dodavanje...</span>
+            <button type="submit" :disabled="saving || (form.password && form.password_confirm && form.password !== form.password_confirm)"
+                    class="px-6 py-3 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span x-show="!saving">Dodaj člana</span>
+                <span x-show="saving" class="flex items-center gap-2">
+                    <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Dodavanje...
+                </span>
             </button>
         </div>
     </form>
@@ -139,6 +247,14 @@ function teamNewPage() {
             prezime: '',
             email: '',
             phone: '',
+            adresa: '',
+            broj_licne_karte: '',
+            pocetak_radnog_odnosa: '',
+            ugovor_tip: '',
+            ugovor_trajanje_meseci: null,
+            plata_tip: '',
+            plata_iznos: null,
+            napomena: '',
             username: '',
             password: '',
             password_confirm: '',
@@ -169,12 +285,23 @@ function teamNewPage() {
             try {
                 // Pripremi podatke - konvertuj prazne stringove u null
                 const payload = {
-                    ...this.form,
+                    ime: this.form.ime,
+                    prezime: this.form.prezime,
+                    username: this.form.username,
+                    password: this.form.password,
+                    role: this.form.role,
                     email: this.form.email?.trim() || null,
-                    phone: this.form.phone?.trim() || null
+                    phone: this.form.phone?.trim() || null,
+                    adresa: this.form.adresa?.trim() || null,
+                    broj_licne_karte: this.form.broj_licne_karte?.trim() || null,
+                    pocetak_radnog_odnosa: this.form.pocetak_radnog_odnosa || null,
+                    ugovor_tip: this.form.ugovor_tip || null,
+                    ugovor_trajanje_meseci: this.form.ugovor_tip === 'ODREDJENO' ? this.form.ugovor_trajanje_meseci : null,
+                    plata_tip: this.form.plata_tip || null,
+                    plata_iznos: this.form.plata_iznos || null,
+                    napomena: this.form.napomena?.trim() || null,
+                    location_ids: this.form.location_ids
                 };
-                // Ukloni password_confirm iz payload-a
-                delete payload.password_confirm;
 
                 const response = await api('/api/v1/users', {
                     method: 'POST',
@@ -183,15 +310,15 @@ function teamNewPage() {
                 });
 
                 if (response.ok) {
-                    showToast('Korisnik dodat', 'success');
+                    showToast('Član tima dodat', 'success');
                     window.location.href = '/team';
                 } else {
                     const error = await response.json();
-                    showToast(error.message || 'Greska pri dodavanju', 'error');
+                    showToast(error.message || error.error || 'Greška pri dodavanju', 'error');
                 }
             } catch (e) {
                 console.error('Failed to save user:', e);
-                showToast('Greska pri dodavanju', 'error');
+                showToast('Greška pri dodavanju', 'error');
             } finally {
                 this.saving = false;
             }

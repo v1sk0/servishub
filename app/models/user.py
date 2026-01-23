@@ -28,6 +28,18 @@ class UserRole(enum.Enum):
     RECEPTIONIST = 'RECEPTIONIST'
 
 
+class TipUgovora(enum.Enum):
+    """Tip ugovora o radu."""
+    NEODREDJENO = 'NEODREDJENO'  # Na neodređeno vreme
+    ODREDJENO = 'ODREDJENO'      # Na određeno vreme
+
+
+class TipPlate(enum.Enum):
+    """Tip isplate plate."""
+    FIKSNO = 'FIKSNO'        # Fiksna mesečna plata
+    DNEVNICA = 'DNEVNICA'    # Rad na dnevnicu
+
+
 class TenantUser(db.Model):
     """
     Korisnik preduzeca - zaposleni koji koristi platformu.
@@ -66,6 +78,22 @@ class TenantUser(db.Model):
     ime = db.Column(db.String(50), nullable=False)      # Ime
     prezime = db.Column(db.String(50), nullable=False)  # Prezime
     phone = db.Column(db.String(30))                    # Kontakt telefon
+    adresa = db.Column(db.String(200))                  # Adresa stanovanja
+
+    # Dokumenta
+    broj_licne_karte = db.Column(db.String(20))         # Broj lične karte
+
+    # Radni odnos
+    pocetak_radnog_odnosa = db.Column(db.Date)          # Datum početka radnog odnosa
+    ugovor_tip = db.Column(db.Enum(TipUgovora))         # Tip ugovora (neodređeno/određeno)
+    ugovor_trajanje_meseci = db.Column(db.Integer)      # Trajanje ugovora u mesecima (za određeno)
+
+    # Plata
+    plata_tip = db.Column(db.Enum(TipPlate))            # Tip plate (fiksno/dnevnica)
+    plata_iznos = db.Column(db.Numeric(12, 2))          # Iznos plate/dnevnice
+
+    # Napomena
+    napomena = db.Column(db.Text)                       # Interna napomena o zaposlenom
 
     # Rola u preduzecu
     role = db.Column(
