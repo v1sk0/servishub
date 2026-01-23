@@ -1,6 +1,6 @@
 <!-- Tenant Sidebar - Dark Glassmorphic Theme -->
-<div x-data="sidebarData()" x-init="loadSubscriptionStatus()" class="flex grow flex-col gap-y-5 overflow-y-auto px-6 pb-4">
-    <!-- Logo -->
+<div x-data="sidebarData()" x-init="init()" class="flex grow flex-col gap-y-5 overflow-y-auto px-6 pb-4">
+    <!-- Logo / Ime servisa -->
     <div class="flex h-16 shrink-0 items-center">
         <a href="/dashboard" class="flex items-center">
             <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
@@ -8,7 +8,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                 </svg>
             </div>
-            <span class="ml-3 text-xl font-bold text-slate-100">ServisHub</span>
+            <span class="ml-3 text-xl font-bold sidebar-logo truncate max-w-[180px]" x-text="tenantName || 'Servis'"></span>
         </a>
     </div>
 
@@ -141,6 +141,11 @@
 
             <!-- Subscription Widget -->
             <li class="mt-auto -mx-2">
+                <!-- Powered by ServisHub -->
+                <div class="text-center mb-2">
+                    <span class="text-xs text-gray-400 opacity-70">powered by</span>
+                    <a href="https://servishub.rs" target="_blank" class="text-xs font-semibold text-blue-400 hover:text-blue-300 ml-1">ServisHub</a>
+                </div>
                 <a href="/settings?tab=subscription" class="block">
                     <div class="subscription-widget rounded-xl p-4 transition-all hover:scale-[1.02] relative overflow-hidden license-widget"
                          :class="getWidgetClass()">
@@ -220,6 +225,26 @@ function sidebarData() {
         graceDaysRemaining: null,  // Days left in grace period (15 days max)
         totalDays: 30,
         locationCount: 1,
+        tenantName: '',
+
+        async init() {
+            await Promise.all([
+                this.loadTenantName(),
+                this.loadSubscriptionStatus()
+            ]);
+        },
+
+        async loadTenantName() {
+            try {
+                const res = await api('/api/v1/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    this.tenantName = data.tenant?.name || 'Servis';
+                }
+            } catch (e) {
+                console.error('Failed to load tenant name:', e);
+            }
+        },
 
         async loadSubscriptionStatus() {
             try {

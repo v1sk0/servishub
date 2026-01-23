@@ -14,37 +14,45 @@
     <!-- Tabs -->
     <div class="border-b border-gray-200 mb-6">
         <nav class="flex space-x-8 overflow-x-auto" aria-label="Tabs">
+            <!-- Podesavanja - svi vide (ali razlicit sadrzaj) -->
             <button @click="activeTab = 'settings'"
                     :class="activeTab === 'settings' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 Podesavanja
             </button>
-            <button @click="activeTab = 'profile'"
+            <!-- Moj Profil - samo za ne-admine (TECHNICIAN, RECEPTIONIST) -->
+            <button x-show="!isAdmin()" @click="activeTab = 'my_profile'"
+                    :class="activeTab === 'my_profile' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Moj Profil
+            </button>
+            <!-- Admin-only tabs -->
+            <button x-show="isAdmin()" @click="activeTab = 'profile'"
                     :class="activeTab === 'profile' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 Profil
             </button>
-            <button @click="activeTab = 'subscription'"
+            <button x-show="isAdmin()" @click="activeTab = 'subscription'"
                     :class="activeTab === 'subscription' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 Pretplata
             </button>
-            <button @click="activeTab = 'team'"
+            <button x-show="isAdmin()" @click="activeTab = 'team'"
                     :class="activeTab === 'team' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 Tim
             </button>
-            <button @click="activeTab = 'locations'"
+            <button x-show="isAdmin()" @click="activeTab = 'locations'"
                     :class="activeTab === 'locations' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 Lokacije
             </button>
-            <button @click="activeTab = 'kyc'"
+            <button x-show="isAdmin()" @click="activeTab = 'kyc'"
                     :class="activeTab === 'kyc' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 KYC
             </button>
-            <button @click="activeTab = 'public_page'"
+            <button x-show="isAdmin()" @click="activeTab = 'public_page'"
                     :class="activeTab === 'public_page' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,62 +178,122 @@
                         </div>
                     </div>
 
-                    <!-- Warranty -->
-                    <div class="border-t border-gray-200 pt-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Default garancija (dana)</label>
-                        <input type="number" x-model="settings.default_warranty_days" min="0" max="365"
-                               class="w-32 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
-                        <p class="text-xs text-gray-500 mt-1">Koliko dana garancije se automatski dodaje na nove naloge</p>
-                    </div>
+                    <!-- Admin-only settings -->
+                    <template x-if="isAdmin()">
+                        <div class="space-y-6">
+                            <!-- Warranty -->
+                            <div class="border-t border-gray-200 pt-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Default garancija (dana)</label>
+                                <input type="number" x-model="settings.default_warranty_days" min="0" max="365"
+                                       class="w-32 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-gray-500 mt-1">Koliko dana garancije se automatski dodaje na nove naloge</p>
+                            </div>
 
-                    <!-- Ticket Prefix -->
-                    <div class="border-t border-gray-200 pt-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Prefix naloga</label>
-                        <input type="text" x-model="settings.ticket_prefix" maxlength="10"
-                               placeholder="SRV" class="w-32 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
-                        <p class="text-xs text-gray-500 mt-1">Npr. SRV-0001 umesto 0001</p>
-                    </div>
+                            <!-- Ticket Prefix -->
+                            <div class="border-t border-gray-200 pt-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Prefix naloga</label>
+                                <input type="text" x-model="settings.ticket_prefix" maxlength="10"
+                                       placeholder="SRV" class="w-32 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-gray-500 mt-1">Npr. SRV-0001 umesto 0001</p>
+                            </div>
 
-                    <!-- Notifications -->
-                    <div class="border-t border-gray-200 pt-6">
-                        <h3 class="text-sm font-medium text-gray-900 mb-4">Notifikacije</h3>
-                        <div class="space-y-4">
-                            <label class="flex items-center gap-3">
-                                <input type="checkbox" x-model="settings.email_notifications"
-                                       class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                                <span class="text-sm text-gray-700">Email notifikacije</span>
-                            </label>
-                            <label class="flex items-center gap-3">
-                                <input type="checkbox" x-model="settings.sms_notifications"
-                                       class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                                <span class="text-sm text-gray-700">SMS notifikacije</span>
-                            </label>
-                            <label class="flex items-center gap-3">
-                                <input type="checkbox" x-model="settings.auto_sms_on_ready"
-                                       class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                                <span class="text-sm text-gray-700">Automatski SMS kada je nalog spreman</span>
-                            </label>
+                            <!-- Notifications -->
+                            <div class="border-t border-gray-200 pt-6">
+                                <h3 class="text-sm font-medium text-gray-900 mb-4">Notifikacije</h3>
+                                <div class="space-y-4">
+                                    <label class="flex items-center gap-3">
+                                        <input type="checkbox" x-model="settings.email_notifications"
+                                               class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                        <span class="text-sm text-gray-700">Email notifikacije</span>
+                                    </label>
+                                    <label class="flex items-center gap-3">
+                                        <input type="checkbox" x-model="settings.sms_notifications"
+                                               class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                        <span class="text-sm text-gray-700">SMS notifikacije</span>
+                                    </label>
+                                    <label class="flex items-center gap-3">
+                                        <input type="checkbox" x-model="settings.auto_sms_on_ready"
+                                               class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                        <span class="text-sm text-gray-700">Automatski SMS kada je nalog spreman</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Print Clause -->
+                            <div class="border-t border-gray-200 pt-6">
+                                <h3 class="text-sm font-medium text-gray-900 mb-4">Podešavanja štampe</h3>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Klauzola za servisni nalog</label>
+                                    <textarea x-model="settings.print_clause" rows="4"
+                                              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 text-sm"
+                                              placeholder="Unesite tekst klauzole koji će se štampati na servisnim nalozima..."></textarea>
+                                    <p class="text-xs text-gray-500 mt-1">Ovaj tekst se prikazuje na dnu servisnog naloga prilikom štampe</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 flex justify-end">
+                                <button type="submit" :disabled="saving"
+                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                                    <span x-show="!saving">Sacuvaj podesavanja</span>
+                                    <span x-show="saving">Cuvam...</span>
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    </template>
+                </div>
+            </form>
+        </div>
+    </div>
 
-                    <!-- Print Clause -->
-                    <div class="border-t border-gray-200 pt-6">
-                        <h3 class="text-sm font-medium text-gray-900 mb-4">Podešavanja štampe</h3>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Klauzola za servisni nalog</label>
-                            <textarea x-model="settings.print_clause" rows="4"
-                                      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 text-sm"
-                                      placeholder="Unesite tekst klauzole koji će se štampati na servisnim nalozima..."></textarea>
-                            <p class="text-xs text-gray-500 mt-1">Ovaj tekst se prikazuje na dnu servisnog naloga prilikom štampe</p>
-                        </div>
+    <!-- ==================== MOJ PROFIL TAB (za TECHNICIAN i RECEPTIONIST) ==================== -->
+    <div x-show="!loading && activeTab === 'my_profile'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
+        <!-- Profil info -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-start gap-6">
+                <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span class="text-3xl font-bold text-blue-600" x-text="(currentUser.ime?.charAt(0) || '') + (currentUser.prezime?.charAt(0) || '')"></span>
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-2xl font-bold text-gray-900" x-text="currentUser.ime + ' ' + currentUser.prezime"></h2>
+                    <p class="text-gray-600" x-text="currentUser.email || 'Bez email-a'"></p>
+                    <span class="inline-block mt-2 text-sm font-medium px-3 py-1 rounded-full bg-green-100 text-green-700"
+                          x-text="getRoleLabel(currentUser.role)"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Promena šifre -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Promena šifre</h3>
+
+            <form @submit.prevent="changeMyPassword()">
+                <div class="space-y-4 max-w-md">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Trenutna šifra</label>
+                        <input type="password" x-model="passwordForm.current_password" required
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nova šifra</label>
+                        <input type="password" x-model="passwordForm.new_password" required minlength="6"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">Minimalno 6 karaktera</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Potvrdite novu šifru</label>
+                        <input type="password" x-model="passwordForm.confirm_password" required minlength="6"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                               :class="{'border-red-500': passwordForm.new_password && passwordForm.confirm_password && passwordForm.new_password !== passwordForm.confirm_password}">
+                        <p x-show="passwordForm.new_password && passwordForm.confirm_password && passwordForm.new_password !== passwordForm.confirm_password"
+                           class="text-xs text-red-500 mt-1">Šifre se ne poklapaju</p>
                     </div>
                 </div>
 
-                <div class="mt-6 flex justify-end">
-                    <button type="submit" :disabled="saving"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
-                        <span x-show="!saving">Sacuvaj podesavanja</span>
-                        <span x-show="saving">Cuvam...</span>
+                <div class="mt-6">
+                    <button type="submit" :disabled="changingPassword || (passwordForm.new_password && passwordForm.confirm_password && passwordForm.new_password !== passwordForm.confirm_password)"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span x-show="!changingPassword">Promeni šifru</span>
+                        <span x-show="changingPassword">Menjam...</span>
                     </button>
                 </div>
             </form>
@@ -1615,8 +1683,13 @@ function settingsPage() {
         loading: true,
         saving: false,
         savingPublic: false,
+        changingPassword: false,
         activeTab: new URLSearchParams(window.location.search).get('tab') || 'settings',
         currentTheme: localStorage.getItem('servishub-theme') || 'light',
+
+        // Current user info
+        currentUser: { id: null, ime: '', prezime: '', email: '', role: '' },
+        passwordForm: { current_password: '', new_password: '', confirm_password: '' },
 
         // Modals
         userModal: false,
@@ -1705,7 +1778,58 @@ function settingsPage() {
         async init() {
             // Apply saved theme on init
             this.applyTheme(this.currentTheme);
+            await this.loadCurrentUser();
             await this.loadAll();
+        },
+
+        // Check if current user is admin (OWNER, ADMIN, MANAGER)
+        isAdmin() {
+            const adminRoles = ['OWNER', 'ADMIN', 'MANAGER'];
+            return adminRoles.includes(this.currentUser.role);
+        },
+
+        async loadCurrentUser() {
+            try {
+                const response = await api('/auth/me');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.currentUser = data.user;
+                }
+            } catch (e) {
+                console.error('Failed to load current user:', e);
+            }
+        },
+
+        async changeMyPassword() {
+            if (this.passwordForm.new_password !== this.passwordForm.confirm_password) {
+                showToast('Šifre se ne poklapaju', 'error');
+                return;
+            }
+
+            this.changingPassword = true;
+            try {
+                const response = await api('/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        current_password: this.passwordForm.current_password,
+                        new_password: this.passwordForm.new_password
+                    })
+                });
+
+                if (response.ok) {
+                    showToast('Šifra uspešno promenjena', 'success');
+                    this.passwordForm = { current_password: '', new_password: '', confirm_password: '' };
+                } else {
+                    const error = await response.json();
+                    showToast(error.error || 'Greška pri promeni šifre', 'error');
+                }
+            } catch (e) {
+                console.error('Failed to change password:', e);
+                showToast('Greška pri promeni šifre', 'error');
+            } finally {
+                this.changingPassword = false;
+            }
         },
 
         setTheme(theme) {
