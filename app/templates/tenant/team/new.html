@@ -151,10 +151,17 @@ function teamNewPage() {
         async saveUser() {
             this.saving = true;
             try {
+                // Pripremi podatke - konvertuj prazne stringove u null
+                const payload = {
+                    ...this.form,
+                    email: this.form.email?.trim() || null,
+                    phone: this.form.phone?.trim() || null
+                };
+
                 const response = await api('/api/v1/users', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(this.form)
+                    body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
