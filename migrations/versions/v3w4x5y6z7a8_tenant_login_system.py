@@ -17,12 +17,38 @@ branch_labels = None
 depends_on = None
 
 
+def column_exists(table_name, column_name):
+    """Check if column exists in table"""
+    conn = op.get_bind()
+    result = conn.execute(sa.text("""
+        SELECT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = :table AND column_name = :column
+        )
+    """), {'table': table_name, 'column': column_name})
+    return result.scalar()
+
+
+def constraint_exists(constraint_name):
+    """Check if constraint exists"""
+    conn = op.get_bind()
+    result = conn.execute(sa.text("""
+        SELECT EXISTS (
+            SELECT 1 FROM information_schema.table_constraints
+            WHERE constraint_name = :name
+        )
+    """), {'name': constraint_name})
+    return result.scalar()
+
+
 def upgrade():
     # 1. Tenant: dodaj login_secret (nullable prvo)
-    op.add_column('tenant', sa.Column('login_secret', sa.String(32), nullable=True))
+    if not column_exists('tenant', 'login_secret'):
+        op.add_column('tenant', sa.Column('login_secret', sa.String(32), nullable=True))
 
     # 2. TenantUser: dodaj username (nullable prvo)
-    op.add_column('tenant_user', sa.Column('username', sa.String(50), nullable=True))
+    if not column_exists('tenant_user', 'username'):
+        op.add_column('tenant_user', sa.Column('username', sa.String(50), nullable=True))
 
     # 3. Popuni postojeće username-ove iz email-a (deo pre @)
     op.execute("""
@@ -46,9 +72,11 @@ def upgrade():
     # 6. Email postaje nullable
     op.alter_column('tenant_user', 'email', nullable=True)
 
-    # 7. Kreiraj unique indekse
-    op.create_unique_constraint('uq_tenant_user_username', 'tenant_user', ['tenant_id', 'username'])
-    op.create_unique_constraint('uq_tenant_login_secret', 'tenant', ['login_secret'])
+    # 7. Kreiraj unique indekse (ako ne postoje)
+    if not constraint_exists('uq_tenant_user_username'):
+        op.create_unique_constraint('uq_tenant_user_username', 'tenant_user', ['tenant_id', 'username'])
+    if not constraint_exists('uq_tenant_login_secret'):
+        op.create_unique_constraint('uq_tenant_login_secret', 'tenant', ['login_secret'])
 
 
 def downgrade():
