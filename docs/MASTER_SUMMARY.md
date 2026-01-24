@@ -1,6 +1,6 @@
 # ServisHub - Master Summary
 
-> Poslednje ažuriranje: 24. Januar 2026 (v297)
+> Poslednje ažuriranje: 24. Januar 2026 (v300.6)
 
 ---
 
@@ -770,6 +770,44 @@ if tenant.can_activate_trust:
 - `app/templates/tenant/network/` - NOVI
 
 **Plan fajl:** `C:\Users\darko\.claude\plans\nested-giggling-wall.md`
+
+---
+
+### v300.6 (24. Januar 2026)
+
+**Sidebar Optimization - SessionStorage Caching + Skeleton Loader:**
+
+**Problem:** Sidebar učitava podatke sa API-ja na svakoj promeni stranice, što uzrokuje:
+- Flickering license widget-a (pojavi se posle sekunde)
+- "Tim" menu item "iskače" (FOUC - Flash of Unstyled Content)
+- Nepotrebni API pozivi pri navigaciji
+
+**Rešenja:**
+
+1. **SessionStorage Caching (5min TTL)**
+   - Cache key: `servishub_sidebar_cache`
+   - Keširani podaci: tenantName, userRole, subscriptionStatus, daysRemaining, locationCount, totalDays
+   - Na page load: prvo učita iz cache-a (instant), zatim osvežava iz API-ja ako je cache istekao
+   - TTL: 5 minuta - balans između svežih podataka i performansi
+
+2. **Skeleton Loader za License Widget**
+   - Prikazuje se dok se podaci ne učitaju
+   - Pulsing animacija (`skeleton-pulse`)
+   - `subscriptionLoaded` flag kontroliše skeleton/widget vidljivost
+
+3. **FOUC Fix za Tim Menu**
+   - `roleLoaded` flag - čeka da API vrati userRole
+   - `isAdmin()` vraća `false` dok `roleLoaded` nije `true`
+   - Kombinacija sa `x-cloak` sprečava "pop-in" efekat
+
+**Loading Flow:**
+```
+First visit:     Skeleton → API → Cache → Widget
+Subsequent:      Cache → Widget instantly → (API refresh if >5min)
+```
+
+**Izmenjeni fajlovi:**
+- `app/templates/components/tenant_sidebar.html` - caching + skeleton
 
 ---
 

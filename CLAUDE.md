@@ -6,13 +6,13 @@ Instrukcije za Claude Code agente. **CITAJ OVO PRE BILO KAKVIH IZMENA.**
 
 ## RESUME POINT
 
-**v297** | 2026-01-24 | Backend KOMPLETNO | Frontend KOMPLETNO
+**v300.6** | 2026-01-24 | Backend KOMPLETNO | Frontend KOMPLETNO
 
-### Status: IMPLEMENTIRANO - Threaded Messaging + Real-Time
+### Status: IMPLEMENTIRANO - Threaded Messaging + Real-Time + Sidebar Caching
 
 **Plan fajl:** `C:\Users\darko\.claude\plans\nested-giggling-wall.md`
 
-**Implementirano (v297):**
+**Implementirano (v300.6):**
 - ✅ Threaded messaging sistem (SYSTEM/SUPPORT/NETWORK)
 - ✅ MessageThread, ThreadParticipant, Message modeli
 - ✅ Tenant Messages API (`/api/v1/threads`)
@@ -22,6 +22,8 @@ Instrukcije za Claude Code agente. **CITAJ OVO PRE BILO KAKVIH IZMENA.**
 - ✅ `after_id` param za efikasan polling
 - ✅ Admin Support stranica (`/admin/support`)
 - ✅ Tenant Messages stranica (`/messages`)
+- ✅ Sidebar sessionStorage caching (5min TTL)
+- ✅ License widget skeleton loader
 
 **Ključni fajlovi:**
 | Fajl | Opis |
@@ -31,6 +33,7 @@ Instrukcije za Claude Code agente. **CITAJ OVO PRE BILO KAKVIH IZMENA.**
 | `app/api/admin/threads.py` | Admin API za poruke + typing |
 | `app/templates/admin/support/list.html` | Admin chat UI |
 | `app/templates/tenant/messages/inbox.html` | Tenant inbox sa 2 taba |
+| `app/templates/components/tenant_sidebar.html` | Sidebar sa caching + skeleton |
 
 **Kako radi real-time messaging:**
 1. Kad korisnik otvori chat, startuje polling (3s poruke, 2s typing)
@@ -583,6 +586,64 @@ if (!this.isTyping) {
 
 ---
 
+### 7.1 Tenant Sidebar Caching (v300.6)
+
+**Problem:** Sidebar učitava podatke sa API-ja na svakoj promeni stranice, prouzrokuje flickering license widget-a i "Tim" menu item-a koji "iskače".
+
+**Rešenje:** SessionStorage caching sa 5 minuta TTL + skeleton loader.
+
+**Cache Key:** `servishub_sidebar_cache`
+
+**Keširani podaci:**
+```javascript
+{
+    tenantName: 'Ime Servisa',
+    userRole: 'OWNER',
+    subscriptionStatus: 'ACTIVE',
+    daysRemaining: 25,
+    graceDaysRemaining: 0,
+    locationCount: 1,
+    totalDays: 30,
+    cachedAt: 1706097600000  // timestamp
+}
+```
+
+**Loading Flow:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  FIRST VISIT (no cache)           SUBSEQUENT PAGES          │
+│  ─────────────────────            ─────────────────         │
+│  1. Skeleton loader shows         1. loadFromCache()        │
+│  2. API calls in parallel         2. Cached data applied    │
+│  3. Data received                    immediately            │
+│  4. saveToCache()                 3. Widget shows instantly │
+│  5. Widget shows                  4. If cache >5min:        │
+│  6. Skeleton hidden                  refresh in background  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key Features:**
+- `subscriptionLoaded` flag - kontroliše skeleton/widget vidljivost
+- `roleLoaded` flag - sprečava FOUC za "Tim" menu item
+- Skeleton ima pulsing animaciju dok se čeka
+- API se preskače ako je cache validan (<5 min)
+
+**Skeleton Loader CSS:**
+```css
+.license-skeleton {
+    background: linear-gradient(135deg, rgba(100,100,100,0.3), rgba(80,80,80,0.3));
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+@keyframes skeleton-pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.4; }
+}
+```
+
+**Fajl:** `app/templates/components/tenant_sidebar.html`
+
+---
+
 ### 8. Ticket Tracking API (Public)
 
 **Endpoint:** `GET /api/public/track/<identifier>`
@@ -783,6 +844,7 @@ Landing Page (kontakt sekcija, social ikone)
 
 | Verzija | Datum | Izmene |
 |---------|-------|--------|
+| v300.6 | 2026-01-24 | **Sidebar Optimization:** SessionStorage caching (5min TTL), skeleton loader za license widget, FOUC fix za Tim menu, smanjeni API pozivi pri navigaciji |
 | v297 | 2026-01-24 | **Real-Time Messaging:** Typing indicators, fast polling (3s), typing_service, admin support chat, tenant inbox sa dva taba |
 | v241 | 2026-01-23 | **Security:** Role-based Tim visibility (sidebar), API zaštita team management endpoints, **OAuth Fix:** sinhroni token handling (race condition fix) |
 | v235 | 2026-01-21 | **Admin Settings:** Social linkovi u Company modal, landing page dinamicki kontakt |
