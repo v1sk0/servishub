@@ -44,23 +44,8 @@ def enum_exists(enum_name):
 
 
 def upgrade():
-    # Kreiraj enum tipove samo ako ne postoje
-    if not enum_exists('threadtype'):
-        thread_type = sa.Enum('SYSTEM', 'SUPPORT', 'NETWORK', name='threadtype')
-        thread_type.create(op.get_bind(), checkfirst=True)
-
-    if not enum_exists('threadstatus'):
-        thread_status = sa.Enum('OPEN', 'PENDING', 'RESOLVED', name='threadstatus')
-        thread_status.create(op.get_bind(), checkfirst=True)
-
-    if not enum_exists('hiddenbytype'):
-        hidden_by_type = sa.Enum('ADMIN', 'TENANT', name='hiddenbytype')
-        hidden_by_type.create(op.get_bind(), checkfirst=True)
-
-    # Reference za korišćenje u kolonama (create_type=False)
-    thread_type = sa.Enum('SYSTEM', 'SUPPORT', 'NETWORK', name='threadtype', create_type=False)
-    thread_status = sa.Enum('OPEN', 'PENDING', 'RESOLVED', name='threadstatus', create_type=False)
-    hidden_by_type = sa.Enum('ADMIN', 'TENANT', name='hiddenbytype', create_type=False)
+    # NAPOMENA: Koristimo String umesto PostgreSQL ENUM za sve type/status kolone
+    # Enum konverzija se radi u Python modelu
 
     # MessageThread tabela
     if not table_exists('message_thread'):
@@ -68,9 +53,9 @@ def upgrade():
             sa.Column('id', sa.Integer(), nullable=False),
             # Vlasnik
             sa.Column('tenant_id', sa.Integer(), nullable=False),
-            # Tip i status
-            sa.Column('thread_type', thread_type, nullable=False),
-            sa.Column('status', thread_status, default='OPEN'),
+            # Tip i status - String umesto Enum
+            sa.Column('thread_type', sa.String(20), nullable=False),
+            sa.Column('status', sa.String(20), server_default='OPEN'),
             # Naslov i tagovi
             sa.Column('subject', sa.String(200), nullable=False),
             sa.Column('tags', sa.JSON(), nullable=True),
@@ -135,7 +120,7 @@ def upgrade():
             sa.Column('is_hidden', sa.Boolean(), default=False),
             sa.Column('hidden_at', sa.DateTime(timezone=True), nullable=True),
             sa.Column('hidden_by_id', sa.Integer(), nullable=True),
-            sa.Column('hidden_by_type', hidden_by_type, nullable=True),
+            sa.Column('hidden_by_type', sa.String(20), nullable=True),
             sa.Column('hidden_reason', sa.String(200), nullable=True),
             # Timestamp
             sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
@@ -169,8 +154,3 @@ def downgrade():
     op.drop_table('message')
     op.drop_table('thread_participant')
     op.drop_table('message_thread')
-
-    # Drop enum types
-    sa.Enum(name='hiddenbytype').drop(op.get_bind(), checkfirst=True)
-    sa.Enum(name='threadstatus').drop(op.get_bind(), checkfirst=True)
-    sa.Enum(name='threadtype').drop(op.get_bind(), checkfirst=True)

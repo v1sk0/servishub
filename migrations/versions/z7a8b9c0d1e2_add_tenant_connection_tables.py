@@ -43,19 +43,8 @@ def enum_exists(enum_name):
 
 
 def upgrade():
-    # Kreiraj ConnectionStatus enum samo ako ne postoji
-    if not enum_exists('connectionstatus'):
-        connection_status = sa.Enum(
-            'PENDING_INVITEE', 'PENDING_INVITER', 'ACTIVE', 'BLOCKED',
-            name='connectionstatus'
-        )
-        connection_status.create(op.get_bind(), checkfirst=True)
-
-    # Referenca za korišćenje u kolonama
-    connection_status = sa.Enum(
-        'PENDING_INVITEE', 'PENDING_INVITER', 'ACTIVE', 'BLOCKED',
-        name='connectionstatus', create_type=False
-    )
+    # NAPOMENA: Koristimo String umesto PostgreSQL ENUM za status kolone
+    # Enum konverzija se radi u Python modelu
 
     # Invite tabela
     if not table_exists('invite'):
@@ -92,8 +81,8 @@ def upgrade():
             # Oba tenanta (bidirectional)
             sa.Column('tenant_a_id', sa.Integer(), nullable=False),
             sa.Column('tenant_b_id', sa.Integer(), nullable=False),
-            # Status
-            sa.Column('status', connection_status, default='PENDING_INVITEE'),
+            # Status - String umesto Enum
+            sa.Column('status', sa.String(20), server_default='PENDING_INVITEE'),
             # Invite koji je korišćen
             sa.Column('invite_id', sa.Integer(), nullable=True),
             # Ko je inicirao
@@ -139,6 +128,3 @@ def downgrade():
     # Drop tabele
     op.drop_table('tenant_connection')
     op.drop_table('invite')
-
-    # Drop enum
-    sa.Enum(name='connectionstatus').drop(op.get_bind(), checkfirst=True)

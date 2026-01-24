@@ -41,13 +41,8 @@ def enum_exists(enum_name):
 
 
 def upgrade():
-    # Kreiraj DeliveryStatus enum samo ako ne postoji
-    if not enum_exists('deliverystatus'):
-        delivery_status = sa.Enum('PENDING', 'SENT', 'FAILED', 'SKIPPED', name='deliverystatus')
-        delivery_status.create(op.get_bind(), checkfirst=True)
-
-    # Referenciranje postojećeg enuma
-    delivery_status = sa.Enum('PENDING', 'SENT', 'FAILED', 'SKIPPED', name='deliverystatus', create_type=False)
+    # NAPOMENA: Koristimo String umesto PostgreSQL ENUM za status kolone
+    # Ovo izbegava probleme sa duplikatima pri migracijama
 
     # PackageChangeHistory tabela
     if not table_exists('package_change_history'):
@@ -85,19 +80,19 @@ def upgrade():
 
     # PackageChangeDelivery tabela
     if not table_exists('package_change_delivery'):
-        # Koristi string reference za enum da izbegne kreiranje novog tipa
+        # Koristi String umesto Enum za izbegavanje konflikata
         op.create_table('package_change_delivery',
             sa.Column('id', sa.Integer(), nullable=False),
             # Veze
             sa.Column('change_id', sa.Integer(), nullable=False),
             sa.Column('tenant_id', sa.Integer(), nullable=False),
-            # Email status - koristi PostgreSQL ENUM direktno
-            sa.Column('email_status', sa.Enum('PENDING', 'SENT', 'FAILED', 'SKIPPED', name='deliverystatus', create_type=False), server_default='PENDING'),
+            # Email status - String za kompatibilnost
+            sa.Column('email_status', sa.String(20), server_default='PENDING'),
             sa.Column('email_sent_at', sa.DateTime(timezone=True), nullable=True),
             sa.Column('email_error', sa.Text(), nullable=True),
             sa.Column('email_recipient', sa.String(255), nullable=True),
             # In-app status
-            sa.Column('inapp_status', sa.Enum('PENDING', 'SENT', 'FAILED', 'SKIPPED', name='deliverystatus', create_type=False), server_default='PENDING'),
+            sa.Column('inapp_status', sa.String(20), server_default='PENDING'),
             sa.Column('inapp_created_at', sa.DateTime(timezone=True), nullable=True),
             sa.Column('inapp_thread_id', sa.Integer(), nullable=True),
             sa.Column('inapp_error', sa.Text(), nullable=True),
@@ -127,6 +122,3 @@ def downgrade():
     # Drop tabele
     op.drop_table('package_change_delivery')
     op.drop_table('package_change_history')
-
-    # Drop enum
-    sa.Enum(name='deliverystatus').drop(op.get_bind(), checkfirst=True)
