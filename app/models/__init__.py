@@ -23,6 +23,12 @@ from .platform_settings import PlatformSettings
 from .tenant_message import TenantMessage, MessageType, MessagePriority, MessageCategory
 from .service import ServiceItem, DEFAULT_CATEGORIES
 from .tenant_public_profile import TenantPublicProfile
+from .package_change_history import PackageChangeHistory, PackageChangeDelivery, DeliveryStatus
+from .message_thread import (
+    MessageThread, ThreadParticipant, Message,
+    ThreadType, ThreadStatus, ThreadTag, HiddenByType
+)
+from .tenant_connection import Invite, TenantConnection, ConnectionStatus
 
 __all__ = [
     # Tenant modeli
@@ -93,4 +99,20 @@ __all__ = [
     'DEFAULT_CATEGORIES',
     # Public Profile (Javna stranica)
     'TenantPublicProfile',
+    # Package Change History (Verzioniranje promena cena)
+    'PackageChangeHistory',
+    'PackageChangeDelivery',
+    'DeliveryStatus',
+    # Message Thread (Threaded Messaging)
+    'MessageThread',
+    'ThreadParticipant',
+    'Message',
+    'ThreadType',
+    'ThreadStatus',
+    'ThreadTag',
+    'HiddenByType',
+    # Tenant Connection (T2T Networking)
+    'Invite',
+    'TenantConnection',
+    'ConnectionStatus',
 ]

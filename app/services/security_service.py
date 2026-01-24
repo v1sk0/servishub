@@ -68,6 +68,24 @@ class SecurityEventType:
     KYC_VERIFIED = 'kyc_verified'
     KYC_REJECTED = 'kyc_rejected'
 
+    # Networking events (T2T)
+    INVITE_CREATED = 'invite_created'
+    INVITE_ACCEPTED = 'invite_accepted'
+    INVITE_REVOKED = 'invite_revoked'
+    INVITE_INVALID = 'invite_invalid'
+    CONNECTION_CREATED = 'connection_created'
+    CONNECTION_BLOCKED = 'connection_blocked'
+    CONNECTION_UNBLOCKED = 'connection_unblocked'
+    CONNECTION_DELETED = 'connection_deleted'
+    CONNECTION_PERMISSIONS_CHANGED = 'connection_permissions_changed'
+
+    # Messaging events
+    MESSAGE_SENT = 'message_sent'
+    MESSAGE_EDITED = 'message_edited'
+    MESSAGE_HIDDEN = 'message_hidden'
+    THREAD_CREATED = 'thread_created'
+    THREAD_STATUS_CHANGED = 'thread_status_changed'
+
 
 class SecurityEventLogger:
     """
@@ -412,3 +430,12 @@ class RateLimits:
     # API - opusteni limiti
     API_READ = {'max_requests': 100, 'window_seconds': 60, 'block_seconds': 60}
     API_WRITE = {'max_requests': 30, 'window_seconds': 60, 'block_seconds': 120}
+
+    # Networking - T2T limiti
+    INVITE_CREATE = {'max_requests': 10, 'window_seconds': 86400, 'block_seconds': 3600}  # 10/dan
+    INVITE_ACCEPT = {'max_requests': 20, 'window_seconds': 3600, 'block_seconds': 300}  # 20/sat
+    CONNECTION_BLOCK = {'max_requests': 10, 'window_seconds': 3600, 'block_seconds': 600}  # 10/sat
+
+    # Messaging limiti
+    MESSAGE_SEND = {'max_requests': 50, 'window_seconds': 60, 'block_seconds': 120}  # 50/min
+    THREAD_CREATE = {'max_requests': 10, 'window_seconds': 3600, 'block_seconds': 600}  # 10/sat

@@ -291,7 +291,7 @@
                                     </svg>
                                 </div>
                                 <span class="text-sm font-medium text-amber-700">EXPIRED</span>
-                                <span class="text-xs text-gray-500" x-text="form.grace_period_days + ' dana grace'"></span>
+                                <span class="text-xs text-gray-500">Istekla pretplata</span>
                             </div>
 
                             <!-- Suspended -->
@@ -437,12 +437,12 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 class="text-lg font-semibold text-gray-900">Periodi Koriscenja</h3>
-                                    <p class="text-sm text-gray-500">Trajanje trial-a i grace perioda</p>
+                                    <h3 class="text-lg font-semibold text-gray-900">Trial Period</h3>
+                                    <p class="text-sm text-gray-500">Besplatni period nakon registracije</p>
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="max-w-md">
                                 <!-- Trial Period -->
                                 <div class="bg-emerald-50 rounded-xl p-5 border border-emerald-200">
                                     <div class="flex items-center gap-3 mb-4">
@@ -461,26 +461,10 @@
                                                class="w-24 px-4 py-2 rounded-lg border border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-lg font-bold text-center bg-white">
                                         <span class="text-emerald-800 font-medium">dana</span>
                                     </div>
-                                </div>
-
-                                <!-- Grace Period -->
-                                <div class="bg-amber-50 rounded-xl p-5 border border-amber-200">
-                                    <div class="flex items-center gap-3 mb-4">
-                                        <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
-                                            <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-semibold text-amber-900">Grace Period</h4>
-                                            <p class="text-xs text-amber-700">Pre automatske suspenzije naloga</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <input type="number" x-model="form.grace_period_days" min="0" max="30"
-                                               class="w-24 px-4 py-2 rounded-lg border border-amber-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 text-lg font-bold text-center bg-white">
-                                        <span class="text-amber-800 font-medium">dana</span>
-                                    </div>
+                                    <p class="mt-3 text-xs text-emerald-600">
+                                        Servisi dobijaju besplatan pristup svim funkcijama tokom trial perioda.
+                                        Nakon isteka, potrebno je aktivirati pretplatu.
+                                    </p>
                                 </div>
                             </div>
                         </div>

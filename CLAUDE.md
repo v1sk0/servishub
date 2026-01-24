@@ -6,11 +6,48 @@ Instrukcije za Claude Code agente. **CITAJ OVO PRE BILO KAKVIH IZMENA.**
 
 ## RESUME POINT
 
-**v241** | 2026-01-23 | Backend 100% | Frontend 100%
+**v243** | 2026-01-23 | Backend PLANIRANO | Frontend PLANIRANO
 
-### Status: KOMPLETNO - Role-Based Access Control + OAuth Fix
+### Status: PLANIRANO - Messaging & Networking System v2.1
 
-**Poslednje izmene (v241):**
+**Plan fajl:** `C:\Users\darko\.claude\plans\nested-giggling-wall.md`
+
+**Arhitektura (Enterprise Ready v2.1):**
+- Race-safe verzioniranje (change_date + daily_seq + retry)
+- Per-tenant delivery tracking (PackageChangeDelivery)
+- UTC storage + timezone za prikaz
+- Threaded messaging sa SYSTEM read-only enforcement
+- unread_count kao cache iz last_read_at
+- Secure invite sa token_hint za support
+- BLOCKED auto-blocks messages + hides threads
+- connection_id na thread za brže queries
+
+**Novi modeli:**
+- `PackageChangeHistory` - verzioniranje + idempotency
+- `PackageChangeDelivery` - per-tenant tracking
+- `MessageThread` + `ThreadParticipant` + `Message`
+- `Invite` + `TenantConnection`
+
+**Key Fixes (v2.1):**
+- Mutable default bug: `default=list` umesto `default=[]`
+- Race condition: optimistic locking sa retry
+- SLA: first_response_at SAMO kad admin odgovori
+- hidden_by_type: ADMIN | TENANT za audit
+- token_hint: prva 6 karaktera za support
+
+**Redosled implementacije:**
+1. Faza 1: Grace period UI (trivijalno)
+2. Faza 2: PackageChangeHistory + PackageChangeDelivery
+3. Faza 2.5: Minimalni in-app notification (SYSTEM threads)
+4. Faza 3: MessageThread + Message modeli + API + frontend
+5. Faza 4: Invite + TenantConnection + Network UI
+6. Faza 5: Security hardening (rate limiting, audit)
+
+---
+
+### Prethodne verzije
+
+**v241** (23. Januar 2026) - Role-Based Access Control + OAuth Fix
 
 **1. Role-Based Access Control za Tim:**
 - **Sidebar:** "Tim" link sakriven za TECHNICIAN i RECEPTIONIST

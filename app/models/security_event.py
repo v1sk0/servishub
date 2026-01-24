@@ -55,6 +55,24 @@ class SecurityEventType(enum.Enum):
     ADMIN_LOGIN_FAILED = 'admin_login_failed'
     ADMIN_ACTION = 'admin_action'
 
+    # Networking events (T2T)
+    INVITE_CREATED = 'invite_created'
+    INVITE_ACCEPTED = 'invite_accepted'
+    INVITE_REVOKED = 'invite_revoked'
+    INVITE_INVALID = 'invite_invalid'
+    CONNECTION_CREATED = 'connection_created'
+    CONNECTION_BLOCKED = 'connection_blocked'
+    CONNECTION_UNBLOCKED = 'connection_unblocked'
+    CONNECTION_DELETED = 'connection_deleted'
+    CONNECTION_PERMISSIONS_CHANGED = 'connection_permissions_changed'
+
+    # Messaging events
+    MESSAGE_SENT = 'message_sent'
+    MESSAGE_EDITED = 'message_edited'
+    MESSAGE_HIDDEN = 'message_hidden'
+    THREAD_CREATED = 'thread_created'
+    THREAD_STATUS_CHANGED = 'thread_status_changed'
+
 
 class SecurityEventSeverity(enum.Enum):
     """Ozbiljnost dogadjaja."""

@@ -730,6 +730,48 @@ if tenant.can_activate_trust:
 
 ## 14. Changelog
 
+### v243 (Planirano) - Messaging & Networking System v2.1
+
+**Status:** PLANIRANO - Čeka implementaciju
+
+**Enterprise-grade implementacija sa:**
+- Race-safe verzioniranje (`create_with_version()` sa retry)
+- Per-tenant delivery tracking (`PackageChangeDelivery`)
+- UTC storage + Europe/Belgrade za prikaz
+- Threaded conversations sa SLA tracking
+- SYSTEM threads read-only (API enforced)
+- Secure invite sistem (hashed tokens + token_hint)
+- 2-step approval za networking
+- BLOCKED auto-blocks sve komunikacije
+- Granularne dozvole (can_message/share/order)
+- Full audit trail (edited_by_type, hidden_by_type)
+- Fixed mutable default bugs
+
+**Novi modeli:**
+| Model | Opis |
+|-------|------|
+| `PackageChangeHistory` | Verzioniranje promena cena + idempotency |
+| `PackageChangeDelivery` | Per-tenant tracking dostave notifikacija |
+| `MessageThread` | Threaded conversations (SYSTEM/SUPPORT/NETWORK) |
+| `ThreadParticipant` | Učesnici sa last_read_at (unread kao cache) |
+| `Message` | Poruke sa edit/hide audit trail |
+| `Invite` | Secure invite tokens (SHA-256 hash + hint) |
+| `TenantConnection` | T2T veze sa granularnim dozvolama |
+
+**Kritični fajlovi (planirani):**
+- `app/models/package_change_history.py` - NOVI
+- `app/models/message_thread.py` - NOVI
+- `app/models/invite.py` - NOVI
+- `app/models/tenant_connection.py` - NOVI
+- `app/api/v1/threads.py` - NOVI
+- `app/api/v1/connections.py` - NOVI
+- `app/templates/tenant/messages/` - NOVI (2 taba UI)
+- `app/templates/tenant/network/` - NOVI
+
+**Plan fajl:** `C:\Users\darko\.claude\plans\nested-giggling-wall.md`
+
+---
+
 ### v241 (23. Januar 2026)
 
 **Role-Based Access Control za Tim:**

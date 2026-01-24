@@ -213,3 +213,19 @@ def settings_kyc():
 def pricing():
     """Cenovnik usluga."""
     return render_template('tenant/pricing/index.html')
+
+
+# ============== Messages / Poruke ==============
+
+@bp.route('/messages')
+def messages_inbox():
+    """Inbox poruka - sistemske notifikacije i razgovori."""
+    return render_template('tenant/messages/inbox.html')
+
+
+# ============== Network / Mreža partnera ==============
+
+@bp.route('/network')
+def network():
+    """Mreža partnera - T2T networking."""
+    return render_template('tenant/network/index.html')

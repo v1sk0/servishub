@@ -1,0 +1,916 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Mreža partnera - ServisHub{% endblock %}
+
+{% block page_content %}
+<style>
+    /* ========================================
+       LIGHT THEME - Network Page
+       ======================================== */
+    .page-header h2 { color: #1e293b; }
+    .page-header p { color: #64748b; }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        border: none;
+        cursor: pointer;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+    .btn-secondary {
+        background: #f1f5f9;
+        color: #475569;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+        border: 1px solid #e2e8f0;
+        cursor: pointer;
+    }
+    .btn-secondary:hover { background: #e2e8f0; color: #1e293b; }
+
+    .btn-danger {
+        background: #fef2f2;
+        color: #dc2626;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        border: 1px solid #fecaca;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-danger:hover { background: #fee2e2; }
+
+    /* Stats cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .stat-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.25rem;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .stat-value { color: #1e293b; font-size: 2rem; font-weight: 700; }
+    .stat-label { color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
+
+    /* Connection card */
+    .connections-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+    .connection-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s;
+    }
+    .connection-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .connection-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .connection-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+    .connection-info h3 {
+        color: #1e293b;
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    .connection-info p {
+        color: #64748b;
+        font-size: 0.8125rem;
+        margin: 0.25rem 0 0;
+    }
+    .connection-status {
+        margin-left: auto;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .connection-status.active { background: #dcfce7; color: #166534; }
+    .connection-status.pending { background: #fef3c7; color: #92400e; }
+    .connection-status.blocked { background: #fee2e2; color: #dc2626; }
+
+    .connection-permissions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .permission-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.6875rem;
+        font-weight: 500;
+    }
+    .permission-badge.enabled { background: #dbeafe; color: #1e40af; }
+    .permission-badge.disabled { background: #f1f5f9; color: #94a3b8; }
+
+    .connection-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid #f1f5f9;
+    }
+    .connection-date { color: #94a3b8; font-size: 0.75rem; }
+    .connection-actions { display: flex; gap: 0.5rem; }
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #64748b;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .action-btn:hover { background: #f8fafc; color: #1e293b; }
+    .action-btn.danger:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+
+    /* Invite section */
+    .invite-section {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .invite-section h3 {
+        color: #1e293b;
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 0 1rem;
+    }
+    .invite-link-display {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    .invite-link-input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        color: #1e293b;
+        font-size: 0.875rem;
+        font-family: monospace;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1.5rem;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+    }
+    .empty-state svg {
+        width: 64px;
+        height: 64px;
+        color: #cbd5e1;
+        margin-bottom: 1rem;
+    }
+    .empty-state h3 {
+        color: #64748b;
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .empty-state p {
+        color: #94a3b8;
+        font-size: 0.875rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 200;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+    }
+    .modal-overlay.open {
+        opacity: 1;
+        visibility: visible;
+    }
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 500px;
+        margin: 1rem;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        transform: scale(0.9);
+        transition: transform 0.3s;
+    }
+    .modal-overlay.open .modal-content {
+        transform: scale(1);
+    }
+    .modal-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .modal-header h3 {
+        color: #1e293b;
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    .close-btn {
+        background: none;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        transition: all 0.2s;
+    }
+    .close-btn:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+    }
+    .modal-body {
+        padding: 1.5rem;
+    }
+    .modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+    }
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    .form-label {
+        display: block;
+        color: #475569;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    .form-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        color: #1e293b;
+        font-size: 0.875rem;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Success message */
+    .success-box {
+        background: #dcfce7;
+        border: 1px solid #bbf7d0;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .success-box h4 {
+        color: #166534;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem;
+    }
+    .success-box p {
+        color: #15803d;
+        font-size: 0.8125rem;
+        margin: 0;
+    }
+
+    /* Warning box */
+    .warning-box {
+        background: #fef3c7;
+        border: 1px solid #fde68a;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .warning-box p {
+        color: #92400e;
+        font-size: 0.8125rem;
+        margin: 0;
+    }
+</style>
+
+<div x-data="networkApp()" x-init="init()">
+    <!-- Page Header -->
+    <div class="page-header mb-4 flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-bold">Mreža partnera</h2>
+            <p class="text-sm mt-1">Povežite se sa drugim servisima za razmenu delova i saradnju</p>
+        </div>
+        <div class="flex gap-2">
+            <button @click="openAcceptModal()" class="btn-secondary">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/>
+                </svg>
+                Imam poziv
+            </button>
+            <button @click="openInviteModal()" class="btn-primary">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Pozovi servis
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" x-text="stats.active"></div>
+            <div class="stat-label">Aktivni partneri</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" x-text="stats.pending"></div>
+            <div class="stat-label">Na čekanju</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" x-text="invites.length"></div>
+            <div class="stat-label">Moji pozivi</div>
+        </div>
+    </div>
+
+    <!-- My Invites Section -->
+    <template x-if="invites.length > 0">
+        <div class="invite-section">
+            <h3>Moji aktivni pozivi</h3>
+            <div class="space-y-3">
+                <template x-for="invite in invites" :key="invite.id">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">
+                                Poziv <span class="font-mono text-blue-600" x-text="invite.token_hint + '...'"></span>
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                Korišćen: <span x-text="invite.used_count + '/' + invite.max_uses"></span> |
+                                Ističe: <span x-text="formatDate(invite.expires_at)"></span>
+                            </div>
+                        </div>
+                        <button @click="revokeInvite(invite.id)" class="action-btn danger" title="Poništi">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </template>
+
+    <!-- Connections -->
+    <template x-if="loading">
+        <div class="text-center py-8">
+            <div class="inline-block w-8 h-8 border-3 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+        </div>
+    </template>
+
+    <template x-if="!loading && connections.length === 0">
+        <div class="empty-state">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            <h3>Još niste povezani ni sa kim</h3>
+            <p>Kreirajte poziv i podelite ga sa drugim servisima da započnete saradnju.</p>
+            <button @click="openInviteModal()" class="btn-primary">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Kreiraj prvi poziv
+            </button>
+        </div>
+    </template>
+
+    <template x-if="!loading && connections.length > 0">
+        <div class="connections-grid">
+            <template x-for="conn in connections" :key="conn.id">
+                <div class="connection-card">
+                    <div class="connection-header">
+                        <div class="connection-avatar" x-text="conn.partner.name.charAt(0).toUpperCase()"></div>
+                        <div class="connection-info">
+                            <h3 x-text="conn.partner.name"></h3>
+                            <p x-text="'@' + conn.partner.slug"></p>
+                        </div>
+                        <span class="connection-status" :class="conn.status.toLowerCase()" x-text="getStatusLabel(conn.status)"></span>
+                    </div>
+
+                    <div class="connection-permissions">
+                        <span class="permission-badge" :class="conn.permissions.can_message ? 'enabled' : 'disabled'">
+                            Poruke
+                        </span>
+                        <span class="permission-badge" :class="conn.permissions.can_share_contacts ? 'enabled' : 'disabled'">
+                            Kontakti
+                        </span>
+                        <span class="permission-badge" :class="conn.permissions.can_order_parts ? 'enabled' : 'disabled'">
+                            Narudžbine
+                        </span>
+                    </div>
+
+                    <div class="connection-meta">
+                        <span class="connection-date">
+                            Povezano: <span x-text="formatDate(conn.connected_at || conn.created_at)"></span>
+                        </span>
+                        <div class="connection-actions">
+                            <button @click="openPermissionsModal(conn)" class="action-btn" title="Dozvole">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                            </button>
+                            <template x-if="conn.status === 'ACTIVE'">
+                                <button @click="blockConnection(conn.id)" class="action-btn danger" title="Blokiraj">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                    </svg>
+                                </button>
+                            </template>
+                            <template x-if="conn.status === 'BLOCKED' && conn.blocked_by_me">
+                                <button @click="unblockConnection(conn.id)" class="action-btn" title="Deblokiraj">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </template>
+
+    <!-- Create Invite Modal -->
+    <div class="modal-overlay" :class="{'open': showInviteModal}">
+        <div class="modal-content" @click.stop>
+            <div class="modal-header">
+                <h3>Kreiraj poziv</h3>
+                <button @click="showInviteModal = false" class="close-btn">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <template x-if="generatedToken">
+                    <div>
+                        <div class="success-box">
+                            <h4>Poziv kreiran!</h4>
+                            <p>Kopirajte link ispod i podelite ga sa servisom koji želite da pozovete.</p>
+                        </div>
+                        <div class="warning-box">
+                            <p><strong>Važno:</strong> Ovaj link se prikazuje samo jednom. Sačuvajte ga pre zatvaranja.</p>
+                        </div>
+                        <div class="invite-link-display">
+                            <input type="text" readonly :value="getInviteUrl()" class="invite-link-input">
+                            <button @click="copyInviteLink()" class="btn-primary">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                                </svg>
+                                Kopiraj
+                            </button>
+                        </div>
+                    </div>
+                </template>
+                <template x-if="!generatedToken">
+                    <div>
+                        <div class="form-group">
+                            <label class="form-label">Poruka (opciono)</label>
+                            <textarea x-model="newInvite.message" class="form-input" rows="2" placeholder="Pozdrav! Želimo da se povežemo za razmenu delova..."></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label class="form-label">Maksimalno korišćenja</label>
+                                <select x-model="newInvite.max_uses" class="form-input">
+                                    <option value="1">Jednokratno (1)</option>
+                                    <option value="5">Do 5 puta</option>
+                                    <option value="10">Do 10 puta</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Važi do</label>
+                                <select x-model="newInvite.expires_in_days" class="form-input">
+                                    <option value="1">1 dan</option>
+                                    <option value="7">7 dana</option>
+                                    <option value="14">14 dana</option>
+                                    <option value="30">30 dana</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <div class="modal-footer">
+                <button @click="showInviteModal = false; generatedToken = null" class="btn-secondary">Zatvori</button>
+                <template x-if="!generatedToken">
+                    <button @click="createInvite()" :disabled="creating" class="btn-primary">
+                        <template x-if="creating">
+                            <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        </template>
+                        Kreiraj poziv
+                    </button>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accept Invite Modal -->
+    <div class="modal-overlay" :class="{'open': showAcceptModal}">
+        <div class="modal-content" @click.stop>
+            <div class="modal-header">
+                <h3>Prihvati poziv</h3>
+                <button @click="showAcceptModal = false" class="close-btn">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Link ili token poziva</label>
+                    <input type="text" x-model="acceptToken" class="form-input" placeholder="Nalepite link koji ste dobili...">
+                </div>
+                <template x-if="acceptError">
+                    <div class="text-red-600 text-sm mt-2" x-text="acceptError"></div>
+                </template>
+            </div>
+            <div class="modal-footer">
+                <button @click="showAcceptModal = false" class="btn-secondary">Otkaži</button>
+                <button @click="acceptInvite()" :disabled="!acceptToken.trim() || accepting" class="btn-primary">
+                    <template x-if="accepting">
+                        <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    </template>
+                    Prihvati
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permissions Modal -->
+    <div class="modal-overlay" :class="{'open': showPermissionsModal}">
+        <div class="modal-content" @click.stop>
+            <div class="modal-header">
+                <h3>Dozvole za <span x-text="selectedConnection?.partner?.name"></span></h3>
+                <button @click="showPermissionsModal = false" class="close-btn">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" x-show="selectedConnection">
+                <div class="space-y-4">
+                    <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer">
+                        <div>
+                            <div class="font-medium text-gray-900">Slanje poruka</div>
+                            <div class="text-sm text-gray-500">Dozvolite partneru da vam šalje poruke</div>
+                        </div>
+                        <input type="checkbox" x-model="editPermissions.can_message" class="w-5 h-5 text-blue-600 rounded">
+                    </label>
+                    <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer">
+                        <div>
+                            <div class="font-medium text-gray-900">Deljenje kontakata</div>
+                            <div class="text-sm text-gray-500">Dozvolite partneru da vidi vaše kontakte</div>
+                        </div>
+                        <input type="checkbox" x-model="editPermissions.can_share_contacts" class="w-5 h-5 text-blue-600 rounded">
+                    </label>
+                    <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer">
+                        <div>
+                            <div class="font-medium text-gray-900">Naručivanje delova</div>
+                            <div class="text-sm text-gray-500">Dozvolite partneru da naručuje delove od vas</div>
+                        </div>
+                        <input type="checkbox" x-model="editPermissions.can_order_parts" class="w-5 h-5 text-blue-600 rounded">
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button @click="showPermissionsModal = false" class="btn-secondary">Otkaži</button>
+                <button @click="savePermissions()" :disabled="savingPermissions" class="btn-primary">
+                    <template x-if="savingPermissions">
+                        <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    </template>
+                    Sačuvaj
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function networkApp() {
+    return {
+        loading: true,
+        connections: [],
+        invites: [],
+        stats: { active: 0, pending: 0, blocked: 0 },
+
+        // Invite modal
+        showInviteModal: false,
+        newInvite: { message: '', max_uses: 1, expires_in_days: 7 },
+        generatedToken: null,
+        creating: false,
+
+        // Accept modal
+        showAcceptModal: false,
+        acceptToken: '',
+        acceptError: null,
+        accepting: false,
+
+        // Permissions modal
+        showPermissionsModal: false,
+        selectedConnection: null,
+        editPermissions: { can_message: true, can_share_contacts: false, can_order_parts: false },
+        savingPermissions: false,
+
+        async init() {
+            // Check for token in URL (from shared link)
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            if (token) {
+                this.acceptToken = token;
+                this.showAcceptModal = true;
+                // Clean URL
+                window.history.replaceState({}, '', window.location.pathname);
+            }
+
+            await Promise.all([
+                this.loadConnections(),
+                this.loadInvites()
+            ]);
+        },
+
+        async loadConnections() {
+            this.loading = true;
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch('/api/v1/connections', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                this.connections = data.connections || [];
+                this.stats = data.stats || { active: 0, pending: 0, blocked: 0 };
+            } catch (error) {
+                console.error('Failed to load connections:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async loadInvites() {
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch('/api/v1/connections/invites?active_only=true', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                this.invites = (data.invites || []).filter(i => i.is_valid);
+            } catch (error) {
+                console.error('Failed to load invites:', error);
+            }
+        },
+
+        openInviteModal() {
+            this.newInvite = { message: '', max_uses: 1, expires_in_days: 7 };
+            this.generatedToken = null;
+            this.showInviteModal = true;
+        },
+
+        async createInvite() {
+            this.creating = true;
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch('/api/v1/connections/invites', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(this.newInvite)
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    this.generatedToken = data.token;
+                    await this.loadInvites();
+                } else {
+                    alert(data.message || data.error);
+                }
+            } catch (error) {
+                console.error('Failed to create invite:', error);
+            } finally {
+                this.creating = false;
+            }
+        },
+
+        getInviteUrl() {
+            if (!this.generatedToken) return '';
+            return `${window.location.origin}/network?token=${this.generatedToken}`;
+        },
+
+        async copyInviteLink() {
+            const url = this.getInviteUrl();
+            await navigator.clipboard.writeText(url);
+            alert('Link kopiran!');
+        },
+
+        async revokeInvite(inviteId) {
+            if (!confirm('Sigurno želite da poništite ovaj poziv?')) return;
+
+            try {
+                const token = localStorage.getItem('access_token');
+                await fetch(`/api/v1/connections/invites/${inviteId}/revoke`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                await this.loadInvites();
+            } catch (error) {
+                console.error('Failed to revoke invite:', error);
+            }
+        },
+
+        openAcceptModal() {
+            this.acceptToken = '';
+            this.acceptError = null;
+            this.showAcceptModal = true;
+        },
+
+        async acceptInvite() {
+            this.accepting = true;
+            this.acceptError = null;
+
+            // Extract token from URL if pasted full link
+            let token = this.acceptToken.trim();
+            if (token.includes('token=')) {
+                const url = new URL(token);
+                token = url.searchParams.get('token') || token;
+            }
+
+            try {
+                const authToken = localStorage.getItem('access_token');
+                const response = await fetch('/api/v1/connections/invites/accept', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    this.showAcceptModal = false;
+                    await this.loadConnections();
+                    alert(data.message);
+                } else {
+                    this.acceptError = data.error || data.message;
+                }
+            } catch (error) {
+                console.error('Failed to accept invite:', error);
+                this.acceptError = 'Došlo je do greške';
+            } finally {
+                this.accepting = false;
+            }
+        },
+
+        openPermissionsModal(conn) {
+            this.selectedConnection = conn;
+            this.editPermissions = { ...conn.permissions };
+            this.showPermissionsModal = true;
+        },
+
+        async savePermissions() {
+            if (!this.selectedConnection) return;
+            this.savingPermissions = true;
+
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch(`/api/v1/connections/${this.selectedConnection.id}/permissions`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(this.editPermissions)
+                });
+
+                if (response.ok) {
+                    this.showPermissionsModal = false;
+                    await this.loadConnections();
+                }
+            } catch (error) {
+                console.error('Failed to save permissions:', error);
+            } finally {
+                this.savingPermissions = false;
+            }
+        },
+
+        async blockConnection(connId) {
+            if (!confirm('Sigurno želite da blokirate ovu konekciju? Neće moći da vam šalje poruke.')) return;
+
+            try {
+                const token = localStorage.getItem('access_token');
+                await fetch(`/api/v1/connections/${connId}/block`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                await this.loadConnections();
+            } catch (error) {
+                console.error('Failed to block connection:', error);
+            }
+        },
+
+        async unblockConnection(connId) {
+            try {
+                const token = localStorage.getItem('access_token');
+                await fetch(`/api/v1/connections/${connId}/unblock`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                await this.loadConnections();
+            } catch (error) {
+                console.error('Failed to unblock connection:', error);
+            }
+        },
+
+        getStatusLabel(status) {
+            const labels = {
+                'ACTIVE': 'Aktivno',
+                'PENDING_INVITEE': 'Čeka',
+                'PENDING_INVITER': 'Čeka',
+                'BLOCKED': 'Blokirano'
+            };
+            return labels[status] || status;
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            return new Date(dateStr).toLocaleDateString('sr-Latn', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+    };
+}
+</script>
+{% endblock %}
