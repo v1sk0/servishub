@@ -1,6 +1,6 @@
 # ServisHub - Master Summary
 
-> Poslednje ažuriranje: 23. Januar 2026 (v241)
+> Poslednje ažuriranje: 24. Januar 2026 (v297)
 
 ---
 
@@ -73,7 +73,8 @@ servishub/
 │   │   ├── auth_service.py   # AuthService klasa
 │   │   ├── security_service.py # Rate limiting
 │   │   ├── billing_tasks.py  # BillingTasksService - scheduled billing operacije
-│   │   └── scheduler_service.py # APScheduler - automatsko pokretanje taskova
+│   │   ├── scheduler_service.py # APScheduler - automatsko pokretanje taskova
+│   │   └── typing_service.py # Real-time typing indicators (in-memory, 3s TTL)
 │   │
 │   └── middleware/
 │       └── security_headers.py # CSP, HSTS, X-Frame-Options
@@ -769,6 +770,77 @@ if tenant.can_activate_trust:
 - `app/templates/tenant/network/` - NOVI
 
 **Plan fajl:** `C:\Users\darko\.claude\plans\nested-giggling-wall.md`
+
+---
+
+### v297 (24. Januar 2026)
+
+**Real-Time Messaging System - Typing Indicators + Fast Polling:**
+
+**Problem:** Kad admin odgovori na poruku, tenant mora da refreshuje stranicu da vidi odgovor. Nema indikacije da neko kuca.
+
+**Rešenja:**
+
+1. **Typing Service** (`app/services/typing_service.py`):
+   - In-memory storage za typing status
+   - Automatsko istekanje posle 3 sekunde
+   - Shared između admin i tenant API-ja
+   - Format: `{thread_id: {user_key: {'name': 'Ime', 'type': 'admin'|'tenant', 'expires': timestamp}}}`
+
+2. **API Endpoints (oba panela):**
+   - `POST /threads/{id}/typing` - šalje typing status (`{typing: true/false}`)
+   - `GET /threads/{id}/typing` - dohvata ko kuca (exclude self)
+   - `after_id` param na messages endpoint za efikasan polling
+
+3. **Admin Support UI** (`/admin/support`):
+   - Nova stranica za admin chat sa tenantima
+   - Listing svih SUPPORT threadova
+   - Real-time chat sa typing indikatorom
+   - Sidebar link "Podrška" u admin panelu
+
+4. **Frontend Real-Time Features:**
+   - Polling novih poruka svake 3 sekunde (koristi `after_id`)
+   - Polling typing statusa svake 2 sekunde
+   - Animirani typing dots (`.typing-dots span` sa bounce animacijom)
+   - Auto-scroll na nove poruke
+   - `@input="onTyping()"` na textarea za detekciju kucanja
+
+**Kako radi flow:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  TENANT KUCA                          ADMIN VIDI            │
+│  ──────────────                       ─────────────         │
+│  1. Korisnik kuca u textarea          1. pollTyping() svakih│
+│  2. onTyping() detektuje              2. GET /typing vraća  │
+│  3. POST /typing {typing:true}           [{name:'Petar',    │
+│  4. typing_service čuva 3s               type:'tenant'}]    │
+│  5. Timeout nakon 2s neaktivnosti     3. Prikazuje animaciju│
+│     šalje {typing:false}                 "Petar kuca..."    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Izmenjeni fajlovi:**
+- `app/services/typing_service.py` - NOVO
+- `app/api/v1/threads.py` - typing endpoints, `after_id`
+- `app/api/admin/threads.py` - typing endpoints, `after_id`
+- `app/templates/admin/support/list.html` - NOVO (admin chat UI)
+- `app/templates/admin/_sidebar.html` - dodat "Podrška" link
+- `app/frontend/admin.py` - dodata `/admin/support` ruta
+- `app/templates/tenant/messages/inbox.html` - real-time polling
+
+**Typing Indicator CSS:**
+```css
+.typing-dots span {
+    width: 6px; height: 6px;
+    background: #94a3b8;
+    border-radius: 50%;
+    animation: typingBounce 1.4s infinite ease-in-out;
+}
+@keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-4px); }
+}
+```
 
 ---
 

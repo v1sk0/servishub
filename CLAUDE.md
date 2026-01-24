@@ -6,42 +6,42 @@ Instrukcije za Claude Code agente. **CITAJ OVO PRE BILO KAKVIH IZMENA.**
 
 ## RESUME POINT
 
-**v243** | 2026-01-23 | Backend PLANIRANO | Frontend PLANIRANO
+**v297** | 2026-01-24 | Backend KOMPLETNO | Frontend KOMPLETNO
 
-### Status: PLANIRANO - Messaging & Networking System v2.1
+### Status: IMPLEMENTIRANO - Threaded Messaging + Real-Time
 
 **Plan fajl:** `C:\Users\darko\.claude\plans\nested-giggling-wall.md`
 
-**Arhitektura (Enterprise Ready v2.1):**
-- Race-safe verzioniranje (change_date + daily_seq + retry)
-- Per-tenant delivery tracking (PackageChangeDelivery)
-- UTC storage + timezone za prikaz
-- Threaded messaging sa SYSTEM read-only enforcement
-- unread_count kao cache iz last_read_at
-- Secure invite sa token_hint za support
-- BLOCKED auto-blocks messages + hides threads
-- connection_id na thread za brže queries
+**Implementirano (v297):**
+- ✅ Threaded messaging sistem (SYSTEM/SUPPORT/NETWORK)
+- ✅ MessageThread, ThreadParticipant, Message modeli
+- ✅ Tenant Messages API (`/api/v1/threads`)
+- ✅ Admin Threads API (`/api/admin/threads`)
+- ✅ Real-time polling (3s za poruke, 2s za typing)
+- ✅ Typing indicator sa animiranim dots
+- ✅ `after_id` param za efikasan polling
+- ✅ Admin Support stranica (`/admin/support`)
+- ✅ Tenant Messages stranica (`/messages`)
 
-**Novi modeli:**
-- `PackageChangeHistory` - verzioniranje + idempotency
-- `PackageChangeDelivery` - per-tenant tracking
-- `MessageThread` + `ThreadParticipant` + `Message`
-- `Invite` + `TenantConnection`
+**Ključni fajlovi:**
+| Fajl | Opis |
+|------|------|
+| `app/services/typing_service.py` | In-memory typing status (3s expiry) |
+| `app/api/v1/threads.py` | Tenant API za poruke + typing |
+| `app/api/admin/threads.py` | Admin API za poruke + typing |
+| `app/templates/admin/support/list.html` | Admin chat UI |
+| `app/templates/tenant/messages/inbox.html` | Tenant inbox sa 2 taba |
 
-**Key Fixes (v2.1):**
-- Mutable default bug: `default=list` umesto `default=[]`
-- Race condition: optimistic locking sa retry
-- SLA: first_response_at SAMO kad admin odgovori
-- hidden_by_type: ADMIN | TENANT za audit
-- token_hint: prva 6 karaktera za support
+**Kako radi real-time messaging:**
+1. Kad korisnik otvori chat, startuje polling (3s poruke, 2s typing)
+2. `pollNewMessages()` koristi `after_id` param - dohvata samo nove poruke
+3. `pollTyping()` proverava ko kuca u threadu
+4. `onTyping()` detektuje kucanje i šalje status serveru
+5. Typing expires nakon 3s neaktivnosti
 
-**Redosled implementacije:**
-1. Faza 1: Grace period UI (trivijalno)
-2. Faza 2: PackageChangeHistory + PackageChangeDelivery
-3. Faza 2.5: Minimalni in-app notification (SYSTEM threads)
-4. Faza 3: MessageThread + Message modeli + API + frontend
-5. Faza 4: Invite + TenantConnection + Network UI
-6. Faza 5: Security hardening (rate limiting, audit)
+**Još planirano (networking):**
+- Faza 4: Invite + TenantConnection + Network UI
+- Faza 5: Security hardening (rate limiting, audit)
 
 ---
 
@@ -265,6 +265,8 @@ servishub/
 │   │       ├── cenovnik.html, kontakt.html, o_nama.html
 │   │
 │   ├── services/            # Business logic
+│   │   ├── typing_service.py # Real-time typing indicators (in-memory)
+│   │   └── ...
 │   ├── repositories/        # Data access
 │   └── tasks/               # Celery (buduci rad)
 │
@@ -342,6 +344,7 @@ flask create-admin         # Kreiraj platform admin-a
 | `/settings/subscription` | tenant/settings/subscription.html |
 | `/settings/kyc` | tenant/settings/kyc.html |
 | `/pricing` | tenant/pricing/index.html |
+| `/messages` | tenant/messages/inbox.html |
 
 ### Admin Panel (13 stranica + 2 partials)
 
@@ -367,6 +370,7 @@ flask create-admin         # Kreiraj platform admin-a
 | `/admin/activity` | admin/activity/list.html | activity |
 | `/admin/packages` | admin/packages/index.html | packages |
 | `/admin/security` | admin/security/events.html | security |
+| `/admin/support` | admin/support/list.html | support |
 
 ### Supplier Panel (9)
 | URL | Template |
@@ -520,7 +524,66 @@ Ako je polje u `TenantPublicProfile` prazno, template koristi podatke iz `Tenant
 - `profile.phone` → `tenant.telefon`
 - `profile.email` → `tenant.email`
 
-### 7. Ticket Tracking API (Public)
+### 7. Real-Time Messaging (Typing Indicators)
+
+**Arhitektura:**
+```
+typing_service.py (in-memory, shared)
+═══════════════════════════════════════
+_typing_status = {
+    thread_id: {
+        user_key: {
+            'name': 'Petar',
+            'type': 'tenant',
+            'expires': timestamp + 3s
+        }
+    }
+}
+```
+
+**API Endpoints:**
+```
+# Tenant
+POST /api/v1/threads/{id}/typing   # {typing: true/false}
+GET  /api/v1/threads/{id}/typing   # {typing: [{name, type}]}
+GET  /api/v1/threads/{id}/messages?after_id=123  # samo nove poruke
+
+# Admin
+POST /api/admin/threads/{id}/typing
+GET  /api/admin/threads/{id}/typing
+GET  /api/admin/threads/{id}/messages?after_id=123
+```
+
+**Frontend Polling:**
+```javascript
+// Kad se otvori chat - startuj polling
+this.messagePollingInterval = setInterval(() => this.pollNewMessages(), 3000);
+this.typingPollingInterval = setInterval(() => this.pollTyping(), 2000);
+
+// pollNewMessages() koristi after_id za efikasnost
+const url = `/api/v1/threads/${id}/messages?after_id=${lastMessageId}`;
+
+// onTyping() - kad korisnik kuca
+if (!this.isTyping) {
+    this.isTyping = true;
+    this.sendTypingStatus(true);
+}
+// Timeout posle 2s -> sendTypingStatus(false)
+```
+
+**Typing Indicator CSS:**
+```css
+.typing-dots span {
+    animation: typingBounce 1.4s infinite ease-in-out;
+}
+.typing-dots span:nth-child(1) { animation-delay: 0s; }
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+```
+
+---
+
+### 8. Ticket Tracking API (Public)
 
 **Endpoint:** `GET /api/public/track/<identifier>`
 
@@ -720,6 +783,7 @@ Landing Page (kontakt sekcija, social ikone)
 
 | Verzija | Datum | Izmene |
 |---------|-------|--------|
+| v297 | 2026-01-24 | **Real-Time Messaging:** Typing indicators, fast polling (3s), typing_service, admin support chat, tenant inbox sa dva taba |
 | v241 | 2026-01-23 | **Security:** Role-based Tim visibility (sidebar), API zaštita team management endpoints, **OAuth Fix:** sinhroni token handling (race condition fix) |
 | v235 | 2026-01-21 | **Admin Settings:** Social linkovi u Company modal, landing page dinamicki kontakt |
 | v0.6.3 | 2026-01-19 | **Security:** Phone verification za ticket tracking, sprečen enumeration napad |
