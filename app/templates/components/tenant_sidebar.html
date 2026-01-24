@@ -251,6 +251,7 @@ function sidebarData() {
         locationCount: 1,
         tenantName: '',
         userRole: '',
+        roleLoaded: false,
 
         async init() {
             await Promise.all([
@@ -270,11 +271,12 @@ function sidebarData() {
             } catch (e) {
                 console.error('Failed to load tenant name:', e);
             }
+            this.roleLoaded = true;
         },
 
         isAdmin() {
             const adminRoles = ['OWNER', 'ADMIN', 'MANAGER'];
-            return adminRoles.includes(this.userRole);
+            return this.roleLoaded && adminRoles.includes(this.userRole);
         },
 
         async loadSubscriptionStatus() {
