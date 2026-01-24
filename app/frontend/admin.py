@@ -91,6 +91,14 @@ def admin_security_events():
     return render_template('admin/security/events.html')
 
 
+# ============== Support ==============
+
+@bp.route('/admin/support')
+def admin_support():
+    """Admin support - podrska korisnicima."""
+    return render_template('admin/support/list.html')
+
+
 # ============== Packages ==============
 
 @bp.route('/admin/paketi')

@@ -1,0 +1,337 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Podrska - ServisHub Admin{% endblock %}
+
+{% block head %}
+{% include "admin/_admin_styles.html" %}
+<style>
+    .thread-item:hover { background-color: #f9fafb; }
+    .thread-item.selected { background-color: #fef2f2; border-left: 3px solid #dc2626; }
+    .message-list { height: calc(100vh - 320px); overflow-y: auto; }
+    .message-bubble { max-width: 80%; }
+    .message-admin { background: #dc2626; color: white; margin-left: auto; }
+    .message-tenant { background: #f3f4f6; color: #111827; }
+    .unread-dot { width: 8px; height: 8px; background: #dc2626; border-radius: 50%; }
+    .sla-warning { color: #f59e0b; }
+    .sla-critical { color: #dc2626; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
+     x-data="supportPage()" x-init="init()">
+    <div class="admin-wrapper min-h-screen bg-gray-100">
+        {% set active_page = 'support' %}
+        {% include "admin/_sidebar.html" %}
+
+        <!-- Main content -->
+        <div class="ml-64">
+            <div class="admin-topbar bg-white shadow-sm h-16 flex items-center justify-between px-8">
+                <h1 class="text-xl font-semibold text-gray-900">Podrska korisnicima</h1>
+                <div class="flex items-center space-x-4">
+                    <!-- SLA Stats -->
+                    <div class="flex items-center space-x-4 text-sm mr-4">
+                        <span class="text-gray-500">Cekaju odgovor:</span>
+                        <span class="font-semibold" :class="stats.open > 5 ? 'text-red-600' : 'text-gray-900'" x-text="stats.open"></span>
+                        <span class="text-gray-300">|</span>
+                        <span class="text-gray-500">Nedodeljeni:</span>
+                        <span class="font-semibold" :class="stats.unassigned > 0 ? 'text-orange-500' : 'text-gray-900'" x-text="stats.unassigned"></span>
+                    </div>
+                    <!-- Theme toggle -->
+                    <div class="flex items-center space-x-2">
+                        <button @click="setTheme('light')" :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'light'}" class="theme-btn p-2 rounded-lg bg-white border border-gray-200 hover:border-gray-300" title="Svetla tema">
+                            <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z"/></svg>
+                        </button>
+                        <button @click="setTheme('glass')" :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'glass'}" class="theme-btn p-2 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600 hover:border-gray-500" title="Glassmorphism tema">
+                            <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <div class="flex gap-6">
+                    <!-- Thread List (Left) -->
+                    <div class="w-1/3 admin-card bg-white rounded-lg shadow">
+                        <!-- Tabs -->
+                        <div class="border-b border-gray-200">
+                            <nav class="-mb-px flex px-4">
+                                <button @click="filter = 'OPEN'" :class="filter === 'OPEN' ? 'border-red-500 text-red-600' : 'border-transparent text-gray-500'"
+                                        class="whitespace-nowrap py-3 px-3 border-b-2 font-medium text-sm flex items-center">
+                                    Otvoreni
+                                    <span x-show="stats.open > 0" class="ml-2 bg-red-100 text-red-600 px-2 py-0.5 rounded-full text-xs" x-text="stats.open"></span>
+                                </button>
+                                <button @click="filter = 'PENDING'" :class="filter === 'PENDING' ? 'border-red-500 text-red-600' : 'border-transparent text-gray-500'"
+                                        class="whitespace-nowrap py-3 px-3 border-b-2 font-medium text-sm flex items-center">
+                                    Na cekanju
+                                    <span x-show="stats.pending > 0" class="ml-2 bg-yellow-100 text-yellow-600 px-2 py-0.5 rounded-full text-xs" x-text="stats.pending"></span>
+                                </button>
+                                <button @click="filter = 'RESOLVED'" :class="filter === 'RESOLVED' ? 'border-red-500 text-red-600' : 'border-transparent text-gray-500'"
+                                        class="whitespace-nowrap py-3 px-3 border-b-2 font-medium text-sm">Reseni</button>
+                            </nav>
+                        </div>
+
+                        <!-- Thread items -->
+                        <div class="overflow-y-auto" style="max-height: calc(100vh - 280px);">
+                            <template x-for="thread in filteredThreads" :key="thread.id">
+                                <div @click="selectThread(thread)"
+                                     class="thread-item p-4 border-b cursor-pointer"
+                                     :class="{'selected': selectedThread && selectedThread.id === thread.id}">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center">
+                                                <span x-show="thread.sla.is_waiting" class="unread-dot mr-2"></span>
+                                                <p class="text-sm font-medium text-gray-900 truncate" x-text="thread.subject"></p>
+                                            </div>
+                                            <p class="text-sm text-gray-500 mt-1" x-text="thread.tenant?.name || 'Nepoznat servis'"></p>
+                                            <p class="text-xs text-gray-400 mt-1 truncate" x-text="thread.last_message?.preview || 'Nema poruka'"></p>
+                                        </div>
+                                        <div class="ml-2 text-right">
+                                            <p class="text-xs text-gray-400" x-text="formatDate(thread.last_reply_at || thread.created_at)"></p>
+                                            <span x-show="!thread.assigned_to" class="inline-block mt-1 text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded">Nedodeljen</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            <div x-show="filteredThreads.length === 0" class="p-8 text-center text-gray-500">
+                                Nema konverzacija u ovoj kategoriji
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat View (Right) -->
+                    <div class="flex-1 admin-card bg-white rounded-lg shadow flex flex-col">
+                        <!-- Thread Header -->
+                        <template x-if="selectedThread">
+                            <div class="p-4 border-b flex justify-between items-center">
+                                <div>
+                                    <h2 class="font-semibold text-gray-900" x-text="selectedThread.subject"></h2>
+                                    <div class="flex items-center mt-1 text-sm text-gray-500">
+                                        <span x-text="selectedThread.tenant?.name"></span>
+                                        <span class="mx-2">-</span>
+                                        <span x-text="formatDate(selectedThread.created_at)"></span>
+                                        <template x-if="selectedThread.sla.response_time_hours">
+                                            <span class="ml-4 text-xs" :class="selectedThread.sla.response_time_hours > 24 ? 'sla-critical' : 'text-green-600'">
+                                                Odgovor za: <span x-text="selectedThread.sla.response_time_hours + 'h'"></span>
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <!-- Status -->
+                                    <select x-model="selectedThread.status" @change="updateStatus()" class="text-sm border rounded-lg px-3 py-1.5">
+                                        <option value="OPEN">Otvoren</option>
+                                        <option value="PENDING">Na cekanju</option>
+                                        <option value="RESOLVED">Resen</option>
+                                    </select>
+                                    <!-- Tags -->
+                                    <div class="flex items-center space-x-1">
+                                        <template x-for="tag in selectedThread.tags" :key="tag">
+                                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded" x-text="tag"></span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Messages -->
+                        <div class="message-list flex-1 p-4 space-y-4" x-ref="messageList">
+                            <template x-if="!selectedThread">
+                                <div class="flex items-center justify-center h-full text-gray-500">
+                                    Izaberi konverzaciju iz liste
+                                </div>
+                            </template>
+                            <template x-if="selectedThread">
+                                <div>
+                                    <template x-for="msg in messages" :key="msg.id">
+                                        <div class="flex" :class="msg.sender.type === 'admin' ? 'justify-end' : 'justify-start'">
+                                            <div class="message-bubble rounded-lg px-4 py-2" :class="msg.sender.type === 'admin' ? 'message-admin' : 'message-tenant'">
+                                                <p class="text-sm whitespace-pre-wrap" x-text="msg.body"></p>
+                                                <div class="mt-1 text-xs opacity-70 flex items-center justify-between">
+                                                    <span x-text="msg.sender.name"></span>
+                                                    <span class="ml-4" x-text="formatDateTime(msg.created_at)"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Reply Box -->
+                        <template x-if="selectedThread && selectedThread.status !== 'RESOLVED'">
+                            <div class="p-4 border-t">
+                                <form @submit.prevent="sendReply()">
+                                    <div class="flex gap-2">
+                                        <textarea x-model="replyText"
+                                                  class="flex-1 border rounded-lg px-3 py-2 text-sm resize-none"
+                                                  rows="2"
+                                                  placeholder="Napisi odgovor..."
+                                                  @keydown.ctrl.enter="sendReply()"></textarea>
+                                        <button type="submit"
+                                                :disabled="!replyText.trim() || sending"
+                                                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+                                            <span x-show="!sending">Posalji</span>
+                                            <span x-show="sending">...</span>
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-1">Ctrl+Enter za slanje</p>
+                                </form>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function supportPage() {
+    return {
+        loading: true,
+        theme: localStorage.getItem('admin-theme') || 'light',
+        threads: [],
+        filter: 'OPEN',
+        stats: { open: 0, pending: 0, unassigned: 0 },
+        selectedThread: null,
+        messages: [],
+        replyText: '',
+        sending: false,
+
+        get filteredThreads() {
+            return this.threads.filter(t => t.status === this.filter);
+        },
+
+        setTheme(newTheme) {
+            this.theme = newTheme;
+            localStorage.setItem('admin-theme', newTheme);
+        },
+
+        async init() {
+            const token = localStorage.getItem('admin_access_token');
+            if (!token) { window.location.href = '/admin/login'; return; }
+            await this.loadThreads();
+            // Poll for new messages every 30s
+            setInterval(() => this.loadThreads(), 30000);
+        },
+
+        async loadThreads() {
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                const response = await fetch('/api/admin/threads?type=SUPPORT', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    this.threads = data.threads || [];
+                    this.stats = data.stats || { open: 0, pending: 0, unassigned: 0 };
+                } else if (response.status === 401) {
+                    window.location.href = '/admin/login';
+                }
+            } catch (e) {
+                console.error('Greska pri ucitavanju:', e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async selectThread(thread) {
+            this.selectedThread = thread;
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                const response = await fetch(`/api/admin/threads/${thread.id}/messages`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    this.messages = data.messages || [];
+                    this.$nextTick(() => this.scrollToBottom());
+                }
+            } catch (e) {
+                console.error('Greska pri ucitavanju poruka:', e);
+            }
+        },
+
+        async sendReply() {
+            if (!this.replyText.trim() || this.sending) return;
+
+            this.sending = true;
+            const token = localStorage.getItem('admin_access_token');
+
+            try {
+                const response = await fetch(`/api/admin/threads/${this.selectedThread.id}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ body: this.replyText })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.messages.push(data.data);
+                    this.replyText = '';
+                    this.selectedThread.status = 'PENDING';
+                    this.$nextTick(() => this.scrollToBottom());
+                    // Refresh threads to update stats
+                    await this.loadThreads();
+                } else {
+                    const error = await response.json();
+                    alert(error.message || 'Greska pri slanju');
+                }
+            } catch (e) {
+                console.error('Greska:', e);
+                alert('Greska pri slanju poruke');
+            } finally {
+                this.sending = false;
+            }
+        },
+
+        async updateStatus() {
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                const response = await fetch(`/api/admin/threads/${this.selectedThread.id}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: this.selectedThread.status })
+                });
+                if (response.ok) {
+                    await this.loadThreads();
+                }
+            } catch (e) {
+                console.error('Greska:', e);
+            }
+        },
+
+        scrollToBottom() {
+            const list = this.$refs.messageList;
+            if (list) list.scrollTop = list.scrollHeight;
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diff = now - date;
+
+            if (diff < 86400000) { // 24h
+                return date.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' });
+            }
+            return date.toLocaleDateString('sr-RS', { day: 'numeric', month: 'short' });
+        },
+
+        formatDateTime(dateStr) {
+            if (!dateStr) return '';
+            return new Date(dateStr).toLocaleString('sr-RS', {
+                day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+            });
+        }
+    }
+}
+</script>
+{% endblock %}
