@@ -233,9 +233,8 @@ Ovaj email je automatski generisan, molimo ne odgovarajte na njega.
                 ]
             }
 
-            print(f"[EMAIL] Sending to: {email}")
-            print(f"[EMAIL] From: {self.from_email} ({self.from_name})")
-            print(f"[EMAIL] Verification URL: {verification_url}")
+            # SECURITY: Ne loguj verification URL - sadrzi token!
+            print(f"[EMAIL] Sending verification email to: {email}")
 
             response = requests.post(
                 self.API_URL,

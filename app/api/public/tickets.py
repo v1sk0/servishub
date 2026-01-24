@@ -16,6 +16,7 @@ import re
 from flask import Blueprint, request, g
 from app.extensions import db
 from app.models import ServiceTicket, Tenant, ServiceLocation
+from app.services.security_service import rate_limit
 
 bp = Blueprint('public_tickets', __name__, url_prefix='/track')
 
@@ -76,6 +77,7 @@ def _parse_ticket_identifier(identifier):
 # ============== Routes ==============
 
 @bp.route('/<string:token>', methods=['GET'])
+@rate_limit(max_requests=30, window_seconds=60, block_seconds=300, endpoint_name='public_track')
 def track_ticket(token):
     """
     Prati status servisnog naloga putem tokena ili broja naloga.
@@ -247,6 +249,7 @@ def track_ticket(token):
 
 
 @bp.route('/<string:token>/qr', methods=['GET'])
+@rate_limit(max_requests=30, window_seconds=60, block_seconds=300, endpoint_name='public_track_qr')
 def get_qr_data(token):
     """
     Vraca podatke za generisanje QR koda.
@@ -276,6 +279,7 @@ def get_qr_data(token):
 
 
 @bp.route('/<string:token>/receipt', methods=['GET'])
+@rate_limit(max_requests=30, window_seconds=60, block_seconds=300, endpoint_name='public_track_receipt')
 def get_receipt_data(token):
     """
     Vraca podatke za printanje potvrde o prijemu.

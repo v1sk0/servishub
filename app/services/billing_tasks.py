@@ -145,11 +145,13 @@ class BillingTasksService:
         }
 
         # Pronadji tenante sa isteklim trust periodom
+        # NAPOMENA: has_debt je @property, ne moze se koristiti u SQL filteru!
+        # Koristi current_debt > 0 umesto toga
         tenants = Tenant.query.filter(
             Tenant.status == TenantStatus.SUSPENDED,
             Tenant.trust_activated_at.isnot(None),
             Tenant.trust_activated_at < cutoff,
-            Tenant.has_debt == True  # Nije platio
+            Tenant.current_debt > 0  # FIX: koristi DB kolonu umesto @property
         ).all()
 
         for tenant in tenants:

@@ -527,144 +527,34 @@ def logout():
 # SMS OTP Verifikacija
 # =============================================================================
 
+# =============================================================================
+# SMS OTP Verifikacija - DISABLED (v301)
+# =============================================================================
+# OTP funkcionalnost je privremeno uklonjena zbog sigurnosnih razloga.
+# TODO: Implementirati pravu SMS verifikaciju sa SMS.to API kad bude potrebno.
+
 @bp.route('/send-otp', methods=['POST'])
-@rate_limit(max_requests=3, window_seconds=600, block_seconds=1800, endpoint_name='send_otp')
 def send_otp():
     """
-    Salje OTP kod na telefon za verifikaciju.
-
-    Koristi se tokom registracije pre nego sto se kreira korisnik.
-    OTP kod se cuva u session ili se vraca u dev modu.
-
-    Request body:
-        - phone: Broj telefona (+381... ili 06...)
-
-    Returns:
-        200: SMS uspesno poslat
-        400: Neispravan broj telefona
-        429: Previse pokusaja
+    DISABLED: OTP funkcionalnost je privremeno uklonjena.
+    Vraća 503 Service Unavailable.
     """
-    from ...services.sms_service import sms_service, SMSError
-    from flask import session
-    from datetime import datetime, timedelta
-    import os
-
-    data = request.get_json() or {}
-    phone = data.get('phone')
-
-    if not phone:
-        return jsonify({
-            'error': 'Validation Error',
-            'message': 'Broj telefona je obavezan'
-        }), 400
-
-    try:
-        # Posalji OTP (bez user-a jer se koristi pre registracije)
-        success, result = sms_service.send_otp(phone)
-
-        # U dev modu, cuva se kod u session za testiranje
-        if os.environ.get('FLASK_ENV') == 'development' or not os.environ.get('SMS_API_KEY'):
-            session['otp_code'] = result
-            session['otp_phone'] = sms_service._format_phone(phone)
-            session['otp_expires'] = (datetime.utcnow() + timedelta(minutes=5)).isoformat()
-            return jsonify({
-                'message': 'OTP kod poslat (DEV MODE)',
-                'dev_code': result  # Samo u dev modu
-            }), 200
-
-        return jsonify({
-            'message': 'SMS sa verifikacionim kodom je poslat na vas telefon'
-        }), 200
-
-    except SMSError as e:
-        return jsonify({
-            'error': 'SMS Error',
-            'message': e.message
-        }), e.code
+    return jsonify({
+        'error': 'Service Unavailable',
+        'message': 'SMS verifikacija trenutno nije dostupna. Registrujte se samo sa email verifikacijom.'
+    }), 503
 
 
 @bp.route('/verify-otp', methods=['POST'])
 def verify_otp():
     """
-    Verifikuje OTP kod unet od strane korisnika.
-
-    Koristi se tokom registracije pre nego sto se kreira korisnik.
-
-    Request body:
-        - phone: Broj telefona
-        - code: 6-cifreni OTP kod
-
-    Returns:
-        200: Verifikacija uspesna
-        400: Neispravan kod ili istekao
+    DISABLED: OTP funkcionalnost je privremeno uklonjena.
+    Vraća 503 Service Unavailable.
     """
-    from ...services.sms_service import sms_service
-    from flask import session
-    from datetime import datetime
-    import os
-
-    data = request.get_json() or {}
-    phone = data.get('phone')
-    code = data.get('code')
-
-    if not phone or not code:
-        return jsonify({
-            'error': 'Validation Error',
-            'message': 'Broj telefona i kod su obavezni'
-        }), 400
-
-    # U dev modu, proveri session
-    if os.environ.get('FLASK_ENV') == 'development' or not os.environ.get('SMS_API_KEY'):
-        stored_code = session.get('otp_code')
-        stored_phone = session.get('otp_phone')
-        expires_str = session.get('otp_expires')
-
-        if not stored_code:
-            return jsonify({
-                'error': 'Verification Error',
-                'message': 'Kod nije poslat. Zatrazite novi kod.'
-            }), 400
-
-        if expires_str:
-            expires = datetime.fromisoformat(expires_str)
-            if datetime.utcnow() > expires:
-                return jsonify({
-                    'error': 'Verification Error',
-                    'message': 'Kod je istekao. Zatrazite novi kod.'
-                }), 400
-
-        formatted_phone = sms_service._format_phone(phone)
-        if stored_phone != formatted_phone:
-            return jsonify({
-                'error': 'Verification Error',
-                'message': 'Broj telefona se ne poklapa.'
-            }), 400
-
-        if stored_code != code:
-            return jsonify({
-                'error': 'Verification Error',
-                'message': 'Neispravan kod. Pokusajte ponovo.'
-            }), 400
-
-        # Ocisti session
-        session.pop('otp_code', None)
-        session.pop('otp_phone', None)
-        session.pop('otp_expires', None)
-
-        # Oznaci kao verifikovan u session
-        session['phone_verified'] = formatted_phone
-
-        return jsonify({
-            'message': 'Telefon uspesno verifikovan',
-            'verified': True
-        }), 200
-
-    # Produkcijski mod - za sada samo vracamo success
-    # Prava verifikacija ce se desiti kada se kreira korisnik
     return jsonify({
-        'message': 'Telefon uspesno verifikovan',
-        'verified': True
-    }), 200
+        'error': 'Service Unavailable',
+        'message': 'SMS verifikacija trenutno nije dostupna.'
+    }), 503
 
 
 # =============================================================================
