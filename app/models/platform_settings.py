@@ -49,6 +49,11 @@ class PlatformSettings(db.Model):
     company_bank_account = db.Column(db.String(50), default='')  # Broj računa
 
     # =========================================================================
+    # v303 Billing - IPS QR Settings
+    # =========================================================================
+    ips_purpose_code = db.Column(db.String(4), default='221')  # 221 = B2B usluge
+
+    # =========================================================================
     # Kontakt podaci za landing page
     # =========================================================================
     contact_email = db.Column(db.String(100), default='')  # Email za kontakt na landing page
@@ -107,6 +112,8 @@ class PlatformSettings(db.Model):
             'company_postal_code', 'company_country', 'company_pib',
             'company_mb', 'company_phone', 'company_email',
             'company_website', 'company_bank_name', 'company_bank_account',
+            # IPS settings (v303)
+            'ips_purpose_code',
             # Social media (koristi se na landing page)
             'social_twitter', 'social_facebook', 'social_instagram',
             'social_linkedin', 'social_youtube'
@@ -158,6 +165,8 @@ class PlatformSettings(db.Model):
             'website': self.company_website or '',
             'bank_name': self.company_bank_name or '',
             'bank_account': self.company_bank_account or '',
+            # IPS QR settings (v303)
+            'ips_purpose_code': self.ips_purpose_code or '221',
             # Social media za landing page
             'social_twitter': self.social_twitter or '',
             'social_facebook': self.social_facebook or '',

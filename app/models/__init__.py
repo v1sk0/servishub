@@ -29,6 +29,10 @@ from .message_thread import (
     ThreadType, ThreadStatus, ThreadTag, HiddenByType
 )
 from .tenant_connection import Invite, TenantConnection, ConnectionStatus
+from .bank_import import (
+    BankStatementImport, BankTransaction,
+    ImportStatus, BankCode, MatchStatus, TransactionType
+)
 
 __all__ = [
     # Tenant modeli
@@ -115,4 +119,11 @@ __all__ = [
     'Invite',
     'TenantConnection',
     'ConnectionStatus',
+    # Bank Import (v303 Billing Enhancement)
+    'BankStatementImport',
+    'BankTransaction',
+    'ImportStatus',
+    'BankCode',
+    'MatchStatus',
+    'TransactionType',
 ]

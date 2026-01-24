@@ -209,6 +209,27 @@ class SubscriptionPayment(db.Model):
     # URL generisane PDF fakture
     invoice_url = db.Column(db.String(500))
 
+    # === v303 Billing Enhancement ===
+    # Invoice delivery tracking
+    invoice_sent_at = db.Column(db.DateTime)
+    invoice_sent_to = db.Column(db.String(200))  # Email adresa primaoca
+
+    # Uplatnica PDF
+    uplatnica_pdf_url = db.Column(db.String(500))
+
+    # IPS QR data (cached)
+    ips_qr_string = db.Column(db.Text)
+    ips_qr_generated_at = db.Column(db.DateTime)
+
+    # Poziv na broj - model (sam payment_reference već postoji gore)
+    payment_reference_model = db.Column(db.String(5), default='97')
+
+    # Bank reconciliation
+    reconciled_at = db.Column(db.DateTime)
+    reconciled_via = db.Column(db.String(50))  # BANK_IMPORT, MANUAL, PROOF_UPLOAD
+    bank_transaction_id = db.Column(db.BigInteger, db.ForeignKey('bank_transaction.id'))
+    # === Kraj v303 ===
+
     # Timestampovi
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -216,6 +237,7 @@ class SubscriptionPayment(db.Model):
     # Relacije
     tenant = db.relationship('Tenant', backref=db.backref('subscription_payments', lazy='dynamic'))
     verified_by = db.relationship('PlatformAdmin', backref='verified_payments')
+    bank_transaction = db.relationship('BankTransaction', foreign_keys=[bank_transaction_id])
 
     # Indeksi
     __table_args__ = (
