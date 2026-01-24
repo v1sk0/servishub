@@ -29,10 +29,25 @@ def table_exists(table_name):
     return result.scalar()
 
 
+def enum_exists(enum_name):
+    """Check if PostgreSQL enum type exists"""
+    conn = op.get_bind()
+    result = conn.execute(sa.text("""
+        SELECT EXISTS (
+            SELECT 1 FROM pg_type WHERE typname = :enum_name
+        )
+    """), {'enum_name': enum_name})
+    return result.scalar()
+
+
 def upgrade():
-    # Kreiraj DeliveryStatus enum
-    delivery_status = sa.Enum('PENDING', 'SENT', 'FAILED', 'SKIPPED', name='deliverystatus')
-    delivery_status.create(op.get_bind(), checkfirst=True)
+    # Kreiraj DeliveryStatus enum samo ako ne postoji
+    if not enum_exists('deliverystatus'):
+        delivery_status = sa.Enum('PENDING', 'SENT', 'FAILED', 'SKIPPED', name='deliverystatus')
+        delivery_status.create(op.get_bind(), checkfirst=True)
+
+    # Referenciranje postojećeg enuma
+    delivery_status = sa.Enum('PENDING', 'SENT', 'FAILED', 'SKIPPED', name='deliverystatus', create_type=False)
 
     # PackageChangeHistory tabela
     if not table_exists('package_change_history'):
@@ -70,18 +85,19 @@ def upgrade():
 
     # PackageChangeDelivery tabela
     if not table_exists('package_change_delivery'):
+        # Koristi string reference za enum da izbegne kreiranje novog tipa
         op.create_table('package_change_delivery',
             sa.Column('id', sa.Integer(), nullable=False),
             # Veze
             sa.Column('change_id', sa.Integer(), nullable=False),
             sa.Column('tenant_id', sa.Integer(), nullable=False),
-            # Email status
-            sa.Column('email_status', delivery_status, default='PENDING'),
+            # Email status - koristi PostgreSQL ENUM direktno
+            sa.Column('email_status', sa.Enum('PENDING', 'SENT', 'FAILED', 'SKIPPED', name='deliverystatus', create_type=False), server_default='PENDING'),
             sa.Column('email_sent_at', sa.DateTime(timezone=True), nullable=True),
             sa.Column('email_error', sa.Text(), nullable=True),
             sa.Column('email_recipient', sa.String(255), nullable=True),
             # In-app status
-            sa.Column('inapp_status', delivery_status, default='PENDING'),
+            sa.Column('inapp_status', sa.Enum('PENDING', 'SENT', 'FAILED', 'SKIPPED', name='deliverystatus', create_type=False), server_default='PENDING'),
             sa.Column('inapp_created_at', sa.DateTime(timezone=True), nullable=True),
             sa.Column('inapp_thread_id', sa.Integer(), nullable=True),
             sa.Column('inapp_error', sa.Text(), nullable=True),

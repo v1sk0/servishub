@@ -31,13 +31,31 @@ def table_exists(table_name):
     return result.scalar()
 
 
+def enum_exists(enum_name):
+    """Check if PostgreSQL enum type exists"""
+    conn = op.get_bind()
+    result = conn.execute(sa.text("""
+        SELECT EXISTS (
+            SELECT 1 FROM pg_type WHERE typname = :enum_name
+        )
+    """), {'enum_name': enum_name})
+    return result.scalar()
+
+
 def upgrade():
-    # Kreiraj ConnectionStatus enum
+    # Kreiraj ConnectionStatus enum samo ako ne postoji
+    if not enum_exists('connectionstatus'):
+        connection_status = sa.Enum(
+            'PENDING_INVITEE', 'PENDING_INVITER', 'ACTIVE', 'BLOCKED',
+            name='connectionstatus'
+        )
+        connection_status.create(op.get_bind(), checkfirst=True)
+
+    # Referenca za korišćenje u kolonama
     connection_status = sa.Enum(
         'PENDING_INVITEE', 'PENDING_INVITER', 'ACTIVE', 'BLOCKED',
-        name='connectionstatus'
+        name='connectionstatus', create_type=False
     )
-    connection_status.create(op.get_bind(), checkfirst=True)
 
     # Invite tabela
     if not table_exists('invite'):

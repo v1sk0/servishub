@@ -32,16 +32,35 @@ def table_exists(table_name):
     return result.scalar()
 
 
+def enum_exists(enum_name):
+    """Check if PostgreSQL enum type exists"""
+    conn = op.get_bind()
+    result = conn.execute(sa.text("""
+        SELECT EXISTS (
+            SELECT 1 FROM pg_type WHERE typname = :enum_name
+        )
+    """), {'enum_name': enum_name})
+    return result.scalar()
+
+
 def upgrade():
-    # Kreiraj enum tipove
-    thread_type = sa.Enum('SYSTEM', 'SUPPORT', 'NETWORK', name='threadtype')
-    thread_type.create(op.get_bind(), checkfirst=True)
+    # Kreiraj enum tipove samo ako ne postoje
+    if not enum_exists('threadtype'):
+        thread_type = sa.Enum('SYSTEM', 'SUPPORT', 'NETWORK', name='threadtype')
+        thread_type.create(op.get_bind(), checkfirst=True)
 
-    thread_status = sa.Enum('OPEN', 'PENDING', 'RESOLVED', name='threadstatus')
-    thread_status.create(op.get_bind(), checkfirst=True)
+    if not enum_exists('threadstatus'):
+        thread_status = sa.Enum('OPEN', 'PENDING', 'RESOLVED', name='threadstatus')
+        thread_status.create(op.get_bind(), checkfirst=True)
 
-    hidden_by_type = sa.Enum('ADMIN', 'TENANT', name='hiddenbytype')
-    hidden_by_type.create(op.get_bind(), checkfirst=True)
+    if not enum_exists('hiddenbytype'):
+        hidden_by_type = sa.Enum('ADMIN', 'TENANT', name='hiddenbytype')
+        hidden_by_type.create(op.get_bind(), checkfirst=True)
+
+    # Reference za korišćenje u kolonama (create_type=False)
+    thread_type = sa.Enum('SYSTEM', 'SUPPORT', 'NETWORK', name='threadtype', create_type=False)
+    thread_status = sa.Enum('OPEN', 'PENDING', 'RESOLVED', name='threadstatus', create_type=False)
+    hidden_by_type = sa.Enum('ADMIN', 'TENANT', name='hiddenbytype', create_type=False)
 
     # MessageThread tabela
     if not table_exists('message_thread'):
