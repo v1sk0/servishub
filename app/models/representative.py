@@ -275,21 +275,12 @@ class SubscriptionPayment(db.Model):
 
     @classmethod
     def generate_invoice_number(cls):
-        """Generise jedinstven broj fakture."""
+        """
+        Generise jedinstven broj fakture.
+
+        DEPRECATED: Koristi app.services.billing_tasks.get_next_invoice_number() direktno.
+        Ova metoda je wrapper za backward compatibility.
+        """
         from datetime import date
-        year = date.today().year
-
-        last = cls.query.filter(
-            cls.invoice_number.like(f'SH-{year}-%')
-        ).order_by(cls.id.desc()).first()
-
-        if last and last.invoice_number:
-            try:
-                last_num = int(last.invoice_number.split('-')[-1])
-                next_num = last_num + 1
-            except (ValueError, IndexError):
-                next_num = 1
-        else:
-            next_num = 1
-
-        return f'SH-{year}-{next_num:06d}'
+        from ..services.billing_tasks import get_next_invoice_number
+        return get_next_invoice_number(date.today().year)

@@ -95,11 +95,12 @@ class SecurityEventLogger:
 
     @staticmethod
     def _get_client_ip() -> str:
-        """Dobija pravu IP adresu klijenta (sa proxy podrskom)."""
-        # Heroku i drugi load balanceri koriste X-Forwarded-For
-        if request.headers.get('X-Forwarded-For'):
-            # Uzmi prvi IP (pravi klijent) iz liste
-            return request.headers.get('X-Forwarded-For').split(',')[0].strip()
+        """
+        Dobija pravu IP adresu klijenta.
+
+        ProxyFix middleware vec obradjuje X-Forwarded-For header i
+        postavlja request.remote_addr ispravno.
+        """
         return request.remote_addr or 'unknown'
 
     @staticmethod

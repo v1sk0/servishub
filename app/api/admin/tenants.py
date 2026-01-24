@@ -11,6 +11,7 @@ from sqlalchemy import func, and_
 
 from app.extensions import db
 from app.models import Tenant, User, ServiceTicket, SubscriptionPayment
+from app.services.billing_tasks import get_next_invoice_number
 from app.models.representative import ServiceRepresentative, RepresentativeStatus
 from app.models.admin_activity import AdminActivityLog, AdminActionType
 from app.api.middleware.auth import platform_admin_required
@@ -325,18 +326,8 @@ def activate_tenant(tenant_id):
     period_start = datetime.utcnow().date()
     period_end = period_start + timedelta(days=30 * months)
 
-    # Generiši broj fakture (SH-YYYY-NNNNNN)
-    year = datetime.utcnow().year
-    last_payment = SubscriptionPayment.query.filter(
-        SubscriptionPayment.invoice_number.like(f'SH-{year}-%')
-    ).order_by(SubscriptionPayment.id.desc()).first()
-
-    if last_payment and last_payment.invoice_number:
-        last_num = int(last_payment.invoice_number.split('-')[-1])
-        next_num = last_num + 1
-    else:
-        next_num = 1
-    invoice_number = f'SH-{year}-{next_num:06d}'
+    # Generiši broj fakture (race-safe sa SELECT FOR UPDATE)
+    invoice_number = get_next_invoice_number(datetime.utcnow().year)
 
     # Kreiraj stavke fakture
     items = [

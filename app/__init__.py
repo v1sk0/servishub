@@ -5,8 +5,10 @@ Ovaj modul sadrzi app factory funkciju koja kreira i konfigurise
 Flask aplikaciju sa svim potrebnim ekstenzijama i blueprintima.
 """
 
+import os
 import click
 from flask import Flask, jsonify
+from werkzeug.middleware.proxy_fix import ProxyFix
 from .config import get_config
 from .extensions import db, migrate, cors
 
@@ -28,6 +30,20 @@ def create_app(config_class=None):
     if config_class is None:
         config_class = get_config()
     app.config.from_object(config_class)
+
+    # =========================================================================
+    # ProxyFix Middleware - za ispravno citanje X-Forwarded-* headera
+    # =========================================================================
+    # Heroku ima 1 proxy layer (router), Cloudflare bi bio +1
+    # ENV varijabla omogucava podesavanje bez code change-a
+    proxy_count = int(os.environ.get('TRUSTED_PROXY_COUNT', '1'))
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for=proxy_count,      # Trust X-Forwarded-For (client IP)
+        x_proto=proxy_count,    # Trust X-Forwarded-Proto (https)
+        x_host=proxy_count,     # Trust X-Forwarded-Host
+        x_prefix=proxy_count    # Trust X-Forwarded-Prefix
+    )
 
     # Inicijalizuj ekstenzije
     _init_extensions(app)
@@ -66,13 +82,16 @@ def _init_extensions(app):
     setup_public_site_middleware(app)
 
     # Background Scheduler - pokrece billing taskove automatski
-    # Samo u produkciji i ne tokom CLI komandi
-    import os
+    # Scheduler: samo na web.1 dyno-u (ako ima vise workera) i ne tokom CLI
     import sys
-    is_main_process = os.environ.get('WERKZEUG_RUN_MAIN') != 'true' or not app.debug
     is_cli_command = 'flask' in sys.argv[0] or any(cmd in sys.argv for cmd in ['db', 'shell', 'routes'])
 
-    if not is_cli_command and app.config.get('SCHEDULER_ENABLED', True):
+    # DYNO guard: na Heroku pokreni scheduler samo na web.1
+    # Lokalno (bez DYNO env) uvek pokreni
+    dyno = os.environ.get('DYNO', 'web.1')
+    is_primary_dyno = dyno == 'web.1'
+
+    if not is_cli_command and is_primary_dyno and app.config.get('SCHEDULER_ENABLED', True):
         from .services.scheduler_service import init_scheduler
         init_scheduler(app)
 

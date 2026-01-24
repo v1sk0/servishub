@@ -12,12 +12,81 @@ Komande:
 from datetime import datetime, timedelta
 from decimal import Decimal
 from flask import current_app
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 
 from ..extensions import db
 from ..models import Tenant, TenantMessage, PlatformSettings
 from ..models.tenant import TenantStatus, ServiceLocation
 from ..models.tenant_message import MessageCategory, MessagePriority
 from ..models.representative import SubscriptionPayment
+
+
+def get_next_invoice_number(year: int) -> str:
+    """
+    Generates next invoice number using atomic UPDATE + RETURNING.
+
+    Uses invoice_counter table with row-level locking to prevent race conditions.
+    Format: SH-{year}-{seq:06d} (e.g., SH-2026-000001)
+
+    Automatically handles year rollover by creating new rows as needed.
+
+    Args:
+        year: Year for the invoice (typically current year)
+
+    Returns:
+        Invoice number string (e.g., "SH-2026-000001")
+
+    Raises:
+        Exception if unable to generate after retries
+    """
+    max_retries = 3
+
+    for attempt in range(max_retries):
+        try:
+            # Use a savepoint for nested transaction
+            with db.session.begin_nested():
+                # Try atomic UPDATE + RETURNING (locks the row)
+                result = db.session.execute(text("""
+                    UPDATE invoice_counter
+                    SET last_seq = last_seq + 1, updated_at = CURRENT_TIMESTAMP
+                    WHERE year = :year
+                    RETURNING last_seq
+                """), {'year': year})
+
+                row = result.fetchone()
+
+                if row:
+                    # Row existed and was updated atomically
+                    next_seq = row[0]
+                    return f"SH-{year}-{next_seq:06d}"
+
+                # Row doesn't exist for this year - INSERT with conflict handling
+                # This handles year rollover (e.g., Jan 1st of new year)
+                db.session.execute(text("""
+                    INSERT INTO invoice_counter (year, last_seq, updated_at)
+                    VALUES (:year, 1, CURRENT_TIMESTAMP)
+                    ON CONFLICT (year) DO UPDATE SET
+                        last_seq = invoice_counter.last_seq + 1,
+                        updated_at = CURRENT_TIMESTAMP
+                """), {'year': year})
+
+                # Get the sequence we just inserted/updated
+                result = db.session.execute(text("""
+                    SELECT last_seq FROM invoice_counter WHERE year = :year
+                """), {'year': year})
+                next_seq = result.scalar()
+
+                return f"SH-{year}-{next_seq:06d}"
+
+        except IntegrityError:
+            # Race condition on INSERT - retry
+            db.session.rollback()
+            if attempt == max_retries - 1:
+                raise
+            continue
+
+    raise Exception("Failed to generate invoice number after max retries")
 
 
 class BillingTasksService:
@@ -297,12 +366,8 @@ class BillingTasksService:
                 else:
                     period_end = now.replace(month=now.month + 1, day=1).date() - timedelta(days=1)
 
-                # Generisi broj fakture
-                year = now.year
-                count = SubscriptionPayment.query.filter(
-                    SubscriptionPayment.invoice_number.like(f'SH-{year}-%')
-                ).count() + 1
-                invoice_number = f'SH-{year}-{count:05d}'
+                # Generisi broj fakture (race-safe sa SELECT FOR UPDATE)
+                invoice_number = get_next_invoice_number(now.year)
 
                 # Kreiraj fakturu
                 payment = SubscriptionPayment(

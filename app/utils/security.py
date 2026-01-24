@@ -274,15 +274,12 @@ def rate_limit(limit: int = 60, window: int = 60, key_func=None):
 
 def get_client_ip() -> str:
     """
-    Get the real client IP address, handling proxies.
+    Get the real client IP address.
+
+    ProxyFix middleware handles X-Forwarded-For headers and sets
+    request.remote_addr correctly. No manual header parsing needed.
 
     Returns:
         Client IP address string
     """
-    # Check for forwarded IP (behind proxy/load balancer)
-    forwarded = request.headers.get('X-Forwarded-For')
-    if forwarded:
-        # Get the first IP in the chain (original client)
-        return forwarded.split(',')[0].strip()
-
     return request.remote_addr or 'unknown'

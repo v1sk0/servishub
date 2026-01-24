@@ -22,6 +22,7 @@ from app.models.tenant import TenantStatus, ServiceLocation
 from app.models.tenant_message import MessageCategory, MessagePriority
 from app.models.admin_activity import AdminActivityLog, AdminActionType
 from app.api.middleware.auth import platform_admin_required
+from app.services.billing_tasks import get_next_invoice_number
 
 bp = Blueprint('admin_payments', __name__, url_prefix='/payments')
 
@@ -397,8 +398,8 @@ def generate_invoice(tenant_id):
     discount = Decimal(str(data.get('discount_amount', 0)))
     total = Decimal(str(subtotal)) - discount
 
-    # Kreiraj fakturu
-    invoice_number = SubscriptionPayment.generate_invoice_number()
+    # Kreiraj fakturu (race-safe sa SELECT FOR UPDATE)
+    invoice_number = get_next_invoice_number(datetime.utcnow().year)
 
     payment = SubscriptionPayment(
         tenant_id=tenant.id,

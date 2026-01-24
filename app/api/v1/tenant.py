@@ -6,6 +6,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from app.extensions import db
 from app.models import Tenant, ServiceLocation, TenantUser, ServiceRepresentative, TenantPublicProfile
 from app.api.middleware.auth import jwt_required
+from app.services.billing_tasks import get_next_invoice_number
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
@@ -668,18 +669,8 @@ def create_subscription_invoice():
     period_start = datetime.utcnow().date()
     period_end = period_start + timedelta(days=30 * months)
 
-    # Generiši broj fakture
-    year = datetime.utcnow().year
-    last_payment = SubscriptionPayment.query.filter(
-        SubscriptionPayment.invoice_number.like(f'SH-{year}-%')
-    ).order_by(SubscriptionPayment.id.desc()).first()
-
-    if last_payment and last_payment.invoice_number:
-        last_num = int(last_payment.invoice_number.split('-')[-1])
-        next_num = last_num + 1
-    else:
-        next_num = 1
-    invoice_number = f'SH-{year}-{next_num:06d}'
+    # Generiši broj fakture (race-safe sa SELECT FOR UPDATE)
+    invoice_number = get_next_invoice_number(datetime.utcnow().year)
 
     # Poziv na broj (tenant ID + period start MMYY)
     payment_reference = f'{tenant.id:06d}{period_start.strftime("%m%y")}'
