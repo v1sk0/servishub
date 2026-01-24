@@ -5,40 +5,301 @@
 {% block head %}
 {% include "admin/_admin_styles.html" %}
 <style>
-    .thread-item:hover { background-color: #f9fafb; }
-    .thread-item.selected { background-color: #fef2f2; border-left: 3px solid #dc2626; }
-    .message-list { height: calc(100vh - 340px); overflow-y: auto; }
-    .message-bubble { max-width: 80%; }
-    .message-admin { background: #dc2626; color: white; margin-left: auto; }
-    .message-tenant { background: #f3f4f6; color: #111827; }
-    .unread-dot { width: 8px; height: 8px; background: #dc2626; border-radius: 50%; }
+    /* Thread List */
+    .thread-item {
+        transition: all 0.15s ease;
+    }
+    .thread-item:hover {
+        background-color: #fef2f2;
+    }
+    .thread-item.selected {
+        background-color: #fef2f2;
+        border-left: 3px solid #dc2626;
+    }
+    .unread-dot {
+        width: 8px;
+        height: 8px;
+        background: #dc2626;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
     .sla-warning { color: #f59e0b; }
     .sla-critical { color: #dc2626; }
+
+    /* Modern Chat Container */
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 180px);
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    /* Chat Header */
+    .chat-header {
+        padding: 1rem 1.25rem;
+        background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+        border-bottom: 1px solid #fecaca;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+    }
+    .chat-header-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .chat-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9375rem;
+    }
+    .chat-info h2 {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: #0f172a;
+        margin: 0;
+    }
+    .chat-info p {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin: 0.25rem 0 0;
+    }
+
+    /* Messages Area */
+    .message-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.25rem;
+        background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
+    }
+
+    /* Modern Message Bubble */
+    .message-row {
+        display: flex;
+        gap: 0.625rem;
+        margin-bottom: 0.75rem;
+        animation: slideIn 0.25s ease-out;
+    }
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .message-row.admin {
+        flex-direction: row-reverse;
+    }
+
+    .msg-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.6875rem;
+        flex-shrink: 0;
+        align-self: flex-end;
+    }
+    .msg-avatar.admin-avatar {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+    }
+    .msg-avatar.tenant-avatar {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+    }
+
+    .msg-content {
+        max-width: 70%;
+    }
+    .message-row.admin .msg-content {
+        text-align: right;
+    }
+
+    .msg-sender {
+        font-size: 0.6875rem;
+        color: #64748b;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        padding: 0 0.375rem;
+    }
+
+    .message-bubble {
+        padding: 0.75rem 1rem;
+        border-radius: 18px;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        display: inline-block;
+        text-align: left;
+        word-wrap: break-word;
+    }
+    .message-bubble.message-admin {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        border-bottom-right-radius: 6px;
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+    }
+    .message-bubble.message-tenant {
+        background: #ffffff;
+        color: #1e293b;
+        border: 1px solid #e2e8f0;
+        border-bottom-left-radius: 6px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .msg-meta {
+        font-size: 0.625rem;
+        color: #94a3b8;
+        margin-top: 0.25rem;
+        padding: 0 0.375rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+    .message-row.admin .msg-meta {
+        justify-content: flex-end;
+    }
+
+    /* Modern Typing Indicator */
     .typing-indicator {
         display: flex;
         align-items: center;
-        padding: 8px 16px;
-        color: #6b7280;
-        font-size: 13px;
-        font-style: italic;
+        gap: 0.5rem;
+        padding: 0.5rem 0;
+        margin-left: calc(32px + 0.625rem);
+    }
+    .typing-bubble {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        padding: 0.625rem 1rem;
+        border-radius: 18px;
+        border-bottom-left-radius: 6px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
     .typing-dots {
-        display: inline-flex;
-        margin-left: 6px;
+        display: flex;
+        gap: 4px;
     }
     .typing-dots span {
-        width: 6px;
-        height: 6px;
-        background: #9ca3af;
+        width: 7px;
+        height: 7px;
+        background: #94a3b8;
         border-radius: 50%;
-        margin: 0 2px;
-        animation: bounce 1.4s infinite ease-in-out;
+        animation: typingPulse 1.4s infinite ease-in-out;
     }
-    .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
-    .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
-    @keyframes bounce {
-        0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
-        40% { transform: scale(1); opacity: 1; }
+    .typing-dots span:nth-child(1) { animation-delay: 0s; }
+    .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes typingPulse {
+        0%, 60%, 100% { transform: scale(0.85); opacity: 0.5; }
+        30% { transform: scale(1); opacity: 1; }
+    }
+    .typing-text {
+        color: #64748b;
+        font-size: 0.75rem;
+    }
+
+    /* Modern Reply Box */
+    .reply-box {
+        padding: 1rem 1.25rem 1.25rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-top: 1px solid #e2e8f0;
+        flex-shrink: 0;
+    }
+    .reply-wrapper {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-end;
+    }
+    .reply-textarea {
+        flex: 1;
+        padding: 0.875rem 1rem;
+        background: #ffffff;
+        border: 2px solid #fecaca;
+        border-radius: 24px;
+        font-size: 0.875rem;
+        resize: none;
+        min-height: 48px;
+        max-height: 150px;
+        transition: all 0.2s;
+        line-height: 1.4;
+    }
+    .reply-textarea:focus {
+        outline: none;
+        border-color: #dc2626;
+        box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+    }
+    .reply-textarea::placeholder {
+        color: #94a3b8;
+    }
+    .send-btn {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+        flex-shrink: 0;
+    }
+    .send-btn:hover:not(:disabled) {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.45);
+    }
+    .send-btn:disabled {
+        background: #fca5a5;
+        box-shadow: none;
+        cursor: not-allowed;
+    }
+    .send-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+    .reply-hint {
+        font-size: 0.6875rem;
+        color: #94a3b8;
+        margin-top: 0.5rem;
+        text-align: right;
+    }
+
+    /* Empty State */
+    .empty-chat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #94a3b8;
+    }
+    .empty-chat svg {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    .empty-chat p {
+        font-size: 0.9375rem;
     }
 </style>
 {% endblock %}
@@ -125,98 +386,127 @@
                         </div>
                     </div>
 
-                    <!-- Chat View (Right) -->
-                    <div class="flex-1 admin-card bg-white rounded-lg shadow flex flex-col">
-                        <!-- Thread Header -->
-                        <template x-if="selectedThread">
-                            <div class="p-4 border-b flex justify-between items-center">
-                                <div>
-                                    <h2 class="font-semibold text-gray-900" x-text="selectedThread.subject"></h2>
-                                    <div class="flex items-center mt-1 text-sm text-gray-500">
-                                        <span x-text="selectedThread.tenant?.name"></span>
-                                        <span class="mx-2">-</span>
-                                        <span x-text="formatDate(selectedThread.created_at)"></span>
-                                        <template x-if="selectedThread.sla.response_time_hours">
-                                            <span class="ml-4 text-xs" :class="selectedThread.sla.response_time_hours > 24 ? 'sla-critical' : 'text-green-600'">
-                                                Odgovor za: <span x-text="selectedThread.sla.response_time_hours + 'h'"></span>
-                                            </span>
-                                        </template>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <!-- Status -->
-                                    <select x-model="selectedThread.status" @change="updateStatus()" class="text-sm border rounded-lg px-3 py-1.5">
-                                        <option value="OPEN">Otvoren</option>
-                                        <option value="PENDING">Na cekanju</option>
-                                        <option value="RESOLVED">Resen</option>
-                                    </select>
-                                    <!-- Tags -->
-                                    <div class="flex items-center space-x-1">
-                                        <template x-for="tag in selectedThread.tags" :key="tag">
-                                            <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded" x-text="tag"></span>
-                                        </template>
-                                    </div>
-                                </div>
+                    <!-- Chat View (Right) - Modern Design -->
+                    <div class="flex-1 admin-card bg-white rounded-lg shadow chat-container">
+                        <!-- Empty State -->
+                        <template x-if="!selectedThread">
+                            <div class="empty-chat">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                </svg>
+                                <p>Izaberi konverzaciju iz liste</p>
                             </div>
                         </template>
 
-                        <!-- Messages -->
-                        <div class="message-list flex-1 p-4 space-y-4" x-ref="messageList">
-                            <template x-if="!selectedThread">
-                                <div class="flex items-center justify-center h-full text-gray-500">
-                                    Izaberi konverzaciju iz liste
+                        <template x-if="selectedThread">
+                            <div class="flex flex-col h-full">
+                                <!-- Modern Chat Header -->
+                                <div class="chat-header">
+                                    <div class="chat-header-left">
+                                        <div class="chat-avatar" x-text="getInitials(selectedThread.tenant?.name || 'NN')"></div>
+                                        <div class="chat-info">
+                                            <h2 x-text="selectedThread.subject"></h2>
+                                            <p>
+                                                <span x-text="selectedThread.tenant?.name || 'Nepoznat'"></span>
+                                                <span class="mx-1">·</span>
+                                                <span x-text="formatDate(selectedThread.created_at)"></span>
+                                                <template x-if="selectedThread.sla?.response_time_hours">
+                                                    <span class="ml-2" :class="selectedThread.sla.response_time_hours > 24 ? 'sla-critical' : 'text-green-600'">
+                                                        · Odgovor: <span x-text="selectedThread.sla.response_time_hours + 'h'"></span>
+                                                    </span>
+                                                </template>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <!-- Tags -->
+                                        <div class="flex items-center space-x-1">
+                                            <template x-for="tag in selectedThread.tags" :key="tag">
+                                                <span class="bg-red-50 text-red-600 text-xs px-2 py-1 rounded-full" x-text="tag"></span>
+                                            </template>
+                                        </div>
+                                        <!-- Status -->
+                                        <select x-model="selectedThread.status" @change="updateStatus()"
+                                                class="text-sm border border-red-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-red-100 focus:border-red-300">
+                                            <option value="OPEN">Otvoren</option>
+                                            <option value="PENDING">Na cekanju</option>
+                                            <option value="RESOLVED">Resen</option>
+                                        </select>
+                                    </div>
                                 </div>
-                            </template>
-                            <template x-if="selectedThread">
-                                <div>
+
+                                <!-- Messages -->
+                                <div class="message-list" x-ref="messageList">
                                     <template x-for="msg in messages" :key="msg.id">
-                                        <div class="flex" :class="msg.sender.type === 'admin' ? 'justify-end' : 'justify-start'">
-                                            <div class="message-bubble rounded-lg px-4 py-2" :class="msg.sender.type === 'admin' ? 'message-admin' : 'message-tenant'">
-                                                <p class="text-sm whitespace-pre-wrap" x-text="msg.body"></p>
-                                                <div class="mt-1 text-xs opacity-70 flex items-center justify-between">
-                                                    <span x-text="msg.sender.name"></span>
-                                                    <span class="ml-4" x-text="formatDateTime(msg.created_at)"></span>
+                                        <div class="message-row" :class="msg.sender.type === 'admin' ? 'admin' : ''">
+                                            <!-- Avatar -->
+                                            <div class="msg-avatar" :class="msg.sender.type === 'admin' ? 'admin-avatar' : 'tenant-avatar'">
+                                                <span x-text="getInitials(msg.sender.name)"></span>
+                                            </div>
+                                            <!-- Content -->
+                                            <div class="msg-content">
+                                                <div class="msg-sender" x-text="msg.sender.name"></div>
+                                                <div class="message-bubble" :class="msg.sender.type === 'admin' ? 'message-admin' : 'message-tenant'">
+                                                    <span class="whitespace-pre-wrap" x-text="msg.body"></span>
+                                                </div>
+                                                <div class="msg-meta">
+                                                    <span x-text="formatDateTime(msg.created_at)"></span>
                                                 </div>
                                             </div>
                                         </div>
                                     </template>
-                                </div>
-                            </template>
-                        </div>
 
-                        <!-- Typing Indicator -->
-                        <template x-if="selectedThread && typingUsers.length > 0">
-                            <div class="typing-indicator border-t">
-                                <span x-text="typingUsers.map(u => u.name).join(', ')"></span>
-                                <span>&nbsp;kuca</span>
-                                <div class="typing-dots">
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
+                                    <!-- Typing Indicator -->
+                                    <template x-if="typingUsers.length > 0">
+                                        <div class="typing-indicator">
+                                            <div class="typing-bubble">
+                                                <div class="typing-dots">
+                                                    <span></span>
+                                                    <span></span>
+                                                    <span></span>
+                                                </div>
+                                                <span class="typing-text" x-text="typingUsers.map(u => u.name).join(', ') + ' kuca...'"></span>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </div>
-                            </div>
-                        </template>
 
-                        <!-- Reply Box -->
-                        <template x-if="selectedThread && selectedThread.status !== 'RESOLVED'">
-                            <div class="p-4 border-t">
-                                <form @submit.prevent="sendReply()">
-                                    <div class="flex gap-2">
-                                        <textarea x-model="replyText"
-                                                  class="flex-1 border rounded-lg px-3 py-2 text-sm resize-none"
-                                                  rows="2"
-                                                  placeholder="Napisi odgovor..."
-                                                  @input="onTyping()"
-                                                  @keydown.ctrl.enter="sendReply()"></textarea>
-                                        <button type="submit"
-                                                :disabled="!replyText.trim() || sending"
-                                                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
-                                            <span x-show="!sending">Posalji</span>
-                                            <span x-show="sending">...</span>
-                                        </button>
+                                <!-- Modern Reply Box -->
+                                <template x-if="selectedThread.status !== 'RESOLVED'">
+                                    <div class="reply-box">
+                                        <div class="reply-wrapper">
+                                            <textarea x-model="replyText"
+                                                      class="reply-textarea"
+                                                      rows="1"
+                                                      placeholder="Napisi odgovor..."
+                                                      @input="onTyping(); autoResize($event)"
+                                                      @keydown.ctrl.enter="sendReply()"></textarea>
+                                            <button @click="sendReply()"
+                                                    :disabled="!replyText.trim() || sending"
+                                                    class="send-btn">
+                                                <template x-if="!sending">
+                                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                                    </svg>
+                                                </template>
+                                                <template x-if="sending">
+                                                    <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                </template>
+                                            </button>
+                                        </div>
+                                        <div class="reply-hint">Ctrl+Enter za slanje</div>
                                     </div>
-                                    <p class="text-xs text-gray-400 mt-1">Ctrl+Enter za slanje</p>
-                                </form>
+                                </template>
+
+                                <!-- Resolved State -->
+                                <template x-if="selectedThread.status === 'RESOLVED'">
+                                    <div class="reply-box text-center text-gray-500 text-sm py-4">
+                                        <svg class="w-5 h-5 inline-block mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        Konverzacija je zatvorena
+                                    </div>
+                                </template>
                             </div>
                         </template>
                     </div>
@@ -479,6 +769,21 @@ function supportPage() {
             return new Date(dateStr).toLocaleString('sr-RS', {
                 day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
             });
+        },
+
+        getInitials(name) {
+            if (!name) return '?';
+            const parts = name.split(' ');
+            if (parts.length >= 2) {
+                return (parts[0][0] + parts[1][0]).toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+        },
+
+        autoResize(event) {
+            const textarea = event.target;
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
         }
     }
 }
