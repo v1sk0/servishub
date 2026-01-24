@@ -1,4 +1,19 @@
 <!-- Tenant Sidebar - Dark Glassmorphic Theme -->
+<style>
+    /* License widget skeleton */
+    .license-skeleton {
+        background: linear-gradient(135deg, rgba(100,100,100,0.3), rgba(80,80,80,0.3));
+        animation: skeleton-pulse 1.5s ease-in-out infinite;
+    }
+    .license-skeleton .skeleton-bar {
+        background: rgba(255,255,255,0.15);
+        border-radius: 4px;
+    }
+    @keyframes skeleton-pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 0.4; }
+    }
+</style>
 <div x-data="sidebarData()" x-init="init()" class="flex grow flex-col gap-y-5 overflow-y-auto px-6 pb-4">
     <!-- Logo / Ime servisa -->
     <div class="flex h-16 shrink-0 items-center">
@@ -170,7 +185,25 @@
                     <span class="text-xs text-gray-400 opacity-70">powered by</span>
                     <a href="https://servishub.rs" target="_blank" class="text-xs font-semibold text-blue-400 hover:text-blue-300 ml-1">ServisHub</a>
                 </div>
-                <a href="/settings?tab=subscription" class="block">
+
+                <!-- Skeleton while loading (shows by default, hidden when loaded) -->
+                <div x-show="!subscriptionLoaded" class="license-skeleton rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="skeleton-bar w-9 h-9"></div>
+                            <div>
+                                <div class="skeleton-bar w-16 h-3 mb-1"></div>
+                                <div class="skeleton-bar w-12 h-4"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton-bar w-14 h-5 rounded-full"></div>
+                    </div>
+                    <div class="skeleton-bar h-3 rounded-full mb-2"></div>
+                    <div class="skeleton-bar w-24 h-3 mx-auto"></div>
+                </div>
+
+                <!-- Actual widget when loaded -->
+                <a x-show="subscriptionLoaded" x-cloak href="/settings?tab=subscription" class="block">
                     <div class="subscription-widget rounded-xl p-4 transition-all hover:scale-[1.02] relative overflow-hidden license-widget"
                          :class="getWidgetClass()">
                         <!-- Shimmer effect -->
@@ -242,22 +275,96 @@
 </div>
 
 <script>
+// Cache key for sidebar data
+const SIDEBAR_CACHE_KEY = 'servishub_sidebar_cache';
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 function sidebarData() {
     return {
         subscriptionStatus: null,
         daysRemaining: null,
-        graceDaysRemaining: null,  // Days left in grace period (15 days max)
+        graceDaysRemaining: null,
         totalDays: 30,
         locationCount: 1,
         tenantName: '',
         userRole: '',
         roleLoaded: false,
+        subscriptionLoaded: false,
 
-        async init() {
+        init() {
+            // 1. Load from cache immediately (no flicker)
+            this.loadFromCache();
+
+            // 2. Refresh from API in background (if cache expired or missing)
+            this.refreshFromAPI();
+        },
+
+        loadFromCache() {
+            try {
+                const cached = sessionStorage.getItem(SIDEBAR_CACHE_KEY);
+                if (cached) {
+                    const data = JSON.parse(cached);
+                    // Apply cached data immediately
+                    this.tenantName = data.tenantName || 'Servis';
+                    this.userRole = data.userRole || '';
+                    this.subscriptionStatus = data.subscriptionStatus;
+                    this.daysRemaining = data.daysRemaining;
+                    this.graceDaysRemaining = data.graceDaysRemaining || 0;
+                    this.locationCount = data.locationCount || 1;
+                    this.totalDays = data.totalDays || 30;
+
+                    // Mark as loaded if we have data
+                    if (data.userRole) this.roleLoaded = true;
+                    if (data.subscriptionStatus) this.subscriptionLoaded = true;
+                }
+            } catch (e) {
+                console.warn('Failed to load sidebar cache:', e);
+            }
+        },
+
+        saveToCache() {
+            try {
+                const data = {
+                    tenantName: this.tenantName,
+                    userRole: this.userRole,
+                    subscriptionStatus: this.subscriptionStatus,
+                    daysRemaining: this.daysRemaining,
+                    graceDaysRemaining: this.graceDaysRemaining,
+                    locationCount: this.locationCount,
+                    totalDays: this.totalDays,
+                    cachedAt: Date.now()
+                };
+                sessionStorage.setItem(SIDEBAR_CACHE_KEY, JSON.stringify(data));
+            } catch (e) {
+                console.warn('Failed to save sidebar cache:', e);
+            }
+        },
+
+        isCacheValid() {
+            try {
+                const cached = sessionStorage.getItem(SIDEBAR_CACHE_KEY);
+                if (!cached) return false;
+                const data = JSON.parse(cached);
+                return data.cachedAt && (Date.now() - data.cachedAt) < CACHE_TTL_MS;
+            } catch (e) {
+                return false;
+            }
+        },
+
+        async refreshFromAPI() {
+            // Skip API call if cache is still valid
+            if (this.isCacheValid() && this.subscriptionLoaded) {
+                return;
+            }
+
+            // Fetch fresh data
             await Promise.all([
                 this.loadTenantName(),
                 this.loadSubscriptionStatus()
             ]);
+
+            // Save to cache
+            this.saveToCache();
         },
 
         async loadTenantName() {
@@ -297,6 +404,7 @@ function sidebarData() {
             } catch (e) {
                 console.error('Failed to load subscription status:', e);
             }
+            this.subscriptionLoaded = true;
         },
 
         getPlanName() {
