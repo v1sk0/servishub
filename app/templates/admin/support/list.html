@@ -7,13 +7,39 @@
 <style>
     .thread-item:hover { background-color: #f9fafb; }
     .thread-item.selected { background-color: #fef2f2; border-left: 3px solid #dc2626; }
-    .message-list { height: calc(100vh - 320px); overflow-y: auto; }
+    .message-list { height: calc(100vh - 340px); overflow-y: auto; }
     .message-bubble { max-width: 80%; }
     .message-admin { background: #dc2626; color: white; margin-left: auto; }
     .message-tenant { background: #f3f4f6; color: #111827; }
     .unread-dot { width: 8px; height: 8px; background: #dc2626; border-radius: 50%; }
     .sla-warning { color: #f59e0b; }
     .sla-critical { color: #dc2626; }
+    .typing-indicator {
+        display: flex;
+        align-items: center;
+        padding: 8px 16px;
+        color: #6b7280;
+        font-size: 13px;
+        font-style: italic;
+    }
+    .typing-dots {
+        display: inline-flex;
+        margin-left: 6px;
+    }
+    .typing-dots span {
+        width: 6px;
+        height: 6px;
+        background: #9ca3af;
+        border-radius: 50%;
+        margin: 0 2px;
+        animation: bounce 1.4s infinite ease-in-out;
+    }
+    .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes bounce {
+        0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+        40% { transform: scale(1); opacity: 1; }
+    }
 </style>
 {% endblock %}
 
@@ -158,6 +184,19 @@
                             </template>
                         </div>
 
+                        <!-- Typing Indicator -->
+                        <template x-if="selectedThread && typingUsers.length > 0">
+                            <div class="typing-indicator border-t">
+                                <span x-text="typingUsers.map(u => u.name).join(', ')"></span>
+                                <span>&nbsp;kuca</span>
+                                <div class="typing-dots">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
+                        </template>
+
                         <!-- Reply Box -->
                         <template x-if="selectedThread && selectedThread.status !== 'RESOLVED'">
                             <div class="p-4 border-t">
@@ -167,6 +206,7 @@
                                                   class="flex-1 border rounded-lg px-3 py-2 text-sm resize-none"
                                                   rows="2"
                                                   placeholder="Napisi odgovor..."
+                                                  @input="onTyping()"
                                                   @keydown.ctrl.enter="sendReply()"></textarea>
                                         <button type="submit"
                                                 :disabled="!replyText.trim() || sending"
@@ -198,6 +238,12 @@ function supportPage() {
         messages: [],
         replyText: '',
         sending: false,
+        typingUsers: [],
+        lastMessageId: 0,
+        messagePollingInterval: null,
+        typingPollingInterval: null,
+        typingTimeout: null,
+        isTyping: false,
 
         get filteredThreads() {
             return this.threads.filter(t => t.status === this.filter);
@@ -212,8 +258,8 @@ function supportPage() {
             const token = localStorage.getItem('admin_access_token');
             if (!token) { window.location.href = '/admin/login'; return; }
             await this.loadThreads();
-            // Poll for new messages every 30s
-            setInterval(() => this.loadThreads(), 30000);
+            // Poll for threads every 15s
+            setInterval(() => this.loadThreads(), 15000);
         },
 
         async loadThreads() {
@@ -237,15 +283,34 @@ function supportPage() {
         },
 
         async selectThread(thread) {
+            // Clear previous polling
+            if (this.messagePollingInterval) clearInterval(this.messagePollingInterval);
+            if (this.typingPollingInterval) clearInterval(this.typingPollingInterval);
+
             this.selectedThread = thread;
+            this.messages = [];
+            this.typingUsers = [];
+            this.lastMessageId = 0;
+
+            await this.loadMessages();
+
+            // Start fast polling for this thread (every 3s)
+            this.messagePollingInterval = setInterval(() => this.pollNewMessages(), 3000);
+            this.typingPollingInterval = setInterval(() => this.pollTyping(), 2000);
+        },
+
+        async loadMessages() {
             const token = localStorage.getItem('admin_access_token');
             try {
-                const response = await fetch(`/api/admin/threads/${thread.id}/messages`, {
+                const response = await fetch(`/api/admin/threads/${this.selectedThread.id}/messages`, {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 if (response.ok) {
                     const data = await response.json();
                     this.messages = data.messages || [];
+                    if (this.messages.length > 0) {
+                        this.lastMessageId = this.messages[this.messages.length - 1].id;
+                    }
                     this.$nextTick(() => this.scrollToBottom());
                 }
             } catch (e) {
@@ -253,10 +318,93 @@ function supportPage() {
             }
         },
 
+        async pollNewMessages() {
+            if (!this.selectedThread) return;
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                // Use after_id to only get new messages
+                const url = `/api/admin/threads/${this.selectedThread.id}/messages?after_id=${this.lastMessageId}`;
+                const response = await fetch(url, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const newMessages = data.messages || [];
+                    if (newMessages.length > 0) {
+                        // Add new messages
+                        newMessages.forEach(msg => {
+                            if (!this.messages.find(m => m.id === msg.id)) {
+                                this.messages.push(msg);
+                            }
+                        });
+                        this.lastMessageId = this.messages[this.messages.length - 1].id;
+                        this.$nextTick(() => this.scrollToBottom());
+                        // Also refresh thread list for updated status/preview
+                        this.loadThreads();
+                    }
+                }
+            } catch (e) {
+                console.error('Polling error:', e);
+            }
+        },
+
+        async pollTyping() {
+            if (!this.selectedThread) return;
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                const response = await fetch(`/api/admin/threads/${this.selectedThread.id}/typing`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    this.typingUsers = data.typing || [];
+                }
+            } catch (e) {
+                // Ignore typing errors
+            }
+        },
+
+        onTyping() {
+            if (!this.selectedThread) return;
+
+            // Send typing indicator
+            if (!this.isTyping) {
+                this.isTyping = true;
+                this.sendTypingStatus(true);
+            }
+
+            // Reset typing timeout
+            if (this.typingTimeout) clearTimeout(this.typingTimeout);
+            this.typingTimeout = setTimeout(() => {
+                this.isTyping = false;
+                this.sendTypingStatus(false);
+            }, 2000);
+        },
+
+        async sendTypingStatus(typing) {
+            if (!this.selectedThread) return;
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                await fetch(`/api/admin/threads/${this.selectedThread.id}/typing`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ typing })
+                });
+            } catch (e) {
+                // Ignore typing errors
+            }
+        },
+
         async sendReply() {
             if (!this.replyText.trim() || this.sending) return;
 
             this.sending = true;
+            this.isTyping = false;
+            this.sendTypingStatus(false);
+
             const token = localStorage.getItem('admin_access_token');
 
             try {
@@ -272,6 +420,7 @@ function supportPage() {
                 if (response.ok) {
                     const data = await response.json();
                     this.messages.push(data.data);
+                    this.lastMessageId = data.data.id;
                     this.replyText = '';
                     this.selectedThread.status = 'PENDING';
                     this.$nextTick(() => this.scrollToBottom());

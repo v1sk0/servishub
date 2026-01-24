@@ -21,6 +21,7 @@ from app.models import (
     ThreadType, ThreadStatus, HiddenByType
 )
 from app.api.middleware.auth import platform_admin_required
+from app.services import typing_service
 
 bp = Blueprint('admin_threads', __name__, url_prefix='/threads')
 
@@ -169,6 +170,7 @@ def get_thread_messages(thread_id):
     Query params:
         - include_hidden: true - uključi sakrivene poruke
         - limit: broj rezultata (default 50, max 200)
+        - after_id: samo poruke sa ID > after_id (za polling)
     """
     thread = MessageThread.query.get(thread_id)
     if not thread:
@@ -176,11 +178,16 @@ def get_thread_messages(thread_id):
 
     limit = min(request.args.get('limit', 50, type=int), 200)
     include_hidden = request.args.get('include_hidden', 'false').lower() == 'true'
+    after_id = request.args.get('after_id', type=int)
 
     query = Message.query.filter(Message.thread_id == thread.id)
 
     if not include_hidden:
         query = query.filter(Message.is_hidden == False)
+
+    # For polling - only get new messages
+    if after_id:
+        query = query.filter(Message.id > after_id)
 
     messages = query.order_by(Message.created_at.asc()).limit(limit).all()
 
@@ -509,6 +516,59 @@ def get_sla_metrics():
             {'admin_id': a.id, 'admin_name': a.full_name, 'count': a.thread_count}
             for a in threads_by_admin
         ]
+    })
+
+
+# =============================================================================
+# Typing Indicator Endpoints
+# =============================================================================
+
+@bp.route('/<int:thread_id>/typing', methods=['POST'])
+@platform_admin_required
+def set_admin_typing(thread_id):
+    """
+    Postavlja typing status za admina.
+    Status istice posle 3 sekunde.
+
+    Body:
+        {
+            typing: boolean (true = kuca, false = prestao)
+        }
+    """
+    admin = g.current_admin
+    data = request.get_json() or {}
+
+    thread = MessageThread.query.get(thread_id)
+    if not thread:
+        return jsonify({'error': 'Thread not found'}), 404
+
+    is_typing = data.get('typing', False)
+    user_key = f"admin_{admin.id}"
+    name = admin.full_name or admin.email.split('@')[0]
+
+    typing_service.set_typing(thread_id, user_key, name, 'admin', is_typing)
+
+    return jsonify({'status': 'ok'})
+
+
+@bp.route('/<int:thread_id>/typing', methods=['GET'])
+@platform_admin_required
+def get_admin_typing(thread_id):
+    """
+    Vraća ko trenutno kuca u threadu.
+    """
+    admin = g.current_admin
+
+    thread = MessageThread.query.get(thread_id)
+    if not thread:
+        return jsonify({'error': 'Thread not found'}), 404
+
+    my_key = f"admin_{admin.id}"
+    typing_users = typing_service.get_typing(thread_id, exclude_key=my_key)
+
+    return jsonify({
+        'typing': typing_users,
+        'thread_id': thread_id
     })
 
 

@@ -23,6 +23,7 @@ from app.models import (
 )
 from app.api.middleware.auth import jwt_required, tenant_required
 from app.services.security_service import SecurityEventLogger, rate_limit, RateLimits
+from app.services import typing_service
 
 bp = Blueprint('threads', __name__, url_prefix='/threads')
 
@@ -613,6 +614,71 @@ def hide_message(message_id):
     return jsonify({
         'message': 'Poruka sakrivena',
         'message_id': message_id
+    })
+
+
+# =============================================================================
+# Typing Indicator Endpoints
+# =============================================================================
+
+@bp.route('/<int:thread_id>/typing', methods=['POST'])
+@jwt_required
+@tenant_required
+def set_typing_status(thread_id):
+    """
+    Postavlja typing status za korisnika.
+    Status istice posle 3 sekunde.
+
+    Body:
+        {
+            typing: boolean (true = kuca, false = prestao)
+        }
+    """
+    tenant = g.current_tenant
+    user = g.current_user
+    data = request.get_json() or {}
+
+    thread = MessageThread.query.filter(
+        MessageThread.id == thread_id,
+        MessageThread.tenant_id == tenant.id
+    ).first()
+
+    if not thread:
+        return jsonify({'error': 'Thread not found'}), 404
+
+    is_typing = data.get('typing', False)
+    user_key = f"tenant_{user.id}"
+    name = user.full_name or user.email.split('@')[0]
+
+    typing_service.set_typing(thread_id, user_key, name, 'tenant', is_typing)
+
+    return jsonify({'status': 'ok'})
+
+
+@bp.route('/<int:thread_id>/typing', methods=['GET'])
+@jwt_required
+@tenant_required
+def get_typing_status(thread_id):
+    """
+    Vraća ko trenutno kuca u threadu.
+    """
+    tenant = g.current_tenant
+    user = g.current_user
+
+    thread = MessageThread.query.filter(
+        MessageThread.id == thread_id,
+        MessageThread.tenant_id == tenant.id
+    ).first()
+
+    if not thread:
+        return jsonify({'error': 'Thread not found'}), 404
+
+    my_key = f"tenant_{user.id}"
+    typing_users = typing_service.get_typing(thread_id, exclude_key=my_key)
+
+    return jsonify({
+        'typing': typing_users,
+        'thread_id': thread_id
     })
 
 

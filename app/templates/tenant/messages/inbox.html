@@ -328,6 +328,36 @@
         color: #94a3b8;
         margin-top: 0.25rem;
     }
+
+    /* Typing Indicator */
+    .typing-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        color: #64748b;
+        font-size: 0.8125rem;
+        font-style: italic;
+    }
+    .typing-dots {
+        display: flex;
+        gap: 3px;
+    }
+    .typing-dots span {
+        width: 6px;
+        height: 6px;
+        background: #94a3b8;
+        border-radius: 50%;
+        animation: typingBounce 1.4s infinite ease-in-out;
+    }
+    .typing-dots span:nth-child(1) { animation-delay: 0s; }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-4px); }
+    }
+
     .reply-container {
         padding: 1rem 1.5rem;
         border-top: 1px solid #e2e8f0;
@@ -624,6 +654,16 @@
                             <div x-show="msg.is_edited" class="message-edited">izmenjena</div>
                         </div>
                     </template>
+
+                    <!-- Typing Indicator -->
+                    <div x-show="typingUsers.length > 0" class="typing-indicator">
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <span x-text="getTypingText()"></span>
+                    </div>
                 </div>
 
                 <!-- Reply Box (hidden for SYSTEM threads) -->
@@ -640,6 +680,7 @@
                         <textarea
                             x-model="replyText"
                             @keydown.ctrl.enter="sendReply()"
+                            @input="onTyping()"
                             class="reply-input"
                             placeholder="Unesite poruku... (Ctrl+Enter za slanje)"
                         ></textarea>
@@ -710,6 +751,13 @@ function messagesApp() {
         showNewThreadModal: false,
         newThread: { subject: '', body: '' },
         creating: false,
+        // Real-time polling
+        typingUsers: [],
+        lastMessageId: 0,
+        messagePollingInterval: null,
+        typingPollingInterval: null,
+        isTyping: false,
+        typingTimeout: null,
 
         get systemThreads() {
             return this.threads.filter(t => t.thread_type === 'SYSTEM');
@@ -753,10 +801,15 @@ function messagesApp() {
         },
 
         async openThread(thread) {
+            // Stop any existing polling
+            this.stopPolling();
+
             this.selectedThread = thread;
             this.messagesLoading = true;
             this.messages = [];
             this.replyText = '';
+            this.typingUsers = [];
+            this.lastMessageId = 0;
 
             try {
                 const token = localStorage.getItem('access_token');
@@ -766,6 +819,11 @@ function messagesApp() {
                 const data = await response.json();
                 this.messages = data.messages || [];
 
+                // Track last message ID for polling
+                if (this.messages.length > 0) {
+                    this.lastMessageId = Math.max(...this.messages.map(m => m.id));
+                }
+
                 // Mark as read
                 await fetch(`/api/v1/threads/${thread.id}/read`, {
                     method: 'PUT',
@@ -774,6 +832,12 @@ function messagesApp() {
 
                 // Update unread count
                 thread.unread_count = 0;
+
+                // Start real-time polling (only for non-SYSTEM threads)
+                if (!thread.is_read_only) {
+                    this.messagePollingInterval = setInterval(() => this.pollNewMessages(), 3000);
+                    this.typingPollingInterval = setInterval(() => this.pollTyping(), 2000);
+                }
             } catch (error) {
                 console.error('Failed to load messages:', error);
             } finally {
@@ -782,14 +846,40 @@ function messagesApp() {
         },
 
         closeThread() {
+            this.stopPolling();
             this.selectedThread = null;
             this.messages = [];
+            this.typingUsers = [];
+        },
+
+        stopPolling() {
+            if (this.messagePollingInterval) {
+                clearInterval(this.messagePollingInterval);
+                this.messagePollingInterval = null;
+            }
+            if (this.typingPollingInterval) {
+                clearInterval(this.typingPollingInterval);
+                this.typingPollingInterval = null;
+            }
+            if (this.typingTimeout) {
+                clearTimeout(this.typingTimeout);
+                this.typingTimeout = null;
+            }
+            // Stop typing indicator when leaving
+            if (this.isTyping && this.selectedThread) {
+                this.sendTypingStatus(false);
+            }
+            this.isTyping = false;
         },
 
         async sendReply() {
             if (!this.replyText.trim() || this.sending) return;
 
             this.sending = true;
+            // Stop typing indicator
+            this.sendTypingStatus(false);
+            this.isTyping = false;
+
             try {
                 const token = localStorage.getItem('access_token');
                 const response = await fetch(`/api/v1/threads/${this.selectedThread.id}/messages`, {
@@ -806,6 +896,9 @@ function messagesApp() {
                     this.messages.push(data.data);
                     this.replyText = '';
 
+                    // Update last message ID
+                    this.lastMessageId = data.data.id;
+
                     // Update thread preview
                     this.selectedThread.last_message_preview = data.data.body.substring(0, 100);
                     this.selectedThread.last_message_at = data.data.created_at;
@@ -815,6 +908,113 @@ function messagesApp() {
             } finally {
                 this.sending = false;
             }
+        },
+
+        // Real-time polling methods
+        async pollNewMessages() {
+            if (!this.selectedThread) return;
+
+            try {
+                const token = localStorage.getItem('access_token');
+                const url = `/api/v1/threads/${this.selectedThread.id}/messages?after_id=${this.lastMessageId}`;
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.messages && data.messages.length > 0) {
+                        // Add new messages
+                        for (const msg of data.messages) {
+                            if (!this.messages.find(m => m.id === msg.id)) {
+                                this.messages.push(msg);
+                            }
+                        }
+                        // Update last message ID
+                        this.lastMessageId = Math.max(...this.messages.map(m => m.id));
+
+                        // Update thread preview
+                        const lastMsg = data.messages[data.messages.length - 1];
+                        this.selectedThread.last_message_preview = lastMsg.body.substring(0, 100);
+                        this.selectedThread.last_message_at = lastMsg.created_at;
+
+                        // Scroll to bottom
+                        this.$nextTick(() => {
+                            const container = document.querySelector('.messages-container');
+                            if (container) {
+                                container.scrollTop = container.scrollHeight;
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Poll messages error:', error);
+            }
+        },
+
+        async pollTyping() {
+            if (!this.selectedThread) return;
+
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch(`/api/v1/threads/${this.selectedThread.id}/typing`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.typingUsers = data.typing || [];
+                }
+            } catch (error) {
+                console.error('Poll typing error:', error);
+            }
+        },
+
+        onTyping() {
+            if (!this.selectedThread || this.selectedThread.is_read_only) return;
+
+            // Send typing indicator if not already typing
+            if (!this.isTyping) {
+                this.isTyping = true;
+                this.sendTypingStatus(true);
+            }
+
+            // Clear existing timeout
+            if (this.typingTimeout) {
+                clearTimeout(this.typingTimeout);
+            }
+
+            // Set new timeout to stop typing after 2 seconds
+            this.typingTimeout = setTimeout(() => {
+                this.isTyping = false;
+                this.sendTypingStatus(false);
+            }, 2000);
+        },
+
+        async sendTypingStatus(isTyping) {
+            if (!this.selectedThread) return;
+
+            try {
+                const token = localStorage.getItem('access_token');
+                await fetch(`/api/v1/threads/${this.selectedThread.id}/typing`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ typing: isTyping })
+                });
+            } catch (error) {
+                // Silent fail for typing indicator
+            }
+        },
+
+        getTypingText() {
+            if (this.typingUsers.length === 0) return '';
+            if (this.typingUsers.length === 1) {
+                return `${this.typingUsers[0].name} kuca...`;
+            }
+            return `${this.typingUsers.length} osobe kucaju...`;
         },
 
         openNewThread() {
