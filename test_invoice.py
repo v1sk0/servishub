@@ -1,4 +1,5 @@
-"""Test script for generating invoice for testservis."""
+"""Test script for generating invoice for a tenant."""
+import sys
 from app import create_app
 from app.models import Tenant, SubscriptionPayment, PlatformSettings
 from app.services.ips_service import IPSService
@@ -9,16 +10,15 @@ from decimal import Decimal
 app = create_app()
 
 with app.app_context():
-    # Find testservis tenant
+    # Find tenant - use testservis or first active tenant
     tenant = Tenant.query.filter_by(slug='testservis').first()
 
     if not tenant:
-        print("Tenant 'testservis' not found!")
-        tenants = Tenant.query.filter_by(is_active=True).limit(5).all()
-        print("Available tenants:")
-        for t in tenants:
-            print(f"  - {t.slug} (ID: {t.id})")
-        exit(1)
+        tenant = Tenant.query.filter_by(is_active=True).first()
+
+    if not tenant:
+        print("No active tenants found!")
+        sys.exit(1)
 
     print(f"Found tenant: {tenant.slug} (ID: {tenant.id})")
     print(f"  Plan: {tenant.subscription_plan}")
