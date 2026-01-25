@@ -1006,7 +1006,7 @@
                     <label for="bank_account" class="form-label">Bankovni račun <span class="optional">(opciono)</span></label>
                     <input type="text" id="bank_account" x-model="form.bank_account"
                            @blur="formatBankAccount()"
-                           @input="clearFieldError('bank_account'); autoFormatBankAccount()"
+                           @input="clearFieldError('bank_account'); limitBankAccountInput()"
                            placeholder="160-1234567890123-45"
                            maxlength="20"
                            :class="{'error': fieldErrors.bank_account}">
@@ -2088,45 +2088,18 @@ window.registerPage = function() {
             }
         },
 
-        // Auto-formatiranje bankovnog racuna dok korisnik kuca
-        autoFormatBankAccount() {
+        // Ogranicava unos bankovnog racuna - samo brojevi i crtice, max 20 karaktera
+        limitBankAccountInput() {
             let value = this.form.bank_account;
             if (!value) return;
 
-            // Ukloni sve osim brojeva i crtica
+            // Dozvoli samo brojeve i crtice
             let cleanValue = value.replace(/[^\d-]/g, '');
 
-            // Ako vec ima crtice, proveri format i ogranici duzinu
-            if (cleanValue.includes('-')) {
-                // Dozvoli samo format XXX-XXXXXXXXXXXXX-XX
-                let parts = cleanValue.split('-');
-                if (parts.length >= 1) parts[0] = parts[0].slice(0, 3);
-                if (parts.length >= 2) parts[1] = parts[1].slice(0, 13);
-                if (parts.length >= 3) parts[2] = parts[2].slice(0, 2);
-                this.form.bank_account = parts.slice(0, 3).join('-');
-                return;
-            }
+            // Ogranici duzinu na 20 karaktera (18 cifara + 2 crtice)
+            cleanValue = cleanValue.slice(0, 20);
 
-            // Ukloni sve osim brojeva
-            let digits = cleanValue.replace(/\D/g, '');
-
-            // Ogranici na maksimalno 18 cifara
-            digits = digits.slice(0, 18);
-
-            // Formatiraj samo kad ima dovoljno cifara (min 6: 3+1+2)
-            if (digits.length >= 6) {
-                let first = digits.slice(0, 3);
-                let last = digits.slice(-2);
-                let middle = digits.slice(3, -2);
-
-                // Dopuni srednji deo nulama do 13 cifara
-                middle = middle.padStart(13, '0');
-
-                this.form.bank_account = `${first}-${middle}-${last}`;
-            } else {
-                // Ako ima manje od 6 cifara, samo sacuvaj cifre
-                this.form.bank_account = digits;
-            }
+            this.form.bank_account = cleanValue;
         },
 
         // APR funkcije za automatsko popunjavanje podataka o firmi
