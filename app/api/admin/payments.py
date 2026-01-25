@@ -1387,3 +1387,83 @@ Poziv na broj: {payment_reference}
     except Exception as e:
         print(f"[EMAIL ERROR] {str(e)}")
         return False
+
+
+# ============================================================================
+# BULK OPERATIONS (v3.04)
+# ============================================================================
+
+@bp.route('/bulk-verify', methods=['POST'])
+@platform_admin_required
+def bulk_verify_payments():
+    """
+    Bulk verifikacija vise faktura odjednom.
+    Koristi verify_payment_manual() helper funkciju.
+
+    Body JSON:
+        - payment_ids: [1, 2, 3] - lista ID-eva faktura
+
+    Response:
+    {
+        "success": 2,
+        "failed": 1,
+        "errors": [{"id": 3, "error": "..."}]
+    }
+    """
+    from app.services.reconciliation import verify_payment_manual
+
+    data = request.get_json() or {}
+    payment_ids = data.get('payment_ids', [])
+
+    if not payment_ids:
+        return jsonify({'error': 'payment_ids is required'}), 400
+
+    if len(payment_ids) > 100:
+        return jsonify({'error': 'Max 100 payments per request'}), 400
+
+    results = {'success': 0, 'failed': 0, 'errors': []}
+
+    for pid in payment_ids:
+        try:
+            payment = SubscriptionPayment.query.get(pid)
+            if not payment:
+                results['failed'] += 1
+                results['errors'].append({'id': pid, 'error': 'Payment not found'})
+                continue
+
+            if payment.status not in ['PENDING', 'OVERDUE']:
+                results['failed'] += 1
+                results['errors'].append({'id': pid, 'error': f'Invalid status: {payment.status}'})
+                continue
+
+            result = verify_payment_manual(
+                payment=payment,
+                verified_by='BULK_VERIFY',
+                admin_id=g.current_admin.id
+            )
+
+            if result['success']:
+                results['success'] += 1
+            else:
+                results['failed'] += 1
+                results['errors'].append({'id': pid, 'error': result.get('error', 'Unknown error')})
+
+        except Exception as e:
+            results['failed'] += 1
+            results['errors'].append({'id': pid, 'error': str(e)})
+
+    # Audit log za bulk operaciju
+    AdminActivityLog.log(
+        action_type=AdminActionType.BULK_VERIFY if hasattr(AdminActionType, 'BULK_VERIFY') else 'BULK_VERIFY',
+        target_type='payments',
+        target_id=None,
+        target_name=f'{len(payment_ids)} payments',
+        details={
+            'payment_ids': payment_ids,
+            'results': results
+        }
+    )
+
+    db.session.commit()
+
+    return jsonify(results)

@@ -273,3 +273,103 @@ def get_reconciliation_summary(days: int = 30) -> Dict[str, Any]:
             'amount': float(unmatched_amount)
         }
     }
+
+
+def verify_payment_manual(
+    payment: SubscriptionPayment,
+    verified_by: str = 'MANUAL',
+    admin_id: Optional[int] = None
+) -> Dict[str, Any]:
+    """
+    Rucna verifikacija uplate BEZ bank transakcije.
+    Koristi se za bulk verify i manual verify bez izvoda.
+
+    Za razliku od reconcile_payment() koja zahteva bank_transaction,
+    ova funkcija:
+    - NE ocekuje bank_transaction parametar
+    - Koristi datetime.utcnow() za paid_at
+    - Postavlja reconciled_via na 'MANUAL_*'
+
+    Args:
+        payment: SubscriptionPayment to verify
+        verified_by: Type of verification (e.g., 'BULK_VERIFY', 'MANUAL')
+        admin_id: Admin ID for audit
+
+    Returns:
+        Dict with verification details
+
+    Side Effects:
+        - Updates payment status
+        - Updates tenant debt
+        - Creates system message
+        - Does NOT commit - caller must commit!
+    """
+    tenant = Tenant.query.get(payment.tenant_id)
+    if not tenant:
+        return {'success': False, 'error': 'Tenant not found'}
+
+    result = {
+        'success': True,
+        'payment_id': payment.id,
+        'changes': []
+    }
+
+    # 1. Update payment status
+    old_status = payment.status
+    if old_status != 'PAID':
+        payment.status = 'PAID'
+        payment.paid_at = datetime.utcnow()
+        payment.reconciled_at = datetime.utcnow()
+        payment.reconciled_via = f'MANUAL_{verified_by}'
+        result['changes'].append(f'status_changed:{old_status}->PAID')
+
+    # 2. Update tenant debt (ISTA LOGIKA kao reconcile_payment)
+    old_debt = tenant.current_debt or Decimal('0')
+    if old_debt > 0:
+        new_debt = max(Decimal('0'), old_debt - payment.total_amount)
+        tenant.current_debt = new_debt
+        result['changes'].append(f'debt_updated:{float(old_debt)}->{float(new_debt)}')
+        result['debt_change'] = float(old_debt - new_debt)
+
+    # 3. Update tenant billing status
+    tenant.last_payment_at = datetime.utcnow()
+    if tenant.days_overdue and tenant.days_overdue > 0:
+        tenant.days_overdue = 0
+        result['changes'].append('days_overdue_reset')
+
+    # 4. Trust score - manual verify daje bonus
+    if hasattr(tenant, 'update_trust_score'):
+        tenant.update_trust_score(+10, f'Rucna potvrda uplate ({verified_by})')
+        result['changes'].append('trust_score_+10')
+
+    # 5. Unblock tenant if needed
+    if tenant.status in [TenantStatus.SUSPENDED, TenantStatus.EXPIRED]:
+        if (tenant.current_debt or Decimal('0')) <= Decimal('0'):
+            if hasattr(tenant, 'unblock'):
+                tenant.unblock()
+            else:
+                tenant.status = TenantStatus.ACTIVE
+            result['changes'].append('tenant_unblocked')
+
+    # 6. System message to tenant
+    try:
+        TenantMessage.create_system_message(
+            tenant_id=tenant.id,
+            subject='Uplata potvrdjena',
+            body=f'''Vasa uplata za fakturu {payment.invoice_number} je rucno potvrdjena.
+
+Iznos: {float(payment.total_amount):,.2f} {payment.currency}
+Datum potvrde: {datetime.utcnow().strftime("%d.%m.%Y")}
+
+Vase trenutno dugovanje: {float(tenant.current_debt or 0):,.2f} RSD
+
+Hvala na poverenju!''',
+            category=MessageCategory.BILLING,
+            priority=MessagePriority.NORMAL,
+            related_payment_id=payment.id
+        )
+        result['changes'].append('message_sent')
+    except Exception as e:
+        result['message_error'] = str(e)
+
+    return result

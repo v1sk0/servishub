@@ -370,9 +370,9 @@ class BillingTasksService:
                 # Generisi broj fakture (race-safe sa SELECT FOR UPDATE)
                 invoice_number = get_next_invoice_number(now.year)
 
-                # Generisi payment reference (IPS format)
+                # Generisi payment reference (IPS format sa godinom za v3.04)
                 invoice_seq = int(invoice_number.split('-')[-1])  # SH-2026-000042 → 42
-                ref_data = IPSService.generate_payment_reference(tenant.id, invoice_seq)
+                ref_data = IPSService.generate_payment_reference(tenant.id, invoice_seq, now.year)
 
                 # Kreiraj fakturu
                 payment = SubscriptionPayment(

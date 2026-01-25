@@ -674,3 +674,73 @@ def get_stats():
         'total_unmatched_amount': float(unmatched_amount),
         'oldest_unmatched': oldest.transaction_date.isoformat() if oldest else None
     })
+
+
+# ============================================================================
+# BULK OPERATIONS (v3.04)
+# ============================================================================
+
+@bp.route('/bulk-ignore', methods=['POST'])
+@platform_admin_required
+def bulk_ignore_transactions():
+    """
+    Bulk ignorisanje vise transakcija odjednom.
+    Koristi se za bankarske provizije, duplikate, itd.
+
+    Body JSON:
+        - transaction_ids: [1, 2, 3] - lista ID-eva transakcija
+        - reason: str - razlog ignorisanja (opciono)
+
+    Response:
+    {
+        "ignored": 3,
+        "already_processed": 1
+    }
+    """
+    data = request.get_json() or {}
+    txn_ids = data.get('transaction_ids', [])
+    reason = data.get('reason', 'No reason provided')
+
+    if not txn_ids:
+        return jsonify({'error': 'transaction_ids is required'}), 400
+
+    if len(txn_ids) > 100:
+        return jsonify({'error': 'Max 100 transactions per request'}), 400
+
+    # Fetch only UNMATCHED transactions
+    transactions = BankTransaction.query.filter(
+        BankTransaction.id.in_(txn_ids)
+    ).all()
+
+    ignored = 0
+    already_processed = 0
+
+    for txn in transactions:
+        if txn.match_status == MatchStatus.UNMATCHED:
+            txn.match_status = MatchStatus.IGNORED
+            txn.match_notes = f'Bulk ignored: {reason}'
+            txn.matched_at = datetime.utcnow()
+            ignored += 1
+        else:
+            already_processed += 1
+
+    # Audit log za bulk operaciju
+    AdminActivityLog.log(
+        action_type=AdminActionType.BULK_IGNORE if hasattr(AdminActionType, 'BULK_IGNORE') else 'BULK_IGNORE',
+        target_type='bank_transactions',
+        target_id=None,
+        target_name=f'{len(txn_ids)} transactions',
+        details={
+            'transaction_ids': txn_ids,
+            'reason': reason,
+            'ignored': ignored,
+            'already_processed': already_processed
+        }
+    )
+
+    db.session.commit()
+
+    return jsonify({
+        'ignored': ignored,
+        'already_processed': already_processed
+    })
