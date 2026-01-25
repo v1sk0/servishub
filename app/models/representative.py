@@ -290,7 +290,27 @@ class SubscriptionPayment(db.Model):
             'verified_by_id': self.verified_by_id,
             'is_auto_generated': self.is_auto_generated,
             'created_at': self.created_at.isoformat() if self.created_at else None,
+            # Reconciliation info
+            'reconciled_at': self.reconciled_at.isoformat() if self.reconciled_at else None,
+            'reconciled_via': self.reconciled_via,
         }
+
+        # Bank import info za PAID fakture
+        if self.bank_transaction and self.bank_transaction.import_batch:
+            batch = self.bank_transaction.import_batch
+            result['bank_import'] = {
+                'import_id': batch.id,
+                'filename': batch.filename,
+                'statement_date': batch.statement_date.isoformat() if batch.statement_date else None,
+                'statement_number': batch.statement_number,
+                'bank_code': batch.bank_code,
+                'bank_name': batch.bank_name,
+                'transaction_date': self.bank_transaction.transaction_date.isoformat() if self.bank_transaction.transaction_date else None,
+                'payer_name': self.bank_transaction.payer_name,
+            }
+        else:
+            result['bank_import'] = None
+
         if include_items:
             result['items'] = self.items_json or []
         return result
