@@ -1,11 +1,11 @@
 """
 Alta Banka XML Parser.
 
-Alta banka šalje izvode kao XML attachment na email.
-Format je specifičan za Alta banku.
+Alta banka šalje izvode kao XML attachment na email (pmtnotification format).
+Format je specifičan za Alta banku iBanking sistem.
 """
 import xml.etree.ElementTree as ET
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional, List
 
@@ -14,33 +14,50 @@ from .base import BaseBankParser, ParseResult, ParsedTransaction
 
 class AltaBankParser(BaseBankParser):
     """
-    Parser za Alta Banka XML izvode.
+    Parser za Alta Banka XML izvode (pmtnotification format).
 
-    XML struktura (primer):
-    <Statement>
-        <Header>
-            <AccountNumber>265-1234567890-12</AccountNumber>
-            <StatementNumber>001</StatementNumber>
-            <StatementDate>2026-01-24</StatementDate>
-        </Header>
-        <Transactions>
-            <Transaction>
-                <Type>C</Type>  <!-- C=Credit, D=Debit -->
-                <Date>2026-01-24</Date>
-                <Amount>5400.00</Amount>
-                <Currency>RSD</Currency>
-                <PayerName>MOBILNI DOKTOR DOO</PayerName>
-                <PayerAccount>160-123456-78</PayerAccount>
-                <Reference>97 000123 000001</Reference>
-                <Purpose>Pretplata SH-2026-000001</Purpose>
-                <PurposeCode>289</PurposeCode>
-            </Transaction>
-        </Transactions>
-    </Statement>
+    Pravi XML struktura od Alta banke:
+    <pmtnotification>
+        <acctid>190-0000000029120-24</acctid>
+        <stmtnumber>13</stmtnumber>
+        <ledgerbal>
+            <dtasof>2026-01-22T00:00:00</dtasof>
+        </ledgerbal>
+        <trnlist count="3">
+            <stmttrn>
+                <fitid>870001081810062</fitid>
+                <benefit>credit</benefit>  <!-- credit=uplata, debit=isplata -->
+                <payeeinfo>
+                    <name>FIRMA DOO</name>
+                    <city>BEOGRAD</city>
+                </payeeinfo>
+                <payeeaccountinfo>
+                    <acctid>190-0000000023845-38</acctid>
+                    <bankid>190</bankid>
+                    <bankname>ALTA BANKA A.D. BEOGRAD</bankname>
+                </payeeaccountinfo>
+                <dtposted>2026-01-22T00:00:00</dtposted>
+                <trnamt>125259.00</trnamt>
+                <purpose>UPLATA PAZARA</purpose>
+                <purposecode>165</purposecode>
+                <curdef>RSD</curdef>
+                <refnumber>22012026</refnumber>
+                <refmodel>97</refmodel>
+                <payeerefnumber>220126-20-4-7-pp</payeerefnumber>
+                <payeerefmodel>97</payeerefmodel>
+            </stmttrn>
+        </trnlist>
+        <rejected count="0">
+            <!-- Odbijene transakcije -->
+        </rejected>
+    </pmtnotification>
     """
 
     BANK_CODE = 'ALTA'
     BANK_NAME = 'Alta Banka'
+
+    # Alta banka ima bank ID 190
+    ALTA_BANK_ID = '190'
 
     def can_parse(self, content: bytes, filename: str) -> bool:
         """Proverava da li je Alta Banka XML format."""
@@ -49,15 +66,22 @@ class AltaBankParser(BaseBankParser):
             text = content.decode('utf-8')
             root = ET.fromstring(text)
 
-            # Proveri karakteristične elemente
-            if root.tag == 'Statement':
+            # Proveri za pmtnotification root element
+            if root.tag == 'pmtnotification':
                 # Proveri za Alta-specifične markere
-                header = root.find('Header')
-                if header is not None:
-                    account = header.find('AccountNumber')
-                    if account is not None and account.text:
-                        # Alta računi počinju sa 265-
-                        if account.text.startswith('265'):
+                acctid = root.find('acctid')
+                if acctid is not None and acctid.text:
+                    # Alta računi počinju sa 190-
+                    if acctid.text.startswith(self.ALTA_BANK_ID):
+                        return True
+
+                # Alternativno, proveri bankname u transakcijama
+                trnlist = root.find('trnlist')
+                if trnlist is not None:
+                    stmttrn = trnlist.find('stmttrn')
+                    if stmttrn is not None:
+                        bankname = stmttrn.find('.//bankname')
+                        if bankname is not None and 'ALTA' in (bankname.text or '').upper():
                             return True
 
             return False
@@ -72,29 +96,37 @@ class AltaBankParser(BaseBankParser):
         transactions: List[ParsedTransaction] = []
         warnings: List[str] = []
 
-        # Header info
-        header = root.find('Header')
-        statement_date = None
+        # Statement info
         statement_number = None
+        statement_date = None
 
-        if header is not None:
-            date_elem = header.find('StatementDate')
-            if date_elem is not None:
-                statement_date = self.parse_date(date_elem.text)
+        stmtnum_elem = root.find('stmtnumber')
+        if stmtnum_elem is not None:
+            statement_number = stmtnum_elem.text
 
-            num_elem = header.find('StatementNumber')
-            if num_elem is not None:
-                statement_number = num_elem.text
+        # Datum izvoda iz ledgerbal/dtasof
+        ledgerbal = root.find('ledgerbal')
+        if ledgerbal is not None:
+            dtasof = ledgerbal.find('dtasof')
+            if dtasof is not None:
+                statement_date = self._parse_datetime(dtasof.text)
 
-        # Transactions
-        txns_elem = root.find('Transactions')
-        if txns_elem is not None:
-            for txn_elem in txns_elem.findall('Transaction'):
+        # Parse transactions from trnlist
+        trnlist = root.find('trnlist')
+        if trnlist is not None:
+            for stmttrn in trnlist.findall('stmttrn'):
                 try:
-                    txn = self._parse_transaction(txn_elem)
+                    txn = self._parse_transaction(stmttrn)
                     transactions.append(txn)
                 except Exception as e:
                     warnings.append(f'Failed to parse transaction: {str(e)}')
+
+        # Parse rejected transactions (opciono, za informaciju)
+        rejected = root.find('rejected')
+        if rejected is not None:
+            rejected_count = rejected.get('count', '0')
+            if rejected_count and int(rejected_count) > 0:
+                warnings.append(f'Izvod sadrži {rejected_count} odbijenih transakcija')
 
         return ParseResult(
             bank_code=self.BANK_CODE,
@@ -108,42 +140,84 @@ class AltaBankParser(BaseBankParser):
         )
 
     def _parse_transaction(self, elem: ET.Element) -> ParsedTransaction:
-        """Parsira pojedinačnu transakciju."""
-        # Tip: C=Credit, D=Debit
-        type_elem = elem.find('Type')
-        txn_type = 'CREDIT' if type_elem is not None and type_elem.text == 'C' else 'DEBIT'
+        """Parsira pojedinačnu transakciju iz stmttrn elementa."""
 
-        # Datum
-        date_elem = elem.find('Date')
-        txn_date = self.parse_date(date_elem.text) if date_elem is not None else date.today()
+        # Tip: credit=CREDIT, debit=DEBIT
+        benefit_elem = elem.find('benefit')
+        if benefit_elem is not None and benefit_elem.text:
+            txn_type = 'CREDIT' if benefit_elem.text.lower() == 'credit' else 'DEBIT'
+        else:
+            txn_type = 'CREDIT'
+
+        # Datum transakcije (dtposted)
+        dtposted = elem.find('dtposted')
+        txn_date = self._parse_datetime(dtposted.text) if dtposted is not None else date.today()
+
+        # Value date (dtavail)
+        dtavail = elem.find('dtavail')
+        value_date = self._parse_datetime(dtavail.text) if dtavail is not None else None
 
         # Iznos
-        amount_elem = elem.find('Amount')
-        amount = self.parse_amount(amount_elem.text) if amount_elem is not None else Decimal('0')
+        trnamt = elem.find('trnamt')
+        amount = self.parse_amount(trnamt.text) if trnamt is not None else Decimal('0')
 
         # Valuta
-        currency_elem = elem.find('Currency')
-        currency = currency_elem.text if currency_elem is not None else 'RSD'
+        curdef = elem.find('curdef')
+        currency = curdef.text if curdef is not None and curdef.text else 'RSD'
 
-        # Platilac
-        payer_name = self._get_text(elem, 'PayerName')
-        payer_account = self._get_text(elem, 'PayerAccount')
-        payer_address = self._get_text(elem, 'PayerAddress')
+        # Payer info - iz payeeinfo elementa
+        payer_name = None
+        payer_address = None
+        payeeinfo = elem.find('payeeinfo')
+        if payeeinfo is not None:
+            name_elem = payeeinfo.find('name')
+            payer_name = name_elem.text.strip() if name_elem is not None and name_elem.text else None
 
-        # Reference (poziv na broj)
-        reference_raw = self._get_text(elem, 'Reference')
-        model, reference = self.normalize_reference(reference_raw)
+            city_elem = payeeinfo.find('city')
+            payer_address = city_elem.text.strip() if city_elem is not None and city_elem.text else None
+
+        # Payer account - iz payeeaccountinfo
+        payer_account = None
+        payeeaccountinfo = elem.find('payeeaccountinfo')
+        if payeeaccountinfo is not None:
+            acctid = payeeaccountinfo.find('acctid')
+            payer_account = acctid.text.strip() if acctid is not None and acctid.text else None
+
+        # Reference (poziv na broj) - može biti u refnumber ili payeerefnumber
+        # refnumber = poziv na broj primaoca
+        # payeerefnumber = poziv na broj platioca
+        reference_raw = None
+        reference = None
+        model = None
+
+        # Prvo probaj refnumber (primateljeva referenca)
+        refnumber = elem.find('refnumber')
+        refmodel = elem.find('refmodel')
+
+        if refnumber is not None and refnumber.text and refnumber.text.strip():
+            reference_raw = refnumber.text.strip()
+            model = refmodel.text.strip() if refmodel is not None and refmodel.text else None
+            model_part, reference = self.normalize_reference(reference_raw)
+            if model_part and not model:
+                model = model_part
+        else:
+            # Ako nema refnumber, koristi payeerefnumber
+            payeerefnumber = elem.find('payeerefnumber')
+            payeerefmodel = elem.find('payeerefmodel')
+
+            if payeerefnumber is not None and payeerefnumber.text:
+                reference_raw = payeerefnumber.text.strip()
+                model = payeerefmodel.text.strip() if payeerefmodel is not None and payeerefmodel.text else None
+                model_part, reference = self.normalize_reference(reference_raw)
+                if model_part and not model:
+                    model = model_part
 
         # Svrha
-        purpose = self._get_text(elem, 'Purpose')
-        purpose_code = self._get_text(elem, 'PurposeCode')
+        purpose = self._get_text(elem, 'purpose')
+        purpose_code = self._get_text(elem, 'purposecode')
 
-        # Bank ID
-        bank_id = self._get_text(elem, 'TransactionId')
-
-        # Value date
-        value_date_elem = elem.find('ValueDate')
-        value_date = self.parse_date(value_date_elem.text) if value_date_elem is not None else None
+        # Bank transaction ID
+        bank_id = self._get_text(elem, 'fitid')
 
         return ParsedTransaction(
             type=txn_type,
@@ -162,6 +236,22 @@ class AltaBankParser(BaseBankParser):
             value_date=value_date,
             raw={'xml': ET.tostring(elem, encoding='unicode')}
         )
+
+    def _parse_datetime(self, dt_str: str) -> Optional[date]:
+        """Parsira datetime string u date (format: 2026-01-22T00:00:00)."""
+        if not dt_str:
+            return None
+
+        dt_str = dt_str.strip()
+
+        # Format: 2026-01-22T00:00:00
+        try:
+            if 'T' in dt_str:
+                return datetime.fromisoformat(dt_str.replace('Z', '+00:00')).date()
+            else:
+                return self.parse_date(dt_str)
+        except Exception:
+            return self.parse_date(dt_str)
 
     def _get_text(self, elem: ET.Element, tag: str) -> Optional[str]:
         """Helper za čitanje teksta iz child elementa."""

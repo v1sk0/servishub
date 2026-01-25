@@ -8,7 +8,8 @@
 
 {% block content %}
 <div :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
-     x-data="bankImportPage()" x-init="loadImports()">
+     x-data="bankImportPage()" x-init="loadImports()"
+     @keydown.escape.window="showPreviewModal = false">
     <div class="admin-wrapper min-h-screen bg-gray-100">
         {% set active_page = 'bank_import' %}
         {% include "admin/_sidebar.html" %}
@@ -147,6 +148,184 @@
                     </svg>
                 </div>
 
+                <!-- Preview Modal -->
+                <div x-show="showPreviewModal" x-cloak
+                     class="fixed inset-0 z-50 overflow-y-auto"
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0">
+                    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+                        <!-- Overlay -->
+                        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" @click="showPreviewModal = false"></div>
+
+                        <!-- Modal panel -->
+                        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100">
+
+                            <!-- Header -->
+                            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900">Pregled Izvoda</h3>
+                                        <p class="text-sm text-gray-500" x-text="previewData?.filename"></p>
+                                    </div>
+                                    <button @click="showPreviewModal = false" class="text-gray-400 hover:text-gray-600">
+                                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Info section -->
+                            <div class="px-6 py-4 bg-blue-50 border-b border-blue-100" x-show="previewData">
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <span class="text-xs text-gray-500">Banka</span>
+                                        <p class="font-medium text-gray-900" x-text="previewData?.bank_name"></p>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs text-gray-500">Format</span>
+                                        <p class="font-medium text-gray-900" x-text="previewData?.format"></p>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs text-gray-500">Datum izvoda</span>
+                                        <p class="font-medium text-gray-900" x-text="formatDate(previewData?.statement_date)"></p>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs text-gray-500">Broj izvoda</span>
+                                        <p class="font-medium text-gray-900" x-text="previewData?.statement_number || '-'"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Duplicate warning -->
+                            <div x-show="previewData?.is_duplicate" class="px-6 py-3 bg-yellow-50 border-b border-yellow-100">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <span class="text-yellow-800 font-medium">Ovaj izvod je vec uvezen!</span>
+                                    <span class="text-yellow-600 ml-2" x-text="'(Import ID: ' + previewData?.existing_import_id + ')'"></span>
+                                </div>
+                            </div>
+
+                            <!-- Summary stats -->
+                            <div class="px-6 py-4 border-b border-gray-200" x-show="previewData?.summary">
+                                <div class="grid grid-cols-3 md:grid-cols-5 gap-4 text-center">
+                                    <div>
+                                        <p class="text-2xl font-bold text-gray-900" x-text="previewData?.summary?.total_count"></p>
+                                        <p class="text-xs text-gray-500">Ukupno</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-2xl font-bold text-green-600" x-text="previewData?.summary?.credit_count"></p>
+                                        <p class="text-xs text-gray-500">Uplate</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-2xl font-bold text-red-600" x-text="previewData?.summary?.debit_count"></p>
+                                        <p class="text-xs text-gray-500">Isplate</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-2xl font-bold text-green-600" x-text="formatPrice(previewData?.summary?.total_credit)"></p>
+                                        <p class="text-xs text-gray-500">Ukupno uplate</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-2xl font-bold text-red-600" x-text="formatPrice(previewData?.summary?.total_debit)"></p>
+                                        <p class="text-xs text-gray-500">Ukupno isplate</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Transactions table -->
+                            <div class="max-h-96 overflow-y-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50 sticky top-0">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">#</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Tip</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Datum</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Platilac</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">Poziv na broj</th>
+                                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500">Iznos</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <template x-for="(txn, idx) in previewData?.transactions || []" :key="idx">
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-4 py-2 text-sm text-gray-500" x-text="idx + 1"></td>
+                                                <td class="px-4 py-2">
+                                                    <span class="px-2 py-1 text-xs font-medium rounded-full"
+                                                          :class="{
+                                                              'bg-green-100 text-green-800': txn.type === 'CREDIT',
+                                                              'bg-red-100 text-red-800': txn.type === 'DEBIT'
+                                                          }"
+                                                          x-text="txn.type === 'CREDIT' ? 'Uplata' : 'Isplata'"></span>
+                                                </td>
+                                                <td class="px-4 py-2 text-sm text-gray-600" x-text="formatDate(txn.date)"></td>
+                                                <td class="px-4 py-2 text-sm text-gray-900" x-text="txn.payer_name || '-'"></td>
+                                                <td class="px-4 py-2 text-sm text-gray-600 font-mono" x-text="txn.reference || '-'"></td>
+                                                <td class="px-4 py-2 text-sm text-right font-medium"
+                                                    :class="{
+                                                        'text-green-600': txn.type === 'CREDIT',
+                                                        'text-red-600': txn.type === 'DEBIT'
+                                                    }"
+                                                    x-text="formatPrice(txn.amount)"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Progress bar during import -->
+                            <div x-show="importProgress.active" class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-700" x-text="importProgress.message"></span>
+                                    <span class="text-sm text-gray-500" x-text="importProgress.percent + '%'"></span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-red-600 h-2.5 rounded-full transition-all duration-300"
+                                         :style="'width: ' + importProgress.percent + '%'"></div>
+                                </div>
+                            </div>
+
+                            <!-- Footer actions -->
+                            <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                                <button @click="showPreviewModal = false"
+                                        :disabled="importProgress.active"
+                                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 disabled:opacity-50">
+                                    Odustani
+                                </button>
+                                <button @click="confirmImport()"
+                                        :disabled="previewData?.is_duplicate || importProgress.active"
+                                        class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg disabled:opacity-50 flex items-center">
+                                    <template x-if="!importProgress.active">
+                                        <span>
+                                            <svg class="w-5 h-5 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                            </svg>
+                                            Uvezi izvod
+                                        </span>
+                                    </template>
+                                    <template x-if="importProgress.active">
+                                        <span>
+                                            <svg class="animate-spin h-5 w-5 mr-2 inline" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                            </svg>
+                                            Uvoz u toku...
+                                        </span>
+                                    </template>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Imports lista -->
                 <div x-show="!loading" x-cloak class="admin-card bg-white shadow rounded-lg overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-200">
@@ -229,6 +408,18 @@ function bankImportPage() {
         processingId: null,
         theme: localStorage.getItem('admin-theme') || 'light',
 
+        // Preview modal state
+        showPreviewModal: false,
+        previewData: null,
+        pendingFile: null,
+
+        // Import progress
+        importProgress: {
+            active: false,
+            percent: 0,
+            message: ''
+        },
+
         statusLabels: {
             'PENDING': 'Na cekanju',
             'PROCESSING': 'U obradi',
@@ -294,12 +485,49 @@ function bankImportPage() {
         },
 
         async uploadFile(file) {
+            // Prvo pozivamo preview endpoint da prikazemo transakcije pre importa
             const token = localStorage.getItem('admin_access_token');
             this.uploading = true;
+            this.pendingFile = file;
 
             try {
                 const formData = new FormData();
                 formData.append('file', file);
+
+                const r = await fetch('/api/admin/bank-import/preview', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token },
+                    body: formData
+                });
+
+                const data = await r.json();
+
+                if (r.ok) {
+                    this.previewData = data;
+                    this.showPreviewModal = true;
+                } else {
+                    window.showToast && showToast(data.error || 'Greska pri parsiranju fajla', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                window.showToast && showToast('Greska pri ucitavanju fajla', 'error');
+            } finally {
+                this.uploading = false;
+            }
+        },
+
+        async confirmImport() {
+            // Korisnik je potvrdio import - sada zapravo cuvamo u bazu
+            if (!this.pendingFile || this.previewData?.is_duplicate) return;
+
+            const token = localStorage.getItem('admin_access_token');
+            this.importProgress = { active: true, percent: 10, message: 'Ucitavanje fajla...' };
+
+            try {
+                const formData = new FormData();
+                formData.append('file', this.pendingFile);
+
+                this.importProgress = { active: true, percent: 30, message: 'Parsiranje izvoda...' };
 
                 const r = await fetch('/api/admin/bank-import', {
                     method: 'POST',
@@ -310,16 +538,49 @@ function bankImportPage() {
                 const data = await r.json();
 
                 if (r.ok) {
-                    window.showToast && showToast('Import uspesan! Pronadjeno ' + data.transactions_found + ' transakcija.', 'success');
+                    this.importProgress = { active: true, percent: 60, message: 'Cuvanje transakcija...' };
+
+                    // Automatski pokreni procesiranje ako ima transakcija
+                    if (data.import_id && data.transactions_found > 0) {
+                        this.importProgress = { active: true, percent: 80, message: 'Uparivanje transakcija...' };
+
+                        const processR = await fetch('/api/admin/bank-import/' + data.import_id + '/process', {
+                            method: 'POST',
+                            headers: { 'Authorization': 'Bearer ' + token }
+                        });
+
+                        const processData = await processR.json();
+
+                        this.importProgress = { active: true, percent: 100, message: 'Zavrseno!' };
+
+                        await new Promise(resolve => setTimeout(resolve, 500));
+
+                        if (processR.ok) {
+                            window.showToast && showToast(
+                                'Import uspesan! Upareno ' + processData.matched + ' od ' + data.transactions_found + ' transakcija.',
+                                'success'
+                            );
+                        } else {
+                            window.showToast && showToast('Import uspesan, ali procesiranje nije uspelo: ' + (processData.error || ''), 'warning');
+                        }
+                    } else {
+                        this.importProgress = { active: true, percent: 100, message: 'Zavrseno!' };
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        window.showToast && showToast('Import uspesan! Pronadjeno ' + data.transactions_found + ' transakcija.', 'success');
+                    }
+
+                    this.showPreviewModal = false;
                     this.loadImports();
                 } else {
-                    window.showToast && showToast(data.error || 'Greska pri uploadu', 'error');
+                    window.showToast && showToast(data.error || 'Greska pri uvozu', 'error');
                 }
             } catch (e) {
                 console.error(e);
-                window.showToast && showToast('Greska pri uploadu fajla', 'error');
+                window.showToast && showToast('Greska pri uvozu izvoda', 'error');
             } finally {
-                this.uploading = false;
+                this.importProgress = { active: false, percent: 0, message: '' };
+                this.pendingFile = null;
+                this.previewData = null;
             }
         },
 

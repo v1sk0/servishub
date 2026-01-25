@@ -325,6 +325,148 @@ def upload_statement():
 
 
 # ============================================================================
+# PREVIEW (BEZ ČUVANJA U BAZU)
+# ============================================================================
+
+@bp.route('/preview', methods=['POST'])
+@platform_admin_required
+def preview_statement():
+    """
+    Parsira fajl i vraća preview bez čuvanja u bazu.
+
+    Korisnik može pregledati transakcije pre nego što potvrdi import.
+
+    Request: multipart/form-data
+        - file: Bank statement file (CSV/XML)
+
+    Response:
+    {
+        "filename": "izvod.csv",
+        "bank_code": "ALTA",
+        "bank_name": "Alta Banka",
+        "format": "XML",
+        "statement_date": "2026-01-25",
+        "statement_number": "001",
+        "transactions": [
+            {
+                "type": "CREDIT",
+                "date": "2026-01-25",
+                "amount": 5400.00,
+                "currency": "RSD",
+                "payer_name": "FIRMA DOO",
+                "reference": "97000123400042",
+                "purpose": "Pretplata"
+            },
+            ...
+        ],
+        "summary": {
+            "total_count": 45,
+            "credit_count": 42,
+            "debit_count": 3,
+            "total_credit": 150000.00,
+            "total_debit": 5000.00
+        },
+        "warnings": [],
+        "is_duplicate": false,
+        "existing_import_id": null
+    }
+    """
+    if 'file' not in request.files:
+        return jsonify({'error': 'Fajl nije priložen'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'Nije izabran fajl'}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({
+            'error': f'Nepodržan format fajla. Dozvoljeni: {", ".join(ALLOWED_EXTENSIONS)}'
+        }), 400
+
+    # Read file content
+    file_content = file.read()
+    file_size = len(file_content)
+
+    if file_size == 0:
+        return jsonify({'error': 'Fajl je prazan'}), 400
+
+    # Calculate hash for deduplication check
+    file_hash = hashlib.sha256(file_content).hexdigest()
+
+    # Check for duplicate
+    existing = BankStatementImport.query.filter_by(file_hash=file_hash).first()
+    is_duplicate = existing is not None
+
+    # Parse file
+    try:
+        parse_result = detect_bank_and_parse(
+            file_content,
+            filename=file.filename,
+            force_bank=None
+        )
+    except ValueError as e:
+        return jsonify({'error': f'Greška pri parsiranju: {str(e)}'}), 400
+    except Exception as e:
+        return jsonify({'error': f'Neočekivana greška: {str(e)}'}), 500
+
+    # Build transaction list for preview
+    transactions_preview = []
+    credit_count = 0
+    debit_count = 0
+    total_credit = 0
+    total_debit = 0
+
+    for txn_data in parse_result.get('transactions', []):
+        txn_type = txn_data.get('type', 'CREDIT')
+        amount = float(txn_data.get('amount', 0))
+
+        transactions_preview.append({
+            'type': txn_type,
+            'date': txn_data.get('date').isoformat() if txn_data.get('date') else None,
+            'amount': amount,
+            'currency': txn_data.get('currency', 'RSD'),
+            'payer_name': txn_data.get('payer_name'),
+            'payer_account': txn_data.get('payer_account'),
+            'reference': txn_data.get('reference'),
+            'reference_raw': txn_data.get('reference_raw'),
+            'purpose': txn_data.get('purpose')
+        })
+
+        if txn_type == 'CREDIT':
+            credit_count += 1
+            total_credit += amount
+        else:
+            debit_count += 1
+            total_debit += amount
+
+    statement_date = parse_result.get('statement_date')
+
+    return jsonify({
+        'filename': file.filename,
+        'file_hash': file_hash,
+        'file_size': file_size,
+        'bank_code': parse_result.get('bank_code', 'UNK'),
+        'bank_name': parse_result.get('bank_name', 'Nepoznata banka'),
+        'format': parse_result.get('format', 'CSV'),
+        'encoding': parse_result.get('encoding', 'UTF-8'),
+        'statement_date': statement_date.isoformat() if statement_date else None,
+        'statement_number': parse_result.get('statement_number'),
+        'transactions': transactions_preview,
+        'summary': {
+            'total_count': credit_count + debit_count,
+            'credit_count': credit_count,
+            'debit_count': debit_count,
+            'total_credit': total_credit,
+            'total_debit': total_debit
+        },
+        'warnings': parse_result.get('warnings', []),
+        'is_duplicate': is_duplicate,
+        'existing_import_id': existing.id if existing else None,
+        'existing_import_date': existing.imported_at.isoformat() if existing else None
+    })
+
+
+# ============================================================================
 # PROCESS / AUTO-MATCH
 # ============================================================================
 
