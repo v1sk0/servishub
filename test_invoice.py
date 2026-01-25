@@ -76,13 +76,15 @@ with app.app_context():
         invoice_number=invoice_number,
         payment_reference=ref_data['full'],
         payment_reference_model=ref_data['model'],
+        subtotal=test_amount,
         total_amount=test_amount,
         currency='RSD',
         status='PENDING',
         period_start=now.replace(day=1),
         period_end=now.replace(day=28),
         due_date=now.replace(day=15),
-        created_at=now
+        created_at=now,
+        is_auto_generated=False
     )
 
     db.session.add(payment)
