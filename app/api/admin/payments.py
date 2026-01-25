@@ -191,6 +191,122 @@ def get_payments_stats():
     })
 
 
+@bp.route('/by-tenant', methods=['GET'])
+@platform_admin_required
+def get_payments_by_tenant():
+    """
+    Sažetak faktura grupisanih po tenantu.
+
+    Returns lista tenanta sa:
+        - tenant info (id, name, email, status)
+        - total_invoices: ukupan broj faktura
+        - pending_count/amount: fakture na čekanju
+        - paid_count/amount: plaćene fakture
+        - overdue_count/amount: zakasnele fakture
+        - current_debt: trenutno dugovanje
+        - last_payment_at: datum poslednje uplate
+    """
+    today = date.today()
+
+    # Subquery za statistike po tenantu
+    tenant_stats = db.session.query(
+        SubscriptionPayment.tenant_id,
+        func.count(SubscriptionPayment.id).label('total_invoices'),
+        func.sum(func.case(
+            (SubscriptionPayment.status == 'PENDING', 1),
+            else_=0
+        )).label('pending_count'),
+        func.sum(func.case(
+            (SubscriptionPayment.status == 'PENDING', SubscriptionPayment.total_amount),
+            else_=0
+        )).label('pending_amount'),
+        func.sum(func.case(
+            (SubscriptionPayment.status == 'PAID', 1),
+            else_=0
+        )).label('paid_count'),
+        func.sum(func.case(
+            (SubscriptionPayment.status == 'PAID', SubscriptionPayment.total_amount),
+            else_=0
+        )).label('paid_amount'),
+        func.sum(func.case(
+            (and_(
+                SubscriptionPayment.status.in_(['PENDING', 'OVERDUE']),
+                SubscriptionPayment.due_date < today
+            ), 1),
+            else_=0
+        )).label('overdue_count'),
+        func.sum(func.case(
+            (and_(
+                SubscriptionPayment.status.in_(['PENDING', 'OVERDUE']),
+                SubscriptionPayment.due_date < today
+            ), SubscriptionPayment.total_amount),
+            else_=0
+        )).label('overdue_amount'),
+        func.max(func.case(
+            (SubscriptionPayment.status == 'PAID', SubscriptionPayment.paid_at),
+            else_=None
+        )).label('last_payment_at')
+    ).group_by(SubscriptionPayment.tenant_id).subquery()
+
+    # Join sa Tenant tabelom
+    results = db.session.query(
+        Tenant,
+        tenant_stats.c.total_invoices,
+        tenant_stats.c.pending_count,
+        tenant_stats.c.pending_amount,
+        tenant_stats.c.paid_count,
+        tenant_stats.c.paid_amount,
+        tenant_stats.c.overdue_count,
+        tenant_stats.c.overdue_amount,
+        tenant_stats.c.last_payment_at
+    ).join(
+        tenant_stats, Tenant.id == tenant_stats.c.tenant_id
+    ).order_by(
+        tenant_stats.c.overdue_count.desc(),
+        tenant_stats.c.pending_count.desc()
+    ).all()
+
+    tenants_data = []
+    for row in results:
+        tenant = row[0]
+        tenants_data.append({
+            'tenant_id': tenant.id,
+            'tenant_name': tenant.name,
+            'tenant_email': tenant.email,
+            'tenant_status': tenant.status.value,
+            'current_debt': float(tenant.current_debt or 0),
+            'total_invoices': row.total_invoices or 0,
+            'pending': {
+                'count': row.pending_count or 0,
+                'amount': float(row.pending_amount or 0)
+            },
+            'paid': {
+                'count': row.paid_count or 0,
+                'amount': float(row.paid_amount or 0)
+            },
+            'overdue': {
+                'count': row.overdue_count or 0,
+                'amount': float(row.overdue_amount or 0)
+            },
+            'last_payment_at': row.last_payment_at.isoformat() if row.last_payment_at else None
+        })
+
+    # Globalne statistike
+    global_stats = {
+        'total_tenants': len(tenants_data),
+        'tenants_with_debt': sum(1 for t in tenants_data if t['current_debt'] > 0),
+        'total_pending': sum(t['pending']['count'] for t in tenants_data),
+        'total_pending_amount': sum(t['pending']['amount'] for t in tenants_data),
+        'total_overdue': sum(t['overdue']['count'] for t in tenants_data),
+        'total_overdue_amount': sum(t['overdue']['amount'] for t in tenants_data)
+    }
+
+    return jsonify({
+        'tenants': tenants_data,
+        'stats': global_stats
+    })
+
+
 @bp.route('/pending', methods=['GET'])
 @platform_admin_required
 def list_pending_payments():
