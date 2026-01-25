@@ -75,6 +75,26 @@ def admin_payments_list():
     return render_template('admin/payments/list.html')
 
 
+# ============== Billing ==============
+
+@bp.route('/admin/billing/bank-import')
+def admin_bank_import():
+    """Uvoz bankovnih izvoda."""
+    return render_template('admin/billing/bank_import.html')
+
+
+@bp.route('/admin/billing/transactions')
+def admin_transactions():
+    """Bankovne transakcije - matching UI."""
+    return render_template('admin/billing/transactions.html')
+
+
+@bp.route('/admin/billing/import/<int:import_id>')
+def admin_import_detail(import_id):
+    """Detalji importa."""
+    return render_template('admin/billing/import_detail.html', import_id=import_id)
+
+
 # ============== Activity Log ==============
 
 @bp.route('/admin/activity')

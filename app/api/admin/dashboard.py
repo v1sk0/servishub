@@ -449,7 +449,7 @@ def get_recent_activity():
         'recent_payments': [{
             'id': p.id,
             'tenant_id': p.tenant_id,
-            'amount': float(p.amount),
+            'amount': float(p.total_amount),
             'created_at': p.created_at.isoformat()
         } for p in recent_payments],
         'pending_kyc': [{

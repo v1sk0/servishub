@@ -193,11 +193,11 @@ class IPSService:
             payer = self._truncate(tenant.name, self.MAX_RECIPIENT_NAME)
             parts.append(f"P:{payer}")
 
-        parts.extend([
-            f"SF:{purpose_code}",
-            f"S:{purpose}",
-            f"RO:{reference}"
-        ])
+        parts.append(f"SF:{purpose_code}")
+        parts.append(f"S:{purpose}")
+        # RO tag SAMO ako postoji reference - prazan RO kvari QR kod!
+        if reference:
+            parts.append(f"RO:{reference}")
 
         return '|'.join(parts)
 

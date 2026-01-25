@@ -88,7 +88,9 @@ class TenantBackupService:
 
     def _export_tenant_data(self, tenant_id: int) -> Dict[str, Any]:
         """
-        Exportuje sve podatke tenanta u dictionary.
+        Exportuje KOMPLETNE podatke tenanta u optimizovanom formatu.
+
+        Uključuje sve tabele povezane sa tenantom za potpuni backup.
 
         Args:
             tenant_id: ID tenanta
@@ -100,129 +102,216 @@ class TenantBackupService:
         if not tenant:
             return {}
 
+        def dt(val):
+            """Helper za kompaktnu datetime konverziju."""
+            return val.isoformat() if val else None
+
+        def fl(val):
+            """Helper za float konverziju."""
+            return float(val) if val else None
+
         # Osnovni podaci tenanta
         data = {
-            'export_timestamp': datetime.now(timezone.utc).isoformat(),
-            'tenant': {
+            '_v': 2,  # Verzija backup formata
+            '_ts': datetime.now(timezone.utc).isoformat(),
+            '_tid': tenant_id,
+            't': {  # tenant
                 'id': tenant.id,
                 'slug': tenant.slug,
                 'name': tenant.name,
                 'pib': tenant.pib,
-                'maticni_broj': tenant.maticni_broj,
-                'adresa_sedista': tenant.adresa_sedista,
-                'grad': tenant.grad,
-                'postanski_broj': tenant.postanski_broj,
+                'mb': tenant.maticni_broj,
+                'addr': tenant.adresa_sedista,
+                'city': tenant.grad,
+                'zip': tenant.postanski_broj,
                 'email': tenant.email,
-                'telefon': tenant.telefon,
-                'bank_account': tenant.bank_account,
+                'phone': tenant.telefon,
+                'bank': tenant.bank_account,
                 'status': tenant.status.value if tenant.status else None,
-                'demo_ends_at': tenant.demo_ends_at.isoformat() if tenant.demo_ends_at else None,
-                'trial_ends_at': tenant.trial_ends_at.isoformat() if tenant.trial_ends_at else None,
-                'subscription_ends_at': tenant.subscription_ends_at.isoformat() if tenant.subscription_ends_at else None,
-                'settings_json': tenant.settings_json,
-                'created_at': tenant.created_at.isoformat() if tenant.created_at else None,
-                'updated_at': tenant.updated_at.isoformat() if tenant.updated_at else None,
+                'demo_end': dt(tenant.demo_ends_at),
+                'trial_end': dt(tenant.trial_ends_at),
+                'sub_end': dt(tenant.subscription_ends_at),
+                'settings': tenant.settings_json,
+                'created': dt(tenant.created_at),
+                'updated': dt(tenant.updated_at),
             }
         }
 
         # Lokacije
         locations = ServiceLocation.query.filter_by(tenant_id=tenant_id).all()
-        data['locations'] = [{
-            'id': loc.id,
-            'name': loc.name,
-            'address': loc.address,
-            'city': loc.city,
-            'postal_code': loc.postal_code,
-            'phone': loc.phone,
-            'email': loc.email,
-            'working_hours_json': loc.working_hours_json,
-            'latitude': float(loc.latitude) if loc.latitude else None,
-            'longitude': float(loc.longitude) if loc.longitude else None,
-            'is_primary': loc.is_primary,
-            'is_active': loc.is_active,
-            'created_at': loc.created_at.isoformat() if loc.created_at else None,
-        } for loc in locations]
+        data['loc'] = [{
+            'id': l.id, 'name': l.name, 'addr': l.address, 'city': l.city,
+            'zip': l.postal_code, 'phone': l.phone, 'email': l.email,
+            'hours': l.working_hours_json,
+            'lat': fl(l.latitude), 'lng': fl(l.longitude),
+            'primary': l.is_primary, 'active': l.is_active, 'created': dt(l.created_at)
+        } for l in locations]
 
-        # Korisnici
+        # Korisnici (bez password hash-a)
         users = User.query.filter_by(tenant_id=tenant_id).all()
-        data['users'] = [{
-            'id': user.id,
-            'email': user.email,
-            'ime': user.ime,
-            'prezime': user.prezime,
-            'phone': user.phone,
-            'role': user.role.value if user.role else None,
-            'is_active': user.is_active,
-            'last_login_at': user.last_login_at.isoformat() if user.last_login_at else None,
-            'created_at': user.created_at.isoformat() if user.created_at else None,
-            # NE exportujemo password_hash iz sigurnosnih razloga
-        } for user in users]
+        data['usr'] = [{
+            'id': u.id, 'email': u.email, 'ime': u.ime, 'prezime': u.prezime,
+            'phone': u.phone, 'role': u.role.value if u.role else None,
+            'active': u.is_active, 'last_login': dt(u.last_login_at), 'created': dt(u.created_at)
+        } for u in users]
 
-        # Predstavnici (KYC)
+        # User-Location veze
+        try:
+            from ..models.user import UserLocation
+            user_ids = [u.id for u in users]
+            if user_ids:
+                user_locs = UserLocation.query.filter(UserLocation.user_id.in_(user_ids)).all()
+                data['usr_loc'] = [{'uid': ul.user_id, 'lid': ul.location_id} for ul in user_locs]
+        except:
+            pass
+
+        # KYC Predstavnici
         representatives = ServiceRepresentative.query.filter_by(tenant_id=tenant_id).all()
-        data['representatives'] = [{
-            'id': rep.id,
-            'ime': rep.ime,
-            'prezime': rep.prezime,
-            'jmbg': rep.jmbg,  # Enkriptovano u backup-u
-            'broj_licne_karte': rep.broj_licne_karte,
-            'adresa': rep.adresa,
-            'telefon': rep.telefon,
-            'email': rep.email,
-            'lk_front_url': rep.lk_front_url,
-            'lk_back_url': rep.lk_back_url,
-            'is_primary': rep.is_primary,
-            'status': rep.status.value if rep.status else None,
-            'verified_at': rep.verified_at.isoformat() if rep.verified_at else None,
-            'created_at': rep.created_at.isoformat() if rep.created_at else None,
-        } for rep in representatives]
+        data['rep'] = [{
+            'id': r.id, 'ime': r.ime, 'prezime': r.prezime, 'jmbg': r.jmbg,
+            'lk': r.broj_licne_karte, 'addr': r.adresa, 'phone': r.telefon, 'email': r.email,
+            'lk_front': r.lk_front_url, 'lk_back': r.lk_back_url,
+            'primary': r.is_primary, 'status': r.status.value if r.status else None,
+            'verified': dt(r.verified_at), 'created': dt(r.created_at)
+        } for r in representatives]
 
-        # Servisni nalozi
+        # Servisni nalozi - KOMPLETNI podaci
         tickets = ServiceTicket.query.filter_by(tenant_id=tenant_id).all()
-        data['service_tickets'] = [{
-            'id': ticket.id,
-            'ticket_number': ticket.ticket_number,
-            'customer_name': ticket.customer_name,
-            'customer_phone': ticket.customer_phone,
-            'customer_email': ticket.customer_email,
-            'brand': ticket.brand,
-            'model': ticket.model,
-            'imei': ticket.imei,
-            'device_condition': ticket.device_condition,
-            'problem_description': ticket.problem_description,
-            'resolution_details': ticket.resolution_details,
-            'status': ticket.status,
-            'priority': ticket.priority,
-            'estimated_price': float(ticket.estimated_price) if ticket.estimated_price else None,
-            'final_price': float(ticket.final_price) if ticket.final_price else None,
-            'currency': ticket.currency,
-            'warranty_days': ticket.warranty_days,
-            'closed_at': ticket.closed_at.isoformat() if ticket.closed_at else None,
-            'collected': ticket.collected,
-            'collected_at': ticket.collected_at.isoformat() if ticket.collected_at else None,
-            'created_at': ticket.created_at.isoformat() if ticket.created_at else None,
-        } for ticket in tickets]
+        data['tkt'] = [{
+            'id': t.id, 'num': t.ticket_number,
+            'cust': t.customer_name, 'cphone': t.customer_phone, 'cemail': t.customer_email,
+            'brand': t.brand, 'model': t.model, 'imei': t.imei,
+            'cond': t.device_condition, 'problem': t.problem_description, 'resolution': t.resolution_details,
+            'status': t.status, 'priority': t.priority,
+            'est_price': fl(t.estimated_price), 'final_price': fl(t.final_price), 'curr': t.currency,
+            'warranty': t.warranty_days, 'closed': dt(t.closed_at),
+            'collected': t.collected, 'collected_at': dt(t.collected_at),
+            'loc_id': t.location_id, 'tech_id': t.technician_id, 'user_id': t.created_by_id,
+            'created': dt(t.created_at)
+        } for t in tickets]
 
         # Uplate
         payments = SubscriptionPayment.query.filter_by(tenant_id=tenant_id).all()
-        data['payments'] = [{
-            'id': pay.id,
-            'amount': float(pay.amount) if pay.amount else None,
-            'currency': pay.currency,
-            'status': pay.status,
-            'payment_method': pay.payment_method,
-            'period_start': pay.period_start.isoformat() if pay.period_start else None,
-            'period_end': pay.period_end.isoformat() if pay.period_end else None,
-            'created_at': pay.created_at.isoformat() if pay.created_at else None,
-        } for pay in payments]
+        data['pay'] = [{
+            'id': p.id, 'inv': getattr(p, 'invoice_number', None),
+            'amt': fl(p.total_amount) if hasattr(p, 'total_amount') else fl(p.amount),
+            'curr': p.currency, 'status': p.status, 'method': p.payment_method,
+            'start': dt(p.period_start), 'end': dt(p.period_end),
+            'paid': dt(p.paid_at) if hasattr(p, 'paid_at') else None,
+            'items': getattr(p, 'items_json', None),
+            'created': dt(p.created_at)
+        } for p in payments]
 
-        # Dodaj statistiku
-        data['statistics'] = {
-            'total_locations': len(data['locations']),
-            'total_users': len(data['users']),
-            'total_representatives': len(data['representatives']),
-            'total_tickets': len(data['service_tickets']),
-            'total_payments': len(data['payments']),
+        # Inventar - Telefoni
+        try:
+            from ..models.inventory import PhoneListing
+            phones = PhoneListing.query.filter_by(tenant_id=tenant_id).all()
+            data['phones'] = [{
+                'id': p.id, 'brand': p.brand, 'model': p.model, 'imei': p.imei,
+                'storage': p.storage, 'color': p.color, 'cond': p.condition,
+                'buy_price': fl(p.purchase_price), 'sell_price': fl(p.selling_price),
+                'curr': p.currency, 'status': p.status, 'notes': p.notes,
+                'sold': dt(p.sold_at), 'created': dt(p.created_at)
+            } for p in phones]
+        except:
+            data['phones'] = []
+
+        # Inventar - Delovi
+        try:
+            from ..models.inventory import SparePart
+            parts = SparePart.query.filter_by(tenant_id=tenant_id).all()
+            data['parts'] = [{
+                'id': p.id, 'name': p.name, 'sku': p.sku, 'cat': p.category,
+                'qty': p.quantity, 'min_qty': p.min_quantity,
+                'buy_price': fl(p.purchase_price), 'sell_price': fl(p.selling_price),
+                'curr': p.currency, 'loc_id': p.location_id,
+                'created': dt(p.created_at)
+            } for p in parts]
+        except:
+            data['parts'] = []
+
+        # Narudzbine
+        try:
+            from ..models.order import Order, OrderItem
+            orders = Order.query.filter_by(tenant_id=tenant_id).all()
+            data['orders'] = []
+            for o in orders:
+                items = OrderItem.query.filter_by(order_id=o.id).all()
+                data['orders'].append({
+                    'id': o.id, 'num': o.order_number, 'status': o.status,
+                    'total': fl(o.total_amount), 'curr': o.currency,
+                    'supplier_id': o.supplier_tenant_id, 'notes': o.notes,
+                    'created': dt(o.created_at),
+                    'items': [{'id': i.id, 'name': i.name, 'qty': i.quantity,
+                               'price': fl(i.unit_price)} for i in items]
+                })
+        except:
+            data['orders'] = []
+
+        # Usluge
+        try:
+            from ..models.service import TenantService
+            services = TenantService.query.filter_by(tenant_id=tenant_id).all()
+            data['svc'] = [{
+                'id': s.id, 'name': s.name, 'desc': s.description,
+                'price': fl(s.price), 'curr': s.currency, 'duration': s.duration_minutes,
+                'active': s.is_active, 'created': dt(s.created_at)
+            } for s in services]
+        except:
+            data['svc'] = []
+
+        # Javni profil
+        try:
+            from ..models.tenant_public_profile import TenantPublicProfile
+            profile = TenantPublicProfile.query.filter_by(tenant_id=tenant_id).first()
+            if profile:
+                data['profile'] = {
+                    'id': profile.id, 'bio': profile.bio, 'logo': profile.logo_url,
+                    'cover': profile.cover_url, 'website': profile.website,
+                    'social': profile.social_links_json, 'visible': profile.is_visible
+                }
+        except:
+            pass
+
+        # Poruke (sistemske)
+        try:
+            from ..models.tenant_message import TenantMessage
+            messages = TenantMessage.query.filter_by(tenant_id=tenant_id).all()
+            data['msg'] = [{
+                'id': m.id, 'type': m.message_type, 'title': m.title,
+                'body': m.body, 'read': m.is_read, 'created': dt(m.created_at)
+            } for m in messages]
+        except:
+            data['msg'] = []
+
+        # Konekcije sa drugim servisima
+        try:
+            from ..models.tenant_connection import TenantConnection
+            conns = TenantConnection.query.filter(
+                db.or_(
+                    TenantConnection.tenant_a_id == tenant_id,
+                    TenantConnection.tenant_b_id == tenant_id
+                )
+            ).all()
+            data['conn'] = [{
+                'id': c.id, 'a': c.tenant_a_id, 'b': c.tenant_b_id,
+                'status': c.status, 'created': dt(c.created_at)
+            } for c in conns]
+        except:
+            data['conn'] = []
+
+        # Statistika
+        data['_stats'] = {
+            'loc': len(data.get('loc', [])),
+            'usr': len(data.get('usr', [])),
+            'rep': len(data.get('rep', [])),
+            'tkt': len(data.get('tkt', [])),
+            'pay': len(data.get('pay', [])),
+            'phones': len(data.get('phones', [])),
+            'parts': len(data.get('parts', [])),
+            'orders': len(data.get('orders', [])),
+            'svc': len(data.get('svc', [])),
+            'msg': len(data.get('msg', [])),
         }
 
         return data
@@ -237,9 +326,9 @@ class TenantBackupService:
         Returns:
             Tuple (encrypted_data, encryption_key_hex, filename)
         """
-        # Export podataka
+        # Export podataka - kompaktan JSON format bez razmaka
         data = self._export_tenant_data(tenant_id)
-        json_data = json.dumps(data, ensure_ascii=False, indent=2)
+        json_data = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
 
         # Generisi kljuc
         key, key_hex = self._generate_encryption_key()
@@ -467,6 +556,81 @@ Backup fajl je prilozen ovom emailu. Sacuvajte kljuc na sigurnom mestu.
             # Prvo brisi child zapise koji imaju foreign key na tenant
             # Redosled je bitan zbog FK constraints
 
+            # Message threads i poruke
+            try:
+                from ..models.message_thread import MessageThread, ThreadMessage, ThreadParticipant
+                threads = MessageThread.query.filter_by(tenant_id=tenant_id).all()
+                for thread in threads:
+                    ThreadMessage.query.filter_by(thread_id=thread.id).delete()
+                    ThreadParticipant.query.filter_by(thread_id=thread.id).delete()
+                MessageThread.query.filter_by(tenant_id=tenant_id).delete()
+                MessageThread.query.filter_by(other_tenant_id=tenant_id).update({MessageThread.other_tenant_id: None})
+                ThreadMessage.query.filter_by(sender_tenant_id=tenant_id).update({ThreadMessage.sender_tenant_id: None})
+                ThreadParticipant.query.filter_by(tenant_id=tenant_id).update({ThreadParticipant.tenant_id: None})
+            except Exception as e:
+                print(f"[BACKUP] Note: MessageThread cleanup: {e}")
+
+            # Tenant connections
+            try:
+                from ..models.tenant_connection import TenantConnection, TenantConnectionRequest
+                TenantConnection.query.filter(
+                    db.or_(
+                        TenantConnection.tenant_a_id == tenant_id,
+                        TenantConnection.tenant_b_id == tenant_id
+                    )
+                ).delete(synchronize_session='fetch')
+                TenantConnectionRequest.query.filter_by(created_by_tenant_id=tenant_id).delete()
+            except Exception as e:
+                print(f"[BACKUP] Note: TenantConnection cleanup: {e}")
+
+            # Tenant messages
+            try:
+                from ..models.tenant_message import TenantMessage
+                TenantMessage.query.filter_by(tenant_id=tenant_id).delete()
+                TenantMessage.query.filter_by(from_tenant_id=tenant_id).update({TenantMessage.from_tenant_id: None})
+            except Exception as e:
+                print(f"[BACKUP] Note: TenantMessage cleanup: {e}")
+
+            # Tenant public profile
+            try:
+                from ..models.tenant_public_profile import TenantPublicProfile
+                TenantPublicProfile.query.filter_by(tenant_id=tenant_id).delete()
+            except Exception as e:
+                print(f"[BACKUP] Note: TenantPublicProfile cleanup: {e}")
+
+            # Package change history
+            try:
+                from ..models.package_change_history import PackageChangeHistory
+                PackageChangeHistory.query.filter_by(tenant_id=tenant_id).delete()
+            except Exception as e:
+                print(f"[BACKUP] Note: PackageChangeHistory cleanup: {e}")
+
+            # Inventory
+            try:
+                from ..models.inventory import PhoneListing, SparePart
+                PhoneListing.query.filter_by(tenant_id=tenant_id).delete()
+                SparePart.query.filter_by(tenant_id=tenant_id).delete()
+            except Exception as e:
+                print(f"[BACKUP] Note: Inventory cleanup: {e}")
+
+            # Orders
+            try:
+                from ..models.order import Order, OrderItem
+                orders = Order.query.filter_by(tenant_id=tenant_id).all()
+                for order in orders:
+                    OrderItem.query.filter_by(order_id=order.id).delete()
+                Order.query.filter_by(tenant_id=tenant_id).delete()
+                Order.query.filter_by(supplier_tenant_id=tenant_id).update({Order.supplier_tenant_id: None})
+            except Exception as e:
+                print(f"[BACKUP] Note: Order cleanup: {e}")
+
+            # Services
+            try:
+                from ..models.service import TenantService
+                TenantService.query.filter_by(tenant_id=tenant_id).delete()
+            except Exception as e:
+                print(f"[BACKUP] Note: TenantService cleanup: {e}")
+
             # Servisni nalozi
             from ..models.ticket import TicketNotificationLog
             for ticket in ServiceTicket.query.filter_by(tenant_id=tenant_id).all():
@@ -475,10 +639,34 @@ Backup fajl je prilozen ovom emailu. Sacuvajte kljuc na sigurnom mestu.
             ServiceTicket.query.filter_by(tenant_id=tenant_id).delete()
 
             # KYC predstavnici
+            try:
+                from ..models.representative import RepresentativeDocument
+                for rep in ServiceRepresentative.query.filter_by(tenant_id=tenant_id).all():
+                    RepresentativeDocument.query.filter_by(representative_id=rep.id).delete()
+            except Exception as e:
+                print(f"[BACKUP] Note: RepresentativeDocument cleanup: {e}")
             ServiceRepresentative.query.filter_by(tenant_id=tenant_id).delete()
 
-            # Uplate (opciono - mozemo zadrzati za finansijsku evidenciju)
-            # SubscriptionPayment.query.filter_by(tenant_id=tenant_id).delete()
+            # Bank transactions - unmatch sve uparene transakcije za ovaj tenant
+            try:
+                from ..models.bank_import import BankTransaction
+                # Nadji sve uplate ovog tenanta
+                tenant_payment_ids = [p.id for p in SubscriptionPayment.query.filter_by(tenant_id=tenant_id).all()]
+                if tenant_payment_ids:
+                    # Unmatch transakcije koje su uparene sa ovim uplatama
+                    BankTransaction.query.filter(
+                        BankTransaction.matched_payment_id.in_(tenant_payment_ids)
+                    ).update({
+                        BankTransaction.matched_payment_id: None,
+                        BankTransaction.status: 'PENDING',
+                        BankTransaction.matched_by: None,
+                        BankTransaction.matched_at: None
+                    }, synchronize_session='fetch')
+            except Exception as e:
+                print(f"[BACKUP] Note: BankTransaction cleanup: {e}")
+
+            # Subscription Payments - brisemo jer vise nema tenanta
+            SubscriptionPayment.query.filter_by(tenant_id=tenant_id).delete()
 
             # Korisnici - prvo brisi user_location veze
             from ..models.user import UserLocation

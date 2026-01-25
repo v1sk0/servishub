@@ -49,6 +49,10 @@ class PaymentMatcher:
         """
         Pokušava da upari transakciju sa fakturom.
 
+        VAŽNO: Auto-match se radi SAMO za EXACT_REF sa confidence=1.0!
+        Sve ostale strategije (fuzzy, amount, date) služe samo za sugestije
+        koje admin ručno potvrđuje u UI-ju.
+
         Args:
             txn: BankTransaction to match
 
@@ -56,34 +60,19 @@ class PaymentMatcher:
             MatchResult sa payment i confidence
 
         Side effects:
-            Updates txn with match status if match found
+            Updates txn with match status ONLY if EXACT_REF match found
         """
-        # 1. Pokušaj EXACT_REF match
+        # Samo EXACT_REF sa punim confidence-om radi auto-match
         result = self._match_by_exact_reference(txn)
-        if result.success:
+        if result.success and result.confidence >= 1.0:
             self._apply_match(txn, result)
             return result
 
-        # 2. Pokušaj FUZZY_REF match
-        result = self._match_by_fuzzy_reference(txn)
-        if result.success:
-            self._apply_match(txn, result)
-            return result
+        # Ostale strategije NE rade auto-match!
+        # One se koriste samo u get_suggestions() za UI predloge.
+        # Transakcija ostaje UNMATCHED dok admin ručno ne potvrdi.
 
-        # 3. Pokušaj AMOUNT + TENANT match
-        result = self._match_by_amount_and_tenant(txn)
-        if result.success:
-            self._apply_match(txn, result)
-            return result
-
-        # 4. Pokušaj AMOUNT + DATE match
-        result = self._match_by_amount_and_date(txn)
-        if result.success:
-            self._apply_match(txn, result)
-            return result
-
-        # Nije pronađen match
-        return MatchResult(success=False, notes='No match found')
+        return MatchResult(success=False, notes='No exact reference match - use manual matching')
 
     def get_suggestions(self, txn: BankTransaction, limit: int = 5) -> List[Dict[str, Any]]:
         """

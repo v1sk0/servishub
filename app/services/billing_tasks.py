@@ -20,6 +20,7 @@ from ..models import Tenant, TenantMessage, PlatformSettings
 from ..models.tenant import TenantStatus, ServiceLocation
 from ..models.tenant_message import MessageCategory, MessagePriority
 from ..models.representative import SubscriptionPayment
+from .ips_service import IPSService
 
 
 def get_next_invoice_number(year: int) -> str:
@@ -369,6 +370,10 @@ class BillingTasksService:
                 # Generisi broj fakture (race-safe sa SELECT FOR UPDATE)
                 invoice_number = get_next_invoice_number(now.year)
 
+                # Generisi payment reference (IPS format)
+                invoice_seq = int(invoice_number.split('-')[-1])  # SH-2026-000042 → 42
+                ref_data = IPSService.generate_payment_reference(tenant.id, invoice_seq)
+
                 # Kreiraj fakturu
                 payment = SubscriptionPayment(
                     tenant_id=tenant.id,
@@ -381,7 +386,8 @@ class BillingTasksService:
                     currency='RSD',
                     status='PENDING',
                     due_date=period_start + timedelta(days=15),
-                    notes=f'Mesecna pretplata - {now.strftime("%B %Y")}'
+                    payment_reference=ref_data['full'],
+                    payment_reference_model=ref_data['model']
                 )
                 db.session.add(payment)
 

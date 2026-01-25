@@ -189,7 +189,7 @@ def get_tenant(tenant_id):
         },
         'payments': [{
             'id': p.id,
-            'amount': float(p.amount),
+            'amount': float(p.total_amount),
             'status': p.status,
             'period_start': p.period_start.isoformat() if p.period_start else None,
             'period_end': p.period_end.isoformat() if p.period_end else None,

@@ -4,9 +4,10 @@ Tenant Profile and Settings API
 from flask import Blueprint, request, g
 from sqlalchemy.orm.attributes import flag_modified
 from app.extensions import db
-from app.models import Tenant, ServiceLocation, TenantUser, ServiceRepresentative, TenantPublicProfile
+from app.models import Tenant, ServiceLocation, TenantUser, ServiceRepresentative, TenantPublicProfile, PlatformSettings
 from app.api.middleware.auth import jwt_required
 from app.services.billing_tasks import get_next_invoice_number
+from app.services.ips_service import IPSService
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
@@ -555,6 +556,113 @@ def notify_payment(payment_id):
     }
 
 
+@bp.route('/subscription/payments/<int:payment_id>/pdf', methods=['GET'])
+@jwt_required
+def get_payment_pdf(payment_id):
+    """
+    Download PDF fakture.
+
+    Returns:
+        PDF file
+    """
+    from flask import send_file
+    from app.models import SubscriptionPayment
+    from app.services.pdf_service import PDFService
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    # Access control: samo svoj payment
+    payment = SubscriptionPayment.query.filter_by(
+        id=payment_id,
+        tenant_id=tenant.id
+    ).first()
+
+    if not payment:
+        return {'error': 'Payment not found'}, 404
+
+    pdf = PDFService()
+    pdf_bytes = pdf.generate_invoice_pdf(payment)
+
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype='application/pdf',
+        download_name=f'faktura_{payment.invoice_number}.pdf'
+    )
+
+
+@bp.route('/subscription/payments/<int:payment_id>/uplatnica', methods=['GET'])
+@jwt_required
+def get_payment_slip(payment_id):
+    """
+    Download PDF uplatnice.
+
+    Returns:
+        PDF file
+    """
+    from flask import send_file
+    from app.models import SubscriptionPayment
+    from app.services.pdf_service import PDFService
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    payment = SubscriptionPayment.query.filter_by(
+        id=payment_id,
+        tenant_id=tenant.id
+    ).first()
+
+    if not payment:
+        return {'error': 'Payment not found'}, 404
+
+    pdf = PDFService()
+    pdf_bytes = pdf.generate_payment_slip_pdf(payment)
+
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype='application/pdf',
+        download_name=f'uplatnica_{payment.invoice_number}.pdf'
+    )
+
+
+@bp.route('/subscription/payments/<int:payment_id>/qr', methods=['GET'])
+@jwt_required
+def get_payment_qr(payment_id):
+    """
+    Download IPS QR kod kao PNG.
+
+    Returns:
+        PNG image
+    """
+    from flask import send_file
+    from app.models import SubscriptionPayment
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    payment = SubscriptionPayment.query.filter_by(
+        id=payment_id,
+        tenant_id=tenant.id
+    ).first()
+
+    if not payment:
+        return {'error': 'Payment not found'}, 404
+
+    settings = PlatformSettings.get_settings()
+    ips = IPSService(settings)
+    qr_string = ips.generate_qr_string(payment, tenant, settings)
+    qr_bytes = ips.generate_qr_image(qr_string, size=300)
+
+    return send_file(
+        io.BytesIO(qr_bytes),
+        mimetype='image/png',
+        download_name=f'qr_{payment.invoice_number}.png'
+    )
+
+
 @bp.route('/subscription/trust-activate', methods=['POST'])
 @jwt_required
 def activate_trust():
@@ -672,8 +780,10 @@ def create_subscription_invoice():
     # Generiši broj fakture (race-safe sa SELECT FOR UPDATE)
     invoice_number = get_next_invoice_number(datetime.utcnow().year)
 
-    # Poziv na broj (tenant ID + period start MMYY)
-    payment_reference = f'{tenant.id:06d}{period_start.strftime("%m%y")}'
+    # Generiši poziv na broj (IPS format)
+    invoice_seq = int(invoice_number.split('-')[-1])  # SH-2026-000042 → 42
+    ref_data = IPSService.generate_payment_reference(tenant.id, invoice_seq)
+    payment_reference = ref_data['full']
 
     # Stavke fakture
     items = [
@@ -708,6 +818,7 @@ def create_subscription_invoice():
         status='PENDING',
         due_date=due_date,
         payment_reference=payment_reference,
+        payment_reference_model=ref_data['model'],
         is_auto_generated=False
     )
     db.session.add(payment)
@@ -727,14 +838,20 @@ def create_subscription_invoice():
             'due_date': due_date.isoformat(),
             'status': 'PENDING'
         },
-        'payment_info': {
-            'bank_name': 'AIK Banka',
-            'account_number': '265-1234567-89',
-            'recipient': 'ServisHub DOO Beograd',
-            'payment_reference': payment_reference,
-            'amount': total_amount,
-            'purpose': f'Pretplata ServisHub {months} mes - {invoice_number}'
-        }
+        'payment_info': _get_payment_info(payment_reference, total_amount, invoice_number, months)
+    }
+
+
+def _get_payment_info(payment_reference: str, amount: float, invoice_number: str, months: int) -> dict:
+    """Vraća platne informacije iz PlatformSettings."""
+    settings = PlatformSettings.get_settings()
+    return {
+        'bank_name': settings.company_bank_name or 'N/A',
+        'account_number': settings.company_bank_account or 'N/A',
+        'recipient': settings.company_name or 'ServisHub DOO',
+        'payment_reference': payment_reference,
+        'amount': amount,
+        'purpose': f'Pretplata ServisHub {months} mes - {invoice_number}'
     }
 
 

@@ -1,0 +1,383 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Uvoz Bankovnih Izvoda - ServisHub Admin{% endblock %}
+
+{% block head %}
+{% include "admin/_admin_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
+     x-data="bankImportPage()" x-init="loadImports()">
+    <div class="admin-wrapper min-h-screen bg-gray-100">
+        {% set active_page = 'bank_import' %}
+        {% include "admin/_sidebar.html" %}
+
+        <!-- Main content -->
+        <div class="ml-64">
+            <div class="admin-topbar bg-white shadow-sm h-16 flex items-center justify-between px-8">
+                <h1 class="text-xl font-semibold text-gray-900">Uvoz Bankovnih Izvoda</h1>
+                <div class="flex items-center space-x-4">
+                    <!-- Theme Toggle -->
+                    <div class="flex items-center space-x-2">
+                        <button @click="setTheme('light')"
+                                :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'light'}"
+                                class="theme-btn p-2 rounded-lg bg-white border border-gray-200 hover:border-gray-300"
+                                title="Svetla tema">
+                            <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z"/>
+                            </svg>
+                        </button>
+                        <button @click="setTheme('glass')"
+                                :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'glass'}"
+                                class="theme-btn p-2 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600 hover:border-gray-500"
+                                title="Glassmorphism tema">
+                            <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-8">
+                <!-- Upload zona -->
+                <div class="admin-card bg-white rounded-lg shadow mb-8">
+                    <div class="p-6">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Upload Izvoda</h2>
+
+                        <div class="border-2 border-dashed rounded-xl p-8 text-center transition-colors"
+                             :class="{'border-red-500 bg-red-50': dragover, 'border-gray-300 hover:border-gray-400': !dragover}"
+                             @dragover.prevent="dragover = true"
+                             @dragleave.prevent="dragover = false"
+                             @drop.prevent="handleDrop($event)">
+
+                            <template x-if="!uploading">
+                                <div>
+                                    <svg class="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    <p class="text-gray-600 mb-2">Prevuci CSV ili XML fajl ovde</p>
+                                    <p class="text-gray-400 text-sm mb-4">ili</p>
+                                    <label class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer transition-colors">
+                                        <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                        </svg>
+                                        Izaberi fajl
+                                        <input type="file" class="hidden" accept=".csv,.xml,.txt" @change="handleFileSelect($event)">
+                                    </label>
+                                    <p class="text-gray-400 text-xs mt-4">Podrzane banke: Alta, Raiffeisen, AIK, Intesa, OTP</p>
+                                </div>
+                            </template>
+
+                            <template x-if="uploading">
+                                <div>
+                                    <svg class="animate-spin h-12 w-12 mx-auto mb-4 text-red-600" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                    </svg>
+                                    <p class="text-gray-600">Ucitavanje i parsiranje izvoda...</p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistike -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="stat-card admin-card bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Ukupno importa</p>
+                                <p class="text-2xl font-bold text-gray-900" x-text="imports.length"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card green admin-card bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Upareno</p>
+                                <p class="text-2xl font-bold text-gray-900" x-text="totalMatched"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card yellow admin-card bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Neupareno</p>
+                                <p class="text-2xl font-bold text-gray-900" x-text="totalUnmatched"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card purple admin-card bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Ukupan promet</p>
+                                <p class="text-2xl font-bold text-gray-900"><span x-text="formatPrice(totalAmount)"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading -->
+                <div x-show="loading" class="flex justify-center py-12">
+                    <svg class="animate-spin h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                </div>
+
+                <!-- Imports lista -->
+                <div x-show="!loading" x-cloak class="admin-card bg-white shadow rounded-lg overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Istorija Importa</h3>
+                    </div>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fajl</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Banka</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datum izvoda</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transakcije</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Akcije</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="imp in imports" :key="imp.id">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="imp.id"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="imp.filename"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800" x-text="imp.bank_code"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(imp.statement_date)"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span class="text-green-600" x-text="imp.matched_count || 0"></span> /
+                                        <span class="text-yellow-600" x-text="imp.unmatched_count || 0"></span> /
+                                        <span x-text="imp.total_transactions || 0"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full"
+                                              :class="{
+                                                  'bg-green-100 text-green-800': imp.status === 'COMPLETED',
+                                                  'bg-yellow-100 text-yellow-800': imp.status === 'PENDING' || imp.status === 'PARTIAL',
+                                                  'bg-blue-100 text-blue-800': imp.status === 'PROCESSING',
+                                                  'bg-red-100 text-red-800': imp.status === 'FAILED'
+                                              }"
+                                              x-text="statusLabels[imp.status] || imp.status"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                        <button x-show="imp.status === 'PENDING' || imp.status === 'PARTIAL'" x-cloak
+                                                @click="processImport(imp.id)"
+                                                :disabled="processingId === imp.id"
+                                                class="text-red-600 hover:text-red-900 disabled:opacity-50">
+                                            <span x-show="processingId !== imp.id">Procesiraj</span>
+                                            <span x-show="processingId === imp.id">
+                                                <svg class="animate-spin inline h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                                </svg>
+                                            </span>
+                                        </button>
+                                        <a :href="'/admin/billing/import/' + imp.id" class="text-blue-600 hover:text-blue-900">Detalji</a>
+                                        <button x-show="imp.matched_count === 0" x-cloak
+                                                @click="deleteImport(imp.id)"
+                                                class="text-gray-400 hover:text-red-600">Obrisi</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                    <div x-show="imports.length === 0" x-cloak class="text-center py-12 text-gray-500">
+                        Nema importovanih izvoda. Uploadujte CSV ili XML fajl iznad.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function bankImportPage() {
+    return {
+        loading: true,
+        uploading: false,
+        dragover: false,
+        imports: [],
+        processingId: null,
+        theme: localStorage.getItem('admin-theme') || 'light',
+
+        statusLabels: {
+            'PENDING': 'Na cekanju',
+            'PROCESSING': 'U obradi',
+            'COMPLETED': 'Zavrseno',
+            'PARTIAL': 'Delimicno',
+            'FAILED': 'Neuspesno'
+        },
+
+        get totalMatched() {
+            return this.imports.reduce((sum, i) => sum + (i.matched_count || 0), 0);
+        },
+
+        get totalUnmatched() {
+            return this.imports.reduce((sum, i) => sum + (i.unmatched_count || 0), 0);
+        },
+
+        get totalAmount() {
+            return this.imports.reduce((sum, i) => sum + (i.total_credit_amount || 0), 0);
+        },
+
+        setTheme(newTheme) {
+            this.theme = newTheme;
+            if (window.setAdminTheme) {
+                window.setAdminTheme(newTheme);
+            }
+        },
+
+        logout() {
+            localStorage.removeItem('admin_access_token');
+            localStorage.removeItem('admin_refresh_token');
+            window.location.href = '/admin/login';
+        },
+
+        async loadImports() {
+            const token = localStorage.getItem('admin_access_token');
+            if (!token) { window.location.href = '/admin/login'; return; }
+            try {
+                const r = await fetch('/api/admin/bank-import', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (r.ok) {
+                    const data = await r.json();
+                    this.imports = data.imports || [];
+                } else if (r.status === 401) {
+                    window.location.href = '/admin/login';
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        handleDrop(e) {
+            this.dragover = false;
+            const file = e.dataTransfer.files[0];
+            if (file) this.uploadFile(file);
+        },
+
+        handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) this.uploadFile(file);
+        },
+
+        async uploadFile(file) {
+            const token = localStorage.getItem('admin_access_token');
+            this.uploading = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const r = await fetch('/api/admin/bank-import', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token },
+                    body: formData
+                });
+
+                const data = await r.json();
+
+                if (r.ok) {
+                    window.showToast && showToast('Import uspesan! Pronadjeno ' + data.transactions_found + ' transakcija.', 'success');
+                    this.loadImports();
+                } else {
+                    window.showToast && showToast(data.error || 'Greska pri uploadu', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                window.showToast && showToast('Greska pri uploadu fajla', 'error');
+            } finally {
+                this.uploading = false;
+            }
+        },
+
+        async processImport(importId) {
+            const token = localStorage.getItem('admin_access_token');
+            this.processingId = importId;
+
+            try {
+                const r = await fetch('/api/admin/bank-import/' + importId + '/process', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                const data = await r.json();
+
+                if (r.ok) {
+                    window.showToast && showToast('Upareno ' + data.matched + ' transakcija, neupareno ' + data.unmatched, 'success');
+                    this.loadImports();
+                } else {
+                    window.showToast && showToast(data.error || 'Greska pri procesiranju', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                this.processingId = null;
+            }
+        },
+
+        async deleteImport(importId) {
+            if (!confirm('Da li ste sigurni da zelite da obrisete ovaj import?')) return;
+
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                const r = await fetch('/api/admin/bank-import/' + importId, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (r.ok) {
+                    window.showToast && showToast('Import obrisan', 'success');
+                    this.loadImports();
+                } else {
+                    const data = await r.json();
+                    window.showToast && showToast(data.error || 'Greska pri brisanju', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        formatPrice(p) {
+            return new Intl.NumberFormat('sr-RS').format(p || 0) + ' RSD';
+        },
+
+        formatDate(d) {
+            return d ? new Date(d).toLocaleDateString('sr-Latn-RS') : '-';
+        }
+    }
+}
+</script>
+{% endblock %}

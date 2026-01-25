@@ -38,6 +38,7 @@ class AdminActionType(enum.Enum):
 
     # Billing akcije
     GENERATE_INVOICE = 'GENERATE_INVOICE'       # Generisanje fakture
+    SEND_INVOICE = 'SEND_INVOICE'               # Slanje fakture na email
     VERIFY_PAYMENT = 'VERIFY_PAYMENT'           # Verifikacija uplate
     REJECT_PAYMENT = 'REJECT_PAYMENT'           # Odbijanje uplate
     BLOCK_TENANT = 'BLOCK_TENANT'               # Blokada zbog neplacanja
@@ -51,6 +52,15 @@ class AdminActionType(enum.Enum):
 
     # Messaging akcije
     SEND_MESSAGE = 'SEND_MESSAGE'               # Poslata poruka servisu
+
+    # Bank Import akcije (v303)
+    BANK_IMPORT = 'BANK_IMPORT'                 # Upload bankovnog izvoda
+    BANK_IMPORT_PROCESS = 'BANK_IMPORT_PROCESS' # Procesiranje/auto-match
+    BANK_IMPORT_DELETE = 'BANK_IMPORT_DELETE'   # Brisanje importa
+    MANUAL_MATCH = 'MANUAL_MATCH'               # Rucno uparivanje transakcije
+    UNMATCH = 'UNMATCH'                         # Ponistavanje uparivanja
+    IGNORE_TRANSACTION = 'IGNORE_TRANSACTION'   # Ignorisanje transakcije
+    UNIGNORE_TRANSACTION = 'UNIGNORE_TRANSACTION'  # Ponistavanje ignorisanja
 
 
 class AdminActivityLog(db.Model):
@@ -205,6 +215,7 @@ class AdminActivityLog(db.Model):
             AdminActionType.UPDATE_SETTINGS: 'Promenio podesavanja platforme',
             # Billing
             AdminActionType.GENERATE_INVOICE: 'Generisao fakturu',
+            AdminActionType.SEND_INVOICE: 'Poslao fakturu na email',
             AdminActionType.VERIFY_PAYMENT: 'Verifikovao uplatu',
             AdminActionType.REJECT_PAYMENT: 'Odbio uplatu',
             AdminActionType.BLOCK_TENANT: 'Blokirao servis',
@@ -216,5 +227,13 @@ class AdminActivityLog(db.Model):
             AdminActionType.UPDATE_TRUST_SCORE: 'Promenio trust score',
             # Messaging
             AdminActionType.SEND_MESSAGE: 'Poslao poruku servisu',
+            # Bank Import (v303)
+            AdminActionType.BANK_IMPORT: 'Uvezao bankovni izvod',
+            AdminActionType.BANK_IMPORT_PROCESS: 'Procesirao izvod',
+            AdminActionType.BANK_IMPORT_DELETE: 'Obrisao izvod',
+            AdminActionType.MANUAL_MATCH: 'Ručno upario transakciju',
+            AdminActionType.UNMATCH: 'Poništio uparivanje',
+            AdminActionType.IGNORE_TRANSACTION: 'Ignorisao transakciju',
+            AdminActionType.UNIGNORE_TRANSACTION: 'Poništio ignorisanje',
         }
         return labels.get(self.action_type, self.action_type.value)
