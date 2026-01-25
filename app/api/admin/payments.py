@@ -197,6 +197,11 @@ def get_payments_by_tenant():
     """
     Sažetak faktura grupisanih po tenantu.
 
+    Vraća SVE tenante, sortirano po:
+    1. current_debt DESC (najpre oni koji duguju)
+    2. overdue_count DESC
+    3. pending_count DESC
+
     Returns lista tenanta sa:
         - tenant info (id, name, email, status)
         - total_invoices: ukupan broj faktura
@@ -248,7 +253,7 @@ def get_payments_by_tenant():
         )).label('last_payment_at')
     ).group_by(SubscriptionPayment.tenant_id).subquery()
 
-    # Join sa Tenant tabelom
+    # LEFT JOIN sa Tenant tabelom - vraća SVE tenante
     results = db.session.query(
         Tenant,
         tenant_stats.c.total_invoices,
@@ -259,11 +264,13 @@ def get_payments_by_tenant():
         tenant_stats.c.overdue_count,
         tenant_stats.c.overdue_amount,
         tenant_stats.c.last_payment_at
-    ).join(
+    ).outerjoin(
         tenant_stats, Tenant.id == tenant_stats.c.tenant_id
     ).order_by(
-        tenant_stats.c.overdue_count.desc(),
-        tenant_stats.c.pending_count.desc()
+        Tenant.current_debt.desc().nullslast(),
+        func.coalesce(tenant_stats.c.overdue_count, 0).desc(),
+        func.coalesce(tenant_stats.c.pending_count, 0).desc(),
+        Tenant.name.asc()
     ).all()
 
     tenants_data = []
