@@ -1,0 +1,547 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Fakture servisa - ServisHub Admin{% endblock %}
+
+{% block head %}
+{% include "admin/_admin_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
+     x-data="tenantInvoicesPage({{ tenant_id }})" x-init="loadData()">
+    <div class="admin-wrapper min-h-screen bg-gray-100">
+        {% set active_page = 'payments' %}
+        {% include "admin/_sidebar.html" %}
+
+        <!-- Main content -->
+        <div class="ml-64">
+            <div class="admin-topbar bg-white shadow-sm h-16 flex items-center justify-between px-8">
+                <div class="flex items-center">
+                    <a href="/admin/tenants/{{ tenant_id }}" class="mr-4 text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                    </a>
+                    <h1 class="text-xl font-semibold text-gray-900">
+                        Fakture: <span x-text="tenant?.name || 'Učitavanje...'"></span>
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button @click="setTheme('light')" :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'light'}" class="theme-btn p-2 rounded-lg bg-white border border-gray-200 hover:border-gray-300" title="Svetla tema">
+                        <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z"/></svg>
+                    </button>
+                    <button @click="setTheme('glass')" :class="{'ring-2 ring-red-500 ring-offset-2': theme === 'glass'}" class="theme-btn p-2 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600 hover:border-gray-500" title="Glassmorphism tema">
+                        <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 24 24"><path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-8">
+                <!-- Tenant Info Card -->
+                <div class="admin-card bg-white rounded-lg shadow p-6 mb-6" x-show="tenant" x-cloak>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900" x-text="tenant?.name"></h2>
+                            <p class="text-sm text-gray-500" x-text="tenant?.email"></p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">Trenutno dugovanje</p>
+                                <p class="text-xl font-bold" :class="(tenant?.current_debt || 0) > 0 ? 'text-red-600' : 'text-green-600'">
+                                    <span x-text="formatPrice(tenant?.current_debt || 0)"></span> RSD
+                                </p>
+                            </div>
+                            <span class="px-3 py-1 text-sm font-medium rounded-full"
+                                  :class="getStatusClass(tenant?.status)"
+                                  x-text="statusLabels[tenant?.status]"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="admin-card bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-gray-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-xs text-gray-500">Ukupno faktura</p>
+                                <p class="text-lg font-bold text-gray-900" x-text="stats.total || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="admin-card bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-xs text-gray-500">Na čekanju</p>
+                                <p class="text-lg font-bold text-yellow-600" x-text="stats.pending || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="admin-card bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-xs text-gray-500">Plaćeno</p>
+                                <p class="text-lg font-bold text-green-600" x-text="stats.paid || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="admin-card bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-xs text-gray-500">Zakasnelo</p>
+                                <p class="text-lg font-bold text-red-600" x-text="stats.overdue || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading -->
+                <div x-show="loading" class="flex justify-center py-12">
+                    <svg class="animate-spin h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                </div>
+
+                <!-- Filters -->
+                <div class="admin-card bg-white rounded-lg shadow p-4 mb-6" x-show="!loading" x-cloak>
+                    <div class="flex flex-wrap gap-4 items-center">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Status</label>
+                            <select x-model="filters.status" @change="loadInvoices()" class="rounded-md border-gray-300 text-sm">
+                                <option value="">Svi statusi</option>
+                                <option value="PENDING">Na čekanju</option>
+                                <option value="PAID">Plaćeno</option>
+                                <option value="OVERDUE">Zakasnelo</option>
+                                <option value="CANCELLED">Otkazano</option>
+                            </select>
+                        </div>
+                        <div class="flex-1"></div>
+                        <button @click="generateInvoice()" class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700">
+                            + Generiši fakturu
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Invoices Table -->
+                <div x-show="!loading" x-cloak class="admin-card bg-white shadow rounded-lg overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Broj fakture</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Iznos</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rok / Plaćeno</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Poslato</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Akcije</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="invoice in invoices" :key="invoice.id">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="text-sm font-medium text-gray-900" x-text="invoice.invoice_number"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <span x-text="formatDate(invoice.period_start)"></span> -
+                                        <span x-text="formatDate(invoice.period_end)"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="text-sm font-medium text-gray-900" x-text="formatPrice(invoice.total_amount) + ' RSD'"></span>
+                                        <template x-if="invoice.discount_amount > 0">
+                                            <span class="text-xs text-green-600 block">(-<span x-text="formatPrice(invoice.discount_amount)"></span> popust)</span>
+                                        </template>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full"
+                                              :class="getPaymentStatusClass(invoice.status)"
+                                              x-text="paymentStatusLabels[invoice.status]"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <template x-if="invoice.status === 'PAID'">
+                                            <span class="text-green-600" x-text="'Plaćeno: ' + formatDate(invoice.paid_at)"></span>
+                                        </template>
+                                        <template x-if="invoice.status !== 'PAID'">
+                                            <span :class="invoice.is_overdue ? 'text-red-600 font-medium' : ''" x-text="'Rok: ' + formatDate(invoice.due_date)"></span>
+                                        </template>
+                                        <template x-if="invoice.is_overdue && invoice.status !== 'PAID'">
+                                            <span class="text-xs text-red-600 block" x-text="invoice.days_overdue + ' dana kasni'"></span>
+                                        </template>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <template x-if="invoice.invoice_sent_at">
+                                            <div>
+                                                <span class="text-green-600">✓</span>
+                                                <span x-text="formatDate(invoice.invoice_sent_at)"></span>
+                                            </div>
+                                        </template>
+                                        <template x-if="!invoice.invoice_sent_at">
+                                            <span class="text-gray-400">Nije poslato</span>
+                                        </template>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                        <div class="flex justify-end space-x-2">
+                                            <!-- PDF -->
+                                            <button @click="downloadPdf(invoice.id)" class="text-gray-400 hover:text-gray-600" title="Download PDF">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                </svg>
+                                            </button>
+                                            <!-- Send email -->
+                                            <button @click="sendEmail(invoice.id)" class="text-gray-400 hover:text-blue-600" title="Pošalji email">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                </svg>
+                                            </button>
+                                            <!-- Verify (if pending) -->
+                                            <button x-show="invoice.status === 'PENDING'" @click="verifyPayment(invoice.id)" class="text-green-600 hover:text-green-800" title="Verifikuj uplatu">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                    <div x-show="invoices.length === 0" x-cloak class="text-center py-12 text-gray-500">
+                        <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p>Nema faktura za ovaj servis</p>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div x-show="pagination.pages > 1" class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+                        <p class="text-sm text-gray-500">
+                            Prikazano <span x-text="(pagination.page - 1) * pagination.per_page + 1"></span> -
+                            <span x-text="Math.min(pagination.page * pagination.per_page, pagination.total)"></span>
+                            od <span x-text="pagination.total"></span> faktura
+                        </p>
+                        <div class="flex space-x-2">
+                            <button @click="goToPage(pagination.page - 1)" :disabled="!pagination.has_prev"
+                                    class="px-3 py-1 border rounded text-sm disabled:opacity-50">
+                                Prethodna
+                            </button>
+                            <button @click="goToPage(pagination.page + 1)" :disabled="!pagination.has_next"
+                                    class="px-3 py-1 border rounded text-sm disabled:opacity-50">
+                                Sledeća
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generate Invoice Modal -->
+    <div x-show="showGenerateModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="fixed inset-0 bg-black bg-opacity-50" @click="showGenerateModal = false"></div>
+            <div class="relative admin-card bg-white rounded-lg shadow-xl max-w-md w-full">
+                <form @submit.prevent="submitGenerateInvoice()">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">Generiši novu fakturu</h3>
+                    </div>
+                    <div class="px-6 py-4 space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Period od</label>
+                                <input type="date" x-model="generateForm.period_start" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Period do</label>
+                                <input type="date" x-model="generateForm.period_end" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Popust (RSD)</label>
+                            <input type="number" x-model="generateForm.discount_amount" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                        </div>
+                        <div x-show="generateForm.discount_amount > 0">
+                            <label class="block text-sm font-medium text-gray-700">Razlog popusta</label>
+                            <input type="text" x-model="generateForm.discount_reason" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                        <button type="button" @click="showGenerateModal = false" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 border border-gray-300">Otkaži</button>
+                        <button type="submit" :disabled="generating" class="px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 disabled:opacity-50">
+                            <span x-show="!generating">Generiši</span>
+                            <span x-show="generating">Generišem...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function tenantInvoicesPage(tenantId) {
+    return {
+        tenantId: tenantId,
+        tenant: null,
+        invoices: [],
+        loading: true,
+        theme: localStorage.getItem('admin-theme') || 'light',
+
+        stats: { total: 0, pending: 0, paid: 0, overdue: 0 },
+        filters: { status: '' },
+        pagination: { page: 1, per_page: 20, total: 0, pages: 0, has_next: false, has_prev: false },
+
+        showGenerateModal: false,
+        generating: false,
+        generateForm: {
+            period_start: '',
+            period_end: '',
+            discount_amount: 0,
+            discount_reason: ''
+        },
+
+        statusLabels: {
+            'DEMO': 'Demo',
+            'TRIAL': 'Trial',
+            'ACTIVE': 'Aktivan',
+            'EXPIRED': 'Istekao',
+            'SUSPENDED': 'Suspendovan'
+        },
+
+        paymentStatusLabels: {
+            'PENDING': 'Na čekanju',
+            'PAID': 'Plaćeno',
+            'OVERDUE': 'Zakasnelo',
+            'CANCELLED': 'Otkazano',
+            'REFUNDED': 'Refundirano'
+        },
+
+        setTheme(newTheme) {
+            this.theme = newTheme;
+            if (window.setAdminTheme) {
+                window.setAdminTheme(newTheme);
+            }
+        },
+
+        async loadData() {
+            await Promise.all([this.loadTenant(), this.loadInvoices()]);
+        },
+
+        async loadTenant() {
+            const token = localStorage.getItem('admin_access_token');
+            if (!token) { window.location.href = '/admin/login'; return; }
+
+            try {
+                const response = await fetch('/api/admin/tenants/' + this.tenantId, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (response.ok) {
+                    this.tenant = await response.json();
+                } else if (response.status === 401) {
+                    window.location.href = '/admin/login';
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        async loadInvoices() {
+            const token = localStorage.getItem('admin_access_token');
+            if (!token) { window.location.href = '/admin/login'; return; }
+
+            this.loading = true;
+            try {
+                const params = new URLSearchParams({
+                    tenant_id: this.tenantId,
+                    page: this.pagination.page,
+                    per_page: this.pagination.per_page
+                });
+                if (this.filters.status) params.append('status', this.filters.status);
+
+                const response = await fetch('/api/admin/payments?' + params.toString(), {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    this.invoices = data.payments || [];
+                    this.pagination = data.pagination || {};
+                    this.calculateStats();
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        calculateStats() {
+            // Calculate from loaded invoices (or make separate API call)
+            this.stats.total = this.pagination.total || this.invoices.length;
+            this.stats.pending = this.invoices.filter(i => i.status === 'PENDING').length;
+            this.stats.paid = this.invoices.filter(i => i.status === 'PAID').length;
+            this.stats.overdue = this.invoices.filter(i => i.status === 'OVERDUE' || i.is_overdue).length;
+        },
+
+        goToPage(page) {
+            if (page < 1 || page > this.pagination.pages) return;
+            this.pagination.page = page;
+            this.loadInvoices();
+        },
+
+        generateInvoice() {
+            // Set default dates (current month)
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            this.generateForm = {
+                period_start: firstDay.toISOString().split('T')[0],
+                period_end: lastDay.toISOString().split('T')[0],
+                discount_amount: 0,
+                discount_reason: ''
+            };
+            this.showGenerateModal = true;
+        },
+
+        async submitGenerateInvoice() {
+            const token = localStorage.getItem('admin_access_token');
+            this.generating = true;
+            try {
+                const response = await fetch('/api/admin/payments/generate/' + this.tenantId, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(this.generateForm)
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showToast(data.message || 'Faktura generisana', 'success');
+                    this.showGenerateModal = false;
+                    await this.loadInvoices();
+                } else {
+                    showToast(data.error || 'Greška', 'error');
+                }
+            } catch (e) {
+                showToast('Greška', 'error');
+            } finally {
+                this.generating = false;
+            }
+        },
+
+        async downloadPdf(invoiceId) {
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                const response = await fetch('/api/admin/payments/' + invoiceId + '/pdf', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'faktura-' + invoiceId + '.pdf';
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                }
+            } catch (e) {
+                showToast('Greška pri download-u', 'error');
+            }
+        },
+
+        async sendEmail(invoiceId) {
+            if (!confirm('Poslati fakturu na email?')) return;
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                const response = await fetch('/api/admin/payments/' + invoiceId + '/send', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ include_pdf: true, include_uplatnica: true })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showToast(data.message || 'Email poslat', 'success');
+                    await this.loadInvoices();
+                } else {
+                    showToast(data.error || 'Greška pri slanju', 'error');
+                }
+            } catch (e) {
+                showToast('Greška', 'error');
+            }
+        },
+
+        async verifyPayment(invoiceId) {
+            if (!confirm('Verifikovati uplatu?')) return;
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                const response = await fetch('/api/admin/payments/' + invoiceId + '/verify', {
+                    method: 'PUT',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showToast(data.message || 'Uplata verifikovana', 'success');
+                    await Promise.all([this.loadTenant(), this.loadInvoices()]);
+                } else {
+                    showToast(data.error || 'Greška', 'error');
+                }
+            } catch (e) {
+                showToast('Greška', 'error');
+            }
+        },
+
+        getStatusClass(status) {
+            const classes = {
+                'DEMO': 'bg-purple-100 text-purple-800',
+                'TRIAL': 'bg-blue-100 text-blue-800',
+                'ACTIVE': 'bg-green-100 text-green-800',
+                'EXPIRED': 'bg-yellow-100 text-yellow-800',
+                'SUSPENDED': 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        },
+
+        getPaymentStatusClass(status) {
+            const classes = {
+                'PENDING': 'bg-yellow-100 text-yellow-800',
+                'PAID': 'bg-green-100 text-green-800',
+                'OVERDUE': 'bg-red-100 text-red-800',
+                'CANCELLED': 'bg-gray-100 text-gray-800',
+                'REFUNDED': 'bg-blue-100 text-blue-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        },
+
+        formatPrice(p) {
+            return new Intl.NumberFormat('sr-RS').format(p || 0);
+        },
+
+        formatDate(d) {
+            return d ? new Date(d).toLocaleDateString('sr-Latn-RS') : '-';
+        }
+    }
+}
+</script>
+{% endblock %}

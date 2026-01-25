@@ -95,6 +95,12 @@ def admin_import_detail(import_id):
     return render_template('admin/billing/import_detail.html', import_id=import_id)
 
 
+@bp.route('/admin/billing/tenant/<int:tenant_id>/invoices')
+def admin_tenant_invoices(tenant_id):
+    """Fakture za specifičan servis."""
+    return render_template('admin/billing/tenant_invoices.html', tenant_id=tenant_id)
+
+
 # ============== Activity Log ==============
 
 @bp.route('/admin/activity')
