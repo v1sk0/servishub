@@ -32,10 +32,18 @@ window.setAdminTheme = function(newTheme) {
 
     /* ==================== KRITIČNO: Full viewport coverage ==================== */
     /* Ovo osigurava da html i body pokrivaju CEO viewport, bez bele pozadine */
+    /* VAŽNO: transition: none sprečava vizuelne glitcheve kad miš napusti stranicu */
     html, body {
         min-height: 100vh !important;
         margin: 0 !important;
         padding: 0 !important;
+        transition: none !important;
+    }
+
+    /* Sprečava hover/focus efekte na root elementima */
+    html:hover, html:focus, html:focus-within,
+    body:hover, body:focus, body:focus-within {
+        background: inherit !important;
     }
 
     /* ==================== PRE-ALPINE STILOVI (data atribut) ==================== */
@@ -766,12 +774,10 @@ window.setAdminTheme = function(newTheme) {
         transition: all 0.2s ease;
     }
 
-    /* Theme transition za smooth switch */
-    .admin-wrapper,
+    /* Theme transition za smooth switch - SAMO na child elementima, ne na wrapper-u */
     .admin-sidebar,
     .admin-topbar,
     .admin-card,
-    .bg-white,
     table,
     thead,
     tbody tr,
@@ -779,5 +785,10 @@ window.setAdminTheme = function(newTheme) {
     select,
     textarea {
         transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    /* KRITIČNO: admin-wrapper NEMA transition da spreči glitch kad miš ode sa stranice */
+    .admin-wrapper {
+        transition: none !important;
     }
 </style>
