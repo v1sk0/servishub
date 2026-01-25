@@ -973,13 +973,20 @@
                     <div class="form-group">
                         <label for="location_city" class="form-label">Grad <span class="required">*</span></label>
                         <input type="text" id="location_city" x-model="form.location_city"
+                               @input="onLocationCityChange()"
                                placeholder="npr. Beograd">
+                        <p x-show="!locationCityManuallyChanged && form.company_city" class="field-hint success">
+                            Automatski kopirano sa grada firme
+                        </p>
                     </div>
                     <div class="form-group">
                         <label for="location_postal" class="form-label">Poštanski broj</label>
                         <input type="text" id="location_postal" x-model="form.location_postal_code" maxlength="5"
-                               @input="filterDigitsOnly('location_postal_code')"
+                               @input="filterDigitsOnly('location_postal_code'); onLocationPostalChange()"
                                placeholder="11000">
+                        <p x-show="!locationPostalManuallyChanged && form.company_postal_code" class="field-hint success">
+                            Automatski kopirano
+                        </p>
                     </div>
                 </div>
 
@@ -1191,6 +1198,8 @@ window.registerPage = function() {
 
         // Address sync tracking
         locationAddressManuallyChanged: false,
+        locationCityManuallyChanged: false,
+        locationPostalManuallyChanged: false,
         previousCompanyAddress: '',
 
         // Phone sync tracking
@@ -1410,14 +1419,18 @@ window.registerPage = function() {
 
         // Sinhronizacija adrese firme sa adresom lokacije
         syncLocationAddress() {
-            // Ako korisnik nije rucno menjao adresu lokacije, kopiraj iz adrese firme
+            // Kopiraj svako polje samo ako korisnik nije rucno menjao to polje
             if (!this.locationAddressManuallyChanged) {
                 this.form.location_address = this.form.adresa_sedista;
-                this.form.location_city = this.form.company_city;
-                this.form.location_postal_code = this.form.company_postal_code;
-                // Kopiraj i koordinate
+                // Kopiraj i koordinate samo ako adresa nije rucno menjana
                 this.form.location_latitude = this.form.company_latitude;
                 this.form.location_longitude = this.form.company_longitude;
+            }
+            if (!this.locationCityManuallyChanged) {
+                this.form.location_city = this.form.company_city;
+            }
+            if (!this.locationPostalManuallyChanged) {
+                this.form.location_postal_code = this.form.company_postal_code;
             }
             this.previousCompanyAddress = this.form.adresa_sedista;
         },
@@ -1427,6 +1440,22 @@ window.registerPage = function() {
             // Ako se razlikuje od adrese firme, oznaci kao rucno promenjeno
             if (this.form.location_address !== this.form.adresa_sedista) {
                 this.locationAddressManuallyChanged = true;
+            }
+        },
+
+        // Kada korisnik rucno menja grad lokacije
+        onLocationCityChange() {
+            // Ako se razlikuje od grada firme, oznaci kao rucno promenjeno
+            if (this.form.location_city !== this.form.company_city) {
+                this.locationCityManuallyChanged = true;
+            }
+        },
+
+        // Kada korisnik rucno menja postanski broj lokacije
+        onLocationPostalChange() {
+            // Ako se razlikuje od postanskog broja firme, oznaci kao rucno promenjeno
+            if (this.form.location_postal_code !== this.form.company_postal_code) {
+                this.locationPostalManuallyChanged = true;
             }
         },
 
