@@ -8,4 +8,4 @@ with app.app_context():
     tenants = Tenant.query.all()
     print(f"Total tenants: {len(tenants)}")
     for t in tenants:
-        print(f"ID: {t.id}, Slug: {t.slug}, Status: {t.status}, Plan: {t.subscription_plan}, Fee: {t.monthly_fee}")
+        print(f"ID: {t.id}, Slug: {t.slug}, Status: {t.status}, Active: {t.is_active}")

@@ -14,18 +14,22 @@ with app.app_context():
     tenant = Tenant.query.filter_by(slug='testservis').first()
 
     if not tenant:
-        tenant = Tenant.query.filter_by(is_active=True).first()
+        from app.models.tenant import TenantStatus
+        tenant = Tenant.query.filter(
+            Tenant.status.in_([TenantStatus.ACTIVE, TenantStatus.TRIAL])
+        ).first()
 
     if not tenant:
         # Create a test tenant
+        import secrets
+        from app.models.tenant import TenantStatus
         print("Creating test tenant 'testservis'...")
         tenant = Tenant(
             name='Test Servis DOO',
             slug='testservis',
             email='test@testservis.rs',
-            is_active=True,
-            subscription_plan='BASIC',
-            monthly_fee=Decimal('5400.00'),
+            status=TenantStatus.ACTIVE,
+            login_secret=secrets.token_hex(16),
             created_at=datetime.utcnow()
         )
         db.session.add(tenant)
@@ -33,8 +37,12 @@ with app.app_context():
         print(f"Created tenant: {tenant.slug} (ID: {tenant.id})")
 
     print(f"Found tenant: {tenant.slug} (ID: {tenant.id})")
-    print(f"  Plan: {tenant.subscription_plan}")
-    print(f"  Monthly fee: {tenant.monthly_fee}")
+    print(f"  Status: {tenant.status}")
+
+    # Get price from PlatformSettings
+    settings = PlatformSettings.get_settings()
+    test_amount = tenant.custom_base_price or settings.base_price or Decimal('3600.00')
+    print(f"  Base price: {test_amount} RSD")
 
     # Get last invoice number
     last_payment = SubscriptionPayment.query.order_by(
@@ -60,7 +68,7 @@ with app.app_context():
     print(f"  Invoice Number: {invoice_number}")
     print(f"  Payment Reference: {ref_data['full']}")
     print(f"  Display: {ref_data['display']}")
-    print(f"  Amount: {tenant.monthly_fee or 5400} RSD")
+    print(f"  Amount: {test_amount} RSD")
 
     # Create payment
     payment = SubscriptionPayment(
@@ -68,7 +76,7 @@ with app.app_context():
         invoice_number=invoice_number,
         payment_reference=ref_data['full'],
         payment_reference_model=ref_data['model'],
-        total_amount=Decimal(str(tenant.monthly_fee or 5400)),
+        total_amount=test_amount,
         currency='RSD',
         status='PENDING',
         period_start=now.replace(day=1),
