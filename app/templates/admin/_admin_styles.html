@@ -30,12 +30,21 @@ window.setAdminTheme = function(newTheme) {
     /* Samo x-cloak elementi se sakrivaju (forme sa x-show) */
     [x-cloak] { display: none !important; }
 
+    /* ==================== KRITIČNO: Full viewport coverage ==================== */
+    /* Ovo osigurava da html i body pokrivaju CEO viewport, bez bele pozadine */
+    html, body {
+        min-height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     /* ==================== PRE-ALPINE STILOVI (data atribut) ==================== */
 
     /* LIGHT THEME - Pre-Alpine */
     html[data-admin-theme="light"],
     html[data-admin-theme="light"] body {
         background: #f3f4f6 !important;
+        min-height: 100vh !important;
     }
     html[data-admin-theme="light"] .admin-wrapper {
         background: #f3f4f6 !important;
@@ -53,6 +62,7 @@ window.setAdminTheme = function(newTheme) {
     html[data-admin-theme="glass"],
     html[data-admin-theme="glass"] body {
         background: #0f0f23 !important;
+        min-height: 100vh !important;
     }
     html[data-admin-theme="glass"] .admin-wrapper {
         background: linear-gradient(145deg, #0f0f23 0%, #1a1a3e 50%, #0d1b2a 100%) !important;
@@ -112,6 +122,7 @@ window.setAdminTheme = function(newTheme) {
     .admin-light,
     .admin-light body {
         background: #f3f4f6 !important;
+        min-height: 100vh !important;
     }
 
     .admin-light .admin-wrapper {
@@ -300,6 +311,7 @@ window.setAdminTheme = function(newTheme) {
     .admin-glass,
     .admin-glass body {
         background: #0f0f23 !important;
+        min-height: 100vh !important;
     }
 
     .admin-glass .admin-wrapper,

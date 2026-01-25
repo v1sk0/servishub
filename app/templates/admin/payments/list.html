@@ -218,7 +218,9 @@
                             <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            <p>Nema servisa sa fakturama</p>
+                            <p>Nema servisa za prikaz</p>
+                            <p class="text-xs mt-2">tenants: <span x-text="tenants.length"></span>, filtered: <span x-text="filteredTenants.length"></span></p>
+                            <p class="text-xs text-gray-400">Pogledaj konzolu (F12) za debug info</p>
                         </div>
                     </div>
                 </div>
@@ -375,28 +377,43 @@ function paymentsPage() {
         },
 
         async loadData() {
-            await this.loadTenantsSummary();
+            console.log('[DEBUG] loadData() called');
+            try {
+                await this.loadTenantsSummary();
+            } catch (e) {
+                console.error('[DEBUG] loadData error:', e);
+            }
         },
 
         async loadTenantsSummary() {
             const token = localStorage.getItem('admin_access_token');
+            console.log('[DEBUG] loadTenantsSummary started, token exists:', !!token);
             if (!token) { window.location.href = '/admin/login'; return; }
 
             this.loading = true;
             try {
+                console.log('[DEBUG] Fetching /api/admin/payments/by-tenant...');
                 const response = await fetch('/api/admin/payments/by-tenant', {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
+                console.log('[DEBUG] Response status:', response.status);
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('[DEBUG] API returned:', data);
+                    console.log('[DEBUG] Tenants count:', (data.tenants || []).length);
                     this.tenants = data.tenants || [];
                     this.stats = data.stats || {};
                     this.filterTenants();
+                    console.log('[DEBUG] After filter, filteredTenants count:', this.filteredTenants.length);
                 } else if (response.status === 401) {
+                    console.log('[DEBUG] 401 Unauthorized, redirecting to login');
                     window.location.href = '/admin/login';
+                } else {
+                    const errorText = await response.text();
+                    console.error('[DEBUG] API error:', response.status, errorText);
                 }
             } catch (e) {
-                console.error(e);
+                console.error('[DEBUG] Exception:', e);
             } finally {
                 this.loading = false;
             }
