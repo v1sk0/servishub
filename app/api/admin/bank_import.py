@@ -422,7 +422,7 @@ def preview_statement():
 
         transactions_preview.append({
             'type': txn_type,
-            'date': txn_data.get('date').isoformat() if txn_data.get('date') else None,
+            'date': txn_data.get('date'),  # Already ISO string from parser
             'amount': amount,
             'currency': txn_data.get('currency', 'RSD'),
             'payer_name': txn_data.get('payer_name'),

@@ -113,7 +113,7 @@ class BankStatementImport(db.Model):
                 'debit': float(self.total_debit_amount or 0),
             },
             'imported_at': self.imported_at.isoformat() if self.imported_at else None,
-            'imported_by': self.imported_by.name if self.imported_by else None,
+            'imported_by': f"{self.imported_by.ime} {self.imported_by.prezime}" if self.imported_by else None,
         }
 
 
