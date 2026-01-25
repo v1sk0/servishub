@@ -763,10 +763,21 @@ window.setAdminTheme = function(newTheme) {
     }
 
     /* Glass theme - hover states za bg-gray-100 buttons */
-    .admin-glass .bg-gray-100:hover,
+    /* VAŽNO: :not(.admin-wrapper) sprečava hover na glavnom wrapperu */
+    .admin-glass .bg-gray-100:not(.admin-wrapper):hover,
     .admin-glass .hover\:bg-gray-200:hover {
         background: rgba(35, 35, 70, 0.8) !important;
         color: var(--glass-text) !important;
+    }
+
+    /* Admin wrapper NIKAD ne sme imati hover efekat */
+    .admin-glass .admin-wrapper {
+        background: linear-gradient(145deg, #0f0f23 0%, #1a1a3e 50%, #0d1b2a 100%) !important;
+        background-attachment: fixed !important;
+    }
+    .admin-glass .admin-wrapper:hover {
+        background: linear-gradient(145deg, #0f0f23 0%, #1a1a3e 50%, #0d1b2a 100%) !important;
+        background-attachment: fixed !important;
     }
 
     /* ==================== SHARED STYLES ==================== */
