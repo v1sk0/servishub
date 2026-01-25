@@ -17,8 +17,20 @@ with app.app_context():
         tenant = Tenant.query.filter_by(is_active=True).first()
 
     if not tenant:
-        print("No active tenants found!")
-        sys.exit(1)
+        # Create a test tenant
+        print("Creating test tenant 'testservis'...")
+        tenant = Tenant(
+            name='Test Servis DOO',
+            slug='testservis',
+            email='test@testservis.rs',
+            is_active=True,
+            subscription_plan='BASIC',
+            monthly_fee=Decimal('5400.00'),
+            created_at=datetime.utcnow()
+        )
+        db.session.add(tenant)
+        db.session.commit()
+        print(f"Created tenant: {tenant.slug} (ID: {tenant.id})")
 
     print(f"Found tenant: {tenant.slug} (ID: {tenant.id})")
     print(f"  Plan: {tenant.subscription_plan}")
