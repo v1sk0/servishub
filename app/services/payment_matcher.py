@@ -107,14 +107,25 @@ class PaymentMatcher:
         return suggestions[:limit]
 
     def _match_by_exact_reference(self, txn: BankTransaction) -> MatchResult:
-        """Match po tačnom pozivu na broj."""
+        """
+        Match po tacnom pozivu na broj.
+
+        Podrzava formate:
+        - NOVI 18-cifreni: "970001232026000042" -> (123, 2026, 42)
+        - Stari 13-cifreni: "9700012300042" -> (123, None, 42)
+        - Bank format sa separatorima: normalizuje pre parsiranja
+
+        Matching poredi (tenant_id, seq) - godina se ignorise za backward compat.
+        """
         if not txn.payment_reference:
             return MatchResult(success=False)
 
-        # Normalizuj - ukloni razmake i crte
-        ref_clean = re.sub(r'[\s\-]', '', txn.payment_reference)
+        from .ips_service import IPSService
 
-        # Traži fakturu sa istim pozivom na broj
+        # Parsiraj transakciju u (tenant_id, year, seq) - year moze biti None
+        txn_parsed = IPSService.parse_payment_reference(txn.payment_reference)
+
+        # Trazi fakturu sa istim pozivom na broj
         payments = SubscriptionPayment.query.filter(
             SubscriptionPayment.status.in_(['PENDING', 'OVERDUE'])
         ).all()
@@ -122,57 +133,84 @@ class PaymentMatcher:
         for p in payments:
             if not p.payment_reference:
                 continue
-            p_ref_clean = re.sub(r'[\s\-]', '', p.payment_reference)
-            if ref_clean == p_ref_clean:
-                # Proveri i iznos
-                if abs(p.total_amount - txn.amount) <= self.AMOUNT_TOLERANCE:
-                    return MatchResult(
-                        success=True,
-                        payment=p,
-                        confidence=1.0,
-                        method='EXACT_REF',
-                        notes=f'Exact reference match: {ref_clean}'
-                    )
-                else:
-                    # Reference match ali iznos se razlikuje
-                    return MatchResult(
-                        success=True,
-                        payment=p,
-                        confidence=0.85,
-                        method='EXACT_REF_AMOUNT_DIFF',
-                        notes=f'Reference match but amount differs: expected {p.total_amount}, got {txn.amount}'
-                    )
+
+            # Parsiraj payment reference
+            p_parsed = IPSService.parse_payment_reference(p.payment_reference)
+
+            # Ako oba nisu parsabilna, pokusaj direktan string match (normalizovan)
+            if txn_parsed is None or p_parsed is None:
+                # Fallback na string normalizaciju (ukloni sve osim cifara)
+                txn_ref_clean = re.sub(r'\D', '', txn.payment_reference)
+                p_ref_clean = re.sub(r'\D', '', p.payment_reference)
+                if txn_ref_clean != p_ref_clean:
+                    continue
+            else:
+                # Poredi parsirane tuple-ove: (tenant_id, year, seq)
+                # Za EXACT match: tenant_id i seq moraju biti isti
+                # Godina se ignorise ako je None u bilo kom od njih (backward compat)
+                txn_tenant, txn_year, txn_seq = txn_parsed
+                p_tenant, p_year, p_seq = p_parsed
+
+                if txn_tenant != p_tenant or txn_seq != p_seq:
+                    continue
+
+                # Ako oba imaju godinu, moraju se poklapati
+                if txn_year is not None and p_year is not None and txn_year != p_year:
+                    continue
+
+            # Match! Proveri i iznos
+            if abs(p.total_amount - txn.amount) <= self.AMOUNT_TOLERANCE:
+                return MatchResult(
+                    success=True,
+                    payment=p,
+                    confidence=1.0,
+                    method='EXACT_REF',
+                    notes=f'Exact reference match: {txn.payment_reference} -> {p.payment_reference}'
+                )
+            else:
+                # Reference match ali iznos se razlikuje
+                return MatchResult(
+                    success=True,
+                    payment=p,
+                    confidence=0.85,
+                    method='EXACT_REF_AMOUNT_DIFF',
+                    notes=f'Reference match but amount differs: expected {p.total_amount}, got {txn.amount}'
+                )
 
         return MatchResult(success=False)
 
     def _match_by_fuzzy_reference(self, txn: BankTransaction) -> MatchResult:
-        """Match po delimičnom pozivu na broj."""
+        """
+        Match po delimicnom pozivu na broj.
+
+        Koristi parse_payment_reference() da izvuce tenant_id,
+        zatim trazi najnoviju neplacenu fakturu tog tenanta.
+        """
         if not txn.payment_reference:
             return MatchResult(success=False)
 
-        ref_clean = re.sub(r'[\s\-]', '', txn.payment_reference)
+        from .ips_service import IPSService
 
-        # Izvuci tenant_id i invoice_seq iz reference (format: 97{tenant:06d}{seq:05d})
-        if len(ref_clean) >= 13 and ref_clean.startswith('97'):
-            try:
-                tenant_id = int(ref_clean[2:8])
+        # Parsiraj referencu da dobijis tenant_id - sada vraca 3-tuple
+        parsed = IPSService.parse_payment_reference(txn.payment_reference)
 
-                # Traži fakturu tog tenanta
-                payment = SubscriptionPayment.query.filter(
-                    SubscriptionPayment.tenant_id == tenant_id,
-                    SubscriptionPayment.status.in_(['PENDING', 'OVERDUE'])
-                ).order_by(SubscriptionPayment.created_at.desc()).first()
+        if parsed:
+            tenant_id = parsed[0]  # (tenant_id, year, seq) - uzmi samo tenant_id
 
-                if payment and abs(payment.total_amount - txn.amount) <= self.AMOUNT_TOLERANCE:
-                    return MatchResult(
-                        success=True,
-                        payment=payment,
-                        confidence=0.9,
-                        method='FUZZY_REF',
-                        notes=f'Reference contains tenant_id={tenant_id}'
-                    )
-            except (ValueError, IndexError):
-                pass
+            # Trazi fakturu tog tenanta
+            payment = SubscriptionPayment.query.filter(
+                SubscriptionPayment.tenant_id == tenant_id,
+                SubscriptionPayment.status.in_(['PENDING', 'OVERDUE'])
+            ).order_by(SubscriptionPayment.created_at.desc()).first()
+
+            if payment and abs(payment.total_amount - txn.amount) <= self.AMOUNT_TOLERANCE:
+                return MatchResult(
+                    success=True,
+                    payment=payment,
+                    confidence=0.9,
+                    method='FUZZY_REF',
+                    notes=f'Reference contains tenant_id={tenant_id}'
+                )
 
         return MatchResult(success=False)
 
@@ -263,7 +301,9 @@ class PaymentMatcher:
         return len(common) >= min(len(words1), len(words2)) * 0.5
 
     def _calculate_match_score(self, txn: BankTransaction, payment: SubscriptionPayment) -> float:
-        """Računa ukupni match score za sugestije."""
+        """Racuna ukupni match score za sugestije."""
+        from .ips_service import IPSService
+
         score = 0.0
 
         # Amount match: +0.4
@@ -272,14 +312,18 @@ class PaymentMatcher:
         elif abs(payment.total_amount - txn.amount) <= Decimal('100'):
             score += 0.2  # Blizu
 
-        # Reference match: +0.4
+        # Reference match: +0.4 (koristi parsing za oba formata)
+        # Sada vraca 3-tuple: (tenant_id, year, seq)
         if txn.payment_reference and payment.payment_reference:
-            ref1 = re.sub(r'[\s\-]', '', txn.payment_reference)
-            ref2 = re.sub(r'[\s\-]', '', payment.payment_reference)
-            if ref1 == ref2:
-                score += 0.4
-            elif ref1 in ref2 or ref2 in ref1:
-                score += 0.2
+            txn_parsed = IPSService.parse_payment_reference(txn.payment_reference)
+            pay_parsed = IPSService.parse_payment_reference(payment.payment_reference)
+
+            if txn_parsed and pay_parsed:
+                # Poredi tenant_id i seq (ignorisi godinu za backward compat)
+                if txn_parsed[0] == pay_parsed[0] and txn_parsed[2] == pay_parsed[2]:
+                    score += 0.4  # Potpuni match (tenant + seq)
+                elif txn_parsed[0] == pay_parsed[0]:
+                    score += 0.2  # Isti tenant_id
 
         # Tenant name match: +0.2
         if txn.payer_name:
@@ -291,22 +335,26 @@ class PaymentMatcher:
         return min(score, 1.0)
 
     def _get_match_reasons(self, txn: BankTransaction, payment: SubscriptionPayment) -> List[str]:
-        """Vraća listu razloga za match (za UI)."""
+        """Vraca listu razloga za match (za UI)."""
+        from .ips_service import IPSService
+
         reasons = []
 
         if abs(payment.total_amount - txn.amount) <= self.AMOUNT_TOLERANCE:
             reasons.append('Iznos se poklapa')
 
         if txn.payment_reference and payment.payment_reference:
-            ref1 = re.sub(r'[\s\-]', '', txn.payment_reference)
-            ref2 = re.sub(r'[\s\-]', '', payment.payment_reference)
-            if ref1 == ref2:
-                reasons.append('Poziv na broj se poklapa')
+            txn_parsed = IPSService.parse_payment_reference(txn.payment_reference)
+            pay_parsed = IPSService.parse_payment_reference(payment.payment_reference)
+            # Sada su 3-tuple: (tenant_id, year, seq)
+            if txn_parsed and pay_parsed:
+                if txn_parsed[0] == pay_parsed[0] and txn_parsed[2] == pay_parsed[2]:
+                    reasons.append('Poziv na broj se poklapa')
 
         if txn.payer_name:
             tenant = Tenant.query.get(payment.tenant_id)
             if tenant and tenant.name and tenant.name.lower() in txn.payer_name.lower():
-                reasons.append('Ime platioca sadrži ime tenanta')
+                reasons.append('Ime platioca sadrzi ime tenanta')
 
         return reasons
 

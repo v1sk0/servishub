@@ -98,26 +98,101 @@ class IPSService:
         return 98 - (check_number % 97)
 
     @staticmethod
-    def generate_payment_reference(tenant_id: int, invoice_seq: int) -> dict:
+    def generate_payment_reference(tenant_id: int, invoice_seq: int, year: int = None) -> dict:
         """
-        Generiše poziv na broj - MAX 25 karaktera za IPS!
+        Generise poziv na broj u NOVOM 18-cifrenom formatu sa godinom.
 
-        Format: 97{tenant_id:06d}{seq:05d} = 2+6+5 = 13 cifara (OK za 25 max)
+        NOVI FORMAT v3.04: 97{tenant_id:06d}{year}{invoice_seq:06d}
+        - Ukupno 18 cifara (< 25 IPS limit)
+        - Godina sprecava kolizije kad invoice_counter resetuje godisnje
+
+        Args:
+            tenant_id: ID tenanta (1-999999)
+            invoice_seq: Redni broj fakture (1-999999)
+            year: Godina (default: current year)
+
+        Primeri:
+        - Tenant 123, 2026, Invoice 42: "970001232026000042" (18 cifara)
+        - Display: "97 000123 2026 000042"
         """
-        # Skrati invoice_seq na 5 cifara da stane u 25 char limit
-        base = f"{tenant_id:06d}{invoice_seq:05d}"
-        control = IPSService.calculate_mod97_control(base)
+        from datetime import datetime
 
-        full_ref = f"97{base}"  # 13 cifara - OK za RO tag
+        if year is None:
+            year = datetime.now().year
+
+        # Validacija
+        if tenant_id < 1 or tenant_id > 999999:
+            raise ValueError(f"Tenant ID must be 1-999999, got {tenant_id}")
+        if invoice_seq < 1 or invoice_seq > 999999:
+            raise ValueError(f"Invoice seq must be 1-999999, got {invoice_seq}")
+        if year < 2020 or year > 2099:
+            raise ValueError(f"Year must be 2020-2099, got {year}")
+
+        # NOVI format: 18 cifara
+        full = f"97{tenant_id:06d}{year}{invoice_seq:06d}"
+
+        # Za display - razmaci za citljivost
+        display = f"97 {tenant_id:06d} {year} {invoice_seq:06d}"
+
+        # Legacy 13-cifreni format (za backward compatibility prikaz)
+        legacy_ref = f"97{tenant_id:06d}{invoice_seq:05d}"
 
         return {
             'model': '97',
-            'base': base,
-            'control': f"{control:02d}",
-            'full': full_ref,
-            'display': f"97 {base[:6]} {base[6:]}",
-            'formatted': f"97 {base[:6]}-{base[6:]}-{control:02d}"
+            'full': full,          # CUVA SE: "970001232026000042"
+            'ips': full,           # Za QR: isto kao full (bez separatora)
+            'legacy': legacy_ref,  # Stari format: "9700012300042"
+            'display': display,    # Za prikaz: "97 000123 2026 000042"
+            'year': year,
+            'tenant_id': tenant_id,
+            'invoice_seq': invoice_seq,
         }
+
+    @staticmethod
+    def parse_payment_reference(ref: str) -> tuple:
+        """
+        Parsira poziv na broj u (tenant_id, year, seq) tuple.
+
+        Podrzava formate:
+        - NOVI 18-cifreni: "970001232026000042" -> (123, 2026, 42)
+        - Stari 13-cifreni: "9700012300042" -> (123, None, 42)
+        - Bank format sa separatorima: "97 000123 2026 000042" -> (123, 2026, 42)
+
+        Returns:
+            (tenant_id, year, seq) tuple ili None ako nije validan
+            - year je None za stari 13-cifreni format
+        """
+        if not ref:
+            return None
+
+        # Normalizuj: ukloni sve osim cifara
+        digits = re.sub(r'\D', '', ref.strip())
+
+        if not digits.startswith('97'):
+            return None
+
+        # NOVI format: 18 cifara (97 + 6 tenant + 4 year + 6 seq)
+        if len(digits) == 18:
+            try:
+                tenant = int(digits[2:8])
+                year = int(digits[8:12])
+                seq = int(digits[12:18])
+                # Validacija godine
+                if 2020 <= year <= 2099:
+                    return (tenant, year, seq)
+            except ValueError:
+                pass
+
+        # STARI format: 13 cifara (97 + 6 tenant + 5 seq)
+        if len(digits) == 13:
+            try:
+                tenant = int(digits[2:8])
+                seq = int(digits[8:13])
+                return (tenant, None, seq)  # year=None za stari format
+            except ValueError:
+                pass
+
+        return None
 
     def format_amount(self, amount: Decimal) -> str:
         """
