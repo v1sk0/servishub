@@ -5,7 +5,7 @@ Sve stranice zahtevaju autentifikaciju putem JWT tokena
 koji se proverava na frontendu (JavaScript).
 """
 
-from flask import render_template, abort
+from flask import render_template, abort, current_app
 from . import bp
 from ..models import Tenant
 
@@ -40,7 +40,10 @@ def login():
 @bp.route('/register')
 def register():
     """Stranica za registraciju novog servisa."""
-    return render_template('tenant/register.html')
+    return render_template(
+        'tenant/register.html',
+        google_maps_api_key=current_app.config.get('GOOGLE_MAPS_API_KEY', '')
+    )
 
 
 @bp.route('/verify-email')

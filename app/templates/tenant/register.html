@@ -212,11 +212,11 @@
                     <label for="bank_account" class="block text-sm font-medium text-gray-700">Bankovni račun</label>
                     <input type="text" id="bank_account" x-model="form.bank_account"
                            @blur="formatBankAccount()"
-                           @input="clearFieldError('bank_account')"
-                           placeholder="265-123456789-12"
+                           @input="clearFieldError('bank_account'); autoFormatBankAccount()"
+                           placeholder="160-1234567890123-45"
                            class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                            :class="fieldErrors.bank_account ? 'border-red-500 bg-red-50' : 'border-gray-300'">
-                    <p class="mt-1 text-xs text-gray-500">Format: XXX-XXXXXXXXX-XX (opciono)</p>
+                    <p class="mt-1 text-xs text-gray-500">Format: BBB-XXXXXXXXXXXXX-KK (18 cifara, opciono)</p>
                 </div>
             </div>
 
@@ -543,6 +543,20 @@
                 </div>
             </div>
 
+            <!-- Info poruka za Step 2 - cekanje email verifikacije -->
+            <div x-show="step === 2 && !emailVerified && !isOAuth && emailVerificationSent"
+                 class="rounded-lg bg-blue-50 border border-blue-200 p-3">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-blue-500 mr-2 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="text-sm text-blue-700">
+                        <span class="font-medium">Čekamo verifikaciju email-a...</span>
+                        Proverite inbox i <strong>Junk/Spam</strong> folder.
+                    </p>
+                </div>
+            </div>
+
             <!-- Navigation buttons -->
             <div class="flex justify-between">
                 <button type="button" @click="prevStep()" x-show="step > 1"
@@ -551,11 +565,10 @@
                 </button>
                 <div x-show="step === 1"></div>
 
-                <!-- Dalje button - hidden on step 2 until email verified (unless OAuth) -->
+                <!-- Dalje button - always visible, disabled on step 2 until email verified (unless OAuth) -->
                 <button type="submit"
-                        x-show="step !== 2 || emailVerified || isOAuth"
-                        :disabled="loading || (step === 4 && !canSubmit)"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50">
+                        :disabled="loading || (step === 4 && !canSubmit) || (step === 2 && !emailVerified && !isOAuth)"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed">
                     <svg x-show="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -1200,9 +1213,12 @@ window.registerPage = function() {
         },
 
         formatBankAccount() {
-            // Auto-formatiranje bankovnog racuna u format XXX-XXXXXXXXX-XX
-            // Srednji deo uvek ima 9 cifara (dopunjava se nulama s leva)
-            // Primer: 192-75224-22 -> 192-000075224-22
+            // Auto-formatiranje bankovnog racuna u format BBB-XXXXXXXXXXXXX-KK
+            // Srpski format: 18 cifara ukupno (3-13-2)
+            // BBB = sifra banke (3 cifre)
+            // XXXXXXXXXXXXX = broj racuna (13 cifara, dopunjava se nulama s leva)
+            // KK = kontrolni broj (2 cifre)
+            // Primer: 190-2912024-45 -> 190-0000002912024-45
 
             let value = this.form.bank_account;
             if (!value) return;
@@ -1219,33 +1235,58 @@ window.registerPage = function() {
 
             if (parts.length >= 3) {
                 // Imamo format sa crticama
-                let first = parts[0].slice(0, 3);  // Max 3 cifre
+                let first = parts[0].slice(0, 3);  // Max 3 cifre (sifra banke)
                 let middle = parts[1];
-                let last = parts[2].slice(0, 2);   // Max 2 cifre
+                let last = parts[2].slice(0, 2);   // Max 2 cifre (kontrolni broj)
 
-                // Dopuni srednji deo nulama do 9 cifara
-                if (middle.length < 9) {
-                    middle = middle.padStart(9, '0');
-                } else if (middle.length > 9) {
-                    middle = middle.slice(0, 9);
+                // Dopuni srednji deo nulama do 13 cifara
+                if (middle.length < 13) {
+                    middle = middle.padStart(13, '0');
+                } else if (middle.length > 13) {
+                    middle = middle.slice(0, 13);
                 }
 
                 if (first && middle && last) {
                     this.form.bank_account = `${first}-${middle}-${last}`;
                 }
-            } else if (digits.length >= 14) {
-                // Nema crtica ali ima dovoljno cifara - formatiraj automatski
-                // Pretpostavka: prve 3 cifre, poslednje 2 cifre, sredina ostalo
+            } else if (digits.length >= 6) {
+                // Nema crtica - formatiraj automatski
+                // Minimum 6 cifara: 3 za banku + 1 za racun + 2 za kontrolni
+                // Pretpostavka: prve 3 cifre = banka, poslednje 2 = kontrolni, sredina = racun
                 let first = digits.slice(0, 3);
                 let last = digits.slice(-2);
                 let middle = digits.slice(3, -2);
 
-                // Dopuni srednji deo nulama do 9 cifara
-                if (middle.length < 9) {
-                    middle = middle.padStart(9, '0');
-                } else if (middle.length > 9) {
-                    middle = middle.slice(0, 9);
+                // Dopuni srednji deo nulama do 13 cifara
+                if (middle.length < 13) {
+                    middle = middle.padStart(13, '0');
+                } else if (middle.length > 13) {
+                    middle = middle.slice(0, 13);
                 }
+
+                this.form.bank_account = `${first}-${middle}-${last}`;
+            }
+        },
+
+        // Auto-formatiranje bankovnog racuna dok korisnik kuca
+        autoFormatBankAccount() {
+            let value = this.form.bank_account;
+            if (!value) return;
+
+            // Ako vec ima crtice, ne diraj (korisnik vec ima formatiran unos)
+            if (value.includes('-')) return;
+
+            // Ukloni sve osim brojeva
+            let digits = value.replace(/\D/g, '');
+
+            // Formatiraj samo kad ima dovoljno cifara (min 6: 3+1+2)
+            if (digits.length >= 6) {
+                let first = digits.slice(0, 3);
+                let last = digits.slice(-2);
+                let middle = digits.slice(3, -2);
+
+                // Dopuni srednji deo nulama do 13 cifara
+                middle = middle.padStart(13, '0');
 
                 this.form.bank_account = `${first}-${middle}-${last}`;
             }
@@ -1395,9 +1436,9 @@ window.registerPage = function() {
                     hasErrors = true;
                 }
 
-                // Validiraj format bankovnog racuna samo ako je unet
-                if (this.form.bank_account && !/^\d{3}-\d{9,13}-\d{2}$/.test(this.form.bank_account)) {
-                    this.fieldErrors['bank_account'] = 'Neispravan format bankovnog računa';
+                // Validiraj format bankovnog racuna samo ako je unet (srpski format: 3-13-2 = 18 cifara)
+                if (this.form.bank_account && !/^\d{3}-\d{13}-\d{2}$/.test(this.form.bank_account)) {
+                    this.fieldErrors['bank_account'] = 'Neispravan format bankovnog računa (format: XXX-XXXXXXXXXXXXX-XX)';
                     hasErrors = true;
                 }
 
@@ -1753,5 +1794,5 @@ function onGoogleMapsLoaded() {
 </script>
 
 <!-- Google Maps Places API -->
-<script src="https://maps.googleapis.com/maps/api/js?key={{ config.get('GOOGLE_MAPS_API_KEY', '') }}&libraries=places&callback=onGoogleMapsLoaded" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&callback=onGoogleMapsLoaded" async defer></script>
 {% endblock %}
