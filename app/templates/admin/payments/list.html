@@ -285,7 +285,11 @@
                                                 </div>
                                             </template>
                                             <template x-if="!p.bank_import && p.status === 'PAID'">
-                                                <span class="text-xs text-gray-400 italic" x-text="p.reconciled_via === 'MANUAL' ? 'Ručno' : (p.reconciled_via || '-')"></span>
+                                                <div>
+                                                    <div class="text-xs text-gray-500 italic" x-text="p.reconciled_via === 'MANUAL' ? 'Ručno verifikovano' : (p.reconciled_via || 'Ručno')"></div>
+                                                    <div class="text-xs text-gray-400" x-show="p.verified_by_name" x-text="p.verified_by_name"></div>
+                                                    <div class="text-xs text-gray-400" x-show="p.verified_at" x-text="formatDate(p.verified_at)"></div>
+                                                </div>
                                             </template>
                                             <template x-if="!p.bank_import && p.status !== 'PAID'">
                                                 <span class="text-gray-400">-</span>

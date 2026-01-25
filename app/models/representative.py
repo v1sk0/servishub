@@ -288,6 +288,7 @@ class SubscriptionPayment(db.Model):
             'payment_proof_url': self.payment_proof_url,
             'verified_at': self.verified_at.isoformat() if self.verified_at else None,
             'verified_by_id': self.verified_by_id,
+            'verified_by_name': f"{self.verified_by.ime} {self.verified_by.prezime}" if self.verified_by else None,
             'is_auto_generated': self.is_auto_generated,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             # Reconciliation info
