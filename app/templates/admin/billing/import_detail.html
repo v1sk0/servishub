@@ -192,21 +192,21 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <template x-for="txn in transactions" :key="txn.id">
                                     <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(txn.transaction_date)"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="txn.payer_name || '-'"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(txn.date)"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="txn.payer?.name || '-'"></td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="formatPrice(txn.amount)"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500" x-text="txn.payment_reference || '-'"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500" x-text="txn.reference?.number || txn.reference?.raw || '-'"></td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 py-1 text-xs font-medium rounded-full"
                                                   :class="{
-                                                      'bg-yellow-100 text-yellow-800': txn.match_status === 'UNMATCHED',
-                                                      'bg-green-100 text-green-800': txn.match_status === 'MATCHED',
-                                                      'bg-blue-100 text-blue-800': txn.match_status === 'MANUAL',
-                                                      'bg-gray-100 text-gray-800': txn.match_status === 'IGNORED'
+                                                      'bg-yellow-100 text-yellow-800': txn.match?.status === 'UNMATCHED',
+                                                      'bg-green-100 text-green-800': txn.match?.status === 'MATCHED',
+                                                      'bg-blue-100 text-blue-800': txn.match?.status === 'MANUAL',
+                                                      'bg-gray-100 text-gray-800': txn.match?.status === 'IGNORED'
                                                   }"
-                                                  x-text="matchStatusLabels[txn.match_status]"></span>
+                                                  x-text="matchStatusLabels[txn.match?.status]"></span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="txn.matched_invoice || '-'"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="txn.match?.payment_id || '-'"></td>
                                     </tr>
                                 </template>
                             </tbody>

@@ -439,7 +439,7 @@ def preview_statement():
             debit_count += 1
             total_debit += amount
 
-    statement_date = parse_result.get('statement_date')
+    statement_date = parse_result.get('statement_date')  # Already ISO string from parser
 
     return jsonify({
         'filename': file.filename,
@@ -449,7 +449,7 @@ def preview_statement():
         'bank_name': parse_result.get('bank_name', 'Nepoznata banka'),
         'format': parse_result.get('format', 'CSV'),
         'encoding': parse_result.get('encoding', 'UTF-8'),
-        'statement_date': statement_date.isoformat() if statement_date else None,
+        'statement_date': statement_date,
         'statement_number': parse_result.get('statement_number'),
         'transactions': transactions_preview,
         'summary': {
