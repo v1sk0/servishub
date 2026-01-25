@@ -4,392 +4,872 @@
 
 {% block head %}
 <style>
-    /* Force light theme - override glass-theme CSS variables */
-    .public-page {
-        --glass-text: #111827 !important;
-        --glass-text-muted: #6b7280 !important;
-        --glass-border: #d1d5db !important;
-        --glass-bg: #f9fafb !important;
-        --glass-card: #ffffff !important;
-        color: #111827 !important;
+    /* ========================================
+       ServisHub Premium Registration Page
+       Glassmorphism Design System
+       ======================================== */
+
+    /* CSS Variables */
+    :root {
+        --sh-bg-dark: #0a0a0f;
+        --sh-card-bg: rgba(30, 41, 59, 0.8);
+        --sh-card-border: rgba(255, 255, 255, 0.1);
+        --sh-text-primary: #ffffff;
+        --sh-text-secondary: #94a3b8;
+        --sh-text-muted: #64748b;
+        --sh-accent-purple: #8b5cf6;
+        --sh-accent-indigo: #6366f1;
+        --sh-accent-blue: #3b82f6;
+        --sh-success: #10b981;
+        --sh-warning: #f59e0b;
+        --sh-error: #ef4444;
+        --sh-glow-purple: rgba(139, 92, 246, 0.4);
+        --sh-glow-blue: rgba(59, 130, 246, 0.3);
     }
-    /* Override glass-theme input styles - high specificity */
-    .public-page input,
-    .public-page select,
-    .public-page textarea,
-    .public-page.glass-theme input,
-    .public-page.glass-theme select,
-    .public-page.glass-theme textarea,
-    body.glass-theme .public-page input,
-    body.glass-theme .public-page select,
-    body.glass-theme .public-page textarea {
-        background-color: #ffffff !important;
-        background: #ffffff !important;
-        color: #111827 !important;
-        border-color: #d1d5db !important;
+
+    /* Reset public-page overrides */
+    .register-page,
+    .register-page * {
+        color: inherit;
     }
-    .public-page input::placeholder { color: #9ca3af !important; }
-    .public-page label { color: #374151 !important; }
-    /* Override glass-theme border-gray-300 */
-    .public-page .border-gray-300,
-    .public-page.glass-theme .border-gray-300,
-    body.glass-theme .public-page .border-gray-300 {
-        border-color: #d1d5db !important;
-        background: transparent !important;
-        color: #111827 !important;
+
+    /* Main container */
+    .register-page {
+        min-height: 100vh;
+        background: var(--sh-bg-dark);
+        color: var(--sh-text-primary);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        position: relative;
+        overflow-x: hidden;
     }
-    /* Text colors */
-    .public-page .text-white { color: #ffffff !important; }
-    .public-page .text-gray-900 { color: #111827 !important; }
-    .public-page .text-gray-800 { color: #1f2937 !important; }
-    .public-page .text-gray-700 { color: #374151 !important; }
-    .public-page .text-gray-600 { color: #4b5563 !important; }
-    .public-page .text-gray-500 { color: #6b7280 !important; }
-    .public-page .text-gray-400 { color: #9ca3af !important; }
-    .public-page .text-primary-600 { color: #2563eb !important; }
-    .public-page .text-primary-500 { color: #3b82f6 !important; }
-    .public-page .text-green-600 { color: #16a34a !important; }
-    .public-page .text-green-700 { color: #15803d !important; }
-    .public-page .text-green-800 { color: #166534 !important; }
-    .public-page .text-yellow-700 { color: #a16207 !important; }
-    .public-page .text-yellow-800 { color: #854d0e !important; }
-    .public-page .text-blue-400 { color: #60a5fa !important; }
-    .public-page .text-blue-500 { color: #3b82f6 !important; }
-    .public-page .text-blue-600 { color: #2563eb !important; }
-    .public-page .text-blue-700 { color: #1d4ed8 !important; }
-    .public-page .text-blue-800 { color: #1e40af !important; }
-    .public-page .text-red-400 { color: #f87171 !important; }
-    .public-page .text-red-500 { color: #ef4444 !important; }
-    .public-page .text-red-600 { color: #dc2626 !important; }
-    .public-page .text-red-700 { color: #b91c1c !important; }
-    .public-page .text-red-800 { color: #991b1b !important; }
-    .public-page .text-sm { color: inherit !important; }
-    /* Background colors */
-    .public-page .bg-white { background-color: #ffffff !important; }
-    .public-page .bg-gray-50 { background-color: #f9fafb !important; }
-    .public-page .bg-gray-100 { background-color: #f3f4f6 !important; }
-    .public-page .bg-primary-600 { background-color: #2563eb !important; }
-    .public-page .bg-blue-600 { background-color: #2563eb !important; }
-    .public-page .bg-green-50 { background-color: #f0fdf4 !important; }
-    .public-page .bg-green-500 { background-color: #22c55e !important; }
-    .public-page .bg-yellow-50 { background-color: #fefce8 !important; }
-    .public-page .bg-red-50 { background-color: #fef2f2 !important; }
-    .public-page .bg-blue-50 { background-color: #eff6ff !important; }
-    /* Border colors */
-    .public-page .border-gray-200 { border-color: #e5e7eb !important; }
-    .public-page .border-gray-300 { border-color: #d1d5db !important; }
-    .public-page .border-green-200 { border-color: #bbf7d0 !important; }
-    .public-page .border-green-400 { border-color: #4ade80 !important; }
-    .public-page .border-yellow-200 { border-color: #fef08a !important; }
-    .public-page .border-blue-200 { border-color: #bfdbfe !important; }
-    .public-page .border-red-200 { border-color: #fecaca !important; }
-    /* Inherit colors for generic elements */
-    .public-page p, .public-page span, .public-page div { color: inherit; }
-    /* Google Places Autocomplete dropdown - ensure visibility */
+
+    /* Animated gradient orbs */
+    .register-page::before,
+    .register-page::after {
+        content: '';
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(120px);
+        opacity: 0.5;
+        pointer-events: none;
+        z-index: 0;
+    }
+    .register-page::before {
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, var(--sh-accent-purple) 0%, transparent 70%);
+        top: -200px;
+        right: -100px;
+        animation: floatOrb1 20s ease-in-out infinite;
+    }
+    .register-page::after {
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, var(--sh-accent-blue) 0%, transparent 70%);
+        bottom: -150px;
+        left: -100px;
+        animation: floatOrb2 25s ease-in-out infinite;
+    }
+
+    @keyframes floatOrb1 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -30px) rotate(120deg); }
+        66% { transform: translate(-20px, 20px) rotate(240deg); }
+    }
+    @keyframes floatOrb2 {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        50% { transform: translate(-40px, -40px) rotate(180deg); }
+    }
+
+    /* Grid overlay */
+    .register-page .grid-overlay {
+        position: fixed;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+        background-size: 60px 60px;
+        pointer-events: none;
+        z-index: 0;
+        mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+    }
+
+    /* Content wrapper */
+    .register-content {
+        position: relative;
+        z-index: 1;
+        padding: 2rem 1rem;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Glass card */
+    .glass-card {
+        background: var(--sh-card-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--sh-card-border);
+        border-radius: 24px;
+        box-shadow:
+            0 25px 50px -12px rgba(0, 0, 0, 0.5),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 520px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .glass-card:hover {
+        transform: translateY(-2px);
+        box-shadow:
+            0 30px 60px -12px rgba(0, 0, 0, 0.6),
+            0 0 40px var(--sh-glow-purple),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    /* Logo */
+    .register-logo {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, var(--sh-accent-indigo) 0%, var(--sh-accent-purple) 100%);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        box-shadow: 0 0 30px var(--sh-glow-purple);
+        animation: pulse-glow 3s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 30px var(--sh-glow-purple); }
+        50% { box-shadow: 0 0 50px var(--sh-glow-purple), 0 0 80px var(--sh-glow-blue); }
+    }
+    .register-logo svg {
+        width: 36px;
+        height: 36px;
+        color: white;
+    }
+
+    /* Typography */
+    .register-title {
+        font-size: 1.875rem;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .register-subtitle {
+        text-align: center;
+        color: var(--sh-text-secondary);
+        font-size: 0.95rem;
+        margin-bottom: 2rem;
+    }
+    .register-subtitle a {
+        color: var(--sh-accent-purple);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .register-subtitle a:hover {
+        color: #a78bfa;
+        text-shadow: 0 0 20px var(--sh-glow-purple);
+    }
+
+    /* Step indicator */
+    .step-indicator {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .step-dot {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .step-dot.active {
+        background: linear-gradient(135deg, var(--sh-accent-indigo) 0%, var(--sh-accent-purple) 100%);
+        color: white;
+        box-shadow: 0 0 20px var(--sh-glow-purple);
+    }
+    .step-dot.completed {
+        background: var(--sh-success);
+        color: white;
+    }
+    .step-dot.inactive {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--sh-text-muted);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .step-line {
+        width: 40px;
+        height: 3px;
+        border-radius: 2px;
+        transition: all 0.3s;
+    }
+    .step-line.active {
+        background: linear-gradient(90deg, var(--sh-accent-purple), var(--sh-accent-blue));
+    }
+    .step-line.inactive {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .step-label {
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--sh-text-secondary);
+        margin-top: 0.75rem;
+        font-weight: 500;
+    }
+
+    /* Form elements */
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--sh-text-secondary);
+        margin-bottom: 0.5rem;
+    }
+    .form-label .required {
+        color: var(--sh-accent-purple);
+    }
+    .form-label .optional {
+        color: var(--sh-text-muted);
+        font-weight: 400;
+        font-size: 0.8rem;
+    }
+
+    /* Inputs */
+    .register-page input,
+    .register-page select,
+    .register-page textarea {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        background: rgba(15, 23, 42, 0.6) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px;
+        color: var(--sh-text-primary) !important;
+        font-size: 0.95rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        outline: none;
+    }
+    .register-page input::placeholder {
+        color: var(--sh-text-muted) !important;
+    }
+    .register-page input:focus,
+    .register-page select:focus,
+    .register-page textarea:focus {
+        border-color: var(--sh-accent-purple) !important;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2), 0 0 20px rgba(139, 92, 246, 0.1);
+        background: rgba(15, 23, 42, 0.8) !important;
+    }
+    .register-page input.success {
+        border-color: var(--sh-success) !important;
+        background: rgba(16, 185, 129, 0.1) !important;
+    }
+    .register-page input.error {
+        border-color: var(--sh-error) !important;
+        background: rgba(239, 68, 68, 0.1) !important;
+    }
+
+    /* Buttons */
+    .btn-primary {
+        width: 100%;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, var(--sh-accent-indigo) 0%, var(--sh-accent-purple) 100%);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 40px -10px var(--sh-glow-purple), 0 0 20px var(--sh-glow-purple);
+    }
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-secondary {
+        width: 100%;
+        padding: 1rem 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        color: white;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-outline {
+        padding: 0.75rem 1.25rem;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        color: var(--sh-text-secondary);
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .btn-outline:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: white;
+    }
+
+    /* Info boxes */
+    .info-box {
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+    .info-box.success {
+        background: rgba(16, 185, 129, 0.15);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .info-box.success .info-icon {
+        color: var(--sh-success);
+    }
+    .info-box.warning {
+        background: rgba(245, 158, 11, 0.15);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .info-box.warning .info-icon {
+        color: var(--sh-warning);
+    }
+    .info-box.info {
+        background: rgba(99, 102, 241, 0.15);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+    .info-box.info .info-icon {
+        color: var(--sh-accent-indigo);
+    }
+    .info-box.error {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .info-box.error .info-icon {
+        color: var(--sh-error);
+    }
+    .info-box-content {
+        flex: 1;
+    }
+    .info-box-title {
+        font-weight: 600;
+        color: var(--sh-text-primary);
+        margin-bottom: 0.25rem;
+    }
+    .info-box-text {
+        font-size: 0.875rem;
+        color: var(--sh-text-secondary);
+        line-height: 1.5;
+    }
+
+    /* Promo badge */
+    .promo-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 100px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--sh-text-primary);
+        margin-bottom: 1.5rem;
+        animation: shimmer 2s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
+    }
+
+    /* Divider */
+    .divider {
+        display: flex;
+        align-items: center;
+        margin: 1.5rem 0;
+    }
+    .divider-line {
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .divider-text {
+        padding: 0 1rem;
+        color: var(--sh-text-muted);
+        font-size: 0.85rem;
+    }
+
+    /* Grid layouts */
+    .form-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    @media (max-width: 480px) {
+        .form-grid-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Navigation buttons */
+    .nav-buttons {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    /* Map container */
+    .map-container {
+        margin-top: 0.75rem;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .map-container > div {
+        height: 180px;
+    }
+
+    /* Google Places Autocomplete - Dark theme */
     .pac-container {
         z-index: 99999 !important;
-        background-color: #ffffff !important;
-        border: 1px solid #d1d5db !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+        background: rgba(30, 41, 59, 0.98) !important;
+        backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
         font-family: inherit !important;
-        margin-top: 4px !important;
+        margin-top: 8px !important;
+        padding: 0.5rem 0 !important;
     }
     .pac-item {
-        padding: 8px 12px !important;
+        padding: 0.75rem 1rem !important;
         cursor: pointer !important;
-        color: #111827 !important;
-        border-top: 1px solid #e5e7eb !important;
-    }
-    .pac-item:first-child {
-        border-top: none !important;
+        color: #e2e8f0 !important;
+        border: none !important;
+        transition: all 0.2s !important;
     }
     .pac-item:hover {
-        background-color: #f3f4f6 !important;
+        background: rgba(139, 92, 246, 0.2) !important;
     }
     .pac-item-selected {
-        background-color: #eff6ff !important;
+        background: rgba(139, 92, 246, 0.3) !important;
     }
     .pac-icon {
-        margin-right: 8px !important;
+        display: none !important;
     }
     .pac-item-query {
-        color: #111827 !important;
+        color: #ffffff !important;
         font-weight: 500 !important;
     }
     .pac-matched {
-        font-weight: 700 !important;
+        color: var(--sh-accent-purple) !important;
+        font-weight: 600 !important;
+    }
+
+    /* Checkbox styling */
+    .checkbox-wrapper {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    .checkbox-wrapper input[type="checkbox"] {
+        width: 20px !important;
+        height: 20px !important;
+        padding: 0 !important;
+        margin-top: 2px;
+        accent-color: var(--sh-accent-purple);
+        cursor: pointer;
+    }
+    .checkbox-label {
+        font-size: 0.9rem;
+        color: var(--sh-text-secondary);
+        line-height: 1.5;
+    }
+    .checkbox-label a {
+        color: var(--sh-accent-purple);
+        text-decoration: none;
+    }
+    .checkbox-label a:hover {
+        text-decoration: underline;
+    }
+
+    /* Loading spinner */
+    .spinner {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* File upload */
+    .file-upload {
+        border: 2px dashed rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .file-upload:hover {
+        border-color: var(--sh-accent-purple);
+        background: rgba(139, 92, 246, 0.1);
+    }
+    .file-upload.uploaded {
+        border-color: var(--sh-success);
+        background: rgba(16, 185, 129, 0.1);
+    }
+
+    /* Form container */
+    .form-container {
+        margin-top: 1.5rem;
+    }
+    .form-step {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    /* Field hints */
+    .field-hint {
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+        color: var(--sh-text-muted);
+    }
+    .field-hint.success {
+        color: var(--sh-success);
+    }
+    .field-hint.error {
+        color: var(--sh-error);
+    }
+
+    /* Hidden utility */
+    .hidden {
+        display: none !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+        .glass-card {
+            padding: 1.5rem;
+            border-radius: 16px;
+        }
+        .register-title {
+            font-size: 1.5rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="public-page min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8" x-data="registerPage()">
-    <div class="max-w-lg w-full space-y-8">
-        <div>
-            <div class="flex justify-center">
-                <div class="w-16 h-16 bg-primary-600 rounded-xl flex items-center justify-center">
-                    <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                </div>
-            </div>
-            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                Registrujte vaš servis
-            </h2>
-            <p class="mt-2 text-center text-sm text-gray-600">
-                Već imate nalog?
-                <a href="/login" class="font-medium text-primary-600 hover:text-primary-500">
-                    Prijavite se
-                </a>
-            </p>
-        </div>
+<div class="register-page" x-data="registerPage()">
+    <!-- Grid overlay -->
+    <div class="grid-overlay"></div>
 
-        <!-- Step indicator (4 steps) -->
-        <nav aria-label="Progress" class="mt-6">
-            <ol class="flex items-center justify-center space-x-2">
+    <!-- Content -->
+    <div class="register-content">
+        <div class="glass-card">
+            <!-- Logo -->
+            <div class="register-logo">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </div>
+
+            <!-- Title -->
+            <h1 class="register-title">Registrujte vaš servis</h1>
+            <p class="register-subtitle">
+                Već imate nalog? <a href="/login">Prijavite se</a>
+            </p>
+
+            <!-- Promo badge -->
+            <div style="text-align: center;">
+                <span class="promo-badge">
+                    <span>🎁</span>
+                    <span>2 meseca potpuno besplatno</span>
+                </span>
+            </div>
+
+            <!-- Step indicator -->
+            <div class="step-indicator">
                 <template x-for="i in 4" :key="i">
-                    <li class="flex items-center">
-                        <div class="relative flex h-8 w-8 items-center justify-center rounded-full"
-                             :class="step >= i ? 'bg-primary-600' : 'border-2 border-gray-300 bg-white'">
-                            <span :class="step >= i ? 'text-white' : 'text-gray-500'" class="text-sm font-medium" x-text="i"></span>
+                    <div style="display: flex; align-items: center;">
+                        <div class="step-dot"
+                             :class="{
+                                 'active': step === i,
+                                 'completed': step > i,
+                                 'inactive': step < i
+                             }">
+                            <span x-show="step <= i" x-text="i"></span>
+                            <svg x-show="step > i" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
                         </div>
-                        <div x-show="i < 4" class="w-8 h-0.5" :class="step > i ? 'bg-primary-600' : 'bg-gray-200'"></div>
-                    </li>
+                        <div x-show="i < 4" class="step-line" :class="step > i ? 'active' : 'inactive'"></div>
+                    </div>
                 </template>
-            </ol>
-            <div class="mt-2 text-center text-sm text-gray-500">
+            </div>
+            <div class="step-label">
                 <span x-show="step === 1">Podaci o firmi</span>
                 <span x-show="step === 2">Admin nalog</span>
                 <span x-show="step === 3">Lokacija servisa</span>
-                <span x-show="step === 4">KYC Verifikacija</span>
+                <span x-show="step === 4">Završetak</span>
             </div>
-        </nav>
 
-        <form @submit.prevent="submitStep()" class="mt-8 space-y-6">
+        <form @submit.prevent="submitStep()" class="form-container">
             <!-- Step 1: Business Info -->
-            <div x-show="step === 1" class="space-y-4">
-                <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Podaci o firmi</h3>
+            <div x-show="step === 1" class="form-step">
 
-                <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700">Naziv firme *</label>
+                <div class="form-group">
+                    <label for="name" class="form-label">Naziv firme <span class="required">*</span></label>
                     <input type="text" id="name" x-model="form.company_name"
                            @input="clearFieldError('company_name')"
-                           class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                           :class="fieldErrors.company_name ? 'border-red-500 bg-red-50' : (aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300')">
+                           :class="{'success': aprCompanyFound && !fieldErrors.company_name, 'error': fieldErrors.company_name}"
+                           placeholder="Unesite naziv vaše firme">
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="pib" class="block text-sm font-medium text-gray-700">PIB <span class="text-gray-400 font-normal">(opciono)</span></label>
-                        <div class="relative">
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="pib" class="form-label">PIB <span class="optional">(opciono)</span></label>
+                        <div style="position: relative;">
                             <input type="text" id="pib" x-model="form.pib" maxlength="9"
                                    @input="filterDigitsOnly('pib'); clearFieldError('pib'); onPibInput()"
                                    placeholder="123456789"
-                                   class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                                   :class="fieldErrors.pib ? 'border-red-500 bg-red-50' : (pibExists ? 'border-red-500 bg-red-50' : (aprCompanyFound ? 'border-green-500 bg-green-50' : (loadingApr ? 'border-yellow-500' : 'border-gray-300')))">
+                                   :class="{'success': aprCompanyFound && !pibExists, 'error': fieldErrors.pib || pibExists}">
                             <!-- Loading indicator -->
-                            <div x-show="loadingApr" class="absolute right-2 top-1/2 transform -translate-y-1/2 mt-0.5">
-                                <svg class="animate-spin h-5 w-5 text-primary-500" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            <div x-show="loadingApr" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%);">
+                                <svg class="spinner" style="width: 20px; height: 20px; color: var(--sh-accent-purple);" fill="none" viewBox="0 0 24 24">
+                                    <circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path style="opacity: 0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
                             </div>
                             <!-- Success checkmark -->
-                            <div x-show="aprCompanyFound && !loadingApr && !pibExists" class="absolute right-2 top-1/2 transform -translate-y-1/2 mt-0.5">
-                                <svg class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div x-show="aprCompanyFound && !loadingApr && !pibExists" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%);">
+                                <svg style="width: 20px; height: 20px; color: var(--sh-success);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
                             <!-- Error X icon -->
-                            <div x-show="pibExists && !loadingApr" class="absolute right-2 top-1/2 transform -translate-y-1/2 mt-0.5">
-                                <svg class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div x-show="pibExists && !loadingApr" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%);">
+                                <svg style="width: 20px; height: 20px; color: var(--sh-error);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </div>
                         </div>
-                        <p x-show="aprCompanyFound && !pibExists" class="mt-1 text-xs text-green-600">Podaci automatski popunjeni iz APR-a</p>
-                        <p x-show="pibExists" class="mt-1 text-xs text-red-600">Servis sa ovim PIB-om je već registrovan</p>
+                        <p x-show="aprCompanyFound && !pibExists" class="field-hint success">Podaci automatski popunjeni iz APR-a</p>
+                        <p x-show="pibExists" class="field-hint error">Servis sa ovim PIB-om je već registrovan</p>
                     </div>
-                    <div>
-                        <label for="maticni_broj" class="block text-sm font-medium text-gray-700">Matični broj</label>
+                    <div class="form-group">
+                        <label for="maticni_broj" class="form-label">Matični broj</label>
                         <input type="text" id="maticni_broj" x-model="form.maticni_broj" maxlength="8"
                                @input="filterDigitsOnly('maticni_broj'); clearFieldError('maticni_broj')"
                                placeholder="12345678"
-                               class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                               :class="fieldErrors.maticni_broj ? 'border-red-500 bg-red-50' : (aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300')">
+                               :class="{'success': aprCompanyFound && !fieldErrors.maticni_broj, 'error': fieldErrors.maticni_broj}">
                     </div>
                 </div>
 
                 <!-- APR Info message -->
-                <div x-show="aprCompanyFound" x-transition class="rounded-lg bg-green-50 border border-green-200 p-3">
-                    <div class="flex items-center">
-                        <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p class="text-sm text-green-700">
-                            <span class="font-medium">Firma pronađena u APR registru!</span>
-                            Podaci su automatski popunjeni. Možete ih izmeniti ako je potrebno.
-                        </p>
+                <div x-show="aprCompanyFound" x-transition class="info-box success">
+                    <svg class="info-icon" style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="info-box-content">
+                        <p class="info-box-title">Firma pronađena u APR registru!</p>
+                        <p class="info-box-text">Podaci su automatski popunjeni. Možete ih izmeniti ako je potrebno.</p>
                     </div>
                 </div>
-                <div>
-                    <label for="adresa_sedista" class="block text-sm font-medium text-gray-700">Adresa sedišta *</label>
+                <div class="form-group">
+                    <label for="adresa_sedista" class="form-label">Adresa sedišta <span class="required">*</span></label>
                     <input type="text" id="adresa_sedista" x-model="form.adresa_sedista"
                            @input="syncLocationAddress(); clearFieldError('adresa_sedista')"
                            placeholder="Ulica i broj"
-                           class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                           :class="fieldErrors.adresa_sedista ? 'border-red-500 bg-red-50' : (aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300')">
+                           :class="{'success': aprCompanyFound && !fieldErrors.adresa_sedista, 'error': fieldErrors.adresa_sedista}">
                     <!-- Mapa za prikaz adrese firme -->
-                    <div id="company_map_container" class="mt-2 hidden">
-                        <div id="company_map" class="w-full h-48 rounded-lg border border-gray-300"></div>
-                        <p class="mt-1 text-xs text-green-600 flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div id="company_map_container" class="map-container hidden">
+                        <div id="company_map"></div>
+                        <p class="field-hint success" style="display: flex; align-items: center; margin-top: 8px;">
+                            <svg style="width: 16px; height: 16px; margin-right: 6px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                             Lokacija potvrđena na mapi
                         </p>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="company_city" class="block text-sm font-medium text-gray-700">Grad *</label>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="company_city" class="form-label">Grad <span class="required">*</span></label>
                         <input type="text" id="company_city" x-model="form.company_city"
                                @input="syncLocationAddress(); clearFieldError('company_city')"
                                placeholder="npr. Beograd"
-                               class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                               :class="fieldErrors.company_city ? 'border-red-500 bg-red-50' : (aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300')">
+                               :class="{'success': aprCompanyFound && !fieldErrors.company_city, 'error': fieldErrors.company_city}">
                     </div>
-                    <div>
-                        <label for="company_postal_code" class="block text-sm font-medium text-gray-700">Poštanski broj</label>
+                    <div class="form-group">
+                        <label for="company_postal_code" class="form-label">Poštanski broj</label>
                         <input type="text" id="company_postal_code" x-model="form.company_postal_code" maxlength="5"
                                @input="filterDigitsOnly('company_postal_code'); syncLocationAddress()"
                                placeholder="11000"
-                               class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                               :class="aprCompanyFound ? 'bg-green-50 border-green-300' : 'border-gray-300'">
+                               :class="{'success': aprCompanyFound}">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="company_phone" class="block text-sm font-medium text-gray-700">Telefon firme *</label>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="company_phone" class="form-label">Telefon firme <span class="required">*</span></label>
                         <input type="tel" id="company_phone" x-model="form.company_phone"
                                @input="filterPhoneInput('company_phone'); clearFieldError('company_phone'); syncOwnerPhone(); syncLocationPhone()"
                                placeholder="+381..."
-                               class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                               :class="fieldErrors.company_phone ? 'border-red-500 bg-red-50' : 'border-gray-300'">
+                               :class="{'error': fieldErrors.company_phone}">
                     </div>
-                    <div>
-                        <label for="company_email" class="block text-sm font-medium text-gray-700">Email firme *</label>
+                    <div class="form-group">
+                        <label for="company_email" class="form-label">Email firme <span class="required">*</span></label>
                         <input type="email" id="company_email" x-model="form.company_email"
                                @input="clearFieldError('company_email'); syncOwnerEmail()"
-                               class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                               :class="fieldErrors.company_email ? 'border-red-500 bg-red-50' : 'border-gray-300'">
+                               placeholder="email@vasafirma.rs"
+                               :class="{'error': fieldErrors.company_email}">
                     </div>
                 </div>
-                <div>
-                    <label for="bank_account" class="block text-sm font-medium text-gray-700">Bankovni račun</label>
+
+                <div class="form-group">
+                    <label for="bank_account" class="form-label">Bankovni račun <span class="optional">(opciono)</span></label>
                     <input type="text" id="bank_account" x-model="form.bank_account"
                            @blur="formatBankAccount()"
                            @input="clearFieldError('bank_account'); autoFormatBankAccount()"
                            placeholder="160-1234567890123-45"
-                           class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                           :class="fieldErrors.bank_account ? 'border-red-500 bg-red-50' : 'border-gray-300'">
-                    <p class="mt-1 text-xs text-gray-500">Format: BBB-XXXXXXXXXXXXX-KK (18 cifara, opciono)</p>
+                           :class="{'error': fieldErrors.bank_account}">
+                    <p class="field-hint">Format: BBB-XXXXXXXXXXXXX-KK (18 cifara)</p>
                 </div>
             </div>
 
             <!-- Step 2: Admin Account -->
-            <div x-show="step === 2" class="space-y-4">
-                <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Vaš admin nalog</h3>
+            <div x-show="step === 2" class="form-step">
 
                 <!-- Google OAuth Button - shown when not already using OAuth -->
-                <div x-show="!isOAuth" class="mb-6">
+                <div x-show="!isOAuth">
                     <button type="button" @click="loginWithGoogleFromStep2()"
                             :disabled="googleLoading"
-                            class="w-full inline-flex justify-center items-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                        <svg x-show="!googleLoading" class="w-5 h-5 mr-3" viewBox="0 0 24 24">
+                            class="btn-secondary">
+                        <svg x-show="!googleLoading" style="width: 20px; height: 20px;" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                         </svg>
-                        <svg x-show="googleLoading" class="animate-spin w-5 h-5 mr-3 text-gray-500" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <svg x-show="googleLoading" class="spinner" style="width: 20px; height: 20px;" fill="none" viewBox="0 0 24 24">
+                            <circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path style="opacity: 0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                         <span x-text="googleLoading ? 'Povezivanje...' : 'Verifikuj preko Google naloga'"></span>
                     </button>
-                    <p class="mt-1 text-xs text-gray-500 text-center">Brža verifikacija - bez potrebe za email-om</p>
+                    <p class="field-hint" style="text-align: center;">Brža verifikacija - bez potrebe za email-om</p>
 
-                    <div class="relative my-4">
-                        <div class="absolute inset-0 flex items-center">
-                            <div class="w-full border-t border-gray-300"></div>
-                        </div>
-                        <div class="relative flex justify-center text-sm">
-                            <span class="px-2 bg-gray-50 text-gray-500">ili verifikujte email ručno</span>
-                        </div>
+                    <div class="divider">
+                        <div class="divider-line"></div>
+                        <span class="divider-text">ili verifikujte email ručno</span>
+                        <div class="divider-line"></div>
                     </div>
                 </div>
 
                 <!-- OAuth Info Message - pokazuje Google verifikaciju -->
-                <div x-show="isOAuth" class="mb-4 rounded-lg bg-green-50 border-2 border-green-400 p-4 shadow-lg">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-green-500 rounded-full p-1 mr-3">
-                            <svg class="h-5 w-5 text-white" viewBox="0 0 24 24">
-                                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-base font-semibold text-green-800">Verifikacija preko Google-a uspešna!</p>
-                            <p class="text-sm text-green-600">Email adresa je potvrđena. Molimo popunite broj telefona da nastavite.</p>
-                        </div>
+                <div x-show="isOAuth" class="info-box success">
+                    <div style="flex-shrink: 0; background: var(--sh-success); border-radius: 50%; padding: 4px;">
+                        <svg style="width: 20px; height: 20px; color: white;" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        </svg>
+                    </div>
+                    <div class="info-box-content">
+                        <p class="info-box-title">Verifikacija preko Google-a uspešna!</p>
+                        <p class="info-box-text">Email adresa je potvrđena. Molimo popunite broj telefona da nastavite.</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="ime" class="block text-sm font-medium text-gray-700">Ime *</label>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="ime" class="form-label">Ime <span class="required">*</span></label>
                         <input type="text" id="ime" x-model="form.owner_ime"
                                :readonly="isOAuth"
-                               :class="isOAuth ? 'bg-gray-100' : ''"
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                               :style="isOAuth ? 'opacity: 0.7;' : ''"
+                               placeholder="Vaše ime">
                     </div>
-                    <div>
-                        <label for="prezime" class="block text-sm font-medium text-gray-700">Prezime *</label>
+                    <div class="form-group">
+                        <label for="prezime" class="form-label">Prezime <span class="required">*</span></label>
                         <input type="text" id="prezime" x-model="form.owner_prezime"
                                :readonly="isOAuth"
-                               :class="isOAuth ? 'bg-gray-100' : ''"
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                               :style="isOAuth ? 'opacity: 0.7;' : ''"
+                               placeholder="Vaše prezime">
                     </div>
                 </div>
-                <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700">Email (za prijavu) *</label>
+
+                <div class="form-group">
+                    <label for="email" class="form-label">Email (za prijavu) <span class="required">*</span></label>
                     <input type="email" id="email" x-model="form.owner_email"
                            @input="onOwnerEmailChange()"
                            :readonly="isOAuth || emailVerified"
-                           :class="(isOAuth || emailVerified) ? 'bg-gray-100' : ''"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                    <p x-show="!ownerEmailManuallyChanged && form.company_email && !isOAuth" class="mt-1 text-xs text-green-600">
+                           :style="(isOAuth || emailVerified) ? 'opacity: 0.7;' : ''"
+                           :class="{'success': emailVerified}"
+                           placeholder="vas@email.com">
+                    <p x-show="!ownerEmailManuallyChanged && form.company_email && !isOAuth" class="field-hint success">
                         Automatski kopirano sa email-a firme
                     </p>
                 </div>
 
                 <!-- Verify Email Button - shown when not verified and not OAuth -->
-                <div x-show="!emailVerified && !isOAuth && !emailVerificationSent">
+                <div x-show="!emailVerified && !isOAuth && !emailVerificationSent" class="form-group">
                     <button type="button" @click="sendVerificationEmail()"
                             :disabled="sendingVerificationEmail || !form.owner_email"
-                            class="w-full inline-flex justify-center items-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <svg x-show="sendingVerificationEmail" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            class="btn-primary">
+                        <svg x-show="sendingVerificationEmail" class="spinner" style="width: 20px; height: 20px;" fill="none" viewBox="0 0 24 24">
+                            <circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path style="opacity: 0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <svg x-show="!sendingVerificationEmail" class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg x-show="!sendingVerificationEmail" style="width: 20px; height: 20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                         <span x-text="sendingVerificationEmail ? 'Šaljem...' : 'Pošalji verifikacioni email'"></span>
                     </button>
-                    <p class="mt-1 text-xs text-gray-500 text-center">Morate verifikovati email pre nastavka</p>
+                    <p class="field-hint" style="text-align: center;">Morate verifikovati email pre nastavka</p>
                 </div>
 
                 <!-- Email verification status - waiting -->
@@ -397,30 +877,25 @@
                      x-transition:leave="transition ease-in duration-200"
                      x-transition:leave-start="opacity-100"
                      x-transition:leave-end="opacity-0"
-                     class="rounded-lg border p-4 bg-yellow-50 border-yellow-200">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                        <div class="ml-3 flex-1">
-                            <p class="text-sm font-medium text-yellow-800">
-                                Verifikacioni email je poslat!
-                            </p>
-                            <p class="mt-1 text-sm text-yellow-700">
-                                Otvorite email i kliknite na link za verifikaciju. Ova strana će se automatski ažurirati.
-                            </p>
-                            <p class="mt-1 text-xs text-yellow-600 font-medium">
-                                ⚠️ Proverite i SPAM/Junk folder ako ne vidite email!
-                            </p>
-                            <!-- Resend button -->
-                            <button type="button" @click="sendVerificationEmail()"
-                                    :disabled="sendingVerificationEmail || emailVerificationCooldown > 0"
-                                    class="mt-2 text-sm font-medium text-yellow-800 hover:text-yellow-900 underline disabled:opacity-50 disabled:no-underline">
-                                <span x-text="emailVerificationCooldown > 0 ? 'Pošalji ponovo za ' + emailVerificationCooldown + 's' : 'Pošalji ponovo'"></span>
-                            </button>
-                        </div>
+                     class="info-box warning">
+                    <svg class="info-icon" style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <div class="info-box-content">
+                        <p class="info-box-title">Verifikacioni email je poslat!</p>
+                        <p class="info-box-text">
+                            Otvorite email i kliknite na link za verifikaciju. Ova strana će se automatski ažurirati.
+                        </p>
+                        <p class="info-box-text" style="font-weight: 600; margin-top: 4px;">
+                            ⚠️ Proverite i SPAM/Junk folder ako ne vidite email!
+                        </p>
+                        <!-- Resend button -->
+                        <button type="button" @click="sendVerificationEmail()"
+                                :disabled="sendingVerificationEmail || emailVerificationCooldown > 0"
+                                style="margin-top: 8px; font-size: 0.875rem; color: var(--sh-warning); text-decoration: underline; background: none; border: none; cursor: pointer; padding: 0;"
+                                :style="(sendingVerificationEmail || emailVerificationCooldown > 0) ? 'opacity: 0.5; cursor: not-allowed; text-decoration: none;' : ''">
+                            <span x-text="emailVerificationCooldown > 0 ? 'Pošalji ponovo za ' + emailVerificationCooldown + 's' : 'Pošalji ponovo'"></span>
+                        </button>
                     </div>
                 </div>
 
@@ -429,166 +904,163 @@
                      x-transition:enter="transition ease-out duration-300"
                      x-transition:enter-start="opacity-0 transform scale-95"
                      x-transition:enter-end="opacity-100 transform scale-100"
-                     class="rounded-lg bg-green-50 border-2 border-green-400 p-4 shadow-lg">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-green-500 rounded-full p-1">
-                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-base font-semibold text-green-800">Email adresa je verifikovana!</p>
-                            <p class="text-sm text-green-600">Možete nastaviti sa registracijom.</p>
-                        </div>
+                     class="info-box success">
+                    <div style="flex-shrink: 0; background: var(--sh-success); border-radius: 50%; padding: 4px;">
+                        <svg style="width: 24px; height: 24px; color: white;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <div class="info-box-content">
+                        <p class="info-box-title">Email adresa je verifikovana!</p>
+                        <p class="info-box-text">Možete nastaviti sa registracijom.</p>
                     </div>
                 </div>
 
-                <div>
-                    <label for="owner_phone" class="block text-sm font-medium text-gray-700">Mobilni telefon *</label>
+                <div class="form-group">
+                    <label for="owner_phone" class="form-label">Mobilni telefon <span class="required">*</span></label>
                     <input type="tel" id="owner_phone" x-model="form.owner_phone"
                            @input="filterPhoneInput('owner_phone'); onOwnerPhoneChange()"
-                           placeholder="+381 64..."
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                    <p x-show="!ownerPhoneManuallyChanged && form.company_phone" class="mt-1 text-xs text-green-600">
+                           placeholder="+381 64...">
+                    <p x-show="!ownerPhoneManuallyChanged && form.company_phone" class="field-hint success">
                         Automatski kopirano sa telefona firme
                     </p>
                 </div>
-                <div x-show="!isOAuth">
-                    <label for="password" class="block text-sm font-medium text-gray-700">Lozinka *</label>
+
+                <div x-show="!isOAuth" class="form-group">
+                    <label for="password" class="form-label">Lozinka <span class="required">*</span></label>
                     <input type="password" id="password" x-model="form.owner_password"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                    <p class="mt-1 text-xs text-gray-500">Minimum 8 karaktera, slovo + broj</p>
+                           placeholder="Minimum 8 karaktera">
+                    <p class="field-hint">Minimum 8 karaktera, slovo + broj</p>
                 </div>
-                <div x-show="!isOAuth">
-                    <label for="password_confirm" class="block text-sm font-medium text-gray-700">Potvrdi lozinku *</label>
+
+                <div x-show="!isOAuth" class="form-group">
+                    <label for="password_confirm" class="form-label">Potvrdi lozinku <span class="required">*</span></label>
                     <input type="password" id="password_confirm" x-model="form.password_confirm"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                           placeholder="Ponovite lozinku">
                 </div>
             </div>
 
             <!-- Step 3: Location -->
-            <div x-show="step === 3" class="space-y-4">
-                <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Prva lokacija servisa</h3>
+            <div x-show="step === 3" class="form-step">
 
-                <div>
-                    <label for="location_name" class="block text-sm font-medium text-gray-700">Naziv lokacije *</label>
+                <div class="form-group">
+                    <label for="location_name" class="form-label">Naziv lokacije <span class="required">*</span></label>
                     <input type="text" id="location_name" x-model="form.location_name"
-                           placeholder="npr. Glavni servis"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                           placeholder="npr. Glavni servis">
                 </div>
-                <div>
-                    <label for="location_address" class="block text-sm font-medium text-gray-700">Adresa *</label>
+
+                <div class="form-group">
+                    <label for="location_address" class="form-label">Adresa <span class="required">*</span></label>
                     <input type="text" id="location_address" x-model="form.location_address"
                            @input="onLocationAddressChange()"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                    <p x-show="!locationAddressManuallyChanged && form.adresa_sedista" class="mt-1 text-xs text-green-600">
+                           placeholder="Ulica i broj">
+                    <p x-show="!locationAddressManuallyChanged && form.adresa_sedista" class="field-hint success">
                         Automatski kopirano sa adrese sedišta firme
                     </p>
                     <!-- Mapa za prikaz adrese lokacije -->
-                    <div id="location_map_container" class="mt-2 hidden">
-                        <div id="location_map" class="w-full h-48 rounded-lg border border-gray-300"></div>
-                        <p class="mt-1 text-xs text-green-600 flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div id="location_map_container" class="map-container hidden">
+                        <div id="location_map"></div>
+                        <p class="field-hint success" style="display: flex; align-items: center; margin-top: 8px;">
+                            <svg style="width: 16px; height: 16px; margin-right: 6px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                             Lokacija servisa potvrđena na mapi
                         </p>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="location_city" class="block text-sm font-medium text-gray-700">Grad *</label>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="location_city" class="form-label">Grad <span class="required">*</span></label>
                         <input type="text" id="location_city" x-model="form.location_city"
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                               placeholder="npr. Beograd">
                     </div>
-                    <div>
-                        <label for="location_postal" class="block text-sm font-medium text-gray-700">Poštanski broj</label>
+                    <div class="form-group">
+                        <label for="location_postal" class="form-label">Poštanski broj</label>
                         <input type="text" id="location_postal" x-model="form.location_postal_code" maxlength="5"
                                @input="filterDigitsOnly('location_postal_code')"
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                               placeholder="11000">
                     </div>
                 </div>
-                <div>
-                    <label for="location_phone" class="block text-sm font-medium text-gray-700">Telefon lokacije</label>
+
+                <div class="form-group">
+                    <label for="location_phone" class="form-label">Telefon lokacije <span class="optional">(opciono)</span></label>
                     <input type="tel" id="location_phone" x-model="form.location_phone"
                            @input="filterPhoneInput('location_phone'); onLocationPhoneChange()"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
-                    <p x-show="!locationPhoneManuallyChanged && form.company_phone" class="mt-1 text-xs text-green-600">
+                           placeholder="+381...">
+                    <p x-show="!locationPhoneManuallyChanged && form.company_phone" class="field-hint success">
                         Automatski kopirano sa telefona firme
                     </p>
                 </div>
             </div>
 
             <!-- Step 4: KYC Verification (opciono) -->
-            <div x-show="step === 4" class="space-y-4">
-                <h3 class="text-lg font-medium text-gray-900 text-center mb-4">Dodatni podaci</h3>
-                <p class="text-sm text-gray-500 text-center mb-4">
-                    Opciono - potrebno samo za korišćenje B2C marketplace-a
-                </p>
+            <div x-show="step === 4" class="form-step">
 
-                <div class="bg-blue-50 rounded-lg p-4 mb-4">
-                    <p class="text-sm text-blue-700">
-                        <strong>Napomena:</strong> KYC podaci nisu obavezni za registraciju.
-                        Možete ih dodati kasnije ako želite da koristite marketplace za prodaju krajnjim kupcima.
-                    </p>
+                <div class="info-box info">
+                    <svg class="info-icon" style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="info-box-content">
+                        <p class="info-box-title">Opcioni podaci</p>
+                        <p class="info-box-text">KYC podaci nisu obavezni. Možete ih dodati kasnije ako želite marketplace pristup.</p>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="kyc_jmbg" class="block text-sm font-medium text-gray-700">JMBG</label>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="kyc_jmbg" class="form-label">JMBG <span class="optional">(opciono)</span></label>
                         <input type="text" id="kyc_jmbg" x-model="form.kyc_jmbg" maxlength="13"
                                @input="filterDigitsOnly('kyc_jmbg')"
-                               placeholder="13 cifara (opciono)"
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                               placeholder="13 cifara">
                     </div>
-                    <div>
-                        <label for="kyc_broj_licne" class="block text-sm font-medium text-gray-700">Broj lične karte</label>
+                    <div class="form-group">
+                        <label for="kyc_broj_licne" class="form-label">Broj lične karte <span class="optional">(opciono)</span></label>
                         <input type="text" id="kyc_broj_licne" x-model="form.kyc_broj_licne"
-                               placeholder="opciono"
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                               placeholder="Broj lične karte">
                     </div>
                 </div>
 
                 <!-- ID Card Upload -->
-                <div class="space-y-2">
-                    <label class="block text-sm font-medium text-gray-700">Slika lične karte</label>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-primary-500 cursor-pointer"
+                <div class="form-group">
+                    <label class="form-label">Slika lične karte <span class="optional">(opciono)</span></label>
+                    <div class="form-grid-2">
+                        <div class="file-upload" :class="{'uploaded': form.kyc_lk_front_url}"
                              @click="$refs.lkFront.click()">
                             <template x-if="!form.kyc_lk_front_url">
                                 <div>
-                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                    <svg style="width: 48px; height: 48px; margin: 0 auto; color: var(--sh-text-muted);" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                         <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                     </svg>
-                                    <p class="mt-1 text-xs text-gray-500">Prednja strana</p>
+                                    <p style="margin-top: 8px; font-size: 0.8rem; color: var(--sh-text-muted);">Prednja strana</p>
                                 </div>
                             </template>
                             <template x-if="form.kyc_lk_front_url">
                                 <div>
-                                    <svg class="mx-auto h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg style="width: 48px; height: 48px; margin: 0 auto; color: var(--sh-success);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <p class="mt-1 text-xs text-green-600">Uploadovano</p>
+                                    <p style="margin-top: 8px; font-size: 0.8rem; color: var(--sh-success);">Uploadovano</p>
                                 </div>
                             </template>
                             <input type="file" x-ref="lkFront" @change="uploadImage($event, 'front')" accept="image/*" class="hidden">
                         </div>
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-primary-500 cursor-pointer"
+                        <div class="file-upload" :class="{'uploaded': form.kyc_lk_back_url}"
                              @click="$refs.lkBack.click()">
                             <template x-if="!form.kyc_lk_back_url">
                                 <div>
-                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                    <svg style="width: 48px; height: 48px; margin: 0 auto; color: var(--sh-text-muted);" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                         <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                     </svg>
-                                    <p class="mt-1 text-xs text-gray-500">Zadnja strana</p>
+                                    <p style="margin-top: 8px; font-size: 0.8rem; color: var(--sh-text-muted);">Zadnja strana</p>
                                 </div>
                             </template>
                             <template x-if="form.kyc_lk_back_url">
                                 <div>
-                                    <svg class="mx-auto h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg style="width: 48px; height: 48px; margin: 0 auto; color: var(--sh-success);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <p class="mt-1 text-xs text-green-600">Uploadovano</p>
+                                    <p style="margin-top: 8px; font-size: 0.8rem; color: var(--sh-success);">Uploadovano</p>
                                 </div>
                             </template>
                             <input type="file" x-ref="lkBack" @change="uploadImage($event, 'back')" accept="image/*" class="hidden">
@@ -597,48 +1069,46 @@
                 </div>
 
                 <!-- Terms -->
-                <div class="flex items-start">
-                    <input type="checkbox" id="terms" x-model="acceptTerms"
-                           class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded mt-1">
-                    <label for="terms" class="ml-2 block text-sm text-gray-900">
-                        Prihvatam <a href="#" class="text-primary-600 hover:text-primary-500">uslove korišćenja</a>
-                        i <a href="#" class="text-primary-600 hover:text-primary-500">politiku privatnosti</a>
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="terms" x-model="acceptTerms">
+                    <label for="terms" class="checkbox-label">
+                        Prihvatam <a href="#">uslove korišćenja</a>
+                        i <a href="#">politiku privatnosti</a>
                     </label>
                 </div>
             </div>
 
             <!-- Error message -->
-            <div x-show="error" class="rounded-md bg-red-50 p-4">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-red-800" x-text="error"></p>
-                    </div>
+            <div x-show="error" class="info-box error">
+                <svg class="info-icon" style="width: 20px; height: 20px; flex-shrink: 0;" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+                <div class="info-box-content">
+                    <p class="info-box-text" x-text="error"></p>
                 </div>
             </div>
 
             <!-- Info poruka za Step 2 - cekanje email verifikacije -->
             <div x-show="step === 2 && !emailVerified && !isOAuth && emailVerificationSent"
-                 class="rounded-lg bg-blue-50 border border-blue-200 p-3">
-                <div class="flex items-center">
-                    <svg class="h-5 w-5 text-blue-500 mr-2 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p class="text-sm text-blue-700">
-                        <span class="font-medium">Čekamo verifikaciju email-a...</span>
+                 class="info-box info">
+                <svg class="info-icon spinner" style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div class="info-box-content">
+                    <p class="info-box-text">
+                        <strong>Čekamo verifikaciju email-a...</strong>
                         Proverite inbox i <strong>Junk/Spam</strong> folder.
                     </p>
                 </div>
             </div>
 
             <!-- Navigation buttons -->
-            <div class="flex justify-between">
+            <div class="nav-buttons">
                 <button type="button" @click="prevStep()" x-show="step > 1"
-                        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        class="btn-outline">
+                    <svg style="width: 16px; height: 16px; margin-right: 6px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
                     Nazad
                 </button>
                 <div x-show="step === 1"></div>
@@ -646,33 +1116,33 @@
                 <!-- Dalje button - always visible, disabled on step 2 until email verified (unless OAuth) -->
                 <button type="submit"
                         :disabled="loading || (step === 4 && !canSubmit) || (step === 2 && !emailVerified && !isOAuth)"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <svg x-show="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        class="btn-primary" style="flex: 1; max-width: 200px;">
+                    <svg x-show="loading" class="spinner" style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24">
+                        <circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path style="opacity: 0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span x-text="step < 4 ? 'Dalje' : 'Registruj se'"></span>
+                    <span x-text="step < 4 ? 'Dalje' : 'Završi registraciju'"></span>
+                    <svg x-show="step < 4 && !loading" style="width: 16px; height: 16px; margin-left: 6px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
                 </button>
             </div>
         </form>
 
-        <!-- Info box -->
-        <div class="bg-blue-50 rounded-lg p-4">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm text-blue-700">
-                        <strong>🎁 PROMO!</strong> 2 meseca potpuno besplatno sa punim pristupom svim funkcijama.
-                    </p>
-                </div>
+        <!-- Bottom promo info -->
+        <div class="info-box info" style="margin-top: 1.5rem;">
+            <svg class="info-icon" style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+            </svg>
+            <div class="info-box-content">
+                <p class="info-box-text">
+                    <strong>PROMO!</strong> 2 meseca potpuno besplatno sa punim pristupom svim funkcijama.
+                </p>
             </div>
         </div>
-    </div>
-</div>
+        </div><!-- /.glass-card -->
+    </div><!-- /.register-content -->
+</div><!-- /.register-page -->
 
 <script>
 {% raw %}
