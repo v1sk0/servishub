@@ -33,6 +33,7 @@ window.setAdminTheme = function(newTheme) {
     /* ==================== PRE-ALPINE STILOVI (data atribut) ==================== */
 
     /* LIGHT THEME - Pre-Alpine */
+    html[data-admin-theme="light"],
     html[data-admin-theme="light"] body {
         background: #f3f4f6 !important;
     }
@@ -49,6 +50,7 @@ window.setAdminTheme = function(newTheme) {
     }
 
     /* GLASS/DARK THEME - Pre-Alpine */
+    html[data-admin-theme="glass"],
     html[data-admin-theme="glass"] body {
         background: #0f0f23 !important;
     }
@@ -103,6 +105,13 @@ window.setAdminTheme = function(newTheme) {
         --light-text: #111827;
         --light-text-muted: #6b7280;
         --light-accent: #ef4444;
+    }
+
+    /* Body pozadina za svetlu temu - pokriva i html element */
+    html.admin-light,
+    .admin-light,
+    .admin-light body {
+        background: #f3f4f6 !important;
     }
 
     .admin-light .admin-wrapper {
@@ -286,7 +295,8 @@ window.setAdminTheme = function(newTheme) {
         --glass-accent-hover: #dc2626;
     }
 
-    /* Body pozadina za tamnu temu */
+    /* Body pozadina za tamnu temu - pokriva i html element */
+    html.admin-glass,
     .admin-glass,
     .admin-glass body {
         background: #0f0f23 !important;
