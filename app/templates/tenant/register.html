@@ -588,6 +588,228 @@
         display: none !important;
     }
 
+    /* ========================================
+       Premium Animations & Transitions
+       ======================================== */
+
+    /* Step transition animations */
+    .form-step {
+        animation: stepFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes stepFadeIn {
+        0% {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Stagger animation for form groups */
+    .form-step .form-group,
+    .form-step .form-grid-2,
+    .form-step .info-box,
+    .form-step .checkbox-wrapper {
+        animation: staggerFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+    }
+    .form-step > *:nth-child(1) { animation-delay: 0.05s; }
+    .form-step > *:nth-child(2) { animation-delay: 0.1s; }
+    .form-step > *:nth-child(3) { animation-delay: 0.15s; }
+    .form-step > *:nth-child(4) { animation-delay: 0.2s; }
+    .form-step > *:nth-child(5) { animation-delay: 0.25s; }
+    .form-step > *:nth-child(6) { animation-delay: 0.3s; }
+    .form-step > *:nth-child(7) { animation-delay: 0.35s; }
+    .form-step > *:nth-child(8) { animation-delay: 0.4s; }
+
+    @keyframes staggerFadeIn {
+        0% {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Input focus animation */
+    .register-page input:focus,
+    .register-page select:focus,
+    .register-page textarea:focus {
+        animation: inputGlow 0.3s ease-out;
+    }
+
+    @keyframes inputGlow {
+        0% {
+            box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+        }
+        50% {
+            box-shadow: 0 0 0 8px rgba(139, 92, 246, 0.15);
+        }
+        100% {
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2), 0 0 20px rgba(139, 92, 246, 0.1);
+        }
+    }
+
+    /* Button hover ripple effect */
+    .btn-primary {
+        position: relative;
+        overflow: hidden;
+    }
+    .btn-primary::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
+        transform: scale(0);
+        opacity: 0;
+        transition: transform 0.5s ease-out, opacity 0.3s ease-out;
+    }
+    .btn-primary:hover::after {
+        transform: scale(2);
+        opacity: 1;
+    }
+
+    /* Step dot bounce animation */
+    .step-dot.active {
+        animation: stepBounce 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes stepBounce {
+        0% { transform: scale(0.8); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    /* Success checkmark animation */
+    .step-dot.completed svg {
+        animation: checkDraw 0.4s ease-out;
+    }
+    @keyframes checkDraw {
+        0% {
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+        }
+        100% {
+            stroke-dasharray: 20;
+            stroke-dashoffset: 0;
+        }
+    }
+
+    /* Info box slide in */
+    .info-box {
+        animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes slideInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Promo badge float animation */
+    .promo-badge {
+        animation: floatBadge 3s ease-in-out infinite;
+    }
+    @keyframes floatBadge {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+
+    /* Glass card entrance */
+    .glass-card {
+        animation: cardEntrance 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes cardEntrance {
+        0% {
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    /* Logo pulse on load */
+    .register-logo {
+        animation: logoEntrance 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes logoEntrance {
+        0% {
+            opacity: 0;
+            transform: scale(0.5) rotate(-10deg);
+        }
+        60% {
+            transform: scale(1.1) rotate(5deg);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+        }
+    }
+
+    /* Smooth transitions for all interactive elements */
+    .form-group,
+    .form-label,
+    .info-box,
+    .step-dot,
+    .step-line,
+    .checkbox-wrapper {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ========================================
+       Footer Styles
+       ======================================== */
+    .register-footer {
+        text-align: center;
+        padding: 2rem 1rem;
+        position: relative;
+        z-index: 1;
+    }
+    .footer-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--sh-text-muted);
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        padding: 0.5rem 1rem;
+        border-radius: 100px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .footer-brand:hover {
+        color: var(--sh-text-primary);
+        background: rgba(139, 92, 246, 0.1);
+        border-color: rgba(139, 92, 246, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(139, 92, 246, 0.2);
+    }
+    .footer-brand svg {
+        width: 18px;
+        height: 18px;
+        color: var(--sh-accent-purple);
+    }
+    .footer-text {
+        opacity: 0.6;
+    }
+    .footer-link {
+        color: var(--sh-accent-purple);
+        font-weight: 500;
+    }
+
     /* Responsive */
     @media (max-width: 640px) {
         .glass-card {
@@ -596,6 +818,15 @@
         }
         .register-title {
             font-size: 1.5rem;
+        }
+    }
+
+    /* Reduce motion for accessibility */
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
         }
     }
 </style>
@@ -1149,6 +1380,17 @@
         </div>
         </div><!-- /.glass-card -->
     </div><!-- /.register-content -->
+
+    <!-- Footer -->
+    <footer class="register-footer">
+        <a href="https://servishub.rs" class="footer-brand" target="_blank" rel="noopener">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span class="footer-text">Powered by</span>
+            <span class="footer-link">ServisHub.rs</span>
+        </a>
+    </footer>
 </div><!-- /.register-page -->
 
 <script>
