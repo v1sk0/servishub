@@ -7,6 +7,7 @@ dobija svoj tenant sa jednom ili vise lokacija.
 
 import enum
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta  # v3.05: kalendarski mesec
 from sqlalchemy import event
 from slugify import slugify
 from ..extensions import db
@@ -16,15 +17,19 @@ class TenantStatus(enum.Enum):
     """
     Mogući statusi tenanta (preduzeca).
 
-    DEMO - Automatski 7 dana nakon registracije, pun pristup
-    TRIAL - 60 dana FREE, aktivira admin nakon kontakta
+    PROMO - v3.05: 2 meseca FREE za nove tenante, pun pristup, bez faktura
     ACTIVE - Aktivna pretplata
     EXPIRED - Istekla pretplata (grace period 7 dana)
     SUSPENDED - Suspendovan (neplacanje ili krsenje pravila)
     CANCELLED - Otkazan nalog
+
+    DEPRECATED (v3.05):
+    DEMO - Legacy, zadrzano za backward compat
+    TRIAL - Legacy, zadrzano za backward compat
     """
-    DEMO = 'DEMO'
-    TRIAL = 'TRIAL'
+    PROMO = 'PROMO'  # v3.05: novi status za 2 meseca FREE
+    DEMO = 'DEMO'    # DEPRECATED v3.05
+    TRIAL = 'TRIAL'  # DEPRECATED v3.05
     ACTIVE = 'ACTIVE'
     EXPIRED = 'EXPIRED'
     SUSPENDED = 'SUSPENDED'
@@ -57,7 +62,7 @@ class Tenant(db.Model):
     longitude = db.Column(db.Float)                   # Geografska duzina sedista
     email = db.Column(db.String(100), nullable=False) # Kontakt email
     telefon = db.Column(db.String(30))                # Kontakt telefon
-    bank_account = db.Column(db.String(50))           # Bankovni racun (XXX-XXXXXXXXX-XX)
+    bank_account = db.Column(db.String(50))           # Bankovni racun (BBB-XXXXXXXXXXXXX-KK, 18 cifara)
 
     # Login za zaposlene - tajni URL segment
     login_secret = db.Column(db.String(32), unique=True, nullable=False)  # Tajni kod za login stranicu
@@ -65,12 +70,13 @@ class Tenant(db.Model):
     # Status i pretplata
     status = db.Column(
         db.Enum(TenantStatus),
-        default=TenantStatus.TRIAL,
+        default=TenantStatus.PROMO,  # v3.05: novi tenant pocinje sa PROMO (2 meseca FREE)
         nullable=False,
         index=True
     )
-    demo_ends_at = db.Column(db.DateTime)            # DEPRECATED - koristimo trial_ends_at
-    trial_ends_at = db.Column(db.DateTime)           # Kada istice trial period (60 dana)
+    demo_ends_at = db.Column(db.DateTime)            # DEPRECATED v3.05
+    trial_ends_at = db.Column(db.DateTime)           # DEPRECATED v3.05 - zadrzano za backward compat
+    promo_ends_at = db.Column(db.DateTime)           # v3.05: Kada istice PROMO period (2 meseca)
     subscription_ends_at = db.Column(db.DateTime)    # Kada istice pretplata
 
     # ============================================
@@ -151,8 +157,8 @@ class Tenant(db.Model):
 
     @property
     def is_active(self):
-        """Da li tenant ima aktivan pristup platformi (TRIAL ili ACTIVE)."""
-        return self.status in (TenantStatus.TRIAL, TenantStatus.ACTIVE)
+        """Da li tenant ima aktivan pristup platformi (PROMO, ACTIVE, ili legacy TRIAL)."""
+        return self.status in (TenantStatus.PROMO, TenantStatus.ACTIVE, TenantStatus.TRIAL)
 
     @property
     def default_warranty_days(self):
@@ -162,29 +168,21 @@ class Tenant(db.Model):
         return warranty_defaults.get('default', 45)
 
     def set_trial(self, trial_days=60):
-        """
-        Postavlja TRIAL status sa istekom.
-        Poziva se automatski pri registraciji - 60 dana besplatno.
-        """
-        self.status = TenantStatus.TRIAL
-        self.trial_ends_at = datetime.utcnow() + timedelta(days=trial_days)
+        """DEPRECATED v3.05: Koristi activate_promo() umesto toga."""
+        self.activate_promo(months=2)  # Redirects to PROMO
 
-    # DEPRECATED - koristimo set_trial
     def set_demo(self, demo_days=7):
-        """DEPRECATED: Koristi set_trial() umesto toga."""
-        self.set_trial(trial_days=60)
+        """DEPRECATED v3.05: Koristi activate_promo() umesto toga."""
+        self.activate_promo(months=2)  # Redirects to PROMO
 
     def activate_trial(self, trial_days=60):
-        """
-        Aktivira/produzuje trial period za tenant.
-        Moze se koristiti i za produljivanje trial-a od strane admina.
-        """
-        self.status = TenantStatus.TRIAL
-        self.trial_ends_at = datetime.utcnow() + timedelta(days=trial_days)
+        """DEPRECATED v3.05: Koristi activate_promo() umesto toga."""
+        self.activate_promo(months=2)  # Redirects to PROMO
 
     def activate_subscription(self, months=1):
         """
         Aktivira ili produzuje pretplatu.
+        v3.05: Koristi kalendarski mesec umesto 30 dana.
         """
         self.status = TenantStatus.ACTIVE
         if self.subscription_ends_at and self.subscription_ends_at > datetime.utcnow():
@@ -193,13 +191,26 @@ class Tenant(db.Model):
         else:
             # Nova pretplata
             base_date = datetime.utcnow()
-        self.subscription_ends_at = base_date + timedelta(days=30 * months)
+        # v3.05: Kalendarski mesec (npr. 15.jan + 1 mes = 15.feb)
+        self.subscription_ends_at = base_date + relativedelta(months=months)
+
+    def activate_promo(self, months=2):
+        """
+        v3.05: Aktivira PROMO period za nove tenante.
+        2 meseca FREE, pun pristup, bez faktura.
+        Po isteku promo_ends_at -> billing_tasks prebacuje u ACTIVE.
+        """
+        self.status = TenantStatus.PROMO
+        self.promo_ends_at = datetime.utcnow() + relativedelta(months=months)
 
     @property
     def days_remaining(self):
         """Vraca broj preostalih dana za trenutni status."""
         now = datetime.utcnow()
-        if self.status == TenantStatus.TRIAL and self.trial_ends_at:
+        if self.status == TenantStatus.PROMO and self.promo_ends_at:
+            delta = self.promo_ends_at - now
+            return max(0, delta.days)
+        elif self.status == TenantStatus.TRIAL and self.trial_ends_at:
             delta = self.trial_ends_at - now
             return max(0, delta.days)
         elif self.status == TenantStatus.ACTIVE and self.subscription_ends_at:
@@ -250,11 +261,11 @@ class Tenant(db.Model):
 
     @property
     def is_trust_active(self):
-        """Da li je trenutno aktivan 'na rec' period (48h)."""
+        """Da li je trenutno aktivan 'na rec' period (72h / 3 dana)."""
         if not self.trust_activated_at:
             return False
         elapsed = datetime.utcnow() - self.trust_activated_at
-        return elapsed.total_seconds() < 48 * 3600  # 48 sati
+        return elapsed.total_seconds() < 72 * 3600  # 72 sata (3 dana) - v3.05
 
     @property
     def trust_hours_remaining(self):
@@ -262,12 +273,12 @@ class Tenant(db.Model):
         if not self.is_trust_active:
             return 0
         elapsed = datetime.utcnow() - self.trust_activated_at
-        remaining_seconds = (48 * 3600) - elapsed.total_seconds()
+        remaining_seconds = (72 * 3600) - elapsed.total_seconds()  # 72 sata - v3.05
         return max(0, int(remaining_seconds / 3600))
 
     def activate_trust(self):
         """
-        Aktivira 'ukljucenje na rec' za 48h.
+        Aktivira 'ukljucenje na rec' za 72h (3 dana) - v3.05.
         NAPOMENA: Pozivalac mora proveriti can_activate_trust pre poziva!
         """
         self.trust_activated_at = datetime.utcnow()
@@ -322,7 +333,9 @@ class Tenant(db.Model):
 
     def _get_expiry_date(self):
         """Vraca datum isteka za trenutni status."""
-        if self.status == TenantStatus.TRIAL and self.trial_ends_at:
+        if self.status == TenantStatus.PROMO and self.promo_ends_at:
+            return self.promo_ends_at.isoformat()
+        elif self.status == TenantStatus.TRIAL and self.trial_ends_at:
             return self.trial_ends_at.isoformat()
         elif self.status == TenantStatus.ACTIVE and self.subscription_ends_at:
             return self.subscription_ends_at.isoformat()

@@ -48,7 +48,7 @@ def register():
         - company_postal_code: Postanski broj firme
         - company_email: Email preduzeca
         - company_phone: Telefon preduzeca
-        - bank_account: Bankovni racun (XXX-XXXXXXXXX-XX)
+        - bank_account: Bankovni racun (BBB-XXXXXXXXXXXXX-KK, 18 cifara)
 
     Request body (Korak 2 - Lokacija):
         - location_name: Naziv lokacije
