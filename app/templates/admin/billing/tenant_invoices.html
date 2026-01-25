@@ -96,6 +96,15 @@
                             <div class="ml-3">
                                 <p class="text-xs text-gray-500">Plaćeno</p>
                                 <p class="text-lg font-bold text-green-600" x-text="stats.paid || 0"></p>
+                                <div class="text-xs text-gray-400 mt-1" x-show="stats.paid > 0">
+                                    <span x-show="stats.paid_via_bank > 0">
+                                        <span class="text-blue-500" x-text="stats.paid_via_bank"></span> izvod
+                                    </span>
+                                    <span x-show="stats.paid_via_bank > 0 && stats.paid_manual > 0"> · </span>
+                                    <span x-show="stats.paid_manual > 0">
+                                        <span class="text-purple-500" x-text="stats.paid_manual"></span> ručno
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -313,7 +322,7 @@ function tenantInvoicesPage(tenantId) {
         loading: true,
         theme: localStorage.getItem('admin-theme') || 'light',
 
-        stats: { total: 0, pending: 0, paid: 0, overdue: 0 },
+        stats: { total: 0, pending: 0, paid: 0, overdue: 0, paid_via_bank: 0, paid_manual: 0 },
         filters: { status: '' },
         pagination: { page: 1, per_page: 20, total: 0, pages: 0, has_next: false, has_prev: false },
 
@@ -406,6 +415,10 @@ function tenantInvoicesPage(tenantId) {
             this.stats.pending = this.invoices.filter(i => i.status === 'PENDING').length;
             this.stats.paid = this.invoices.filter(i => i.status === 'PAID').length;
             this.stats.overdue = this.invoices.filter(i => i.status === 'OVERDUE' || i.is_overdue).length;
+            // Breakdown plaćenih faktura
+            const paidInvoices = this.invoices.filter(i => i.status === 'PAID');
+            this.stats.paid_via_bank = paidInvoices.filter(i => i.bank_import).length;
+            this.stats.paid_manual = paidInvoices.filter(i => !i.bank_import).length;
         },
 
         goToPage(page) {
