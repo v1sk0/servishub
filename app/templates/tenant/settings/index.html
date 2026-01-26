@@ -2550,80 +2550,108 @@ function settingsPage() {
             }
         },
 
-        // Initialize Google Places Autocomplete for address
-        initAddressAutocomplete() {
-            const addressInput = document.getElementById('public-address-input');
-            if (!addressInput || typeof google === 'undefined' || !google.maps || !google.maps.places) {
-                return;
-            }
-
-            const autocomplete = new google.maps.places.Autocomplete(addressInput, {
-                types: ['address'],
-                componentRestrictions: { country: 'rs' }, // Serbia
-                fields: ['address_components', 'formatted_address', 'geometry', 'place_id', 'url']
-            });
-
-            autocomplete.addListener('place_changed', () => {
-                const place = autocomplete.getPlace();
-                if (!place.address_components) return;
-
-                // Extract address components
-                let streetNumber = '';
-                let route = '';
-                let city = '';
-                let postalCode = '';
-
-                for (const component of place.address_components) {
-                    const type = component.types[0];
-                    if (type === 'street_number') {
-                        streetNumber = component.long_name;
-                    } else if (type === 'route') {
-                        route = component.long_name;
-                    } else if (type === 'locality' || type === 'administrative_area_level_2') {
-                        city = component.long_name;
-                    } else if (type === 'postal_code') {
-                        postalCode = component.long_name;
-                    }
-                }
-
-                // Build full address
-                const fullAddress = route + (streetNumber ? ' ' + streetNumber : '');
-
-                // Update form fields
-                this.publicProfile.address = fullAddress || place.formatted_address;
-                this.publicProfile.city = city;
-                this.publicProfile.postal_code = postalCode;
-
-                // Google Maps URL
-                if (place.url) {
-                    this.publicProfile.maps_url = place.url;
-                } else if (place.place_id) {
-                    this.publicProfile.maps_url = `https://www.google.com/maps/place/?q=place_id:${place.place_id}`;
-                }
-
-                // Google Maps Embed URL
-                if (place.geometry && place.geometry.location) {
-                    const lat = place.geometry.location.lat();
-                    const lng = place.geometry.location.lng();
-                    this.publicProfile.maps_embed_url = `https://www.google.com/maps/embed/v1/place?key={{ google_maps_api_key }}&q=${lat},${lng}&zoom=17`;
-                }
-            });
-        }
     }
 }
+
+// Store reference to settings page Alpine instance
+var settingsPageInstance = null;
 </script>
 
 <!-- Google Maps Places API for address autocomplete -->
 {% if google_maps_api_key %}
 <script>
 function initGoogleMapsAutocomplete() {
-    // Wait for Alpine to be ready
-    setTimeout(() => {
-        const el = document.querySelector('[x-data]');
-        if (el && el.__x) {
-            el.__x.$data.initAddressAutocomplete();
+    console.log('[Google Places] Initializing address autocomplete...');
+
+    const addressInput = document.getElementById('public-address-input');
+    if (!addressInput) {
+        console.log('[Google Places] Address input not found');
+        return;
+    }
+
+    if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+        console.log('[Google Places] Google Maps API not loaded');
+        return;
+    }
+
+    const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+        types: ['address'],
+        componentRestrictions: { country: 'rs' },
+        fields: ['address_components', 'formatted_address', 'geometry', 'place_id', 'url']
+    });
+
+    autocomplete.addListener('place_changed', function() {
+        const place = autocomplete.getPlace();
+        console.log('[Google Places] Place selected:', place);
+
+        if (!place.address_components) return;
+
+        // Extract address components
+        let streetNumber = '';
+        let route = '';
+        let city = '';
+        let postalCode = '';
+
+        for (const component of place.address_components) {
+            const type = component.types[0];
+            if (type === 'street_number') {
+                streetNumber = component.long_name;
+            } else if (type === 'route') {
+                route = component.long_name;
+            } else if (type === 'locality' || type === 'administrative_area_level_2') {
+                city = component.long_name;
+            } else if (type === 'postal_code') {
+                postalCode = component.long_name;
+            }
         }
-    }, 500);
+
+        // Build full address
+        const fullAddress = route + (streetNumber ? ' ' + streetNumber : '');
+
+        // Update Alpine data if available
+        const el = document.querySelector('[x-data="settingsPage()"]');
+        if (el && el._x_dataStack && el._x_dataStack[0]) {
+            const data = el._x_dataStack[0];
+            data.publicProfile.address = fullAddress || place.formatted_address;
+            data.publicProfile.city = city;
+            data.publicProfile.postal_code = postalCode;
+
+            // Google Maps URL
+            if (place.url) {
+                data.publicProfile.maps_url = place.url;
+            } else if (place.place_id) {
+                data.publicProfile.maps_url = 'https://www.google.com/maps/place/?q=place_id:' + place.place_id;
+            }
+
+            // Google Maps Embed URL
+            if (place.geometry && place.geometry.location) {
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+                data.publicProfile.maps_embed_url = 'https://www.google.com/maps/embed/v1/place?key={{ google_maps_api_key }}&q=' + lat + ',' + lng + '&zoom=17';
+            }
+
+            console.log('[Google Places] Updated Alpine data');
+        } else {
+            console.log('[Google Places] Alpine data not found, trying __x');
+            // Fallback for older Alpine
+            if (el && el.__x && el.__x.$data) {
+                const data = el.__x.$data;
+                data.publicProfile.address = fullAddress || place.formatted_address;
+                data.publicProfile.city = city;
+                data.publicProfile.postal_code = postalCode;
+                if (place.url) {
+                    data.publicProfile.maps_url = place.url;
+                }
+                if (place.geometry && place.geometry.location) {
+                    const lat = place.geometry.location.lat();
+                    const lng = place.geometry.location.lng();
+                    data.publicProfile.maps_embed_url = 'https://www.google.com/maps/embed/v1/place?key={{ google_maps_api_key }}&q=' + lat + ',' + lng + '&zoom=17';
+                }
+            }
+        }
+    });
+
+    console.log('[Google Places] Autocomplete initialized successfully');
 }
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&callback=initGoogleMapsAutocomplete" async defer></script>
