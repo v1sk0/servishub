@@ -252,7 +252,7 @@
                                 <span class="text-gray-300">Nalog je otkazan</span>
                             </template>
                             <!-- Active statuses -->
-                            <template x-if="subscriptionStatus === 'ACTIVE' || subscriptionStatus === 'TRIAL' || subscriptionStatus === 'DEMO'">
+                            <template x-if="subscriptionStatus === 'ACTIVE' || subscriptionStatus === 'TRIAL' || subscriptionStatus === 'DEMO' || subscriptionStatus === 'PROMO'">
                                 <span class="opacity-80">
                                     Traje jos <strong x-text="daysRemaining"></strong> dana
                                     <span class="opacity-70" x-text="'(do ' + getEndDate() + ')'"></span>
@@ -398,6 +398,7 @@ function sidebarData() {
                     // Calculate total days based on plan type
                     if (data.status === 'DEMO') this.totalDays = 7;
                     else if (data.status === 'TRIAL') this.totalDays = 14;
+                    else if (data.status === 'PROMO') this.totalDays = 60; // 2 months
                     else if (data.status === 'GRACE') this.totalDays = 15;
                     else this.totalDays = 30;
                 }
@@ -418,6 +419,7 @@ function sidebarData() {
             const types = {
                 'DEMO': 'Demo',
                 'TRIAL': 'Trial',
+                'PROMO': 'Promo',
                 'ACTIVE': 'Standard',
                 'GRACE': 'Na reč',
                 'SUSPENDED': 'Suspendovano',
@@ -431,6 +433,7 @@ function sidebarData() {
             const classes = {
                 'DEMO': 'bg-gradient-to-br from-slate-600 to-slate-700 text-white',
                 'TRIAL': 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white',
+                'PROMO': 'bg-gradient-to-br from-purple-600 to-indigo-700 text-white',
                 'ACTIVE': 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white',
                 'GRACE': 'bg-gradient-to-br from-amber-600 to-orange-700 text-white',
                 'SUSPENDED': 'bg-gradient-to-br from-red-700 to-red-800 text-white',
@@ -445,7 +448,7 @@ function sidebarData() {
         },
 
         getStatusPillClass() {
-            if (this.subscriptionStatus === 'ACTIVE' || this.subscriptionStatus === 'TRIAL' || this.subscriptionStatus === 'DEMO') {
+            if (this.subscriptionStatus === 'ACTIVE' || this.subscriptionStatus === 'TRIAL' || this.subscriptionStatus === 'DEMO' || this.subscriptionStatus === 'PROMO') {
                 // Green button for active status
                 return 'bg-emerald-500 text-white';
             }
@@ -459,7 +462,7 @@ function sidebarData() {
         },
 
         getStatusPillText() {
-            if (this.subscriptionStatus === 'ACTIVE' || this.subscriptionStatus === 'TRIAL' || this.subscriptionStatus === 'DEMO') {
+            if (this.subscriptionStatus === 'ACTIVE' || this.subscriptionStatus === 'TRIAL' || this.subscriptionStatus === 'DEMO' || this.subscriptionStatus === 'PROMO') {
                 return 'Aktivno';
             }
             if (this.subscriptionStatus === 'GRACE') {
