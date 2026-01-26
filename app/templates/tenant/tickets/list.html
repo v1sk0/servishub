@@ -319,56 +319,7 @@
     /* Form section title */
     .form-section-title { font-size: 0.875rem; font-weight: 600; color: #3b82f6; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0; }
 
-    /* Not working toggle button - premium design */
-    .not-working-btn {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.875rem 1.5rem;
-        border-radius: 12px;
-        border: 2px solid #e2e8f0;
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-    .not-working-btn:hover {
-        border-color: #fca5a5;
-        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.15);
-    }
-    .not-working-btn:active { transform: translateY(0); }
-    .not-working-btn-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s;
-    }
-    .not-working-btn-icon svg { width: 22px; height: 22px; color: #dc2626; transition: all 0.3s; }
-    .not-working-btn-text { font-size: 0.875rem; font-weight: 600; color: #64748b; transition: all 0.3s; }
-    .not-working-btn:hover .not-working-btn-text { color: #dc2626; }
-
-    /* Active state */
-    .not-working-btn.active {
-        border-color: #dc2626;
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
-    }
-    .not-working-btn.active:hover {
-        background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
-        box-shadow: 0 8px 30px rgba(239, 68, 68, 0.5);
-    }
-    .not-working-btn.active .not-working-btn-icon {
-        background: rgba(255, 255, 255, 0.2);
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .not-working-btn.active .not-working-btn-icon svg { color: white; }
-    .not-working-btn.active .not-working-btn-text { color: white; font-weight: 700; letter-spacing: 0.05em; }
+    /* Grade C style is reused for "Ne pali" button - no extra CSS needed */
 
     /* Light theme filter select */
     .filter-select { padding: 0.5rem 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; color: #1e293b; font-size: 0.875rem; }
@@ -483,23 +434,7 @@
     .glass-theme .form-section-title { color: #60a5fa; border-bottom-color: rgba(255, 255, 255, 0.1); }
 
     /* Glass theme not working option */
-    /* Glass theme not-working button */
-    .glass-theme .not-working-btn {
-        border-color: rgba(255, 255, 255, 0.1);
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-    }
-    .glass-theme .not-working-btn:hover {
-        border-color: rgba(248, 113, 113, 0.5);
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.1) 100%);
-    }
-    .glass-theme .not-working-btn-icon { background: rgba(239, 68, 68, 0.2); }
-    .glass-theme .not-working-btn-icon svg { color: #f87171; }
-    .glass-theme .not-working-btn-text { color: #94a3b8; }
-    .glass-theme .not-working-btn:hover .not-working-btn-text { color: #f87171; }
-    .glass-theme .not-working-btn.active { border-color: #ef4444; }
-    .glass-theme .not-working-btn.active .not-working-btn-icon { background: rgba(255, 255, 255, 0.15); }
-    .glass-theme .not-working-btn.active .not-working-btn-icon svg { color: white; }
-    .glass-theme .not-working-btn.active .not-working-btn-text { color: white; }
+    /* Glass theme uses existing grade-option styles for "Ne pali" */
 
     /* Glass theme filter select */
     .glass-theme .filter-select { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #f1f5f9; }
@@ -1264,22 +1199,13 @@
                     <textarea class="form-input" rows="2" x-model="newTicket.device_condition_notes" placeholder="Ogrebotine, ostecenja..."></textarea>
                 </div>
                 <div class="form-group" style="display: flex; justify-content: center; margin-top: 1rem;">
-                    <button type="button"
-                            class="not-working-btn"
-                            :class="{'active': newTicket.device_not_working}"
-                            @click="newTicket.device_not_working = !newTicket.device_not_working">
-                        <div class="not-working-btn-icon">
-                            <svg x-show="!newTicket.device_not_working" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                            </svg>
-                            <svg x-show="newTicket.device_not_working" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </div>
-                        <div class="not-working-btn-text">
-                            <span x-text="newTicket.device_not_working ? 'NE PALI' : 'Ne pali?'"></span>
-                        </div>
-                    </button>
+                    <div class="grade-option grade-c"
+                         :class="{'selected': newTicket.device_not_working}"
+                         @click="newTicket.device_not_working = !newTicket.device_not_working"
+                         style="padding: 1rem 2rem;">
+                        <div class="grade-letter">✕</div>
+                        <div class="grade-text">Ne pali</div>
+                    </div>
                 </div>
 
                 <!-- Section: Servisne informacije -->
