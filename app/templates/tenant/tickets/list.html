@@ -42,8 +42,10 @@
         transition: all 0.2s;
         border: 1px solid #e2e8f0;
         text-decoration: none;
+        cursor: pointer;
     }
     .btn-secondary:hover { background: #e2e8f0; color: #1e293b; }
+    .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* Light theme stat cards */
     .stat-card {
@@ -238,10 +240,12 @@
     .modal-content { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25); }
     .modal-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
     .modal-header h3 { color: #1e293b; font-size: 1.125rem; font-weight: 600; margin: 0; }
-    .modal-close { color: #94a3b8; cursor: pointer; padding: 0.25rem; }
-    .modal-close:hover { color: #1e293b; }
+    .modal-close { color: #94a3b8; cursor: pointer; padding: 0.5rem; background: transparent; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .modal-close:hover { color: #1e293b; background: rgba(0, 0, 0, 0.05); }
+    .modal-close svg { width: 20px; height: 20px; }
     .modal-body { padding: 1.5rem; }
-    .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 0.75rem; }
+    .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 0.75rem; background: #f8fafc; }
+    .modal-footer button { position: relative; z-index: 1; }
 
     /* Notification modal info card */
     .notify-info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
@@ -386,9 +390,9 @@
     .glass-theme .modal-content { background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5); }
     .glass-theme .modal-header { border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
     .glass-theme .modal-header h3 { color: #f1f5f9; }
-    .glass-theme .modal-close { color: #64748b; }
-    .glass-theme .modal-close:hover { color: #f1f5f9; }
-    .glass-theme .modal-footer { border-top: 1px solid rgba(255, 255, 255, 0.1); }
+    .glass-theme .modal-close { color: #64748b; background: transparent; }
+    .glass-theme .modal-close:hover { color: #f1f5f9; background: rgba(255, 255, 255, 0.1); }
+    .glass-theme .modal-footer { border-top: 1px solid rgba(255, 255, 255, 0.1); background: rgba(15, 23, 42, 0.5); }
 
     /* Glass theme notification modal */
     .glass-theme .notify-info-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); }
