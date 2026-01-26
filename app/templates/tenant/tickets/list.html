@@ -2091,6 +2091,14 @@ function ticketsPage() {
                 if (r.ok) {
                     const data = await r.json();
                     this.locations = data.locations || [];
+                    // Set default location to primary location
+                    const primary = this.locations.find(l => l.is_primary);
+                    if (primary) {
+                        this.newTicket.location_id = primary.id;
+                    } else if (this.locations.length > 0) {
+                        // Fallback to first location if no primary
+                        this.newTicket.location_id = this.locations[0].id;
+                    }
                 }
             } catch (e) {
                 console.error('Failed to load locations:', e);
