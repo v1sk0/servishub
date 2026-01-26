@@ -299,16 +299,112 @@
     .category-option span { font-size: 0.7rem; color: #64748b; display: block; transition: all 0.2s; }
     .category-option.selected span { color: #2563eb; font-weight: 600; }
 
-    /* Light theme grade selector - always colored */
+    /* ========================================
+       PREMIUM GRADE SELECTOR - World-class design
+       Muted when inactive, vibrant when selected
+       ======================================== */
     .grade-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
-    .grade-option { padding: 1rem; border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.2s; border: 3px solid transparent; }
-    .grade-option .grade-letter { font-size: 1.5rem; font-weight: 700; color: white; transition: all 0.2s; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-    .grade-option .grade-text { font-size: 0.625rem; color: rgba(255,255,255,0.9); margin-top: 0.25rem; transition: all 0.2s; font-weight: 500; }
-    .grade-option.grade-a { background: linear-gradient(135deg, #22c55e, #16a34a); }
-    .grade-option.grade-b { background: linear-gradient(135deg, #eab308, #ca8a04); }
-    .grade-option.grade-c { background: linear-gradient(135deg, #ef4444, #dc2626); }
-    .grade-option:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
-    .grade-option.selected { border-color: #1e293b; box-shadow: 0 0 0 2px white, 0 6px 20px rgba(0, 0, 0, 0.3); transform: scale(1.05); }
+    .grade-option {
+        padding: 1.25rem 1rem;
+        border-radius: 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px solid #e2e8f0;
+        background: #f8fafc;
+        position: relative;
+        overflow: hidden;
+    }
+    .grade-option::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .grade-option .grade-letter {
+        font-size: 1.75rem;
+        font-weight: 800;
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 1;
+    }
+    .grade-option .grade-text {
+        font-size: 0.7rem;
+        margin-top: 0.25rem;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Inactive state - muted colors */
+    .grade-option.grade-a { border-color: #d1fae5; }
+    .grade-option.grade-a .grade-letter { color: #86efac; }
+    .grade-option.grade-a .grade-text { color: #a7f3d0; }
+    .grade-option.grade-a::before { background: linear-gradient(135deg, #22c55e, #16a34a); }
+
+    .grade-option.grade-b { border-color: #fef3c7; }
+    .grade-option.grade-b .grade-letter { color: #fcd34d; }
+    .grade-option.grade-b .grade-text { color: #fde68a; }
+    .grade-option.grade-b::before { background: linear-gradient(135deg, #eab308, #ca8a04); }
+
+    .grade-option.grade-c { border-color: #fecaca; }
+    .grade-option.grade-c .grade-letter { color: #fca5a5; }
+    .grade-option.grade-c .grade-text { color: #fecaca; }
+    .grade-option.grade-c::before { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+    /* Hover state - hint of color */
+    .grade-option:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    .grade-option.grade-a:hover { border-color: #86efac; background: #f0fdf4; }
+    .grade-option.grade-b:hover { border-color: #fcd34d; background: #fefce8; }
+    .grade-option.grade-c:hover { border-color: #fca5a5; background: #fef2f2; }
+
+    /* Selected state - full vibrant color */
+    .grade-option.selected {
+        border-color: transparent;
+        transform: scale(1.02) translateY(-2px);
+    }
+    .grade-option.selected::before {
+        opacity: 1;
+    }
+    .grade-option.selected .grade-letter {
+        color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .grade-option.selected .grade-text {
+        color: rgba(255, 255, 255, 0.95);
+    }
+    .grade-option.grade-a.selected {
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2), 0 8px 25px rgba(34, 197, 94, 0.35);
+    }
+    .grade-option.grade-b.selected {
+        box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.2), 0 8px 25px rgba(234, 179, 8, 0.35);
+    }
+    .grade-option.grade-c.selected {
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2), 0 8px 25px rgba(239, 68, 68, 0.35);
+    }
+
+    /* Checkmark indicator for selected state */
+    .grade-option.selected::after {
+        content: '✓';
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        font-size: 0.75rem;
+        color: white;
+        font-weight: 700;
+        opacity: 0;
+        animation: checkFadeIn 0.3s ease 0.1s forwards;
+    }
+    @keyframes checkFadeIn {
+        to { opacity: 1; }
+    }
 
     /* Light theme problem chips - card style like grades */
     .problem-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem; }
@@ -319,7 +415,90 @@
     /* Form section title */
     .form-section-title { font-size: 0.875rem; font-weight: 600; color: #3b82f6; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0; }
 
-    /* Grade C style is reused for "Ne pali" button - no extra CSS needed */
+    /* ========================================
+       PREMIUM POWER TOGGLE - "Ne pali" button
+       ======================================== */
+    .power-toggle {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem 2.5rem;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px solid #fecaca;
+        background: #fef2f2;
+        position: relative;
+        overflow: hidden;
+    }
+    .power-toggle::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .power-toggle .power-icon {
+        position: relative;
+        z-index: 1;
+        transition: all 0.3s ease;
+    }
+    .power-toggle .power-icon svg {
+        width: 32px;
+        height: 32px;
+        color: #fca5a5;
+        transition: all 0.3s ease;
+    }
+    .power-toggle .power-text {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-top: 0.5rem;
+        color: #fca5a5;
+        position: relative;
+        z-index: 1;
+        transition: all 0.3s ease;
+    }
+    .power-toggle:hover {
+        transform: translateY(-2px);
+        border-color: #f87171;
+        background: #fee2e2;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+    }
+    .power-toggle:hover .power-icon svg { color: #ef4444; }
+    .power-toggle:hover .power-text { color: #ef4444; }
+
+    /* Selected state - vibrant */
+    .power-toggle.selected {
+        border-color: transparent;
+        transform: scale(1.02) translateY(-2px);
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2), 0 8px 25px rgba(239, 68, 68, 0.35);
+    }
+    .power-toggle.selected::before {
+        opacity: 1;
+    }
+    .power-toggle.selected .power-icon svg {
+        color: white;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+    .power-toggle.selected .power-text {
+        color: white;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    .power-toggle.selected::after {
+        content: '✓';
+        position: absolute;
+        top: 6px;
+        right: 10px;
+        font-size: 0.75rem;
+        color: white;
+        font-weight: 700;
+        z-index: 2;
+        opacity: 0;
+        animation: checkFadeIn 0.3s ease 0.1s forwards;
+    }
 
     /* Light theme filter select */
     .filter-select { padding: 0.5rem 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; color: #1e293b; font-size: 0.875rem; }
@@ -423,8 +602,40 @@
     .glass-theme .category-option span { color: #94a3b8; }
     .glass-theme .category-option.selected span { color: #60a5fa; }
 
-    /* Glass theme grade selector - keep colored backgrounds, adjust selected state */
-    .glass-theme .grade-option.selected { border-color: #f1f5f9; box-shadow: 0 0 0 2px rgba(30, 41, 59, 0.8), 0 6px 20px rgba(0, 0, 0, 0.4); }
+    /* Glass theme grade selector - premium dark mode */
+    .glass-theme .grade-option {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    .glass-theme .grade-option.grade-a { border-color: rgba(34, 197, 94, 0.2); }
+    .glass-theme .grade-option.grade-a .grade-letter { color: rgba(134, 239, 172, 0.5); }
+    .glass-theme .grade-option.grade-a .grade-text { color: rgba(167, 243, 208, 0.5); }
+    .glass-theme .grade-option.grade-b { border-color: rgba(234, 179, 8, 0.2); }
+    .glass-theme .grade-option.grade-b .grade-letter { color: rgba(252, 211, 77, 0.5); }
+    .glass-theme .grade-option.grade-b .grade-text { color: rgba(253, 230, 138, 0.5); }
+    .glass-theme .grade-option.grade-c { border-color: rgba(239, 68, 68, 0.2); }
+    .glass-theme .grade-option.grade-c .grade-letter { color: rgba(252, 165, 165, 0.5); }
+    .glass-theme .grade-option.grade-c .grade-text { color: rgba(254, 202, 202, 0.5); }
+
+    .glass-theme .grade-option:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .glass-theme .grade-option.grade-a:hover { border-color: rgba(34, 197, 94, 0.4); }
+    .glass-theme .grade-option.grade-b:hover { border-color: rgba(234, 179, 8, 0.4); }
+    .glass-theme .grade-option.grade-c:hover { border-color: rgba(239, 68, 68, 0.4); }
+
+    .glass-theme .grade-option.selected {
+        background: transparent;
+    }
+    .glass-theme .grade-option.grade-a.selected {
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3), 0 8px 25px rgba(34, 197, 94, 0.25);
+    }
+    .glass-theme .grade-option.grade-b.selected {
+        box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.3), 0 8px 25px rgba(234, 179, 8, 0.25);
+    }
+    .glass-theme .grade-option.grade-c.selected {
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3), 0 8px 25px rgba(239, 68, 68, 0.25);
+    }
 
     /* Glass theme problem chips */
     .glass-theme .problem-chip { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; }
@@ -433,8 +644,22 @@
     /* Glass theme form section title */
     .glass-theme .form-section-title { color: #60a5fa; border-bottom-color: rgba(255, 255, 255, 0.1); }
 
-    /* Glass theme not working option */
-    /* Glass theme uses existing grade-option styles for "Ne pali" */
+    /* Glass theme power toggle */
+    .glass-theme .power-toggle {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(239, 68, 68, 0.2);
+    }
+    .glass-theme .power-toggle .power-icon svg { color: rgba(252, 165, 165, 0.5); }
+    .glass-theme .power-toggle .power-text { color: rgba(252, 165, 165, 0.5); }
+    .glass-theme .power-toggle:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(239, 68, 68, 0.4);
+    }
+    .glass-theme .power-toggle:hover .power-icon svg { color: rgba(252, 165, 165, 0.8); }
+    .glass-theme .power-toggle:hover .power-text { color: rgba(252, 165, 165, 0.8); }
+    .glass-theme .power-toggle.selected {
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3), 0 8px 25px rgba(239, 68, 68, 0.25);
+    }
 
     /* Glass theme filter select */
     .glass-theme .filter-select { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #f1f5f9; }
@@ -1315,12 +1540,16 @@
                     <textarea class="form-input" rows="2" x-model="newTicket.device_condition_notes" placeholder="Ogrebotine, ostecenja..."></textarea>
                 </div>
                 <div class="form-group" style="display: flex; justify-content: center; margin-top: 1rem;">
-                    <div class="grade-option grade-c"
+                    <div class="power-toggle"
                          :class="{'selected': newTicket.device_not_working}"
-                         @click="newTicket.device_not_working = !newTicket.device_not_working"
-                         style="padding: 1rem 2rem;">
-                        <div class="grade-letter">✕</div>
-                        <div class="grade-text">Ne pali</div>
+                         @click="newTicket.device_not_working = !newTicket.device_not_working">
+                        <div class="power-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>
+                                <line x1="12" y1="2" x2="12" y2="12"/>
+                            </svg>
+                        </div>
+                        <div class="power-text">Ne pali</div>
                     </div>
                 </div>
 
