@@ -415,6 +415,11 @@ class ServiceTicket(db.Model):
         if self.assigned_technician:
             data['assigned_technician_name'] = self.assigned_technician.full_name
 
+        # Dodaj ime korisnika koji je kreirao nalog
+        if self.created_by:
+            data['created_by_id'] = self.created_by_id
+            data['created_by_name'] = self.created_by.full_name
+
         # Dodaj ime lokacije ako postoji
         if self.location:
             data['location_name'] = self.location.name

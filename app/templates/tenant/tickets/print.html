@@ -580,7 +580,7 @@
     }
 
     // Fill both copies with data
-    function fillTicketData(ticket, tenant, location, qr_code_base64, currentUser) {
+    function fillTicketData(ticket, tenant, location, qr_code_base64) {
       for (let i = 1; i <= 2; i++) {
         // Tenant info - logo text shows tenant name
         document.getElementById(`logo-text-${i}`).textContent = tenant?.name || 'Servis';
@@ -612,8 +612,8 @@
         document.getElementById(`price-${i}`).textContent =
           ticket.estimated_price ? `${ticket.estimated_price} ${ticket.currency || 'RSD'}` : '-';
 
-        // Technician (logged-in user) and location
-        document.getElementById(`technician-${i}`).textContent = currentUser?.full_name || '-';
+        // Technician (who created the ticket) and location
+        document.getElementById(`technician-${i}`).textContent = ticket.created_by_name || '-';
         document.getElementById(`location-${i}`).textContent = location?.name || '-';
 
         // IMEI
@@ -643,33 +643,27 @@
       }
 
       try {
-        // Fetch ticket with print data and current user in parallel
-        const [ticketResponse, userResponse] = await Promise.all([
-          fetch(`/api/v1/tickets/${ticketId}/print`, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-          }),
-          fetch('/api/v1/auth/me', {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-          })
-        ]);
+        // Fetch ticket with print data
+        const response = await fetch(`/api/v1/tickets/${ticketId}/print`, {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
 
-        if (!ticketResponse.ok) {
-          if (ticketResponse.status === 401) {
+        if (!response.ok) {
+          if (response.status === 401) {
             showError('Sesija je istekla. Molimo prijavite se ponovo.');
             return;
           }
-          if (ticketResponse.status === 404) {
+          if (response.status === 404) {
             showError('Nalog nije pronadjen.');
             return;
           }
           throw new Error('Greska pri ucitavanju naloga');
         }
 
-        const data = await ticketResponse.json();
-        const userData = userResponse.ok ? await userResponse.json() : null;
+        const data = await response.json();
 
         // Fill both copies
-        fillTicketData(data.ticket, data.tenant, data.location, data.qr_code_base64, userData?.user);
+        fillTicketData(data.ticket, data.tenant, data.location, data.qr_code_base64);
 
         // Show content
         document.getElementById('loading').style.display = 'none';
