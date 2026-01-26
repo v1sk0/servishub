@@ -287,6 +287,36 @@
     .form-input::placeholder { color: #94a3b8; }
     .form-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
 
+    /* Hide number input spinners */
+    .form-input[type="number"]::-webkit-outer-spin-button,
+    .form-input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    .form-input[type="number"] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+
+    /* Form validation states */
+    .form-input.invalid {
+        border-color: #ef4444;
+        background: #fef2f2;
+    }
+    .form-input.invalid:focus {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+    .form-error {
+        color: #ef4444;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: none;
+    }
+    .form-error.show {
+        display: block;
+    }
+
     /* Light theme category selector */
     .category-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
     .category-option { padding: 0.75rem 0.5rem; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s; }
@@ -1416,11 +1446,11 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div class="form-group">
                         <label class="form-label">Ime i prezime *</label>
-                        <input type="text" class="form-input" x-model="newTicket.customer_name" placeholder="Ime i prezime" required>
+                        <input type="text" class="form-input" :class="{'invalid': validationErrors.customer_name}" x-model="newTicket.customer_name" placeholder="Ime i prezime" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Telefon *</label>
-                        <input type="text" class="form-input" x-model="newTicket.customer_phone" placeholder="06X...">
+                        <input type="tel" class="form-input" :class="{'invalid': validationErrors.customer_phone}" x-model="newTicket.customer_phone" placeholder="06X..." required>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -1472,7 +1502,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div class="form-group">
                         <label class="form-label">Marka *</label>
-                        <input type="text" class="form-input" x-model="newTicket.brand" list="brandList" placeholder="Samsung, Apple..." autocomplete="off">
+                        <input type="text" class="form-input" :class="{'invalid': validationErrors.brand}" x-model="newTicket.brand" list="brandList" placeholder="Samsung, Apple..." autocomplete="off" required>
                         <datalist id="brandList">
                             <option value="Apple">
                             <option value="Samsung">
@@ -1495,7 +1525,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Model *</label>
-                        <input type="text" class="form-input" x-model="newTicket.model" placeholder="Galaxy S21, iPhone 13...">
+                        <input type="text" class="form-input" :class="{'invalid': validationErrors.model}" x-model="newTicket.model" placeholder="Galaxy S21, iPhone 13..." required>
                     </div>
                 </div>
 
@@ -1519,7 +1549,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Opis kvara <span x-show="selectedProblems.length === 0">*</span></label>
-                    <textarea class="form-input" rows="2" x-model="newTicket.problem_description" @input="syncSelectedProblems()" placeholder="Opišite problem..."></textarea>
+                    <textarea class="form-input" :class="{'invalid': validationErrors.problem_description}" rows="2" x-model="newTicket.problem_description" @input="syncSelectedProblems()" placeholder="Opišite problem..."></textarea>
                 </div>
 
                 <!-- Section: Stanje uredaja -->
@@ -1564,7 +1594,7 @@
                 <div class="grid grid-cols-3 gap-4">
                     <div class="form-group">
                         <label class="form-label">Okvirna cena *</label>
-                        <input type="number" class="form-input" x-model="newTicket.estimated_price" placeholder="0">
+                        <input type="number" class="form-input" :class="{'invalid': validationErrors.estimated_price}" x-model="newTicket.estimated_price" placeholder="0" min="1" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Valuta</label>
@@ -1583,7 +1613,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Lokacija *</label>
-                    <select class="form-input" x-model="newTicket.location_id">
+                    <select class="form-input" :class="{'invalid': validationErrors.location_id}" x-model="newTicket.location_id" required>
                         <option value="">Izaberi lokaciju</option>
                         <template x-for="loc in locations" :key="loc.id">
                             <option :value="loc.id" x-text="loc.name"></option>
@@ -2218,6 +2248,7 @@ function ticketsPage() {
         loading: true,
         saving: false,
         showAddModal: false,
+        validationErrors: {},
         openTickets: [],
         pendingTickets: [],
         stats: {},
@@ -2785,11 +2816,50 @@ function ticketsPage() {
         },
 
         async saveTicket() {
-            const hasProblem = this.newTicket.problem_description || this.selectedProblems.length > 0;
-            if (!this.newTicket.customer_name || !this.newTicket.brand || !this.newTicket.model || !hasProblem) {
-                alert('Popunite obavezna polja: ime, marka, model i opis problema');
+            // Clear previous validation errors
+            this.validationErrors = {};
+
+            // Validate required fields
+            const errors = [];
+
+            if (!this.newTicket.customer_name?.trim()) {
+                errors.push('Ime i prezime');
+                this.validationErrors.customer_name = true;
+            }
+            if (!this.newTicket.customer_phone?.trim()) {
+                errors.push('Telefon');
+                this.validationErrors.customer_phone = true;
+            }
+            if (!this.newTicket.brand?.trim()) {
+                errors.push('Marka');
+                this.validationErrors.brand = true;
+            }
+            if (!this.newTicket.model?.trim()) {
+                errors.push('Model');
+                this.validationErrors.model = true;
+            }
+
+            const hasProblem = this.newTicket.problem_description?.trim() || this.selectedProblems.length > 0;
+            if (!hasProblem) {
+                errors.push('Opis problema');
+                this.validationErrors.problem_description = true;
+            }
+
+            if (!this.newTicket.estimated_price || parseFloat(this.newTicket.estimated_price) <= 0) {
+                errors.push('Okvirna cena');
+                this.validationErrors.estimated_price = true;
+            }
+
+            if (!this.newTicket.location_id) {
+                errors.push('Lokacija');
+                this.validationErrors.location_id = true;
+            }
+
+            if (errors.length > 0) {
+                alert('Popunite obavezna polja: ' + errors.join(', '));
                 return;
             }
+
             this.saving = true;
             try {
                 const r = await api('/api/v1/tickets', {
@@ -2835,6 +2905,7 @@ function ticketsPage() {
             };
             this.selectedProblems = [];
             this.currentProblems = PROBLEM_CATEGORIES['phone'] || [];
+            this.validationErrors = {};
         },
 
         setDeviceType(type) {

@@ -160,11 +160,27 @@ def create_ticket():
 
     customer_name = data.get('customer_name', '').strip()
     if not customer_name:
-        return jsonify({'error': 'Validation Error', 'message': 'customer_name je obavezan'}), 400
+        return jsonify({'error': 'Validation Error', 'message': 'Ime i prezime je obavezno'}), 400
+
+    customer_phone = data.get('customer_phone', '').strip()
+    if not customer_phone:
+        return jsonify({'error': 'Validation Error', 'message': 'Telefon je obavezan'}), 400
+
+    brand = data.get('brand', '').strip()
+    if not brand:
+        return jsonify({'error': 'Validation Error', 'message': 'Marka je obavezna'}), 400
+
+    model = data.get('model', '').strip()
+    if not model:
+        return jsonify({'error': 'Validation Error', 'message': 'Model je obavezan'}), 400
 
     problem_description = data.get('problem_description', '').strip()
     if not problem_description:
-        return jsonify({'error': 'Validation Error', 'message': 'problem_description je obavezan'}), 400
+        return jsonify({'error': 'Validation Error', 'message': 'Opis problema je obavezan'}), 400
+
+    estimated_price = data.get('estimated_price')
+    if not estimated_price or float(estimated_price) <= 0:
+        return jsonify({'error': 'Validation Error', 'message': 'Okvirna cena mora biti veća od 0'}), 400
 
     # Pripremi problem_areas kao JSON string ako je dict
     problem_areas = data.get('problem_areas')
@@ -178,14 +194,14 @@ def create_ticket():
         ticket_number=get_next_ticket_number(tenant.id),
         # Kupac podaci
         customer_name=customer_name,
-        customer_phone=data.get('customer_phone'),
+        customer_phone=customer_phone,
         customer_email=data.get('customer_email'),
         customer_company_name=data.get('customer_company_name'),
         customer_pib=data.get('customer_pib'),
         # Uredjaj podaci
         device_type=data.get('device_type'),
-        brand=data.get('brand'),
-        model=data.get('model'),
+        brand=brand,
+        model=model,
         imei=data.get('imei'),
         device_condition=data.get('device_condition'),
         device_password=data.get('device_password'),
@@ -197,7 +213,7 @@ def create_ticket():
         problem_areas=problem_areas,
         # Problem i cena
         problem_description=problem_description,
-        estimated_price=data.get('estimated_price'),
+        estimated_price=float(estimated_price),
         currency=data.get('currency', 'RSD'),
         warranty_days=data.get('warranty_days', tenant.default_warranty_days),
         # Napomene
