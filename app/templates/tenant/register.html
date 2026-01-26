@@ -589,6 +589,294 @@
     }
 
     /* ========================================
+       SUCCESS CELEBRATION OVERLAY
+       ======================================== */
+
+    .success-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(2, 6, 23, 0.95);
+        backdrop-filter: blur(20px);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .success-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .success-card {
+        position: relative;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 24px;
+        padding: 3rem;
+        text-align: center;
+        max-width: 480px;
+        width: 90%;
+        transform: scale(0.8) translateY(30px);
+        opacity: 0;
+        transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow:
+            0 0 60px rgba(139, 92, 246, 0.3),
+            0 0 120px rgba(99, 102, 241, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .success-overlay.active .success-card {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+
+    /* Animated checkmark circle */
+    .success-checkmark {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto 1.5rem;
+        position: relative;
+    }
+
+    .success-checkmark-circle {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981, #059669);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: checkmarkPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+        box-shadow:
+            0 0 40px rgba(16, 185, 129, 0.5),
+            0 0 80px rgba(16, 185, 129, 0.3);
+    }
+
+    @keyframes checkmarkPop {
+        0% {
+            transform: scale(0);
+            opacity: 0;
+        }
+        50% {
+            transform: scale(1.2);
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .success-checkmark-icon {
+        width: 50px;
+        height: 50px;
+        color: white;
+        stroke-dasharray: 50;
+        stroke-dashoffset: 50;
+        animation: checkDraw 0.5s ease-out 0.6s forwards;
+    }
+
+    @keyframes checkDraw {
+        to {
+            stroke-dashoffset: 0;
+        }
+    }
+
+    /* Pulse ring effect */
+    .success-checkmark::before,
+    .success-checkmark::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 2px solid rgba(16, 185, 129, 0.5);
+        animation: pulseRing 2s ease-out infinite;
+    }
+
+    .success-checkmark::after {
+        animation-delay: 0.5s;
+    }
+
+    @keyframes pulseRing {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(1.8);
+            opacity: 0;
+        }
+    }
+
+    .success-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.75rem;
+        animation: slideUp 0.5s ease-out 0.5s both;
+    }
+
+    .success-subtitle {
+        font-size: 1.1rem;
+        color: var(--sh-text-muted);
+        margin-bottom: 1.5rem;
+        animation: slideUp 0.5s ease-out 0.6s both;
+    }
+
+    .success-promo-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(99, 102, 241, 0.2));
+        border: 1px solid rgba(139, 92, 246, 0.4);
+        border-radius: 100px;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: white;
+        margin-bottom: 2rem;
+        animation: slideUp 0.5s ease-out 0.7s both, badgeGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes slideUp {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes badgeGlow {
+        0%, 100% {
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+        50% {
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.5), 0 0 60px rgba(99, 102, 241, 0.3);
+        }
+    }
+
+    .success-redirect {
+        font-size: 0.9rem;
+        color: var(--sh-text-muted);
+        animation: slideUp 0.5s ease-out 0.8s both;
+    }
+
+    .success-redirect span {
+        color: var(--sh-accent-purple);
+        font-weight: 600;
+    }
+
+    /* Confetti Canvas */
+    .confetti-canvas {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10000;
+    }
+
+    /* Fireworks */
+    .fireworks-container {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 9998;
+        overflow: hidden;
+    }
+
+    .firework {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        animation: fireworkExplode 1s ease-out forwards;
+    }
+
+    @keyframes fireworkExplode {
+        0% {
+            transform: scale(0);
+            opacity: 1;
+        }
+        50% {
+            opacity: 1;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 0;
+        }
+    }
+
+    .firework-particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        animation: particleFly 1.5s ease-out forwards;
+    }
+
+    @keyframes particleFly {
+        0% {
+            opacity: 1;
+            transform: translate(0, 0) scale(1);
+        }
+        100% {
+            opacity: 0;
+            transform: var(--particle-end) scale(0);
+        }
+    }
+
+    /* Sparkle stars */
+    .sparkle {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        animation: sparkle 0.8s ease-out forwards;
+    }
+
+    .sparkle::before,
+    .sparkle::after {
+        content: '';
+        position: absolute;
+        background: white;
+    }
+
+    .sparkle::before {
+        width: 100%;
+        height: 2px;
+        top: 50%;
+        left: 0;
+        transform: translateY(-50%);
+    }
+
+    .sparkle::after {
+        width: 2px;
+        height: 100%;
+        left: 50%;
+        top: 0;
+        transform: translateX(-50%);
+    }
+
+    @keyframes sparkle {
+        0% {
+            transform: scale(0) rotate(0deg);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1) rotate(90deg);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(0) rotate(180deg);
+            opacity: 0;
+        }
+    }
+
+    /* ========================================
        Premium Animations & Transitions
        ======================================== */
 
@@ -1393,6 +1681,37 @@
             <span class="footer-link">ServisHub.rs</span>
         </a>
     </footer>
+
+    <!-- Success Celebration Overlay -->
+    <div id="successOverlay" class="success-overlay">
+        <div class="fireworks-container" id="fireworksContainer"></div>
+        <canvas class="confetti-canvas" id="confettiCanvas"></canvas>
+
+        <div class="success-card">
+            <div class="success-checkmark">
+                <div class="success-checkmark-circle">
+                    <svg class="success-checkmark-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+            </div>
+
+            <h2 class="success-title">Registracija uspešna!</h2>
+            <p class="success-subtitle">Vaš servis je uspešno kreiran</p>
+
+            <div class="success-promo-badge">
+                <svg style="width: 24px; height: 24px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                </svg>
+                2 meseca BESPLATNO!
+            </div>
+
+            <p class="success-redirect">
+                Preusmeravanje na login za <span id="redirectCountdown">5</span> sekundi...
+            </p>
+        </div>
+    </div>
+
 </div><!-- /.register-page -->
 
 <script>
@@ -2329,9 +2648,8 @@ window.registerPage = function() {
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Show success and redirect
-                    alert('Registracija uspešna! Imate 2 meseca potpuno besplatno.');
-                    window.location.href = '/login';
+                    // Show premium success celebration
+                    showSuccessCelebration();
                 } else {
                     this.error = data.message || data.details?.[0]?.msg || 'Greška pri registraciji';
                 }
@@ -2599,6 +2917,224 @@ document.addEventListener('DOMContentLoaded', function() {
 function onGoogleMapsLoaded() {
     console.log('[Google Places] Google Maps API loaded');
     initGooglePlacesAutocomplete();
+}
+
+// ========================================
+// SUCCESS CELEBRATION ANIMATIONS
+// ========================================
+
+function showSuccessCelebration() {
+    console.log('[Celebration] Starting success celebration!');
+
+    const overlay = document.getElementById('successOverlay');
+    if (!overlay) {
+        console.error('[Celebration] Success overlay not found');
+        window.location.href = '/login';
+        return;
+    }
+
+    // Show overlay
+    overlay.classList.add('active');
+
+    // Start confetti
+    startConfetti();
+
+    // Start fireworks
+    startFireworks();
+
+    // Start sparkles
+    startSparkles();
+
+    // Countdown and redirect
+    let countdown = 5;
+    const countdownEl = document.getElementById('redirectCountdown');
+
+    const countdownInterval = setInterval(() => {
+        countdown--;
+        if (countdownEl) {
+            countdownEl.textContent = countdown;
+        }
+
+        if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            window.location.href = '/login';
+        }
+    }, 1000);
+}
+
+// Confetti Animation
+function startConfetti() {
+    const canvas = document.getElementById('confettiCanvas');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const confettiPieces = [];
+    const colors = ['#8b5cf6', '#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#ffffff'];
+
+    // Create confetti pieces
+    for (let i = 0; i < 150; i++) {
+        confettiPieces.push({
+            x: Math.random() * canvas.width,
+            y: -20 - Math.random() * 100,
+            size: Math.random() * 8 + 4,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            speedY: Math.random() * 3 + 2,
+            speedX: (Math.random() - 0.5) * 4,
+            rotation: Math.random() * 360,
+            rotationSpeed: (Math.random() - 0.5) * 10,
+            shape: Math.random() > 0.5 ? 'rect' : 'circle'
+        });
+    }
+
+    let animationFrame;
+    let startTime = Date.now();
+
+    function animateConfetti() {
+        const elapsed = Date.now() - startTime;
+
+        // Stop after 6 seconds
+        if (elapsed > 6000) {
+            cancelAnimationFrame(animationFrame);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            return;
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        confettiPieces.forEach(piece => {
+            ctx.save();
+            ctx.translate(piece.x, piece.y);
+            ctx.rotate((piece.rotation * Math.PI) / 180);
+
+            ctx.fillStyle = piece.color;
+
+            if (piece.shape === 'rect') {
+                ctx.fillRect(-piece.size / 2, -piece.size / 4, piece.size, piece.size / 2);
+            } else {
+                ctx.beginPath();
+                ctx.arc(0, 0, piece.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+
+            // Update position
+            piece.y += piece.speedY;
+            piece.x += piece.speedX;
+            piece.rotation += piece.rotationSpeed;
+
+            // Add some wobble
+            piece.speedX += (Math.random() - 0.5) * 0.2;
+
+            // Reset if off screen
+            if (piece.y > canvas.height + 20) {
+                piece.y = -20;
+                piece.x = Math.random() * canvas.width;
+            }
+        });
+
+        animationFrame = requestAnimationFrame(animateConfetti);
+    }
+
+    animateConfetti();
+}
+
+// Fireworks Animation
+function startFireworks() {
+    const container = document.getElementById('fireworksContainer');
+    if (!container) return;
+
+    const colors = ['#8b5cf6', '#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ec4899'];
+
+    function createFirework() {
+        const x = Math.random() * window.innerWidth;
+        const y = Math.random() * (window.innerHeight * 0.6) + 50;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+
+        // Create explosion center
+        const explosion = document.createElement('div');
+        explosion.className = 'firework';
+        explosion.style.left = x + 'px';
+        explosion.style.top = y + 'px';
+        explosion.style.background = color;
+        explosion.style.boxShadow = `0 0 20px ${color}`;
+        container.appendChild(explosion);
+
+        // Create particles
+        const particleCount = 12;
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * 360;
+            const distance = 50 + Math.random() * 50;
+            const endX = Math.cos((angle * Math.PI) / 180) * distance;
+            const endY = Math.sin((angle * Math.PI) / 180) * distance;
+
+            const particle = document.createElement('div');
+            particle.className = 'firework-particle';
+            particle.style.left = x + 'px';
+            particle.style.top = y + 'px';
+            particle.style.background = color;
+            particle.style.boxShadow = `0 0 6px ${color}`;
+            particle.style.setProperty('--particle-end', `translate(${endX}px, ${endY}px)`);
+            container.appendChild(particle);
+
+            // Remove particle after animation
+            setTimeout(() => particle.remove(), 1500);
+        }
+
+        // Remove explosion after animation
+        setTimeout(() => explosion.remove(), 1000);
+    }
+
+    // Create multiple fireworks over time
+    let fireworkCount = 0;
+    const maxFireworks = 15;
+
+    const fireworkInterval = setInterval(() => {
+        createFirework();
+        fireworkCount++;
+
+        // Sometimes create 2 at once
+        if (Math.random() > 0.5) {
+            setTimeout(createFirework, 100);
+        }
+
+        if (fireworkCount >= maxFireworks) {
+            clearInterval(fireworkInterval);
+        }
+    }, 400);
+}
+
+// Sparkle Animation
+function startSparkles() {
+    const container = document.getElementById('fireworksContainer');
+    if (!container) return;
+
+    function createSparkle() {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        sparkle.style.left = Math.random() * window.innerWidth + 'px';
+        sparkle.style.top = Math.random() * window.innerHeight + 'px';
+        container.appendChild(sparkle);
+
+        setTimeout(() => sparkle.remove(), 800);
+    }
+
+    // Create sparkles over time
+    let sparkleCount = 0;
+    const maxSparkles = 30;
+
+    const sparkleInterval = setInterval(() => {
+        createSparkle();
+        createSparkle(); // Create 2 at a time
+        sparkleCount += 2;
+
+        if (sparkleCount >= maxSparkles) {
+            clearInterval(sparkleInterval);
+        }
+    }, 200);
 }
 
 {% endraw %}
