@@ -1,156 +1,670 @@
-{% extends "layouts/base.html" %}
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prijava - ServisHub</title>
 
-{% block title %}Prijava - ServisHub{% endblock %}
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-{% block head %}
-<style>
-    /* Force light theme colors for public login page */
-    .public-page .text-white { color: #ffffff !important; }
-    .public-page .text-gray-900 { color: #111827 !important; }
-    .public-page .text-gray-800 { color: #1f2937 !important; }
-    .public-page .text-gray-700 { color: #374151 !important; }
-    .public-page .text-gray-600 { color: #4b5563 !important; }
-    .public-page .text-gray-500 { color: #6b7280 !important; }
-    .public-page .text-primary-600 { color: #2563eb !important; }
-    .public-page .text-primary-500 { color: #3b82f6 !important; }
-    .public-page .bg-white { background-color: #ffffff !important; }
-    .public-page .bg-gray-50 { background-color: #f9fafb !important; }
-    .public-page .bg-primary-600 { background-color: #2563eb !important; }
-    .public-page .border-gray-300 { border-color: #d1d5db !important; }
-    .public-page .shadow-xl { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important; }
-    .public-page input, .public-page select, .public-page textarea {
-        background-color: #ffffff !important;
-        color: #111827 !important;
-        border-color: #d1d5db !important;
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+    /* ========================================
+       CSS Variables - Design System
+       ======================================== */
+    :root {
+        --sh-bg-primary: #020617;
+        --sh-bg-secondary: #0f172a;
+        --sh-bg-card: rgba(15, 23, 42, 0.8);
+        --sh-text-primary: #f8fafc;
+        --sh-text-secondary: #e2e8f0;
+        --sh-text-muted: #94a3b8;
+        --sh-accent-purple: #8b5cf6;
+        --sh-accent-indigo: #6366f1;
+        --sh-accent-blue: #3b82f6;
+        --sh-success: #10b981;
+        --sh-warning: #f59e0b;
+        --sh-error: #ef4444;
+        --sh-glow-purple: rgba(139, 92, 246, 0.4);
+        --sh-border-subtle: rgba(148, 163, 184, 0.1);
+        --sh-border-accent: rgba(139, 92, 246, 0.3);
     }
-    .public-page input::placeholder { color: #9ca3af !important; }
-    .public-page label { color: #374151 !important; }
-</style>
-{% endblock %}
 
-{% block content %}
-<div class="public-page flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8" x-data="loginForm()">
-    <div class="sm:mx-auto sm:w-full sm:max-w-md">
-        <!-- Logo -->
-        <div class="flex justify-center">
-            <div class="h-12 w-12 rounded-xl bg-primary-600 flex items-center justify-center">
-                <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
+    /* ========================================
+       Base Styles
+       ======================================== */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--sh-bg-primary);
+        color: var(--sh-text-primary);
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* ========================================
+       Login Page Layout
+       ======================================== */
+    .login-page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Animated Background */
+    .login-page::before {
+        content: '';
+        position: fixed;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+        top: -200px;
+        right: -100px;
+        border-radius: 50%;
+        filter: blur(80px);
+        animation: floatOrb 20s ease-in-out infinite;
+        pointer-events: none;
+    }
+
+    .login-page::after {
+        content: '';
+        position: fixed;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+        bottom: -150px;
+        left: -100px;
+        border-radius: 50%;
+        filter: blur(80px);
+        animation: floatOrb 25s ease-in-out infinite reverse;
+        pointer-events: none;
+    }
+
+    @keyframes floatOrb {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -30px) rotate(120deg); }
+        66% { transform: translate(-20px, 20px) rotate(240deg); }
+    }
+
+    /* ========================================
+       Login Content
+       ======================================== */
+    .login-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ========================================
+       Glass Card
+       ======================================== */
+    .glass-card {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--sh-border-accent);
+        border-radius: 20px;
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 420px;
+        box-shadow:
+            0 0 40px rgba(139, 92, 246, 0.1),
+            0 25px 50px -12px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        animation: cardEntrance 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes cardEntrance {
+        0% {
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    /* ========================================
+       Logo & Header
+       ======================================== */
+    .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .logo-container {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, var(--sh-accent-purple), var(--sh-accent-indigo));
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0 30px var(--sh-glow-purple);
+        animation: logoEntrance 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes logoEntrance {
+        0% {
+            opacity: 0;
+            transform: scale(0.5) rotate(-10deg);
+        }
+        60% {
+            transform: scale(1.1) rotate(5deg);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+        }
+    }
+
+    .logo-container svg {
+        width: 36px;
+        height: 36px;
+        color: white;
+    }
+
+    .login-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--sh-text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .login-subtitle {
+        font-size: 0.95rem;
+        color: var(--sh-text-muted);
+    }
+
+    .login-subtitle a {
+        color: var(--sh-accent-purple);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .login-subtitle a:hover {
+        color: var(--sh-accent-indigo);
+        text-decoration: underline;
+    }
+
+    /* ========================================
+       Google OAuth Button
+       ======================================== */
+    .google-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        width: 100%;
+        padding: 0.875rem 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        color: var(--sh-text-primary);
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .google-btn:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+    }
+
+    .google-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .google-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* ========================================
+       Separator
+       ======================================== */
+    .separator {
+        display: flex;
+        align-items: center;
+        margin: 1.5rem 0;
+        gap: 1rem;
+    }
+
+    .separator-line {
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--sh-border-subtle), transparent);
+    }
+
+    .separator-text {
+        font-size: 0.8rem;
+        color: var(--sh-text-muted);
+        white-space: nowrap;
+    }
+
+    /* ========================================
+       Form Styles
+       ======================================== */
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--sh-text-secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid var(--sh-border-subtle);
+        border-radius: 10px;
+        color: var(--sh-text-primary);
+        font-size: 0.95rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .form-input::placeholder {
+        color: var(--sh-text-muted);
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--sh-accent-purple);
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2), 0 0 20px rgba(139, 92, 246, 0.1);
+        background: rgba(15, 23, 42, 0.8);
+    }
+
+    .form-input.error {
+        border-color: var(--sh-error);
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+    }
+
+    /* ========================================
+       Remember Me & Forgot Password
+       ======================================== */
+    .form-options {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .checkbox-wrapper input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--sh-accent-purple);
+        cursor: pointer;
+    }
+
+    .checkbox-wrapper label {
+        font-size: 0.875rem;
+        color: var(--sh-text-secondary);
+        cursor: pointer;
+    }
+
+    .forgot-link {
+        font-size: 0.875rem;
+        color: var(--sh-accent-purple);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .forgot-link:hover {
+        color: var(--sh-accent-indigo);
+        text-decoration: underline;
+    }
+
+    /* ========================================
+       Submit Button
+       ======================================== */
+    .submit-btn {
+        width: 100%;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, var(--sh-accent-purple), var(--sh-accent-indigo));
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .submit-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, var(--sh-accent-indigo), var(--sh-accent-blue));
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .submit-btn:hover:not(:disabled)::before {
+        opacity: 1;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 40px -10px var(--sh-glow-purple);
+    }
+
+    .submit-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .submit-btn span,
+    .submit-btn svg {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Spinner */
+    .spinner {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* ========================================
+       Error Message
+       ======================================== */
+    .error-message {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        animation: shakeError 0.5s ease-in-out;
+    }
+
+    @keyframes shakeError {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-5px); }
+        40%, 80% { transform: translateX(5px); }
+    }
+
+    .error-message svg {
+        width: 20px;
+        height: 20px;
+        color: var(--sh-error);
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+    .error-message p {
+        font-size: 0.9rem;
+        color: #fca5a5;
+    }
+
+    /* ========================================
+       Footer
+       ======================================== */
+    .login-footer {
+        text-align: center;
+        padding: 2rem 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .footer-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        color: var(--sh-text-muted);
+        font-size: 0.85rem;
+        transition: all 0.3s;
+        padding: 0.5rem 1rem;
+        border-radius: 100px;
+    }
+
+    .footer-brand:hover {
+        color: var(--sh-text-secondary);
+        background: rgba(139, 92, 246, 0.1);
+    }
+
+    .footer-brand svg {
+        width: 16px;
+        height: 16px;
+        color: var(--sh-accent-purple);
+    }
+
+    .footer-link {
+        color: var(--sh-accent-purple);
+        font-weight: 500;
+    }
+
+    /* ========================================
+       Animations
+       ======================================== */
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    .stagger-4 { animation-delay: 0.4s; }
+    .stagger-5 { animation-delay: 0.5s; }
+
+    .animate-fade-in {
+        animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    @keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* ========================================
+       Responsive
+       ======================================== */
+    @media (max-width: 480px) {
+        .glass-card {
+            padding: 1.75rem;
+            margin: 0 0.5rem;
+        }
+
+        .login-title {
+            font-size: 1.5rem;
+        }
+
+        .form-options {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+    }
+
+    /* ========================================
+       Accessibility
+       ======================================== */
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+
+    /* Hidden utility */
+    [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body>
+<div class="login-page" x-data="loginForm()">
+
+    <div class="login-content">
+        <div class="glass-card">
+            <!-- Header -->
+            <div class="login-header">
+                <div class="logo-container">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <h1 class="login-title animate-fade-in stagger-1">Dobrodošli nazad</h1>
+                <p class="login-subtitle animate-fade-in stagger-2">
+                    Nemate nalog?
+                    <a href="/register">Registrujte se besplatno</a>
+                </p>
             </div>
-        </div>
-        <h2 class="mt-6 text-center text-2xl font-bold tracking-tight text-gray-900">
-            Prijavite se na ServisHub
-        </h2>
-        <p class="mt-2 text-center text-sm text-gray-600">
-            Nemate nalog?
-            <a href="/register" class="font-medium text-primary-600 hover:text-primary-500">
-                Registrujte se besplatno
-            </a>
-        </p>
-    </div>
 
-    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div class="bg-white py-8 px-4 shadow-xl sm:rounded-lg sm:px-10">
-            <!-- Google OAuth dugme -->
-            <div class="mb-6">
+            <!-- Google OAuth -->
+            <div class="animate-fade-in stagger-3">
                 <button type="button"
+                        class="google-btn"
                         @click="loginWithGoogle()"
-                        :disabled="googleLoading"
-                        class="flex w-full justify-center items-center gap-3 rounded-md border border-gray-300 bg-white py-2.5 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <svg x-show="!googleLoading" class="h-5 w-5" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                    <svg x-show="googleLoading" class="animate-spin h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                        :disabled="googleLoading">
+                    <template x-if="!googleLoading">
+                        <svg viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                    </template>
+                    <template x-if="googleLoading">
+                        <svg class="spinner" style="width: 20px; height: 20px; color: #94a3b8;" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </template>
                     <span x-text="googleLoading ? 'Povezivanje...' : 'Nastavi sa Google'"></span>
                 </button>
             </div>
 
             <!-- Separator -->
-            <div class="relative mb-6">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-gray-300"></div>
-                </div>
-                <div class="relative flex justify-center text-sm">
-                    <span class="bg-white px-2 text-gray-500">ili se prijavite sa email-om</span>
-                </div>
+            <div class="separator animate-fade-in stagger-3">
+                <div class="separator-line"></div>
+                <span class="separator-text">ili sa email-om</span>
+                <div class="separator-line"></div>
             </div>
 
-            <form @submit.prevent="submit()" class="space-y-6">
-                <!-- Error message -->
-                <div x-show="error" x-cloak class="rounded-md bg-red-50 p-4">
-                    <div class="flex">
-                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
-                        </svg>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-red-800" x-text="error"></p>
-                        </div>
-                    </div>
-                </div>
+            <!-- Error Message -->
+            <div x-show="error" x-cloak class="error-message">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p x-text="error"></p>
+            </div>
 
+            <!-- Login Form -->
+            <form @submit.prevent="submit()">
                 <!-- Email -->
-                <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700">
-                        Email adresa
-                    </label>
-                    <div class="mt-1">
-                        <input id="email" name="email" type="email" autocomplete="email" required
-                               x-model="form.email"
-                               class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm">
-                    </div>
+                <div class="form-group animate-fade-in stagger-4">
+                    <label for="email" class="form-label">Email adresa</label>
+                    <input type="email"
+                           id="email"
+                           class="form-input"
+                           x-model="form.email"
+                           placeholder="vas@email.com"
+                           required
+                           autocomplete="email">
                 </div>
 
                 <!-- Password -->
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700">
-                        Lozinka
-                    </label>
-                    <div class="mt-1">
-                        <input id="password" name="password" type="password" autocomplete="current-password" required
-                               x-model="form.password"
-                               class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm">
-                    </div>
+                <div class="form-group animate-fade-in stagger-4">
+                    <label for="password" class="form-label">Lozinka</label>
+                    <input type="password"
+                           id="password"
+                           class="form-input"
+                           x-model="form.password"
+                           placeholder="••••••••"
+                           required
+                           autocomplete="current-password">
                 </div>
 
-                <!-- Remember me + Forgot -->
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <input id="remember-me" name="remember-me" type="checkbox"
-                               class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
-                        <label for="remember-me" class="ml-2 block text-sm text-gray-900">
-                            Zapamti me
-                        </label>
+                <!-- Remember & Forgot -->
+                <div class="form-options animate-fade-in stagger-5">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="remember" x-model="rememberMe">
+                        <label for="remember">Zapamti me</label>
                     </div>
-
-                    <div class="text-sm">
-                        <a href="/forgot-password" class="font-medium text-primary-600 hover:text-primary-500">
-                            Zaboravili ste lozinku?
-                        </a>
-                    </div>
+                    <a href="/forgot-password" class="forgot-link">Zaboravljena lozinka?</a>
                 </div>
 
-                <!-- Submit -->
-                <div>
-                    <button type="submit"
-                            :disabled="loading"
-                            class="flex w-full justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <svg x-show="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                <!-- Submit Button -->
+                <button type="submit"
+                        class="submit-btn animate-fade-in stagger-5"
+                        :disabled="loading">
+                    <template x-if="loading">
+                        <svg class="spinner" style="width: 20px; height: 20px;" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span x-text="loading ? 'Prijavljivanje...' : 'Prijavi se'"></span>
-                    </button>
-                </div>
+                    </template>
+                    <span x-text="loading ? 'Prijavljivanje...' : 'Prijavi se'"></span>
+                </button>
             </form>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="login-footer">
+        <a href="https://servishub.rs" class="footer-brand" target="_blank" rel="noopener">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span>Powered by</span>
+            <span class="footer-link">ServisHub.rs</span>
+        </a>
+    </footer>
+
 </div>
 
 <script>
@@ -162,10 +676,11 @@ function loginForm() {
         },
         loading: false,
         googleLoading: false,
+        rememberMe: false,
         error: null,
 
         init() {
-            // Proveri da li ima grešku u URL-u (npr. nakon neuspešnog Google OAuth)
+            // Check for error in URL (e.g. after failed Google OAuth)
             const urlParams = new URLSearchParams(window.location.search);
             const error = urlParams.get('error');
 
@@ -197,7 +712,7 @@ function loginForm() {
                     default:
                         this.error = 'Greška pri prijavi.';
                 }
-                // Očisti URL parametre
+                // Clean URL parameters
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         },
@@ -208,12 +723,11 @@ function loginForm() {
 
             try {
                 const response = await fetch('/api/v1/auth/google', {
-                    credentials: 'include'  // Ensure session cookie is set
+                    credentials: 'include'
                 });
                 const data = await response.json();
 
                 if (response.ok && data.auth_url) {
-                    // Small delay to ensure cookie is processed before redirect
                     await new Promise(resolve => setTimeout(resolve, 100));
                     window.location.href = data.auth_url;
                 } else {
@@ -244,7 +758,7 @@ function loginForm() {
                     localStorage.setItem('refresh_token', data.tokens.refresh_token);
                     window.location.href = '/dashboard';
                 } else {
-                    this.error = data.message || data.error || 'Greška pri prijavi';
+                    this.error = data.message || data.error || 'Pogrešan email ili lozinka';
                 }
             } catch (e) {
                 this.error = 'Greška u komunikaciji sa serverom';
@@ -255,4 +769,5 @@ function loginForm() {
     }
 }
 </script>
-{% endblock %}
+</body>
+</html>
