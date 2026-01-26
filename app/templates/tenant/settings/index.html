@@ -1782,6 +1782,27 @@ function settingsPage() {
             this.applyTheme(this.currentTheme);
             await this.loadCurrentUser();
             await this.loadAll();
+
+            // Watch for tab changes to initialize Google autocomplete when public_page tab is shown
+            this.$watch('activeTab', (value) => {
+                if (value === 'public_page') {
+                    // Small delay to ensure DOM is updated
+                    setTimeout(() => {
+                        if (typeof initGoogleMapsAutocomplete === 'function' && !window._googleAutocompleteInitialized) {
+                            initGoogleMapsAutocomplete();
+                        }
+                    }, 100);
+                }
+            });
+
+            // Also check if we're already on public_page tab
+            if (this.activeTab === 'public_page') {
+                setTimeout(() => {
+                    if (typeof initGoogleMapsAutocomplete === 'function' && !window._googleAutocompleteInitialized) {
+                        initGoogleMapsAutocomplete();
+                    }
+                }, 100);
+            }
         },
 
         // Check if current user is admin (OWNER, ADMIN, MANAGER)
@@ -2560,25 +2581,35 @@ var settingsPageInstance = null;
 <!-- Google Maps Places API for address autocomplete -->
 {% if google_maps_api_key %}
 <script>
+// Global flag to track if autocomplete is initialized
+window._googleAutocompleteInitialized = false;
+
 function initGoogleMapsAutocomplete() {
     console.log('[Google Places] Initializing address autocomplete...');
 
+    // Check if already initialized
+    if (window._googleAutocompleteInitialized) {
+        console.log('[Google Places] Already initialized, skipping');
+        return;
+    }
+
     const addressInput = document.getElementById('public-address-input');
     if (!addressInput) {
-        console.log('[Google Places] Address input not found');
+        console.log('[Google Places] Address input not found, will retry when tab is shown');
         return;
     }
 
     if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
-        console.log('[Google Places] Google Maps API not loaded');
+        console.log('[Google Places] Google Maps API not loaded yet');
         return;
     }
 
-    const autocomplete = new google.maps.places.Autocomplete(addressInput, {
-        types: ['address'],
-        componentRestrictions: { country: 'rs' },
-        fields: ['address_components', 'formatted_address', 'geometry', 'place_id', 'url']
-    });
+    try {
+        const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+            types: ['address'],
+            componentRestrictions: { country: 'rs' },
+            fields: ['address_components', 'formatted_address', 'geometry', 'place_id', 'url']
+        });
 
     autocomplete.addListener('place_changed', function() {
         const place = autocomplete.getPlace();
@@ -2651,7 +2682,12 @@ function initGoogleMapsAutocomplete() {
         }
     });
 
-    console.log('[Google Places] Autocomplete initialized successfully');
+        // Mark as initialized
+        window._googleAutocompleteInitialized = true;
+        console.log('[Google Places] Autocomplete initialized successfully');
+    } catch (e) {
+        console.error('[Google Places] Error initializing autocomplete:', e);
+    }
 }
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&callback=initGoogleMapsAutocomplete" async defer></script>
