@@ -224,7 +224,7 @@ def upload_logo():
         - 403: Permission denied
         - 500: Upload error
     """
-    from ..utils.cloudinary_upload import upload_logo as do_upload
+    from app.utils.cloudinary_upload import upload_logo as do_upload
 
     user = TenantUser.query.get(g.user_id)
     if not user or user.role.value not in ['OWNER', 'ADMIN']:
@@ -267,7 +267,7 @@ def delete_logo():
 
     Only OWNER and ADMIN can delete logo.
     """
-    from ..utils.cloudinary_upload import delete_logo as do_delete
+    from app.utils.cloudinary_upload import delete_logo as do_delete
 
     user = TenantUser.query.get(g.user_id)
     if not user or user.role.value not in ['OWNER', 'ADMIN']:
