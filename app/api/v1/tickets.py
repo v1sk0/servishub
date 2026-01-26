@@ -918,6 +918,7 @@ def get_ticket_print_data(ticket_id):
             'address': tenant.adresa_sedista,
             'email': tenant.email,
             'phone': tenant.telefon,
+            'logo_url': tenant.logo_url,
             'print_clause': clause
         },
         'location': {

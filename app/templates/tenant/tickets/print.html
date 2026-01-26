@@ -335,6 +335,7 @@
     <div class="ticket-container">
       <header class="company-header">
         <div class="company-logo">
+          <img id="logo-img-1" style="display: none;" alt="Logo">
           <span class="logo-text" id="logo-text-1"></span>
         </div>
         <div class="company-info">
@@ -434,6 +435,7 @@
     <div class="ticket-container">
       <header class="company-header">
         <div class="company-logo">
+          <img id="logo-img-2" style="display: none;" alt="Logo">
           <span class="logo-text" id="logo-text-2"></span>
         </div>
         <div class="company-info">
@@ -582,8 +584,20 @@
     // Fill both copies with data
     function fillTicketData(ticket, tenant, location, qr_code_base64) {
       for (let i = 1; i <= 2; i++) {
-        // Tenant info - logo text shows tenant name
-        document.getElementById(`logo-text-${i}`).textContent = tenant?.name || 'Servis';
+        // Tenant info - show logo image if available, otherwise text
+        const logoImg = document.getElementById(`logo-img-${i}`);
+        const logoText = document.getElementById(`logo-text-${i}`);
+
+        if (tenant?.logo_url) {
+          logoImg.src = tenant.logo_url;
+          logoImg.style.display = 'block';
+          logoText.style.display = 'none';
+        } else {
+          logoImg.style.display = 'none';
+          logoText.style.display = 'block';
+          logoText.textContent = tenant?.name || 'Servis';
+        }
+
         document.getElementById(`tenant-info-${i}`).textContent =
           [tenant?.address, tenant?.phone ? `Tel: ${tenant.phone}` : ''].filter(Boolean).join(' | ') || '';
 

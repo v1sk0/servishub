@@ -11,6 +11,7 @@ from app.services.ips_service import IPSService
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta  # v3.05: kalendarski mesec
 import secrets
 import qrcode
 import io
@@ -163,6 +164,7 @@ def get_profile():
         'adresa_sedista': tenant.adresa_sedista,
         'email': tenant.email,
         'telefon': tenant.telefon,
+        'logo_url': tenant.logo_url,
         'status': tenant.status.value,
         'trial_ends_at': tenant.trial_ends_at.isoformat() if tenant.trial_ends_at else None,
         'subscription_ends_at': tenant.subscription_ends_at.isoformat() if tenant.subscription_ends_at else None,
@@ -205,6 +207,88 @@ def update_profile():
     db.session.commit()
 
     return {'message': 'Profile updated', 'tenant_id': tenant.id}
+
+
+@bp.route('/upload/logo', methods=['POST'])
+@jwt_required
+def upload_logo():
+    """
+    Upload tenant logo to Cloudinary.
+
+    Expects multipart/form-data with 'logo' file field.
+    Only OWNER and ADMIN can upload logo.
+
+    Returns:
+        - 200: { url: "cloudinary_url", message: "Logo uploaded" }
+        - 400: Validation error
+        - 403: Permission denied
+        - 500: Upload error
+    """
+    from ..utils.cloudinary_upload import upload_logo as do_upload
+
+    user = TenantUser.query.get(g.user_id)
+    if not user or user.role.value not in ['OWNER', 'ADMIN']:
+        return {'error': 'Admin access required'}, 403
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    # Check if file is in request
+    if 'logo' not in request.files:
+        return {'error': 'Fajl nije prosleđen'}, 400
+
+    file = request.files['logo']
+
+    # Upload to Cloudinary
+    result = do_upload(file, tenant.id)
+
+    if not result['success']:
+        return {'error': result['error']}, 400
+
+    # Save URL to tenant
+    tenant.logo_url = result['url']
+    tenant.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    return {
+        'message': 'Logo uspešno uploadovan',
+        'url': result['url'],
+        'width': result.get('width'),
+        'height': result.get('height')
+    }
+
+
+@bp.route('/upload/logo', methods=['DELETE'])
+@jwt_required
+def delete_logo():
+    """
+    Delete tenant logo from Cloudinary.
+
+    Only OWNER and ADMIN can delete logo.
+    """
+    from ..utils.cloudinary_upload import delete_logo as do_delete
+
+    user = TenantUser.query.get(g.user_id)
+    if not user or user.role.value not in ['OWNER', 'ADMIN']:
+        return {'error': 'Admin access required'}, 403
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    if not tenant.logo_url:
+        return {'error': 'Logo ne postoji'}, 400
+
+    # Delete from Cloudinary
+    result = do_delete(tenant.id)
+
+    # Clear URL from tenant regardless of Cloudinary result
+    tenant.logo_url = None
+    tenant.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    return {'message': 'Logo obrisan'}
 
 
 @bp.route('/login-info', methods=['GET'])
@@ -773,9 +857,9 @@ def create_subscription_invoice():
     monthly_price = base_price + (additional_locations * location_price)
     total_amount = monthly_price * months
 
-    # Period
+    # Period - v3.05: kalendarski mesec
     period_start = datetime.utcnow().date()
-    period_end = period_start + timedelta(days=30 * months)
+    period_end = period_start + relativedelta(months=months)
 
     # Generiši broj fakture (race-safe sa SELECT FOR UPDATE)
     invoice_number = get_next_invoice_number(datetime.utcnow().year)

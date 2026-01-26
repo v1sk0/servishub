@@ -64,6 +64,9 @@ class Tenant(db.Model):
     telefon = db.Column(db.String(30))                # Kontakt telefon
     bank_account = db.Column(db.String(50))           # Bankovni racun (BBB-XXXXXXXXXXXXX-KK, 18 cifara)
 
+    # Logo servisa (Cloudinary URL)
+    logo_url = db.Column(db.String(500))                 # URL loga servisa (Cloudinary)
+
     # Login za zaposlene - tajni URL segment
     login_secret = db.Column(db.String(32), unique=True, nullable=False)  # Tajni kod za login stranicu
 
