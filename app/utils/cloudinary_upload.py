@@ -73,13 +73,17 @@ def validate_file(file):
     return True, None
 
 
-def upload_logo(file, tenant_id):
+def upload_image(file, tenant_id, subfolder, filename='image'):
     """
-    Upload a logo image to Cloudinary.
+    Upload an image to Cloudinary in tenant's folder structure.
+
+    Folder structure: servishub/tenant_{id}/{subfolder}/{filename}
 
     Args:
         file: FileStorage object from request.files
         tenant_id: Tenant ID for organizing uploads
+        subfolder: Subfolder name (e.g., 'logos', 'locations', 'documents')
+        filename: Name for the file (without extension)
 
     Returns:
         dict with 'success', 'url', 'public_id' or 'error' key
@@ -94,11 +98,10 @@ def upload_logo(file, tenant_id):
         return {'success': False, 'error': 'Cloudinary nije konfigurisan'}
 
     try:
-        # Generate unique filename
-        filename = secure_filename(file.filename)
-        public_id = f"servishub/logos/tenant_{tenant_id}"
+        # Folder structure: servishub/tenant_{id}/{subfolder}/{filename}
+        public_id = f"servishub/tenant_{tenant_id}/{subfolder}/{filename}"
 
-        # Upload to Cloudinary with transformations for logo
+        # Upload to Cloudinary with transformations
         result = cloudinary.uploader.upload(
             file,
             public_id=public_id,
@@ -125,6 +128,46 @@ def upload_logo(file, tenant_id):
         return {'success': False, 'error': f'Greška pri uploadu: {str(e)}'}
 
 
+def upload_logo(file, tenant_id):
+    """
+    Upload a logo image to Cloudinary.
+
+    Args:
+        file: FileStorage object from request.files
+        tenant_id: Tenant ID for organizing uploads
+
+    Returns:
+        dict with 'success', 'url', 'public_id' or 'error' key
+    """
+    return upload_image(file, tenant_id, 'logos', 'logo')
+
+
+def delete_image(tenant_id, subfolder, filename):
+    """
+    Delete an image from Cloudinary.
+
+    Args:
+        tenant_id: Tenant ID
+        subfolder: Subfolder name (e.g., 'logos', 'locations')
+        filename: File name (without extension)
+
+    Returns:
+        dict with 'success' or 'error' key
+    """
+    if not init_cloudinary():
+        return {'success': False, 'error': 'Cloudinary nije konfigurisan'}
+
+    try:
+        public_id = f"servishub/tenant_{tenant_id}/{subfolder}/{filename}"
+        result = cloudinary.uploader.destroy(public_id)
+
+        return {'success': True, 'result': result.get('result')}
+
+    except Exception as e:
+        current_app.logger.error(f'Cloudinary delete error: {str(e)}')
+        return {'success': False, 'error': f'Greška pri brisanju: {str(e)}'}
+
+
 def delete_logo(tenant_id):
     """
     Delete a logo from Cloudinary.
@@ -135,15 +178,4 @@ def delete_logo(tenant_id):
     Returns:
         dict with 'success' or 'error' key
     """
-    if not init_cloudinary():
-        return {'success': False, 'error': 'Cloudinary nije konfigurisan'}
-
-    try:
-        public_id = f"servishub/logos/tenant_{tenant_id}"
-        result = cloudinary.uploader.destroy(public_id)
-
-        return {'success': True, 'result': result.get('result')}
-
-    except Exception as e:
-        current_app.logger.error(f'Cloudinary delete error: {str(e)}')
-        return {'success': False, 'error': f'Greška pri brisanju: {str(e)}'}
+    return delete_image(tenant_id, 'logos', 'logo')
