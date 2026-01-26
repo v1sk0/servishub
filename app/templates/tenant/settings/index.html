@@ -1889,18 +1889,26 @@ function settingsPage() {
                     this.publicPageUrls.subdomain = publicData.subdomain_url || `https://${this.tenantSlug}.servishub.rs`;
                     this.publicPageUrls.custom_domain = publicData.custom_domain_url || null;
 
+                    // Use tenant profile data as defaults for empty fields
+                    const tenantDefaults = {
+                        display_name: this.profile.name || '',
+                        phone: this.profile.telefon || '',
+                        email: this.profile.email || '',
+                        address: this.profile.adresa_sedista || ''
+                    };
+
                     if (publicData.exists && publicData.profile) {
                         const p = publicData.profile;
-                        // Flatten profile data for form binding
+                        // Flatten profile data for form binding, using tenant data as fallback
                         this.publicProfile = {
                             is_public: p.is_public || false,
-                            display_name: p.display_name || '',
+                            display_name: p.display_name || tenantDefaults.display_name,
                             tagline: p.tagline || '',
                             description: p.description || '',
-                            phone: p.contact?.phone || '',
+                            phone: p.contact?.phone || tenantDefaults.phone,
                             phone_secondary: p.contact?.phone_secondary || '',
-                            email: p.contact?.email || '',
-                            address: p.contact?.address || '',
+                            email: p.contact?.email || tenantDefaults.email,
+                            address: p.contact?.address || tenantDefaults.address,
                             city: p.contact?.city || '',
                             postal_code: p.contact?.postal_code || '',
                             maps_url: p.contact?.maps_url || '',
@@ -1949,6 +1957,15 @@ function settingsPage() {
                                 this.publicPageUrls.custom_domain = `https://${p.custom_domain.domain}`;
                             }
                         }
+                    } else {
+                        // Public profile doesn't exist yet - use tenant profile data as defaults
+                        this.publicProfile = {
+                            ...this.publicProfile,
+                            display_name: tenantDefaults.display_name,
+                            phone: tenantDefaults.phone,
+                            email: tenantDefaults.email,
+                            address: tenantDefaults.address
+                        };
                     }
                 }
             } catch (e) {
