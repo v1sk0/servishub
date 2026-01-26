@@ -189,7 +189,8 @@ def team_detail(user_id):
 @bp.route('/settings')
 def settings():
     """Podesavanja servisa."""
-    return render_template('tenant/settings/index.html')
+    return render_template('tenant/settings/index.html',
+                           google_maps_api_key=current_app.config.get('GOOGLE_MAPS_API_KEY', ''))
 
 
 @bp.route('/settings/profile')

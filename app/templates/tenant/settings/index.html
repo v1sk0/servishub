@@ -921,8 +921,10 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Adresa</label>
-                            <input type="text" x-model="publicProfile.address" maxlength="300"
+                            <input type="text" id="public-address-input" x-model="publicProfile.address" maxlength="300"
+                                   placeholder="Pocnite da kucate adresu..."
                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
+                            <p class="text-xs text-gray-500 mt-1">Izaberite adresu sa liste za automatsko popunjavanje svih polja</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Postanski broj</label>
@@ -2546,8 +2548,84 @@ function settingsPage() {
             } catch (e) {
                 showToast(e.message || 'Greska pri uklanjanju domena', 'error');
             }
+        },
+
+        // Initialize Google Places Autocomplete for address
+        initAddressAutocomplete() {
+            const addressInput = document.getElementById('public-address-input');
+            if (!addressInput || typeof google === 'undefined' || !google.maps || !google.maps.places) {
+                return;
+            }
+
+            const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+                types: ['address'],
+                componentRestrictions: { country: 'rs' }, // Serbia
+                fields: ['address_components', 'formatted_address', 'geometry', 'place_id', 'url']
+            });
+
+            autocomplete.addListener('place_changed', () => {
+                const place = autocomplete.getPlace();
+                if (!place.address_components) return;
+
+                // Extract address components
+                let streetNumber = '';
+                let route = '';
+                let city = '';
+                let postalCode = '';
+
+                for (const component of place.address_components) {
+                    const type = component.types[0];
+                    if (type === 'street_number') {
+                        streetNumber = component.long_name;
+                    } else if (type === 'route') {
+                        route = component.long_name;
+                    } else if (type === 'locality' || type === 'administrative_area_level_2') {
+                        city = component.long_name;
+                    } else if (type === 'postal_code') {
+                        postalCode = component.long_name;
+                    }
+                }
+
+                // Build full address
+                const fullAddress = route + (streetNumber ? ' ' + streetNumber : '');
+
+                // Update form fields
+                this.publicProfile.address = fullAddress || place.formatted_address;
+                this.publicProfile.city = city;
+                this.publicProfile.postal_code = postalCode;
+
+                // Google Maps URL
+                if (place.url) {
+                    this.publicProfile.maps_url = place.url;
+                } else if (place.place_id) {
+                    this.publicProfile.maps_url = `https://www.google.com/maps/place/?q=place_id:${place.place_id}`;
+                }
+
+                // Google Maps Embed URL
+                if (place.geometry && place.geometry.location) {
+                    const lat = place.geometry.location.lat();
+                    const lng = place.geometry.location.lng();
+                    this.publicProfile.maps_embed_url = `https://www.google.com/maps/embed/v1/place?key={{ google_maps_api_key }}&q=${lat},${lng}&zoom=17`;
+                }
+            });
         }
     }
 }
 </script>
+
+<!-- Google Maps Places API for address autocomplete -->
+{% if google_maps_api_key %}
+<script>
+function initGoogleMapsAutocomplete() {
+    // Wait for Alpine to be ready
+    setTimeout(() => {
+        const el = document.querySelector('[x-data]');
+        if (el && el.__x) {
+            el.__x.$data.initAddressAutocomplete();
+        }
+    }, 500);
+}
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&callback=initGoogleMapsAutocomplete" async defer></script>
+{% endif %}
 {% endblock %}
