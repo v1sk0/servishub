@@ -373,12 +373,18 @@
     .grade-option.selected::before {
         opacity: 1;
     }
-    .grade-option.selected .grade-letter {
-        color: white;
+    .grade-option.selected .grade-letter,
+    .grade-option.grade-a.selected .grade-letter,
+    .grade-option.grade-b.selected .grade-letter,
+    .grade-option.grade-c.selected .grade-letter {
+        color: white !important;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
-    .grade-option.selected .grade-text {
-        color: rgba(255, 255, 255, 0.95);
+    .grade-option.selected .grade-text,
+    .grade-option.grade-a.selected .grade-text,
+    .grade-option.grade-b.selected .grade-text,
+    .grade-option.grade-c.selected .grade-text {
+        color: white !important;
     }
     .grade-option.grade-a.selected {
         box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2), 0 8px 25px rgba(34, 197, 94, 0.35);
