@@ -1051,10 +1051,21 @@ def _get_payment_info(payment_reference: str, amount: float, invoice_number: str
 @bp.route('/kyc', methods=['GET'])
 @jwt_required
 def get_kyc_status():
-    """Get KYC verification status"""
+    """
+    Get KYC verification status and representative data.
+
+    Security:
+    - JWT authentication required (tenant_id from token)
+    - Sensitive data (JMBG, broj_licne_karte) only returned to OWNER/ADMIN
+    - Other users see only verification status (no personal data)
+    """
     tenant = Tenant.query.get(g.tenant_id)
     if not tenant:
         return {'error': 'Tenant not found'}, 404
+
+    # Check user role for sensitive data access
+    user = TenantUser.query.get(g.user_id)
+    is_admin = user and user.role.value in ['OWNER', 'ADMIN']
 
     # Get primary representative
     representative = ServiceRepresentative.query.filter_by(
@@ -1069,21 +1080,35 @@ def get_kyc_status():
             'representative': None
         }
 
-    return {
+    # Base response with status info
+    response = {
         'kyc_submitted': True,
         'kyc_status': representative.status.value,
         'verified_at': representative.verified_at.isoformat() if representative.verified_at else None,
-        'rejection_reason': representative.rejection_reason,
-        'representative': {
+        'rejection_reason': representative.rejection_reason
+    }
+
+    # Only OWNER/ADMIN can see full representative data (including sensitive fields)
+    if is_admin:
+        response['representative'] = {
             'id': representative.id,
             'ime': representative.ime,
             'prezime': representative.prezime,
+            'jmbg': representative.jmbg,
+            'broj_licne_karte': representative.broj_licne_karte,
+            'datum_rodjenja': representative.datum_rodjenja.isoformat() if representative.datum_rodjenja else None,
             'email': representative.email,
             'telefon': representative.telefon,
+            'adresa': representative.adresa,
+            'grad': representative.grad,
             'lk_front_url': representative.lk_front_url,
             'lk_back_url': representative.lk_back_url
         }
-    }
+    else:
+        # Non-admin users only see basic status, no personal data
+        response['representative'] = None
+
+    return response
 
 
 @bp.route('/kyc', methods=['POST'])
