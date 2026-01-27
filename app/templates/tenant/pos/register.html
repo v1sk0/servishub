@@ -452,6 +452,9 @@ function posRegister() {
         async init() {
             await this.loadUserLocation();
             await this.checkCurrentRegister();
+            if (this.session) {
+                await this.resumeDraftReceipt();
+            }
             await this.loadRecentReceipts();
         },
 
@@ -512,6 +515,28 @@ function posRegister() {
                 }
             } catch (e) {
                 console.error('Failed to load user location', e);
+            }
+        },
+
+        async resumeDraftReceipt() {
+            // Check for orphaned DRAFT receipts in current session
+            try {
+                const res = await api(`/api/v1/pos/receipts?session_id=${this.session.session_id}&status=DRAFT&per_page=1`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.receipts && data.receipts.length > 0) {
+                        const draft = data.receipts[0];
+                        // Load full receipt with items
+                        const detailRes = await api(`/api/v1/pos/receipts/${draft.id}`);
+                        if (detailRes.ok) {
+                            const detail = await detailRes.json();
+                            this.activeReceipt = { receipt_id: detail.id, receipt_number: detail.receipt_number, status: detail.status };
+                            this.receiptItems = detail.items || [];
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to resume draft receipt', e);
             }
         },
 
@@ -650,10 +675,11 @@ function posRegister() {
         },
 
         async refreshReceipt() {
-            const res = await api(`/api/v1/pos/receipts/${this.activeReceipt.receipt_id}`);
+            const rid = this.activeReceipt.receipt_id || this.activeReceipt.id;
+            const res = await api(`/api/v1/pos/receipts/${rid}`);
             if (res.ok) {
                 const data = await res.json();
-                this.activeReceipt = data;
+                this.activeReceipt = { receipt_id: data.id, receipt_number: data.receipt_number, status: data.status };
                 this.receiptItems = data.items || [];
             }
         },
@@ -733,7 +759,7 @@ function posRegister() {
             const res = await api('/api/v1/pos/receipts?per_page=10');
             if (res.ok) {
                 const data = await res.json();
-                this.recentReceipts = data.receipts || [];
+                this.recentReceipts = (data.receipts || []).filter(r => r.status !== 'DRAFT');
             }
         },
 
