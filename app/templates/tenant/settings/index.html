@@ -616,13 +616,13 @@
                             </div>
 
                             <!-- Working Hours -->
-                            <div class="flex items-start gap-2" x-show="location.working_hours">
+                            <div class="flex items-start gap-2" x-show="formatLocationWorkingHours(location.working_hours)">
                                 <svg class="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                                 <div>
                                     <span class="text-gray-500 text-xs">Radno vreme:</span>
-                                    <p class="text-gray-700" x-text="location.working_hours"></p>
+                                    <p class="text-gray-700 text-sm" x-text="formatLocationWorkingHours(location.working_hours)"></p>
                                 </div>
                             </div>
                         </div>
@@ -2568,6 +2568,43 @@ function settingsPage() {
         formatDate(dateStr) {
             if (!dateStr) return '-';
             return new Date(dateStr).toLocaleDateString('sr-RS');
+        },
+
+        // Format working hours object to readable string for locations
+        formatLocationWorkingHours(wh) {
+            if (!wh || typeof wh !== 'object') return '';
+
+            const dayNames = {
+                mon: 'Pon', tue: 'Uto', wed: 'Sre', thu: 'Cet', fri: 'Pet', sat: 'Sub', sun: 'Ned'
+            };
+            const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+            const parts = [];
+
+            for (const day of days) {
+                const openKey = `${day}_open`;
+                const closeKey = `${day}_close`;
+                const closedKey = `${day}_closed`;
+
+                // Check if this day has data
+                if (wh[closedKey] === true) {
+                    // Skip closed days or add "Zatvoreno"
+                    continue;
+                }
+
+                if (wh[openKey] && wh[closeKey]) {
+                    parts.push(`${dayNames[day]}: ${wh[openKey]}-${wh[closeKey]}`);
+                } else if (wh[day]) {
+                    // Old format: { mon: "09:00-17:00" }
+                    parts.push(`${dayNames[day]}: ${wh[day]}`);
+                }
+            }
+
+            // Try to group consecutive days with same hours
+            if (parts.length === 0) return '';
+            if (parts.length <= 2) return parts.join(', ');
+
+            // Return abbreviated version for many days
+            return parts.slice(0, 3).join(', ') + (parts.length > 3 ? '...' : '');
         },
 
         // ==================== PUBLIC PROFILE ====================
