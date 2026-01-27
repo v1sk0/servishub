@@ -50,7 +50,7 @@
             <button x-show="isAdmin()" @click="activeTab = 'kyc'"
                     :class="activeTab === 'kyc' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                Fizičko lice
+                Odgovorno lice
             </button>
             <button x-show="isAdmin()" @click="activeTab = 'public_page'"
                     :class="activeTab === 'public_page' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
@@ -668,10 +668,10 @@
         </div>
     </div>
 
-    <!-- ==================== FIZIČKO LICE TAB ==================== -->
+    <!-- ==================== ODGOVORNO LICE TAB ==================== -->
     <div x-show="!loading && activeTab === 'kyc'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Verifikacija fizičkog lica</h2>
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Odgovorno lice</h2>
             <p class="text-sm text-gray-500 mb-4">Podaci o vlasniku servisa potrebni za izdavanje faktura</p>
 
             <!-- Status -->
@@ -699,14 +699,14 @@
                            x-text="kyc.kyc_status === 'VERIFIED' ? 'Verifikovan' : kyc.kyc_status === 'PENDING' ? 'Ceka se verifikacija' : kyc.kyc_status === 'REJECTED' ? 'Odbijeno' : 'Nije prijavljeno'"></p>
                         <p class="text-sm"
                            :class="kyc.kyc_status === 'VERIFIED' ? 'text-green-700' : kyc.kyc_status === 'PENDING' ? 'text-yellow-700' : kyc.kyc_status === 'REJECTED' ? 'text-red-700' : 'text-gray-600'"
-                           x-text="kyc.kyc_status === 'VERIFIED' ? 'Fizičko lice je verifikovano' : kyc.kyc_status === 'PENDING' ? 'Podaci su poslati na verifikaciju' : kyc.kyc_status === 'REJECTED' ? 'Molimo popravite podatke i pošaljite ponovo' : 'Popunite podatke o vlasniku servisa'"></p>
+                           x-text="kyc.kyc_status === 'VERIFIED' ? 'Odgovorno lice je verifikovano' : kyc.kyc_status === 'PENDING' ? 'Podaci su poslati na verifikaciju' : kyc.kyc_status === 'REJECTED' ? 'Molimo popravite podatke i pošaljite ponovo' : 'Popunite podatke o odgovornom licu'"></p>
                     </div>
                 </div>
             </div>
 
-            <!-- Fizičko lice Form -->
+            <!-- Odgovorno lice Form -->
             <div x-show="kyc.kyc_status !== 'VERIFIED'">
-                <h3 class="font-medium text-gray-900 mb-4">Podaci vlasnika servisa</h3>
+                <h3 class="font-medium text-gray-900 mb-4">Podaci odgovornog lica</h3>
                 <form @submit.prevent="submitKyc()">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -766,7 +766,7 @@
             <!-- Verified Info -->
             <div x-show="kyc.kyc_status === 'VERIFIED' && kyc.representative">
                 <div class="p-4 bg-gray-50 rounded-lg">
-                    <p class="text-sm text-gray-600 mb-2">Verifikovano fizičko lice:</p>
+                    <p class="text-sm text-gray-600 mb-2">Verifikovano odgovorno lice:</p>
                     <p class="font-medium text-gray-900" x-text="kyc.representative?.ime + ' ' + kyc.representative?.prezime"></p>
                     <p class="text-sm text-gray-600" x-text="kyc.representative?.email"></p>
                 </div>
