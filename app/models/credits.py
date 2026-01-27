@@ -75,8 +75,12 @@ class CreditBalance(db.Model):
         nullable=True,
         index=True
     )
-    # PublicUser ne postoji još - nullable bez FK constraint-a
-    public_user_id = db.Column(db.Integer, nullable=True, index=True)
+    public_user_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('public_user.id', ondelete='CASCADE'),
+        nullable=True,
+        index=True
+    )
 
     # Stanje
     balance = db.Column(db.Numeric(10, 2), nullable=False, default=0)

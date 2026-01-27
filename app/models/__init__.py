@@ -31,6 +31,13 @@ from .message_thread import (
 )
 from .tenant_connection import Invite, TenantConnection, ConnectionStatus
 from .supplier_reveal import SupplierReveal
+from .public_user import PublicUser, PublicUserStatus
+from .service_request import (
+    ServiceRequest, ServiceBid,
+    ServiceRequestStatus, ServiceRequestCategory, ServiceBidStatus
+)
+from .rating import Rating, RatingType
+from .content_report import ContentReport, ReportReason, ReportStatus
 from .credits import (
     CreditBalance, CreditTransaction, CreditPurchase, PromoCode,
     OwnerType, CreditTransactionType, DiscountType, CreditPaymentStatus
@@ -132,6 +139,19 @@ __all__ = [
     'ConnectionStatus',
     # Supplier Reveal
     'SupplierReveal',
+    # B2C Marketplace modeli
+    'PublicUser',
+    'PublicUserStatus',
+    'ServiceRequest',
+    'ServiceBid',
+    'ServiceRequestStatus',
+    'ServiceRequestCategory',
+    'ServiceBidStatus',
+    'Rating',
+    'RatingType',
+    'ContentReport',
+    'ReportReason',
+    'ReportStatus',
     # Credit System modeli
     'CreditBalance',
     'CreditTransaction',
