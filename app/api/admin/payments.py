@@ -11,6 +11,7 @@ Endpointi za:
 """
 
 from datetime import datetime, date, timedelta
+from dateutil.relativedelta import relativedelta  # v3.05: kalendarski mesec
 from decimal import Decimal
 from flask import Blueprint, request, jsonify, g
 from sqlalchemy import func, or_, and_
@@ -414,11 +415,12 @@ def verify_payment(payment_id):
     if tenant.status in [TenantStatus.EXPIRED, TenantStatus.SUSPENDED]:
         tenant.unblock()
 
-    # Postavi subscription_ends_at
+    # Postavi subscription_ends_at - v3.05: kalendarski mesec
     if payment.period_end:
         tenant.subscription_ends_at = datetime.combine(payment.period_end, datetime.min.time())
     else:
-        tenant.subscription_ends_at = datetime.utcnow() + timedelta(days=30)
+        # Fallback: 1 kalendarski mesec od sada
+        tenant.subscription_ends_at = datetime.utcnow() + relativedelta(months=1)
 
     tenant.status = TenantStatus.ACTIVE
 

@@ -5,8 +5,9 @@ Ovaj modul exportuje sve modele kako bi bili dostupni
 za import iz app.models.
 """
 
-from .tenant import Tenant, ServiceLocation, TenantStatus
+from .tenant import Tenant, ServiceLocation, TenantStatus, LocationStatus
 from .user import TenantUser, UserLocation, UserRole, TipUgovora, TipPlate
+from .feature_flag import FeatureFlag, is_feature_enabled, seed_feature_flags
 # Alias za kompatibilnost
 User = TenantUser
 from .admin import PlatformAdmin, AdminRole
@@ -29,6 +30,10 @@ from .message_thread import (
     ThreadType, ThreadStatus, ThreadTag, HiddenByType
 )
 from .tenant_connection import Invite, TenantConnection, ConnectionStatus
+from .credits import (
+    CreditBalance, CreditTransaction, CreditPurchase, PromoCode,
+    OwnerType, CreditTransactionType, DiscountType, CreditPaymentStatus
+)
 from .bank_import import (
     BankStatementImport, BankTransaction,
     ImportStatus, BankCode, MatchStatus, TransactionType
@@ -39,6 +44,11 @@ __all__ = [
     'Tenant',
     'ServiceLocation',
     'TenantStatus',
+    'LocationStatus',
+    # Feature Flag modeli
+    'FeatureFlag',
+    'is_feature_enabled',
+    'seed_feature_flags',
     # User modeli
     'TenantUser',
     'User',
@@ -119,6 +129,15 @@ __all__ = [
     'Invite',
     'TenantConnection',
     'ConnectionStatus',
+    # Credit System modeli
+    'CreditBalance',
+    'CreditTransaction',
+    'CreditPurchase',
+    'PromoCode',
+    'OwnerType',
+    'CreditTransactionType',
+    'DiscountType',
+    'CreditPaymentStatus',
     # Bank Import (v303 Billing Enhancement)
     'BankStatementImport',
     'BankTransaction',

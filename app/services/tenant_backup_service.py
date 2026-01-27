@@ -558,28 +558,29 @@ Backup fajl je prilozen ovom emailu. Sacuvajte kljuc na sigurnom mestu.
 
             # Message threads i poruke
             try:
-                from ..models.message_thread import MessageThread, ThreadMessage, ThreadParticipant
+                from ..models.message_thread import MessageThread, Message, ThreadParticipant
                 threads = MessageThread.query.filter_by(tenant_id=tenant_id).all()
                 for thread in threads:
-                    ThreadMessage.query.filter_by(thread_id=thread.id).delete()
+                    Message.query.filter_by(thread_id=thread.id).delete()
                     ThreadParticipant.query.filter_by(thread_id=thread.id).delete()
                 MessageThread.query.filter_by(tenant_id=tenant_id).delete()
-                MessageThread.query.filter_by(other_tenant_id=tenant_id).update({MessageThread.other_tenant_id: None})
-                ThreadMessage.query.filter_by(sender_tenant_id=tenant_id).update({ThreadMessage.sender_tenant_id: None})
-                ThreadParticipant.query.filter_by(tenant_id=tenant_id).update({ThreadParticipant.tenant_id: None})
+                # Cleanup references from other tenants' threads
+                if hasattr(MessageThread, 'other_tenant_id'):
+                    MessageThread.query.filter_by(other_tenant_id=tenant_id).update({MessageThread.other_tenant_id: None})
+                if hasattr(Message, 'sender_tenant_id'):
+                    Message.query.filter_by(sender_tenant_id=tenant_id).update({Message.sender_tenant_id: None})
             except Exception as e:
                 print(f"[BACKUP] Note: MessageThread cleanup: {e}")
 
             # Tenant connections
             try:
-                from ..models.tenant_connection import TenantConnection, TenantConnectionRequest
+                from ..models.tenant_connection import TenantConnection
                 TenantConnection.query.filter(
                     db.or_(
                         TenantConnection.tenant_a_id == tenant_id,
                         TenantConnection.tenant_b_id == tenant_id
                     )
                 ).delete(synchronize_session='fetch')
-                TenantConnectionRequest.query.filter_by(created_by_tenant_id=tenant_id).delete()
             except Exception as e:
                 print(f"[BACKUP] Note: TenantConnection cleanup: {e}")
 
@@ -587,7 +588,6 @@ Backup fajl je prilozen ovom emailu. Sacuvajte kljuc na sigurnom mestu.
             try:
                 from ..models.tenant_message import TenantMessage
                 TenantMessage.query.filter_by(tenant_id=tenant_id).delete()
-                TenantMessage.query.filter_by(from_tenant_id=tenant_id).update({TenantMessage.from_tenant_id: None})
             except Exception as e:
                 print(f"[BACKUP] Note: TenantMessage cleanup: {e}")
 
@@ -639,12 +639,6 @@ Backup fajl je prilozen ovom emailu. Sacuvajte kljuc na sigurnom mestu.
             ServiceTicket.query.filter_by(tenant_id=tenant_id).delete()
 
             # KYC predstavnici
-            try:
-                from ..models.representative import RepresentativeDocument
-                for rep in ServiceRepresentative.query.filter_by(tenant_id=tenant_id).all():
-                    RepresentativeDocument.query.filter_by(representative_id=rep.id).delete()
-            except Exception as e:
-                print(f"[BACKUP] Note: RepresentativeDocument cleanup: {e}")
             ServiceRepresentative.query.filter_by(tenant_id=tenant_id).delete()
 
             # Bank transactions - unmatch sve uparene transakcije za ovaj tenant

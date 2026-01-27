@@ -108,6 +108,15 @@ class TenantUser(db.Model):
     # Permissions
     can_view_revenue = db.Column(db.Boolean, default=False, nullable=False)  # Pregled prihoda u widgetima
 
+    # Trenutno izabrana lokacija
+    current_location_id = db.Column(
+        db.Integer,
+        db.ForeignKey('service_location.id', ondelete='SET NULL'),
+        nullable=True,
+        index=True
+    )
+    current_location = db.relationship('ServiceLocation', foreign_keys=[current_location_id])
+
     # Pracenje aktivnosti
     last_login_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -205,6 +214,8 @@ class UserLocation(db.Model):
     is_primary = db.Column(db.Boolean, default=False)   # Glavna lokacija korisnika
     can_manage = db.Column(db.Boolean, default=False)   # Da li moze upravljati lokacijom
     is_active = db.Column(db.Boolean, default=True)     # Da li je veza aktivna
+    role_at_location = db.Column(db.String(30), nullable=True)  # Override user.role per location, NULL = inherit
+    assigned_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Timestamp
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

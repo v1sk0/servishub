@@ -128,11 +128,16 @@ def tenant_required(f):
             }), 403
 
         # Proveri status tenanta
+        # v3.05: Dodaj proveru is_trust_active za "na rec" funkcionalnost
         if tenant.status == TenantStatus.SUSPENDED:
-            return jsonify({
-                'error': 'Forbidden',
-                'message': 'Vas nalog je suspendovan. Kontaktirajte podrsku.'
-            }), 403
+            # Ako je "na rec" aktivno (72h), dozvoli pristup uprkos SUSPENDED statusu
+            if hasattr(tenant, 'is_trust_active') and tenant.is_trust_active:
+                pass  # Dozvoli pristup - "na rec" je aktivan
+            else:
+                return jsonify({
+                    'error': 'Forbidden',
+                    'message': 'Vas nalog je suspendovan. Kontaktirajte podrsku.'
+                }), 403
 
         if tenant.status == TenantStatus.CANCELLED:
             return jsonify({
@@ -146,7 +151,7 @@ def tenant_required(f):
                 'message': 'Vasa pretplata je istekla. Obnovite pretplatu.'
             }), 402
 
-        # DEMO, TRIAL i ACTIVE imaju pun pristup - ne treba dodatna provera
+        # v3.05: PROMO i ACTIVE imaju pun pristup - ne treba dodatna provera
 
         # Ucitaj korisnika
         user = User.query.get(g.current_user_id)

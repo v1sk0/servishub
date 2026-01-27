@@ -10,14 +10,15 @@ Komande:
 """
 
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta  # v3.05: kalendarski mesec
 from decimal import Decimal
 from flask import current_app
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
 from ..extensions import db
-from ..models import Tenant, TenantMessage, PlatformSettings
-from ..models.tenant import TenantStatus, ServiceLocation
+from ..models import Tenant, TenantUser, TenantMessage, PlatformSettings
+from ..models.tenant import TenantStatus, ServiceLocation, LocationStatus
 from ..models.tenant_message import MessageCategory, MessagePriority
 from ..models.representative import SubscriptionPayment
 from .ips_service import IPSService
@@ -114,11 +115,33 @@ class BillingTasksService:
         """
         now = datetime.utcnow()
         stats = {
+            'promo_activated': 0,  # v3.05: PROMO -> ACTIVE
             'trial_expired': 0,
             'active_expired': 0,
             'suspended': 0,
             'errors': []
         }
+
+        # v3.05: 0. PROMO koji je istekao -> ACTIVE (1 kalendarski mesec)
+        promo_expired = Tenant.query.filter(
+            Tenant.status == TenantStatus.PROMO,
+            Tenant.promo_ends_at < now
+        ).all()
+
+        for tenant in promo_expired:
+            try:
+                tenant.status = TenantStatus.ACTIVE
+                tenant.subscription_ends_at = now + relativedelta(months=1)
+                BillingTasksService._send_tenant_message(
+                    tenant_id=tenant.id,
+                    title='Promo period je završen - aktivirana mesečna pretplata',
+                    content='Vaš besplatni 2-mesečni promo period je završen. Automatski je aktiviran mesečni paket. Faktura će biti generisana 7 dana pre isteka.',
+                    category=MessageCategory.BILLING,
+                    priority=MessagePriority.NORMAL
+                )
+                stats['promo_activated'] += 1
+            except Exception as e:
+                stats['errors'].append(f'PROMO Tenant {tenant.id}: {str(e)}')
 
         # 1. TRIAL koji je istekao -> EXPIRED
         trial_expired = Tenant.query.filter(
@@ -333,10 +356,10 @@ class BillingTasksService:
                 actual_base = tenant.custom_base_price or base_price
                 actual_loc = tenant.custom_location_price or location_price
 
-                # Broj lokacija
+                # Broj lokacija (koristi LocationStatus umesto is_active)
                 location_count = ServiceLocation.query.filter(
                     ServiceLocation.tenant_id == tenant.id,
-                    ServiceLocation.is_active == True
+                    ServiceLocation.status == LocationStatus.ACTIVE
                 ).count()
                 additional_locations = max(0, location_count - 1)
 
@@ -470,6 +493,42 @@ class BillingTasksService:
             priority=priority.value if hasattr(priority, 'value') else priority
         )
         db.session.add(message)
+
+
+    # =========================================================================
+    # ENFORCE LOCATION LIMITS - Deaktivira višak lokacija pri downgrade-u
+    # =========================================================================
+
+    @staticmethod
+    def enforce_location_limits(tenant_id: int):
+        """
+        Poziva se pri downgrade-u plana.
+        Lokacije preko limita se deaktiviraju (najnovije prvo, nikad primary).
+        """
+        from .billing_service import can_add_location
+
+        check = can_add_location(tenant_id)
+        if check['allowed']:
+            return  # Sve OK, nema viška
+
+        excess = check['current'] - check['limit']
+        if excess <= 0:
+            return
+
+        # Deaktiviraj najnovije ne-primary lokacije
+        locations = ServiceLocation.query.filter_by(
+            tenant_id=tenant_id, status=LocationStatus.ACTIVE, is_primary=False
+        ).order_by(ServiceLocation.created_at.desc()).limit(excess).all()
+
+        for loc in locations:
+            loc.status = LocationStatus.INACTIVE
+            loc.is_active = False
+            # Prebaci korisnike — middleware će postaviti primary kao fallback
+            TenantUser.query.filter_by(
+                current_location_id=loc.id
+            ).update({'current_location_id': None})
+
+        db.session.commit()
 
 
 # Singleton instanca

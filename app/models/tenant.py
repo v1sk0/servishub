@@ -13,26 +13,28 @@ from slugify import slugify
 from ..extensions import db
 
 
+class LocationStatus(enum.Enum):
+    """Status lokacije servisa."""
+    ACTIVE = 'ACTIVE'
+    INACTIVE = 'INACTIVE'
+    ARCHIVED = 'ARCHIVED'  # soft-delete, čuva podatke za audit
+
+
 class TenantStatus(enum.Enum):
     """
-    Mogući statusi tenanta (preduzeca).
+    Lifecycle: PROMO (2mo free) → ACTIVE (paying) → EXPIRED (7d grace) → SUSPENDED → BLOCKED
 
-    PROMO - v3.05: 2 meseca FREE za nove tenante, pun pristup, bez faktura
-    ACTIVE - Aktivna pretplata
-    EXPIRED - Istekla pretplata (grace period 7 dana)
-    SUSPENDED - Suspendovan (neplacanje ili krsenje pravila)
-    CANCELLED - Otkazan nalog
-
-    DEPRECATED (v3.05):
-    DEMO - Legacy, zadrzano za backward compat
-    TRIAL - Legacy, zadrzano za backward compat
+    DEPRECATED: DEMO, TRIAL, CANCELLED — zadržano u enum-u jer postoje u DB,
+    ali se NE koriste za nove tenante. Svi novi idu kroz PROMO → ACTIVE.
     """
-    PROMO = 'PROMO'  # v3.05: novi status za 2 meseca FREE
-    DEMO = 'DEMO'    # DEPRECATED v3.05
-    TRIAL = 'TRIAL'  # DEPRECATED v3.05
+    PROMO = 'PROMO'
     ACTIVE = 'ACTIVE'
     EXPIRED = 'EXPIRED'
     SUSPENDED = 'SUSPENDED'
+    BLOCKED = 'BLOCKED'
+    # DEPRECATED — ne koristiti za nove tenante, zadržano za backward compat
+    DEMO = 'DEMO'
+    TRIAL = 'TRIAL'
     CANCELLED = 'CANCELLED'
 
 
@@ -400,6 +402,13 @@ class ServiceLocation(db.Model):
 
     # Status
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+    status = db.Column(
+        db.Enum(LocationStatus),
+        default=LocationStatus.ACTIVE,
+        nullable=False
+    )
+    archived_at = db.Column(db.DateTime)
+    archived_by_id = db.Column(db.Integer, db.ForeignKey('tenant_user.id'))
 
     # Timestampovi
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

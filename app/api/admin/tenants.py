@@ -278,127 +278,12 @@ def activate_trial(tenant_id):
     }), 200
 
 
-@bp.route('/<int:tenant_id>/activate', methods=['POST'])
-@platform_admin_required
-def activate_tenant(tenant_id):
-    """
-    Aktivira tenant - postavlja status na ACTIVE i kreira SubscriptionPayment.
-
-    Request body (JSON):
-        - months: Broj meseci pretplate (1, 3, 6, 12) - default 1
-        - payment_method: BANK_TRANSFER, CASH, CARD - default BANK_TRANSFER
-        - payment_reference: Referenca uplate (opciono)
-        - notes: Napomena (opciono)
-    """
-    tenant = Tenant.query.get_or_404(tenant_id)
-    data = request.get_json() or {}
-
-    # Parametri iz request body
-    months = data.get('months', 1)
-    payment_method = data.get('payment_method', 'BANK_TRANSFER')
-    payment_reference = data.get('payment_reference', '')
-    notes = data.get('notes', '')
-
-    # Validacija meseci
-    if months not in [1, 3, 6, 12]:
-        return jsonify({'error': 'Broj meseci mora biti 1, 3, 6 ili 12'}), 400
-
-    # Sacuvaj stari status za audit
-    old_status = tenant.status.value if tenant.status else None
-
-    # Ucitaj cene iz PlatformSettings
-    from app.models import PlatformSettings
-    settings = PlatformSettings.get_settings()
-    base_price = float(settings.base_price) if settings.base_price else 3600
-    location_price = float(settings.location_price) if settings.location_price else 1800
-
-    # Izracunaj broj lokacija
-    from app.models.tenant import ServiceLocation, TenantStatus
-    locations_count = ServiceLocation.query.filter_by(tenant_id=tenant.id, is_active=True).count()
-    locations_count = max(1, locations_count)  # Minimum 1 lokacija
-
-    # Izracunaj mesecnu cenu
-    additional_locations = max(0, locations_count - 1)
-    monthly_price = base_price + (additional_locations * location_price)
-    total_amount = monthly_price * months
-
-    # Period pretplate
-    period_start = datetime.utcnow().date()
-    period_end = period_start + timedelta(days=30 * months)
-
-    # Generiši broj fakture (race-safe sa SELECT FOR UPDATE)
-    invoice_number = get_next_invoice_number(datetime.utcnow().year)
-
-    # Kreiraj stavke fakture
-    items = [
-        {
-            'description': 'Bazni paket ServisHub',
-            'quantity': months,
-            'unit_price': base_price,
-            'total': base_price * months
-        }
-    ]
-    if additional_locations > 0:
-        items.append({
-            'description': f'Dodatne lokacije ({additional_locations})',
-            'quantity': months,
-            'unit_price': location_price * additional_locations,
-            'total': location_price * additional_locations * months
-        })
-
-    # Kreiraj SubscriptionPayment
-    payment = SubscriptionPayment(
-        tenant_id=tenant.id,
-        invoice_number=invoice_number,
-        period_start=period_start,
-        period_end=period_end,
-        items_json=items,
-        subtotal=total_amount,
-        total_amount=total_amount,
-        currency='RSD',
-        status='PAID',  # Direktno PAID jer admin aktivira
-        paid_at=datetime.utcnow(),
-        payment_method=payment_method,
-        payment_reference=payment_reference,
-        payment_notes=notes,
-        verified_by_id=g.current_admin.id,
-        verified_at=datetime.utcnow(),
-        is_auto_generated=False
-    )
-    db.session.add(payment)
-
-    # Postavi status i period pretplate
-    tenant.status = TenantStatus.ACTIVE
-    tenant.subscription_ends_at = datetime.combine(period_end, datetime.min.time())
-
-    # Audit log
-    AdminActivityLog.log(
-        action_type=AdminActionType.ACTIVATE_SUBSCRIPTION,
-        target_type='tenant',
-        target_id=tenant.id,
-        target_name=tenant.name,
-        old_status=old_status,
-        new_status='ACTIVE',
-        details={
-            'subscription_ends_at': tenant.subscription_ends_at.isoformat(),
-            'months': months,
-            'total_amount': total_amount,
-            'invoice_number': invoice_number,
-            'payment_method': payment_method,
-            'locations_count': locations_count
-        }
-    )
-
-    db.session.commit()
-
-    return jsonify({
-        'message': f'Pretplata za "{tenant.name}" aktivirana na {months} mesec(i).',
-        'tenant_id': tenant.id,
-        'status': tenant.status.value,
-        'subscription_ends_at': tenant.subscription_ends_at.isoformat(),
-        'invoice_number': invoice_number,
-        'total_amount': total_amount
-    }), 200
+# UKLONENO v3.05: /activate endpoint
+# Aktivacija pretplate se sada radi ISKLJUCIVO kroz billing flow:
+# 1. Admin generise fakturu (PENDING)
+# 2. Tenant placa na racun
+# 3. Admin importuje izvod -> matching -> reconcile_payment() -> ACTIVE
+# Vidi: BILLING_FRONTEND_V305_PLAN.md
 
 
 @bp.route('/<int:tenant_id>/suspend', methods=['POST'])
@@ -446,48 +331,12 @@ def suspend_tenant(tenant_id):
     }), 200
 
 
-@bp.route('/<int:tenant_id>/unsuspend', methods=['POST'])
-@platform_admin_required
-def unsuspend_tenant(tenant_id):
-    """
-    Ukida suspenziju tenanta.
-    """
-    tenant = Tenant.query.get_or_404(tenant_id)
-
-    from app.models.tenant import TenantStatus
-
-    # Vrati na ACTIVE ili TRIAL zavisno od stanja
-    if tenant.trial_ends_at and tenant.trial_ends_at > datetime.utcnow():
-        new_status = TenantStatus.TRIAL
-    else:
-        new_status = TenantStatus.ACTIVE
-
-    tenant.status = new_status
-
-    # Ukloni suspension info
-    if tenant.settings:
-        tenant.settings.pop('suspension_reason', None)
-        tenant.settings.pop('suspended_at', None)
-        tenant.settings.pop('suspended_by', None)
-
-    # Audit log
-    AdminActivityLog.log(
-        action_type=AdminActionType.UNSUSPEND_TENANT,
-        target_type='tenant',
-        target_id=tenant.id,
-        target_name=tenant.name,
-        old_status='SUSPENDED',
-        new_status=new_status.value,
-        details={}
-    )
-
-    db.session.commit()
-
-    return jsonify({
-        'message': f'Suspenzija za "{tenant.name}" je ukinuta.',
-        'tenant_id': tenant.id,
-        'status': tenant.status.value
-    }), 200
+# UKLONENO v3.05: /unsuspend endpoint
+# Reaktivacija suspendovanih tenanta se sada radi AUTOMATSKI kroz billing flow:
+# 1. SUSPENDED tenant placa na racun
+# 2. Admin importuje izvod -> matching -> reconcile_payment()
+# 3. reconcile_payment() poziva tenant.unblock() -> ACTIVE
+# Vidi: BILLING_FRONTEND_V305_PLAN.md
 
 
 @bp.route('/<int:tenant_id>/extend-trial', methods=['POST'])

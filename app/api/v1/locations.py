@@ -4,6 +4,8 @@ Service Locations API
 from flask import Blueprint, request, g
 from app.extensions import db
 from app.models import ServiceLocation, TenantUser, UserLocation
+from app.models.tenant import LocationStatus
+from app.services.billing_service import can_add_location, calculate_prorate
 from app.api.middleware.auth import jwt_required
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
@@ -131,6 +133,17 @@ def create_location():
     if not user or user.role.value not in ['OWNER', 'ADMIN', 'MANAGER']:
         return {'error': 'Permission denied'}, 403
 
+    # Billing gating: proveri limit lokacija
+    check = can_add_location(g.tenant_id)
+    if not check['allowed']:
+        return {
+            'error': 'Dostignut limit lokacija za vaš plan',
+            'current': check['current'],
+            'limit': check['limit'],
+            'requires_upgrade': True,
+            'prorate': calculate_prorate(g.tenant_id)
+        }, 403
+
     try:
         data = LocationCreate(**request.json)
     except Exception as e:
@@ -209,6 +222,18 @@ def update_location(location_id):
         location.coverage_radius_km = data.coverage_radius_km
     if data.is_active is not None:
         location.is_active = data.is_active
+        if not data.is_active:
+            location.status = LocationStatus.INACTIVE
+            # Fallback: prebaci korisnike na primary lokaciju
+            primary = ServiceLocation.query.filter_by(
+                tenant_id=g.tenant_id, is_primary=True, status=LocationStatus.ACTIVE
+            ).first()
+            if primary and primary.id != location.id:
+                TenantUser.query.filter_by(
+                    current_location_id=location_id
+                ).update({'current_location_id': primary.id})
+        else:
+            location.status = LocationStatus.ACTIVE
 
     db.session.commit()
 
@@ -234,11 +259,31 @@ def delete_location(location_id):
     if location.is_primary:
         return {'error': 'Cannot delete primary location'}, 400
 
-    # Soft delete
+    # Guard: ne dozvoli brisanje poslednje aktivne lokacije
+    active_count = ServiceLocation.query.filter_by(
+        tenant_id=g.tenant_id, status=LocationStatus.ACTIVE
+    ).count()
+    if active_count <= 1:
+        return {'error': 'Cannot delete the last active location'}, 400
+
+    # Soft delete — archive
     location.is_active = False
+    location.status = LocationStatus.ARCHIVED
+    location.archived_at = datetime.utcnow()
+    location.archived_by_id = g.user_id
+
+    # Fallback: prebaci korisnike sa current_location_id na primary
+    primary = ServiceLocation.query.filter_by(
+        tenant_id=g.tenant_id, is_primary=True, status=LocationStatus.ACTIVE
+    ).first()
+    if primary:
+        TenantUser.query.filter_by(
+            current_location_id=location_id
+        ).update({'current_location_id': primary.id})
+
     db.session.commit()
 
-    return {'message': 'Location deleted'}
+    return {'message': 'Location archived'}
 
 
 @bp.route('/<int:location_id>/set-primary', methods=['POST'])

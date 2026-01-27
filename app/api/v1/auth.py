@@ -20,7 +20,8 @@ from ..schemas.auth import (
 from ..middleware.auth import jwt_required, tenant_required
 from ...services.auth_service import auth_service, AuthError
 from ...services.security_service import rate_limit, RateLimits, SecurityEventLogger
-from ...models import ServiceLocation, UserRole, Tenant
+from ...models import ServiceLocation, UserRole, Tenant, TenantUser
+from ...models.tenant import LocationStatus
 from ...extensions import db
 
 # Blueprint za auth endpoints
@@ -438,6 +439,47 @@ def me():
             }
             for loc in locations
         ]
+    }), 200
+
+
+@bp.route('/select-location', methods=['POST'])
+@jwt_required
+@tenant_required
+def select_location():
+    """
+    Bira aktivnu lokaciju za korisnika.
+
+    Request body:
+        - location_id: ID lokacije
+
+    Returns:
+        200: Lokacija izabrana
+        400: Lokacija ne postoji ili nije aktivna
+        403: Korisnik nema pristup lokaciji
+    """
+    data = request.get_json() or {}
+    location_id = data.get('location_id')
+
+    if not location_id:
+        return jsonify({'error': 'location_id je obavezan'}), 400
+
+    location = ServiceLocation.query.filter_by(
+        id=location_id, tenant_id=g.tenant_id, status=LocationStatus.ACTIVE
+    ).first()
+    if not location:
+        return jsonify({'error': 'Lokacija ne postoji ili nije aktivna'}), 400
+
+    user = g.current_user
+    if not user.has_location_access(location_id):
+        return jsonify({'error': 'Nemate pristup ovoj lokaciji'}), 403
+
+    user.current_location_id = location_id
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Lokacija izabrana',
+        'location_id': location_id,
+        'location_name': location.name
     }), 200
 
 

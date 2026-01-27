@@ -164,19 +164,14 @@
                                                 <template x-if="tenant.status === 'DEMO'">
                                                     <button @click="activateTrial(tenant)" class="px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700">Aktiviraj TRIAL</button>
                                                 </template>
-                                                <!-- TRIAL/EXPIRED -> ACTIVE aktivacija -->
-                                                <template x-if="tenant.status === 'TRIAL' || tenant.status === 'EXPIRED'">
-                                                    <button @click="activateTenant(tenant)" class="px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700">Aktiviraj</button>
-                                                </template>
+                                                <!-- UKLONENO v3.05: Aktiviraj - aktivacija samo kroz billing flow -->
                                                 <template x-if="tenant.status === 'TRIAL'">
                                                     <button @click="openExtendModal(tenant)" class="text-blue-600 hover:text-blue-900">Produzi</button>
                                                 </template>
                                                 <template x-if="tenant.status !== 'SUSPENDED'">
                                                     <button @click="openSuspendModal(tenant)" class="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700">Suspenduj</button>
                                                 </template>
-                                                <template x-if="tenant.status === 'SUSPENDED'">
-                                                    <button @click="unsuspendTenant(tenant)" class="px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700">Reaktiviraj</button>
-                                                </template>
+                                                <!-- UKLONENO v3.05: Reaktiviraj - reaktivacija samo kroz placanje -->
                                             </div>
                                         </td>
                                     </tr>
@@ -403,22 +398,7 @@ function tenantsPage() {
             }
         },
 
-        async activateTenant(tenant) {
-            if (!confirm(`Aktiviraj servis "${tenant.name}"?`)) return;
-            const token = localStorage.getItem('admin_access_token');
-            try {
-                const response = await fetch(`/api/admin/tenants/${tenant.id}/activate`, {
-                    method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                if (response.ok) {
-                    showToast('Servis aktiviran', 'success');
-                    this.loadTenants();
-                }
-            } catch (e) {
-                showToast('Greska', 'error');
-            }
-        },
+        // UKLONENO v3.05: activateTenant() - aktivacija samo kroz billing flow
 
         async suspendTenant() {
             const token = localStorage.getItem('admin_access_token');
@@ -438,22 +418,7 @@ function tenantsPage() {
             }
         },
 
-        async unsuspendTenant(tenant) {
-            if (!confirm(`Ukini suspenziju za "${tenant.name}"?`)) return;
-            const token = localStorage.getItem('admin_access_token');
-            try {
-                const response = await fetch(`/api/admin/tenants/${tenant.id}/unsuspend`, {
-                    method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                if (response.ok) {
-                    showToast('Suspenzija ukinuta', 'success');
-                    this.loadTenants();
-                }
-            } catch (e) {
-                showToast('Greska', 'error');
-            }
-        },
+        // UKLONENO v3.05: unsuspendTenant() - reaktivacija samo kroz placanje
 
         async extendTrial() {
             const token = localStorage.getItem('admin_access_token');
