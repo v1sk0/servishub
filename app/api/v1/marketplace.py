@@ -6,7 +6,7 @@ from app.extensions import db
 from app.models import (
     SparePart, PartVisibility, PartCategory,
     Supplier, SupplierListing, SupplierStatus,
-    Tenant
+    Tenant, SupplierReveal
 )
 from app.api.middleware.auth import jwt_required
 from sqlalchemy import or_, and_
@@ -39,6 +39,13 @@ def search_parts():
     per_page = min(request.args.get('per_page', 20, type=int), 100)
 
     results = []
+
+    # Dohvati revealed supplier ID-jeve
+    revealed_supplier_ids = set(
+        r.supplier_id for r in SupplierReveal.query.filter_by(
+            tenant_id=g.tenant_id
+        ).all()
+    )
 
     # Search supplier listings
     if source != 'tenant':
@@ -74,11 +81,13 @@ def search_parts():
             supplier_query = supplier_query.filter(SupplierListing.price <= max_price)
 
         for listing, supplier in supplier_query.limit(per_page * 2).all():
+            is_revealed = supplier.id in revealed_supplier_ids
             results.append({
                 'id': listing.id,
                 'source': 'supplier',
                 'source_id': supplier.id,
-                'source_name': supplier.name,
+                'source_name': supplier.name if is_revealed else None,
+                'is_revealed': is_revealed,
                 'source_rating': float(supplier.rating) if supplier.rating else None,
                 'name': listing.name,
                 'brand': listing.brand,
@@ -286,16 +295,22 @@ def list_suppliers():
     total = query.count()
     suppliers = query.offset((page - 1) * per_page).limit(per_page).all()
 
+    # Dohvati revealed supplier ID-jeve za ovog tenanta
+    revealed_ids = set(
+        r.supplier_id for r in SupplierReveal.query.filter_by(
+            tenant_id=g.tenant_id
+        ).all()
+    )
+
+    supplier_list = []
+    for s in suppliers:
+        if s.id in revealed_ids:
+            supplier_list.append(s.to_revealed_dict())
+        else:
+            supplier_list.append(s.to_anonymous_dict())
+
     return {
-        'suppliers': [{
-            'id': s.id,
-            'name': s.name,
-            'city': s.city,
-            'rating': float(s.rating) if s.rating else None,
-            'rating_count': s.rating_count,
-            'is_verified': s.is_verified,
-            'website': s.website
-        } for s in suppliers],
+        'suppliers': supplier_list,
         'total': total,
         'page': page,
         'per_page': per_page,
@@ -311,36 +326,37 @@ def get_supplier(supplier_id):
     if not supplier or supplier.status != SupplierStatus.ACTIVE:
         return {'error': 'Supplier not found'}, 404
 
-    # Get listings
+    # Proveri da li je otkriven
+    is_revealed = SupplierReveal.query.filter_by(
+        tenant_id=g.tenant_id,
+        supplier_id=supplier_id
+    ).first() is not None
+
+    if is_revealed:
+        result = supplier.to_revealed_dict()
+    else:
+        result = supplier.to_anonymous_dict()
+
+    # Get listings (uvek vidljivi)
     listings = SupplierListing.query.filter_by(
         supplier_id=supplier_id,
         is_active=True
     ).filter(SupplierListing.stock_quantity > 0).limit(50).all()
 
-    return {
-        'id': supplier.id,
-        'name': supplier.name,
-        'city': supplier.city,
-        'address': supplier.address,
-        'phone': supplier.phone,
-        'email': supplier.email,
-        'website': supplier.website,
-        'rating': float(supplier.rating) if supplier.rating else None,
-        'rating_count': supplier.rating_count,
-        'is_verified': supplier.is_verified,
-        'listings': [{
-            'id': l.id,
-            'name': l.name,
-            'brand': l.brand,
-            'part_category': l.part_category,
-            'price': float(l.price),
-            'currency': l.currency or 'RSD',
-            'stock_quantity': l.stock_quantity
-        } for l in listings],
-        'listings_count': SupplierListing.query.filter_by(
-            supplier_id=supplier_id, is_active=True
-        ).count()
-    }
+    result['listings'] = [{
+        'id': l.id,
+        'name': l.name,
+        'brand': l.brand,
+        'part_category': l.part_category,
+        'price': float(l.price),
+        'currency': l.currency or 'RSD',
+        'stock_quantity': l.stock_quantity
+    } for l in listings]
+    result['listings_count'] = SupplierListing.query.filter_by(
+        supplier_id=supplier_id, is_active=True
+    ).count()
+
+    return result
 
 
 @bp.route('/categories', methods=['GET'])

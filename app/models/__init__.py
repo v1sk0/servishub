@@ -30,6 +30,7 @@ from .message_thread import (
     ThreadType, ThreadStatus, ThreadTag, HiddenByType
 )
 from .tenant_connection import Invite, TenantConnection, ConnectionStatus
+from .supplier_reveal import SupplierReveal
 from .credits import (
     CreditBalance, CreditTransaction, CreditPurchase, PromoCode,
     OwnerType, CreditTransactionType, DiscountType, CreditPaymentStatus
@@ -129,6 +130,8 @@ __all__ = [
     'Invite',
     'TenantConnection',
     'ConnectionStatus',
+    # Supplier Reveal
+    'SupplierReveal',
     # Credit System modeli
     'CreditBalance',
     'CreditTransaction',

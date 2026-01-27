@@ -105,6 +105,35 @@ class Supplier(db.Model):
             'rating_count': self.rating_count,
         }
 
+    def to_anonymous_dict(self):
+        """Anonimni prikaz - bez kontakt podataka."""
+        return {
+            'id': self.id,
+            'city': self.city,
+            'is_verified': self.is_verified,
+            'rating': float(self.rating) if self.rating else None,
+            'rating_count': self.rating_count,
+            'is_revealed': False,
+        }
+
+    def to_revealed_dict(self):
+        """Potpuni prikaz - sa svim kontakt podacima."""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'slug': self.slug,
+            'city': self.city,
+            'address': self.address,
+            'phone': self.phone,
+            'email': self.email,
+            'website': self.website,
+            'pib': self.pib,
+            'is_verified': self.is_verified,
+            'rating': float(self.rating) if self.rating else None,
+            'rating_count': self.rating_count,
+            'is_revealed': True,
+        }
+
 
 class SupplierListing(db.Model):
     """

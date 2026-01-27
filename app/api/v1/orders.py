@@ -8,9 +8,12 @@ from app.models import (
     OrderStatus, SellerType,
     Supplier, SupplierListing,
     Tenant, SparePart, PartVisibility,
-    TenantUser, ServiceLocation, ServiceTicket
+    TenantUser, ServiceLocation, ServiceTicket,
+    SupplierReveal
 )
+from app.models.credits import OwnerType, CreditTransactionType
 from app.api.middleware.auth import jwt_required
+from app.utils.content_filter import filter_contact_info, is_blocked_file_extension
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
@@ -534,11 +537,21 @@ def send_order_message(order_id):
     except Exception as e:
         return {'error': str(e)}, 400
 
+    # Filtriraj kontakt info pre reveal-a (za supplier ordere)
+    msg_text = data.message
+    if order.seller_type == SellerType.SUPPLIER and order.status in (OrderStatus.DRAFT, OrderStatus.SENT):
+        is_revealed = SupplierReveal.query.filter_by(
+            tenant_id=g.tenant_id,
+            supplier_id=order.seller_supplier_id
+        ).first() is not None
+        if not is_revealed:
+            msg_text = filter_contact_info(msg_text)
+
     message = PartOrderMessage(
         order_id=order.id,
         sender_type='buyer',
         sender_user_id=g.user_id,
-        message_text=data.message
+        message_text=msg_text
     )
     db.session.add(message)
     db.session.commit()
@@ -547,6 +560,76 @@ def send_order_message(order_id):
         'message': 'Message sent',
         'message_id': message.id
     }, 201
+
+
+@bp.route('/<int:order_id>/accept', methods=['POST'])
+@jwt_required
+def accept_order(order_id):
+    """
+    Accept order - otkriva kontakt dobavljača uz kredit dedukciju.
+
+    Za supplier ordere: 1 kredit za otkrivanje dobavljačevih podataka.
+    Idempotentno - ako je već otkriven, ne naplaćuje ponovo.
+    """
+    order = PartOrder.query.filter_by(
+        id=order_id,
+        buyer_tenant_id=g.tenant_id
+    ).first()
+
+    if not order:
+        return {'error': 'Order not found'}, 404
+
+    if order.seller_type != SellerType.SUPPLIER:
+        return {'error': 'Accept is only for supplier orders'}, 400
+
+    supplier_id = order.seller_supplier_id
+    supplier = Supplier.query.get(supplier_id)
+    if not supplier:
+        return {'error': 'Supplier not found'}, 404
+
+    # Proveri da li je već otkriven (idempotentno)
+    existing_reveal = SupplierReveal.query.filter_by(
+        tenant_id=g.tenant_id,
+        supplier_id=supplier_id
+    ).first()
+
+    if existing_reveal:
+        return {
+            'message': 'Dobavljač je već otkriven',
+            'supplier': supplier.to_revealed_dict()
+        }, 200
+
+    # Dedukcija 1 kredita
+    from app.services.credit_service import deduct_credits
+    idempotency_key = f"reveal_{g.tenant_id}_{supplier_id}"
+    txn = deduct_credits(
+        owner_type=OwnerType.TENANT,
+        owner_id=g.tenant_id,
+        amount=1,
+        transaction_type=CreditTransactionType.CONNECTION_FEE,
+        description=f"Otkrivanje dobavljača #{supplier_id}",
+        ref_type='supplier_reveal',
+        ref_id=supplier_id,
+        idempotency_key=idempotency_key,
+    )
+
+    if txn is False:
+        return {'error': 'Nemate dovoljno kredita', 'credits_required': 1}, 402
+
+    # Kreiraj SupplierReveal zapis
+    reveal = SupplierReveal(
+        tenant_id=g.tenant_id,
+        supplier_id=supplier_id,
+        credit_transaction_id=txn.id,
+    )
+    db.session.add(reveal)
+    db.session.commit()
+
+    return {
+        'message': 'Dobavljač otkriven',
+        'supplier': supplier.to_revealed_dict(),
+        'credits_spent': 1
+    }, 200
 
 
 @bp.route('/statuses', methods=['GET'])
