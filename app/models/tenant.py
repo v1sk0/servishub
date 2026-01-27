@@ -410,6 +410,18 @@ class ServiceLocation(db.Model):
     archived_at = db.Column(db.DateTime)
     archived_by_id = db.Column(db.Integer, db.ForeignKey('tenant_user.id'))
 
+    # ============================================
+    # FISKALNA KONFIGURACIJA
+    # ============================================
+    fiscal_mode = db.Column(db.Boolean, default=False)          # Da li je fiskalna kasa aktivna
+    pfr_url = db.Column(db.String(255))                         # URL ka LPFR/VPFR
+    pfr_type = db.Column(db.String(10))                         # 'LPFR' ili 'VPFR'
+    business_unit_code = db.Column(db.String(50))               # Šifra poslovne jedinice
+    device_code = db.Column(db.String(50))                      # ID fiskalnog uređaja
+    company_pib = db.Column(db.String(20))                      # PIB firme za zaglavlje računa
+    company_name = db.Column(db.String(200))                    # Naziv firme za zaglavlje
+    company_address = db.Column(db.String(300))                 # Adresa za zaglavlje
+
     # Timestampovi
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 

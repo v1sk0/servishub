@@ -228,6 +228,14 @@ class ServiceTicket(db.Model):
         return f'<ServiceTicket {self.id}: {self.ticket_number_formatted}>'
 
     @property
+    def parts_cost(self):
+        """Ukupna nabavna cena utrošenih delova."""
+        from .inventory import SparePartUsage
+        usages = SparePartUsage.query.filter_by(service_ticket_id=self.id).all()
+        total = sum((u.unit_price or 0) * (u.quantity_used or 0) for u in usages)
+        return total
+
+    @property
     def ticket_number_formatted(self):
         """Formatiran broj naloga: SRV-0001"""
         return f'SRV-{self.ticket_number:04d}'

@@ -18,6 +18,8 @@ from ...models import (
     get_next_ticket_number, AuditLog, AuditAction, TenantUser,
     SparePart, SparePartUsage, SparePartLog, StockActionType
 )
+from ...services.pos_service import POSService
+from ...models.feature_flag import is_feature_enabled
 from datetime import timezone as tz
 import json
 
@@ -835,12 +837,36 @@ def collect_ticket(ticket_id):
         user=user
     )
 
+    # Auto-kreiranje POS računa ako je POS modul aktivan
+    receipt_data = None
+    if is_feature_enabled('pos_enabled', tenant.id) and ticket.final_price:
+        try:
+            receipt = POSService.create_service_receipt(
+                ticket=ticket,
+                payment_method=payment_method,
+                user_id=user.id,
+                location_id=ticket.location_id,
+            )
+            receipt_data = {
+                'receipt_id': receipt.id,
+                'receipt_number': receipt.receipt_number,
+                'total_amount': float(receipt.total_amount or 0),
+            }
+        except Exception as e:
+            # Ne blokiraj preuzimanje ako POS zakaže
+            import logging
+            logging.getLogger(__name__).error(f'Auto-receipt failed for ticket {ticket.id}: {e}')
+
     db.session.commit()
 
-    return jsonify({
+    result = {
         'message': 'Nalog uspesno naplacen i zatvoren',
         'ticket': ticket.to_dict()
-    }), 200
+    }
+    if receipt_data:
+        result['receipt'] = receipt_data
+
+    return jsonify(result), 200
 
 
 @bp.route('/<int:ticket_id>/print', methods=['GET'])
@@ -1422,3 +1448,143 @@ def remove_ticket_part(ticket_id, usage_id):
     db.session.commit()
 
     return jsonify({'message': 'Deo uklonjen sa tiketa'}), 200
+
+
+@bp.route('/<int:ticket_id>/parts/receive-and-use', methods=['POST'])
+@jwt_required
+@tenant_required
+def receive_and_use_part(ticket_id):
+    """
+    Brzi prijem dela od dobavljača i odmah utrošak na tiketu.
+
+    Kreira ili pronalazi SparePart, prima na stanje, odmah troši.
+
+    Request body:
+        - part_name: Naziv dela (obavezan)
+        - brand: Brend (opciono)
+        - model: Model (opciono)
+        - purchase_price: Nabavna cena (obavezna)
+        - selling_price: Prodajna cena (opciono)
+        - quantity: Količina (default 1)
+        - supplier_name: Naziv dobavljača (opciono)
+    """
+    user = g.current_user
+    tenant = g.current_tenant
+    data = request.get_json() or {}
+
+    ticket = ServiceTicket.query.filter_by(id=ticket_id, tenant_id=tenant.id).first()
+    if not ticket:
+        return jsonify({'error': 'Not Found', 'message': 'Nalog nije pronadjen'}), 404
+    if not user.has_location_access(ticket.location_id):
+        return jsonify({'error': 'Forbidden', 'message': 'Nemate pristup ovoj lokaciji'}), 403
+
+    part_name = data.get('part_name', '').strip()
+    purchase_price = data.get('purchase_price')
+    if not part_name or purchase_price is None:
+        return jsonify({'error': 'Validation Error', 'message': 'part_name i purchase_price su obavezni'}), 400
+
+    quantity = data.get('quantity', 1)
+    brand = data.get('brand', '').strip() or None
+    model_name = data.get('model', '').strip() or None
+    selling_price = data.get('selling_price')
+    supplier_name = data.get('supplier_name', '').strip() or None
+
+    # Pronađi postojeći deo ili kreiraj novi
+    part = SparePart.query.filter_by(
+        tenant_id=tenant.id,
+        part_name=part_name,
+    ).first()
+
+    if part:
+        # Ažuriraj cenu
+        part.purchase_price = purchase_price
+        if selling_price:
+            part.selling_price = selling_price
+    else:
+        from ...models.inventory import SparePart as SP
+        part = SP(
+            tenant_id=tenant.id,
+            part_name=part_name,
+            brand=brand,
+            model=model_name,
+            purchase_price=purchase_price,
+            selling_price=selling_price or purchase_price,
+            quantity=0,
+            currency='RSD',
+        )
+        db.session.add(part)
+        db.session.flush()
+
+    # Prijem na stanje (RECEIVE)
+    qty_before = part.quantity
+    part.quantity += quantity
+
+    receive_log = SparePartLog(
+        tenant_id=tenant.id,
+        spare_part_id=part.id,
+        action_type=StockActionType.RECEIVE,
+        quantity_before=qty_before,
+        quantity_after=part.quantity,
+        quantity_change=quantity,
+        description=f'Brzi prijem od {supplier_name or "dobavljača"} za tiket #{ticket.ticket_number}',
+        reference_type='ticket',
+        reference_id=ticket_id,
+        user_id=user.id,
+    )
+    db.session.add(receive_log)
+
+    # Odmah troši (USE_TICKET) — atomično
+    qty_before_use = part.quantity
+    rows = db.session.execute(
+        db.text(
+            "UPDATE spare_part SET quantity = quantity - :qty, "
+            "updated_at = NOW() "
+            "WHERE id = :pid AND tenant_id = :tid AND quantity >= :qty "
+            "RETURNING quantity"
+        ),
+        {'qty': quantity, 'pid': part.id, 'tid': tenant.id}
+    )
+    result = rows.fetchone()
+    if not result:
+        db.session.rollback()
+        return jsonify({'error': 'Stock Error', 'message': 'Greška pri oduzimanju sa stanja'}), 500
+
+    # Usage zapis
+    usage = SparePartUsage(
+        tenant_id=tenant.id,
+        service_ticket_id=ticket_id,
+        spare_part_id=part.id,
+        quantity_used=quantity,
+        unit_price=part.purchase_price,
+        currency=part.currency or 'RSD',
+        added_by_id=user.id,
+    )
+    db.session.add(usage)
+
+    use_log = SparePartLog(
+        tenant_id=tenant.id,
+        spare_part_id=part.id,
+        action_type=StockActionType.USE_TICKET,
+        quantity_before=qty_before_use,
+        quantity_after=result[0],
+        quantity_change=-quantity,
+        description=f'Utrošen na tiket #{ticket.ticket_number}',
+        reference_type='ticket',
+        reference_id=ticket_id,
+        user_id=user.id,
+    )
+    db.session.add(use_log)
+
+    db.session.commit()
+    db.session.refresh(part)
+
+    return jsonify({
+        'message': 'Deo primljen i utrošen',
+        'usage': usage.to_dict(),
+        'part': {
+            'id': part.id,
+            'part_name': part.part_name,
+            'quantity': part.quantity,
+            'purchase_price': float(part.purchase_price) if part.purchase_price else None,
+        }
+    }), 201

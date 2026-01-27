@@ -5,6 +5,7 @@ Operacije: otvaranje/zatvaranje kase, kreiranje/izdavanje/storno/refund računa,
 dodavanje/brisanje stavki, dnevni izveštaji.
 """
 
+import re
 from datetime import datetime, date
 from decimal import Decimal
 from sqlalchemy import text, func
@@ -16,7 +17,10 @@ from ..models.pos import (
 from ..models.inventory import PhoneListing, SparePart
 from ..models.service import ServiceItem
 from ..models.ticket import ServiceTicket
+from ..models.tenant import ServiceLocation
 from ..models.audit import AuditLog, AuditAction
+from ..models.goods import GoodsItem, PosAuditLog
+from ..models.user import TenantUser, PosRole
 
 
 class POSService:
@@ -37,6 +41,10 @@ class POSService:
                 raise ValueError('Kasa je već otvorena za danas na ovoj lokaciji')
             raise ValueError('Kasa je već zatvorena za danas')
 
+        # Nasledi fiscal_mode iz lokacije
+        location = ServiceLocation.query.get(location_id)
+        fiscal = bool(location and location.fiscal_mode)
+
         session = CashRegisterSession(
             tenant_id=tenant_id,
             location_id=location_id,
@@ -45,6 +53,7 @@ class POSService:
             opened_at=datetime.utcnow(),
             opening_cash=Decimal(str(opening_cash)),
             status=CashRegisterStatus.OPEN,
+            fiscal_mode=fiscal,
         )
         db.session.add(session)
         db.session.flush()
@@ -105,7 +114,7 @@ class POSService:
             if not phone:
                 raise ValueError('Telefon nije pronađen')
             purchase_price = Decimal(str(phone.purchase_price or 0))
-            unit_price = Decimal(str(kwargs.get('unit_price', phone.sales_price or 0)))
+            unit_price = Decimal(str(kwargs.get('unit_price') or phone.sales_price or 0))
             item_name = item_name or f'{phone.brand} {phone.model}'
 
         elif item_type_enum == SaleItemType.SPARE_PART and item_id:
@@ -114,7 +123,7 @@ class POSService:
                 raise ValueError('Deo nije pronađen')
             POSService.safe_deduct_stock(item_id, quantity)
             purchase_price = Decimal(str(part.purchase_price or 0))
-            unit_price = Decimal(str(kwargs.get('unit_price', part.selling_price or 0)))
+            unit_price = Decimal(str(kwargs.get('unit_price') or part.selling_price or 0))
             item_name = item_name or part.part_name
 
         elif item_type_enum == SaleItemType.SERVICE and item_id:
@@ -122,7 +131,7 @@ class POSService:
             if not service:
                 raise ValueError('Usluga nije pronađena')
             purchase_price = Decimal('0')
-            unit_price = Decimal(str(kwargs.get('unit_price', service.price or 0)))
+            unit_price = Decimal(str(kwargs.get('unit_price') or service.price or 0))
             item_name = item_name or service.name
 
         elif item_type_enum == SaleItemType.TICKET and item_id:
@@ -130,12 +139,22 @@ class POSService:
             if not ticket:
                 raise ValueError('Nalog nije pronađen')
             purchase_price = Decimal(str(ticket.parts_cost or 0))
-            unit_price = Decimal(str(kwargs.get('unit_price', ticket.final_price or 0)))
+            unit_price = Decimal(str(kwargs.get('unit_price') or ticket.final_price or 0))
             item_name = item_name or f'Servis #{ticket.ticket_number}'
 
+        elif item_type_enum == SaleItemType.GOODS and item_id:
+            from ..services.goods_service import GoodsService
+            goods = GoodsItem.query.get(item_id)
+            if not goods:
+                raise ValueError('Artikl nije pronađen')
+            GoodsService.safe_deduct_goods_stock(item_id, quantity)
+            purchase_price = Decimal(str(goods.purchase_price or 0))
+            unit_price = Decimal(str(kwargs.get('unit_price') or goods.selling_price or 0))
+            item_name = item_name or goods.name
+
         elif item_type_enum == SaleItemType.CUSTOM:
-            purchase_price = Decimal(str(kwargs.get('purchase_price', 0)))
-            unit_price = Decimal(str(kwargs.get('unit_price', 0)))
+            purchase_price = Decimal(str(kwargs.get('purchase_price') or 0))
+            unit_price = Decimal(str(kwargs.get('unit_price') or 0))
             item_name = item_name or 'Stavka'
 
         discount_pct = Decimal(str(kwargs.get('discount_pct', 0)))
@@ -152,6 +171,7 @@ class POSService:
             spare_part_id=item_id if item_type_enum == SaleItemType.SPARE_PART else None,
             service_item_id=item_id if item_type_enum == SaleItemType.SERVICE else None,
             service_ticket_id=item_id if item_type_enum == SaleItemType.TICKET else None,
+            goods_item_id=item_id if item_type_enum == SaleItemType.GOODS else None,
             purchase_price=purchase_price,
             unit_price=unit_price,
             discount_pct=discount_pct,
@@ -175,20 +195,39 @@ class POSService:
         if not receipt or receipt.status != ReceiptStatus.DRAFT:
             raise ValueError('Račun nije u DRAFT statusu')
 
-        # Vrati zalihu ako je SPARE_PART
+        # Vrati zalihu
         if item.item_type == SaleItemType.SPARE_PART and item.spare_part_id:
             POSService._restore_stock(item.spare_part_id, item.quantity)
+        elif item.item_type == SaleItemType.GOODS and item.goods_item_id:
+            from ..services.goods_service import GoodsService
+            GoodsService.restore_goods_stock(item.goods_item_id, item.quantity)
 
         db.session.delete(item)
         POSService._recalculate_receipt(receipt)
         db.session.flush()
 
     @staticmethod
-    def issue_receipt(receipt_id, payment_method, cash_received=None, card_amount=None, transfer_amount=None):
-        """Izdaj račun."""
+    def issue_receipt(receipt_id, payment_method, cash_received=None, card_amount=None,
+                      transfer_amount=None, idempotency_key=None, buyer_pib=None, buyer_name=None):
+        """Izdaj račun sa idempotency podrškom."""
+        # PIB validacija (srpski PIB = tačno 9 cifara)
+        if buyer_pib and not re.match(r'^\d{9}$', str(buyer_pib)):
+            raise ValueError('PIB mora imati tačno 9 cifara')
+
+        # Idempotency check
+        if idempotency_key:
+            existing = Receipt.query.filter_by(idempotency_key=idempotency_key).first()
+            if existing:
+                return existing
+
         receipt = Receipt.query.get(receipt_id)
         if not receipt or receipt.status != ReceiptStatus.DRAFT:
             raise ValueError('Račun nije u DRAFT statusu')
+
+        # Provera da je kasa otvorena
+        session = CashRegisterSession.query.get(receipt.session_id)
+        if session and session.status != CashRegisterStatus.OPEN:
+            raise ValueError('Kasa je zatvorena — nije moguće izdati račun')
 
         items = ReceiptItem.query.filter_by(receipt_id=receipt_id).all()
         if not items:
@@ -197,6 +236,17 @@ class POSService:
         receipt.payment_method = PaymentMethod(payment_method) if isinstance(payment_method, str) else payment_method
         receipt.status = ReceiptStatus.ISSUED
         receipt.issued_at = datetime.utcnow()
+        if idempotency_key:
+            receipt.idempotency_key = idempotency_key
+        if buyer_pib:
+            receipt.buyer_pib = buyer_pib
+        if buyer_name:
+            receipt.buyer_name = buyer_name
+
+        # Fiscal mode
+        session = CashRegisterSession.query.get(receipt.session_id)
+        if session and session.fiscal_mode:
+            receipt.fiscal_status = 'pending'
 
         if cash_received is not None:
             receipt.cash_received = Decimal(str(cash_received))
@@ -226,8 +276,20 @@ class POSService:
         return receipt
 
     @staticmethod
+    def _check_pos_permission(user_id, required_role=PosRole.MANAGER):
+        """Proveri da li korisnik ima dovoljnu POS rolu.
+
+        Ako pos_role nije eksplicitno postavljen (None), dozvoli operaciju
+        za backwards kompatibilnost.
+        """
+        user = TenantUser.query.get(user_id)
+        if user and user.pos_role is not None and user.pos_role == PosRole.CASHIER and required_role != PosRole.CASHIER:
+            raise ValueError('Nemate dozvolu za ovu operaciju')
+
+    @staticmethod
     def void_receipt(receipt_id, user_id, reason):
         """Storniraj izdati račun."""
+        POSService._check_pos_permission(user_id, PosRole.MANAGER)
         receipt = Receipt.query.get(receipt_id)
         if not receipt or receipt.status != ReceiptStatus.ISSUED:
             raise ValueError('Samo izdati računi se mogu stornirati')
@@ -236,6 +298,9 @@ class POSService:
         for item in items:
             if item.item_type == SaleItemType.SPARE_PART and item.spare_part_id:
                 POSService._restore_stock(item.spare_part_id, item.quantity)
+            elif item.item_type == SaleItemType.GOODS and item.goods_item_id:
+                from ..services.goods_service import GoodsService
+                GoodsService.restore_goods_stock(item.goods_item_id, item.quantity)
             if item.item_type == SaleItemType.PHONE and item.phone_listing_id:
                 phone = PhoneListing.query.get(item.phone_listing_id)
                 if phone:
@@ -261,6 +326,7 @@ class POSService:
     @staticmethod
     def refund_receipt(original_receipt_id, user_id, items_to_refund=None):
         """Kreiraj refund račun."""
+        POSService._check_pos_permission(user_id, PosRole.MANAGER)
         original = Receipt.query.get(original_receipt_id)
         if not original or original.status != ReceiptStatus.ISSUED:
             raise ValueError('Original račun nije validan za refund')
@@ -318,6 +384,9 @@ class POSService:
             # Vrati zalihe
             if orig_item.item_type == SaleItemType.SPARE_PART and orig_item.spare_part_id:
                 POSService._restore_stock(orig_item.spare_part_id, qty)
+            elif orig_item.item_type == SaleItemType.GOODS and orig_item.goods_item_id:
+                from ..services.goods_service import GoodsService
+                GoodsService.restore_goods_stock(orig_item.goods_item_id, qty)
             if orig_item.item_type == SaleItemType.PHONE and orig_item.phone_listing_id:
                 phone = PhoneListing.query.get(orig_item.phone_listing_id)
                 if phone:
@@ -338,6 +407,130 @@ class POSService:
 
         db.session.flush()
         return refund
+
+    @staticmethod
+    def create_service_receipt(ticket, payment_method, user_id, location_id):
+        """Kreiraj automatski račun za servisni nalog pri preuzimanju.
+
+        Args:
+            ticket: ServiceTicket objekat (mora imati final_price)
+            payment_method: 'CASH', 'CARD', 'TRANSFER'
+            user_id: ID korisnika koji izdaje
+            location_id: ID lokacije
+
+        Returns:
+            Receipt objekat (ISSUED)
+        """
+        # Idempotency — sprečava duplo izdavanje za isti ticket
+        idempotency_key = f'ticket-deliver-{ticket.id}'
+        existing = Receipt.query.filter_by(idempotency_key=idempotency_key).first()
+        if existing:
+            return existing
+
+        tenant_id = ticket.tenant_id
+
+        # Pronađi ili kreiraj sesiju za danas
+        today = date.today()
+        session = CashRegisterSession.query.filter_by(
+            tenant_id=tenant_id,
+            location_id=location_id,
+            date=today,
+            status=CashRegisterStatus.OPEN,
+        ).first()
+
+        if not session:
+            # Auto-open registar za danas
+            from ..models.tenant import ServiceLocation
+            loc = ServiceLocation.query.get(location_id)
+            fiscal = bool(loc and loc.fiscal_mode)
+            session = CashRegisterSession(
+                tenant_id=tenant_id,
+                location_id=location_id,
+                date=today,
+                opened_by_id=user_id,
+                opened_at=datetime.utcnow(),
+                opening_cash=Decimal('0'),
+                status=CashRegisterStatus.OPEN,
+                fiscal_mode=fiscal,
+            )
+            db.session.add(session)
+            db.session.flush()
+
+        # Kreiraj receipt number
+        today_str = today.strftime('%Y%m%d')
+        count = Receipt.query.filter(
+            Receipt.tenant_id == tenant_id,
+            Receipt.receipt_number.like(f'{today_str}-%')
+        ).count()
+        receipt_number = f'{today_str}-{count + 1:03d}'
+
+        # Cene
+        final_price = Decimal(str(ticket.final_price or 0))
+        parts_cost = Decimal(str(ticket.parts_cost or 0))
+        profit = final_price - parts_cost
+
+        # Opis stavke
+        device_info = f'{ticket.brand or ""} {ticket.model or ""}'.strip()
+        fault_desc = (ticket.problem_description or 'Servis')[:100]
+        item_name = f'Servis: {fault_desc}'
+        if device_info:
+            item_name += f' — {device_info}'
+
+        receipt = Receipt(
+            tenant_id=tenant_id,
+            session_id=session.id,
+            receipt_number=receipt_number,
+            receipt_type=ReceiptType.SALE,
+            status=ReceiptStatus.ISSUED,
+            issued_by_id=user_id,
+            issued_at=datetime.utcnow(),
+            payment_method=PaymentMethod(payment_method) if isinstance(payment_method, str) else payment_method,
+            subtotal=final_price,
+            total_amount=final_price,
+            total_cost=parts_cost,
+            profit=profit,
+            customer_name=ticket.customer_name,
+            customer_phone=ticket.customer_phone,
+            idempotency_key=idempotency_key,
+            service_ticket_id=ticket.id,
+        )
+        if session.fiscal_mode:
+            receipt.fiscal_status = 'pending'
+
+        if payment_method == 'CASH':
+            receipt.cash_received = final_price
+            receipt.cash_change = Decimal('0')
+
+        db.session.add(receipt)
+        db.session.flush()
+
+        # Stavka
+        item = ReceiptItem(
+            receipt_id=receipt.id,
+            item_type=SaleItemType.TICKET,
+            item_name=item_name,
+            quantity=1,
+            service_ticket_id=ticket.id,
+            purchase_price=parts_cost,
+            unit_price=final_price,
+            discount_pct=Decimal('0'),
+            line_total=final_price,
+            line_cost=parts_cost,
+            line_profit=profit,
+        )
+        db.session.add(item)
+
+        AuditLog.log(
+            entity_type='receipt',
+            entity_id=receipt.id,
+            action=AuditAction.CREATE,
+            changes={'action': 'SERVICE_RECEIPT', 'ticket_id': ticket.id, 'total': float(final_price)},
+            tenant_id=tenant_id,
+            user_id=user_id,
+        )
+
+        db.session.flush()
+        return receipt
 
     @staticmethod
     def close_register(session_id, user_id, closing_cash):

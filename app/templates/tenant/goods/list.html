@@ -1,0 +1,351 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Magacin - Roba{% endblock %}
+
+{% block page_content %}
+<div x-data="goodsList()" x-init="init()">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div class="min-w-0 flex-1">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl">Roba na stanju</h2>
+            <p class="mt-1 text-sm text-gray-500">Artikli, stanje zaliha i cene</p>
+        </div>
+        <div class="mt-4 flex gap-2 md:ml-4 md:mt-0">
+            <a href="/goods/invoices" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                Ulazne fakture
+            </a>
+            <button @click="showAddModal = true" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
+                + Novi artikl
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white shadow rounded-lg mb-6 p-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+            <div class="sm:col-span-2">
+                <input type="text" x-model="search" @input.debounce.300ms="loadGoods()"
+                       placeholder="Pretrazi po imenu, barkodu ili sifri..."
+                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+            </div>
+            <div>
+                <select x-model="categoryFilter" @change="loadGoods()"
+                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                    <option value="">Sve kategorije</option>
+                    <template x-for="cat in categories" :key="cat">
+                        <option :value="cat" x-text="cat"></option>
+                    </template>
+                </select>
+            </div>
+            <div>
+                <label class="inline-flex items-center">
+                    <input type="checkbox" x-model="lowStockOnly" @change="loadGoods()"
+                           class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                    <span class="ml-2 text-sm text-gray-700">Samo nizak stok</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-300">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Naziv</th>
+                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Kategorija</th>
+                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Stanje</th>
+                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Nabavna</th>
+                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Prodajna</th>
+                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Marza %</th>
+                    <th class="relative py-3.5 pl-3 pr-4 w-24"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                <template x-for="item in items" :key="item.id">
+                    <tr>
+                        <td class="py-3 pl-4 pr-3">
+                            <div class="text-sm font-medium text-gray-900" x-text="item.name"></div>
+                            <div class="text-xs text-gray-400" x-show="item.barcode" x-text="item.barcode"></div>
+                        </td>
+                        <td class="px-3 py-3 text-sm text-gray-500" x-text="item.category || '-'"></td>
+                        <td class="px-3 py-3 text-right">
+                            <span class="text-sm font-medium"
+                                  :class="item.is_low_stock ? 'text-red-600' : 'text-gray-900'"
+                                  x-text="item.current_stock"></span>
+                        </td>
+                        <td class="px-3 py-3 text-right text-sm text-gray-700" x-text="formatPrice(item.purchase_price)"></td>
+                        <td class="px-3 py-3 text-right text-sm font-medium text-gray-900" x-text="formatPrice(item.selling_price)"></td>
+                        <td class="px-3 py-3 text-right text-sm text-gray-500" x-text="item.margin_pct ? item.margin_pct.toFixed(1) + '%' : '-'"></td>
+                        <td class="py-3 pl-3 pr-4 text-right text-sm">
+                            <button @click="editItem(item)" class="text-primary-600 hover:text-primary-800 mr-2">Izmeni</button>
+                            <button @click="adjustStock(item)" class="text-orange-600 hover:text-orange-800">Stanje</button>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="p-4 border-t border-gray-200 flex items-center justify-between" x-show="totalPages > 1">
+            <span class="text-sm text-gray-500" x-text="'Ukupno: ' + total + ' artikala'"></span>
+            <div class="flex gap-2">
+                <button @click="page--; loadGoods()" :disabled="page <= 1"
+                        class="px-3 py-1 text-sm rounded-md bg-white ring-1 ring-gray-300 disabled:opacity-50">Prethodna</button>
+                <span class="px-3 py-1 text-sm" x-text="page + ' / ' + totalPages"></span>
+                <button @click="page++; loadGoods()" :disabled="page >= totalPages"
+                        class="px-3 py-1 text-sm rounded-md bg-white ring-1 ring-gray-300 disabled:opacity-50">Sledeca</button>
+            </div>
+        </div>
+
+        <!-- Empty -->
+        <div x-show="items.length === 0" class="p-8 text-center text-gray-400">
+            Nema artikala.
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div x-show="showAddModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape="showAddModal = false">
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="fixed inset-0 bg-gray-500/75" @click="showAddModal = false"></div>
+            <div class="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4" x-text="editingItem ? 'Izmeni artikl' : 'Novi artikl'"></h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Naziv *</label>
+                        <input type="text" x-model="form.name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Barkod</label>
+                            <input type="text" x-model="form.barcode" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Kategorija</label>
+                            <input type="text" x-model="form.category" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nabavna cena</label>
+                            <input type="number" x-model.number="form.purchase_price" step="0.01"
+                                   @input="suggestPrice()"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Marza %</label>
+                            <input type="number" x-model.number="form.default_margin_pct" step="0.1"
+                                   @input="suggestPrice()"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Prodajna cena</label>
+                            <input type="number" x-model.number="form.selling_price" step="0.01"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                            <p class="text-xs text-gray-400 mt-1" x-show="suggestedPrice" x-text="'Predlog: ' + suggestedPrice + ' RSD'"></p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Poreska oznaka</label>
+                            <select x-model="form.tax_label" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                                <option value="A">A - 20% PDV</option>
+                                <option value="B">B - 10% PDV</option>
+                                <option value="C">C - 0% PDV</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Min. stanje</label>
+                            <input type="number" x-model.number="form.min_stock_level" min="0"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button @click="showAddModal = false; editingItem = null" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Otkazi</button>
+                    <button @click="saveItem()" :disabled="!form.name" class="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 disabled:opacity-50">Sacuvaj</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Adjustment Modal -->
+    <div x-show="showAdjustModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape="showAdjustModal = false">
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="fixed inset-0 bg-gray-500/75" @click="showAdjustModal = false"></div>
+            <div class="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Korekcija stanja</h3>
+                <p class="text-sm text-gray-500 mb-4" x-text="adjustingItem ? adjustingItem.name + ' (trenutno: ' + adjustingItem.current_stock + ')' : ''"></p>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Tip korekcije</label>
+                        <select x-model="adjustForm.adjustment_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                            <option value="CORRECTION">Korekcija (inventura)</option>
+                            <option value="WRITE_OFF">Otpis</option>
+                            <option value="DAMAGE">Ostecenje</option>
+                            <option value="RETURN_TO_SUPPLIER">Povrat dobavljacu</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Promena kolicine</label>
+                        <input type="number" x-model.number="adjustForm.quantity_change"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                        <p class="text-xs text-gray-400 mt-1">Negativno = smanjenje, pozitivno = povecanje</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Razlog</label>
+                        <input type="text" x-model="adjustForm.reason"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button @click="showAdjustModal = false" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Otkazi</button>
+                    <button @click="submitAdjust()" :disabled="!adjustForm.quantity_change"
+                            class="rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 disabled:opacity-50">Primeni</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div x-show="toast.show" x-cloak
+         x-transition class="fixed bottom-4 right-4 z-50 rounded-lg p-4 shadow-lg"
+         :class="toast.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'">
+        <span x-text="toast.message"></span>
+    </div>
+</div>
+
+<script>
+function goodsList() {
+    return {
+        items: [],
+        categories: [],
+        total: 0,
+        page: 1,
+        totalPages: 1,
+        search: '',
+        categoryFilter: '',
+        lowStockOnly: false,
+
+        // Modals
+        showAddModal: false,
+        showAdjustModal: false,
+        editingItem: null,
+        adjustingItem: null,
+
+        // Forms
+        form: { name: '', barcode: '', category: '', purchase_price: null, selling_price: null, default_margin_pct: 30, tax_label: 'A', min_stock_level: 0 },
+        adjustForm: { adjustment_type: 'CORRECTION', quantity_change: 0, reason: '' },
+        suggestedPrice: null,
+
+        toast: { show: false, message: '', type: 'success' },
+
+        async init() {
+            await this.loadGoods();
+            await this.loadCategories();
+        },
+
+        async loadGoods() {
+            const params = new URLSearchParams({ page: this.page, per_page: 50 });
+            if (this.search) params.set('q', this.search);
+            if (this.categoryFilter) params.set('category', this.categoryFilter);
+            if (this.lowStockOnly) params.set('low_stock', '1');
+
+            const res = await api(`/api/v1/goods?${params}`);
+            if (res.ok) {
+                const data = await res.json();
+                this.items = data.items || [];
+                this.total = data.total;
+                this.totalPages = data.pages;
+            }
+        },
+
+        async loadCategories() {
+            const res = await api('/api/v1/goods/categories');
+            if (res.ok) {
+                const data = await res.json();
+                this.categories = data.categories || [];
+            }
+        },
+
+        editItem(item) {
+            this.editingItem = item;
+            this.form = {
+                name: item.name,
+                barcode: item.barcode || '',
+                category: item.category || '',
+                purchase_price: item.purchase_price,
+                selling_price: item.selling_price,
+                default_margin_pct: item.default_margin_pct || 30,
+                tax_label: item.tax_label || 'A',
+                min_stock_level: item.min_stock_level || 0,
+            };
+            this.showAddModal = true;
+        },
+
+        async saveItem() {
+            let res;
+            if (this.editingItem) {
+                res = await api(`/api/v1/goods/${this.editingItem.id}`, 'PUT', this.form);
+            } else {
+                res = await api('/api/v1/goods', 'POST', this.form);
+            }
+            if (res.ok) {
+                this.showToast(this.editingItem ? 'Artikl azuriran' : 'Artikl kreiran', 'success');
+                this.showAddModal = false;
+                this.editingItem = null;
+                this.form = { name: '', barcode: '', category: '', purchase_price: null, selling_price: null, default_margin_pct: 30, tax_label: 'A', min_stock_level: 0 };
+                await this.loadGoods();
+                await this.loadCategories();
+            } else {
+                const err = await res.json();
+                this.showToast(err.error || 'Greska', 'error');
+            }
+        },
+
+        async suggestPrice() {
+            if (!this.form.purchase_price || !this.form.default_margin_pct) {
+                this.suggestedPrice = null;
+                return;
+            }
+            const res = await api(`/api/v1/goods/suggest-price?purchase_price=${this.form.purchase_price}&margin_pct=${this.form.default_margin_pct}`);
+            if (res.ok) {
+                const data = await res.json();
+                this.suggestedPrice = data.suggested_price;
+                if (!this.form.selling_price) {
+                    this.form.selling_price = data.suggested_price;
+                }
+            }
+        },
+
+        adjustStock(item) {
+            this.adjustingItem = item;
+            this.adjustForm = { adjustment_type: 'CORRECTION', quantity_change: 0, reason: '' };
+            this.showAdjustModal = true;
+        },
+
+        async submitAdjust() {
+            const res = await api(`/api/v1/goods/${this.adjustingItem.id}/adjust`, 'POST', this.adjustForm);
+            if (res.ok) {
+                this.showToast('Stanje korigovano', 'success');
+                this.showAdjustModal = false;
+                await this.loadGoods();
+            } else {
+                const err = await res.json();
+                this.showToast(err.error || 'Greska', 'error');
+            }
+        },
+
+        formatPrice(val) {
+            if (val == null) return '-';
+            return Number(val).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+
+        showToast(message, type) {
+            this.toast = { show: true, message, type };
+            setTimeout(() => { this.toast.show = false; }, 3000);
+        }
+    };
+}
+</script>
+{% endblock %}

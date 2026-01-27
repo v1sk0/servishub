@@ -206,6 +206,26 @@ def pos_daily_report():
     return render_template('tenant/pos/daily_report.html')
 
 
+# ============== Magacin / Goods ==============
+
+@bp.route('/goods')
+def goods_list():
+    """Lista robe na stanju."""
+    return render_template('tenant/goods/list.html')
+
+
+@bp.route('/goods/invoices')
+def goods_invoices():
+    """Lista ulaznih faktura."""
+    return render_template('tenant/goods/invoice_list.html')
+
+
+@bp.route('/goods/invoices/new')
+def goods_invoice_new():
+    """Unos nove ulazne fakture."""
+    return render_template('tenant/goods/invoice.html')
+
+
 # ============== Credits / Krediti ==============
 
 @bp.route('/credits')

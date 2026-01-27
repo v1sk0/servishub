@@ -28,6 +28,13 @@ class UserRole(enum.Enum):
     RECEPTIONIST = 'RECEPTIONIST'
 
 
+class PosRole(enum.Enum):
+    """Rola za POS operacije."""
+    CASHIER = 'CASHIER'
+    MANAGER = 'MANAGER'
+    ADMIN = 'ADMIN'
+
+
 class TipUgovora(enum.Enum):
     """Tip ugovora o radu."""
     NEODREDJENO = 'NEODREDJENO'  # Na neodređeno vreme
@@ -104,6 +111,10 @@ class TenantUser(db.Model):
 
     # Status
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+
+    # POS rola (za void/refund/price override dozvole)
+    # None = nije dodeljena (dozvoljeno sve), CASHIER = samo prodaja
+    pos_role = db.Column(db.Enum(PosRole), nullable=True)
 
     # Permissions
     can_view_revenue = db.Column(db.Boolean, default=False, nullable=False)  # Pregled prihoda u widgetima

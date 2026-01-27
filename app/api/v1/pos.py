@@ -16,7 +16,9 @@ from app.models.pos import (
 from app.models.feature_flag import is_feature_enabled
 from app.api.middleware.auth import jwt_required
 from app.services.pos_service import POSService
-from sqlalchemy import func
+from app.models.goods import GoodsItem
+from app.models.inventory import PhoneListing, SparePart
+from sqlalchemy import func, or_
 
 bp = Blueprint('pos', __name__, url_prefix='/pos')
 
@@ -54,6 +56,7 @@ def open_register():
             'session_id': session.id,
             'date': str(session.date),
             'opening_cash': float(session.opening_cash),
+            'fiscal_mode': session.fiscal_mode or False,
         }, 201
     except ValueError as e:
         return {'error': str(e)}, 400
@@ -130,7 +133,92 @@ def current_register():
         'opened_at': session.opened_at.isoformat() if session.opened_at else None,
         'receipt_count': session.receipt_count,
         'total_revenue': float(session.total_revenue),
+        'fiscal_mode': session.fiscal_mode or False,
     }, 200
+
+
+# ============================================
+# PRETRAGA ARTIKALA
+# ============================================
+
+@bp.route('/search-items', methods=['GET'])
+@jwt_required
+def search_items():
+    """Pretraga artikala za kasu — roba, delovi, telefoni."""
+    check = _check_pos_enabled()
+    if check:
+        return check
+
+    q = request.args.get('q', '').strip()
+    if len(q) < 2:
+        return {'items': []}, 200
+
+    results = []
+    like_q = f'%{q}%'
+
+    # GoodsItem
+    goods = GoodsItem.query.filter(
+        GoodsItem.tenant_id == g.tenant_id,
+        GoodsItem.is_active == True,
+        GoodsItem.current_stock > 0,
+        or_(
+            GoodsItem.name.ilike(like_q),
+            GoodsItem.barcode.ilike(like_q),
+            GoodsItem.sku.ilike(like_q),
+        )
+    ).limit(20).all()
+    for item in goods:
+        results.append({
+            'type': 'GOODS',
+            'id': item.id,
+            'name': item.name,
+            'price': float(item.selling_price or 0),
+            'purchase_price': float(item.purchase_price or 0),
+            'stock': item.current_stock,
+            'barcode': item.barcode,
+            'tax_label': item.tax_label or 'A',
+        })
+
+    # SparePart
+    parts = SparePart.query.filter(
+        SparePart.tenant_id == g.tenant_id,
+        SparePart.quantity > 0,
+        SparePart.part_name.ilike(like_q),
+    ).limit(20).all()
+    for p in parts:
+        results.append({
+            'type': 'SPARE_PART',
+            'id': p.id,
+            'name': p.part_name,
+            'price': float(p.selling_price or 0),
+            'purchase_price': float(p.purchase_price or 0),
+            'stock': p.quantity,
+            'barcode': None,
+            'tax_label': 'A',
+        })
+
+    # PhoneListing (unsold)
+    phones = PhoneListing.query.filter(
+        PhoneListing.tenant_id == g.tenant_id,
+        PhoneListing.sold == False,
+        or_(
+            (PhoneListing.brand + ' ' + PhoneListing.model).ilike(like_q),
+            PhoneListing.imei.ilike(like_q),
+        )
+    ).limit(20).all()
+    for ph in phones:
+        results.append({
+            'type': 'PHONE',
+            'id': ph.id,
+            'name': f'{ph.brand} {ph.model}',
+            'price': float(ph.sales_price or 0),
+            'purchase_price': float(ph.purchase_price or 0),
+            'stock': 1,
+            'barcode': ph.imei,
+            'tax_label': 'A',
+        })
+
+    return {'items': results}, 200
 
 
 # ============================================
@@ -282,6 +370,9 @@ def issue_receipt(receipt_id):
             cash_received=data.get('cash_received'),
             card_amount=data.get('card_amount'),
             transfer_amount=data.get('transfer_amount'),
+            idempotency_key=data.get('idempotency_key'),
+            buyer_pib=data.get('buyer_pib'),
+            buyer_name=data.get('buyer_name'),
         )
         db.session.commit()
         return {
@@ -289,6 +380,7 @@ def issue_receipt(receipt_id):
             'receipt_number': receipt.receipt_number,
             'total_amount': float(receipt.total_amount),
             'cash_change': float(receipt.cash_change) if receipt.cash_change else None,
+            'fiscal_status': receipt.fiscal_status,
         }, 200
     except ValueError as e:
         db.session.rollback()
@@ -516,3 +608,138 @@ def export_report(report_id):
         mimetype='text/csv',
         headers={'Content-Disposition': f'attachment; filename=pos_report_{report.date}.csv'}
     )
+
+
+@bp.route('/reports/x', methods=['GET'])
+@jwt_required
+def x_report():
+    """X izvestaj — tekuci promet (ne resetuje brojace)."""
+    check = _check_pos_enabled()
+    if check:
+        return check
+
+    location_id = request.args.get('location_id') or getattr(g, 'current_location_id', None)
+    session = CashRegisterSession.query.filter_by(
+        tenant_id=g.tenant_id,
+        location_id=location_id,
+        date=date.today(),
+        status=CashRegisterStatus.OPEN
+    ).first()
+
+    if not session:
+        return {'error': 'Nema otvorene kase'}, 404
+
+    # Sumiraj ISSUED racune sesije
+    receipts = Receipt.query.filter_by(
+        session_id=session.id,
+        status=ReceiptStatus.ISSUED
+    ).all()
+
+    total_revenue = sum(float(r.total_amount or 0) for r in receipts)
+    total_cost = sum(float(r.total_cost or 0) for r in receipts)
+    total_profit = total_revenue - total_cost
+    total_cash = sum(float(r.cash_received or 0) - float(r.cash_change or 0) for r in receipts if r.payment_method and r.payment_method.value == 'CASH')
+    total_card = sum(float(r.card_amount or 0) for r in receipts if r.card_amount)
+    total_transfer = sum(float(r.transfer_amount or 0) for r in receipts if r.transfer_amount)
+    voided = Receipt.query.filter_by(session_id=session.id, status=ReceiptStatus.VOIDED).count()
+
+    return {
+        'report_type': 'X',
+        'date': str(session.date),
+        'location_id': session.location_id,
+        'session_id': session.id,
+        'opened_at': session.opened_at.isoformat() if session.opened_at else None,
+        'opening_cash': float(session.opening_cash or 0),
+        'total_revenue': total_revenue,
+        'total_cost': total_cost,
+        'total_profit': total_profit,
+        'total_cash': total_cash,
+        'total_card': total_card,
+        'total_transfer': total_transfer,
+        'receipt_count': len(receipts),
+        'voided_count': voided,
+        'fiscal_mode': session.fiscal_mode or False,
+    }, 200
+
+
+@bp.route('/reports/z', methods=['POST'])
+@jwt_required
+def z_report():
+    """Z izvestaj — dnevni obracun (zatvara kasu, generise DailyReport)."""
+    check = _check_pos_enabled()
+    if check:
+        return check
+
+    data = request.get_json() or {}
+    closing_cash = data.get('closing_cash')
+    if closing_cash is None:
+        return {'error': 'closing_cash je obavezan'}, 400
+
+    location_id = data.get('location_id') or getattr(g, 'current_location_id', None)
+    session = CashRegisterSession.query.filter_by(
+        tenant_id=g.tenant_id,
+        location_id=location_id,
+        date=date.today(),
+        status=CashRegisterStatus.OPEN
+    ).first()
+
+    if not session:
+        return {'error': 'Nema otvorene kase'}, 404
+
+    # Zabrana duplog Z izveštaja za isti dan/lokaciju
+    existing_report = DailyReport.query.filter_by(
+        tenant_id=g.tenant_id,
+        location_id=session.location_id,
+        date=session.date,
+    ).first()
+    if existing_report:
+        return {'error': 'Z izveštaj već postoji za ovaj dan'}, 409
+
+    try:
+        session, report = POSService.close_register(session.id, g.user_id, closing_cash)
+        db.session.commit()
+        return {
+            'report_type': 'Z',
+            'report_id': report.id,
+            'date': str(report.date),
+            'total_revenue': float(report.total_revenue or 0),
+            'total_cost': float(report.total_cost or 0),
+            'total_profit': float(report.total_profit or 0),
+            'total_cash': float(report.total_cash or 0),
+            'total_card': float(report.total_card or 0),
+            'total_transfer': float(report.total_transfer or 0),
+            'opening_cash': float(report.opening_cash or 0),
+            'closing_cash': float(report.closing_cash or 0),
+            'cash_difference': float(report.cash_difference or 0),
+            'receipt_count': report.receipt_count,
+            'voided_count': report.voided_count,
+        }, 200
+    except ValueError as e:
+        return {'error': str(e)}, 400
+
+
+@bp.route('/fiscal/retry', methods=['POST'])
+@jwt_required
+def fiscal_retry():
+    """Retry neuspelih fiskalnih računa (max 3 pokušaja)."""
+    check = _check_pos_enabled()
+    if check:
+        return check
+
+    failed = Receipt.query.filter_by(
+        tenant_id=g.tenant_id,
+        fiscal_status='failed',
+    ).filter(Receipt.fiscal_retry_count < 3).all()
+
+    retried = []
+    for r in failed:
+        r.fiscal_retry_count = (r.fiscal_retry_count or 0) + 1
+        r.fiscal_status = 'pending'
+        # TODO: actual PFR HTTP call here
+        retried.append(r.id)
+
+    db.session.commit()
+    return {
+        'retried_count': len(retried),
+        'receipt_ids': retried,
+    }, 200

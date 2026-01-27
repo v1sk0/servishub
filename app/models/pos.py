@@ -44,6 +44,23 @@ class CashRegisterStatus(enum.Enum):
     CLOSED = 'CLOSED'
 
 
+class FiscalStatus(enum.Enum):
+    """Status fiskalizacije računa."""
+    PENDING = 'pending'
+    SENT = 'sent'
+    SIGNED = 'signed'
+    FAILED = 'failed'
+
+
+# Dozvoljeni prelazi fiskalnog statusa
+FISCAL_TRANSITIONS = {
+    None: ['pending'],
+    'pending': ['sent', 'failed'],
+    'sent': ['signed', 'failed'],
+    'failed': ['pending'],  # retry
+}
+
+
 class SaleItemType(enum.Enum):
     """Tip stavke na računu."""
     PHONE = 'PHONE'
@@ -51,6 +68,7 @@ class SaleItemType(enum.Enum):
     SERVICE = 'SERVICE'
     TICKET = 'TICKET'
     CUSTOM = 'CUSTOM'
+    GOODS = 'GOODS'
 
 
 # ============================================
@@ -95,6 +113,9 @@ class CashRegisterSession(db.Model):
         default=CashRegisterStatus.OPEN,
         nullable=False
     )
+
+    # Fiskalni režim (nasledjuje iz lokacije pri otvaranju)
+    fiscal_mode = db.Column(db.Boolean, default=False)
 
     # Sumirani totali
     total_revenue = db.Column(db.Numeric(12, 2), default=0)
@@ -182,10 +203,22 @@ class Receipt(db.Model):
     voided_at = db.Column(db.DateTime)
     void_reason = db.Column(db.String(300))
 
-    # Fiskalizacija (pripremljeno za buduću integraciju)
+    # Fiskalizacija
     fiscal_invoice_number = db.Column(db.String(100))
     fiscal_signature = db.Column(db.Text)
     fiscal_sent_at = db.Column(db.DateTime)
+    fiscal_status = db.Column(db.String(20))  # None/pending/sent/signed/failed
+    fiscal_response_json = db.Column(db.JSON)
+    fiscal_retry_count = db.Column(db.Integer, default=0)
+    fiscal_error_code = db.Column(db.String(50))
+    fiscal_qr_code = db.Column(db.Text)
+
+    # Idempotency — sprečava duplo izdavanje
+    idempotency_key = db.Column(db.String(255), unique=True, nullable=True)
+
+    # B2B kupac
+    buyer_pib = db.Column(db.String(20))
+    buyer_name = db.Column(db.String(200))
 
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -196,6 +229,13 @@ class Receipt(db.Model):
     __table_args__ = (
         db.UniqueConstraint('tenant_id', 'receipt_number', name='uq_receipt_tenant_number'),
     )
+
+    def transition_fiscal(self, new_status):
+        """Prelaz fiskalnog statusa sa validacijom dozvoljenih prelaza."""
+        allowed = FISCAL_TRANSITIONS.get(self.fiscal_status, [])
+        if new_status not in allowed:
+            raise ValueError(f'Nedozvoljen prelaz: {self.fiscal_status} → {new_status}')
+        self.fiscal_status = new_status
 
     def __repr__(self):
         return f'<Receipt {self.id}: {self.receipt_number} {self.receipt_type.value}>'
@@ -224,6 +264,7 @@ class ReceiptItem(db.Model):
     spare_part_id = db.Column(db.Integer, db.ForeignKey('spare_part.id', ondelete='SET NULL'))
     service_item_id = db.Column(db.Integer, db.ForeignKey('service_item.id', ondelete='SET NULL'))
     service_ticket_id = db.Column(db.Integer, db.ForeignKey('service_ticket.id', ondelete='SET NULL'))
+    goods_item_id = db.Column(db.Integer, db.ForeignKey('goods_item.id', ondelete='SET NULL'))
 
     # Cene
     purchase_price = db.Column(db.Numeric(10, 2), default=0)

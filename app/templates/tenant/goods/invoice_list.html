@@ -1,0 +1,70 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Ulazne fakture{% endblock %}
+
+{% block page_content %}
+<div x-data="invoiceList()" x-init="init()">
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">Ulazne fakture</h2>
+            <p class="mt-1 text-sm text-gray-500">Prijem robe od dobavljaca</p>
+        </div>
+        <div class="mt-4 flex gap-2 md:mt-0">
+            <a href="/goods" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Roba</a>
+            <a href="/goods/invoices/new" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">+ Nova faktura</a>
+        </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-300">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Dobavljac</th>
+                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Broj fakture</th>
+                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Datum</th>
+                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Iznos</th>
+                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                <template x-for="inv in invoices" :key="inv.id">
+                    <tr>
+                        <td class="py-3 pl-4 pr-3 text-sm font-medium text-gray-900" x-text="inv.supplier_name"></td>
+                        <td class="px-3 py-3 text-sm text-gray-700" x-text="inv.invoice_number"></td>
+                        <td class="px-3 py-3 text-sm text-gray-500" x-text="inv.invoice_date"></td>
+                        <td class="px-3 py-3 text-right text-sm font-medium text-gray-900" x-text="formatPrice(inv.total_amount) + ' RSD'"></td>
+                        <td class="px-3 py-3">
+                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                                  :class="{
+                                      'bg-yellow-100 text-yellow-800': inv.status === 'DRAFT',
+                                      'bg-green-100 text-green-800': inv.status === 'RECEIVED',
+                                      'bg-red-100 text-red-800': inv.status === 'CANCELLED',
+                                  }" x-text="inv.status"></span>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+        <div x-show="invoices.length === 0" class="p-8 text-center text-gray-400">Nema faktura.</div>
+    </div>
+</div>
+
+<script>
+function invoiceList() {
+    return {
+        invoices: [],
+        async init() {
+            const res = await api('/api/v1/goods/invoices');
+            if (res.ok) {
+                const data = await res.json();
+                this.invoices = data.invoices || [];
+            }
+        },
+        formatPrice(val) {
+            if (val == null) return '0,00';
+            return Number(val).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    };
+}
+</script>
+{% endblock %}

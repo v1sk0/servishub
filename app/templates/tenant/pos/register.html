@@ -3,12 +3,23 @@
 {% block title %}Kasa - ServisHub{% endblock %}
 
 {% block page_content %}
-<div x-data="posRegister()" x-init="init()">
-    <!-- Header -->
-    <div class="md:flex md:items-center md:justify-between mb-8">
+<div x-data="posRegister()" x-init="init()" @keydown.window="handleKeyboard($event)">
+    <!-- Header with Dual-Mode Badge -->
+    <div class="md:flex md:items-center md:justify-between mb-6">
         <div class="min-w-0 flex-1">
-            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl">Kasa</h2>
-            <p class="mt-1 text-sm text-gray-500">Upravljanje kasom, racunima i dnevnim prometom</p>
+            <div class="flex items-center gap-3">
+                <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl">Kasa</h2>
+                <template x-if="session">
+                    <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide"
+                          :class="session.fiscal_mode ? 'bg-green-100 text-green-800 ring-1 ring-green-600/20' : 'bg-blue-100 text-blue-800 ring-1 ring-blue-600/20'"
+                          x-text="session.fiscal_mode ? 'FISKALNA KASA' : 'INTERNA KASA'"></span>
+                </template>
+            </div>
+            <p class="mt-1 text-sm text-gray-500">
+                <span x-text="currentLocationName || ''"></span>
+                <span class="mx-1" x-show="session">&middot;</span>
+                <span x-show="session" x-text="session ? formatDate(session.date) : ''"></span>
+            </p>
         </div>
         <div class="mt-4 flex gap-2 md:ml-4 md:mt-0">
             <a href="/pos/receipts" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -22,184 +33,273 @@
         </div>
     </div>
 
-    <!-- Kasa Status -->
-    <div class="bg-white shadow rounded-lg mb-6 p-6">
+    <!-- Kasa Status Bar -->
+    <div class="bg-white shadow rounded-lg mb-6 p-4">
         <div class="flex items-center justify-between">
-            <div>
-                <h3 class="text-lg font-semibold text-gray-900">Status kase</h3>
-                <p class="text-sm text-gray-500 mt-1" x-text="session ? 'Kasa je otvorena od ' + formatTime(session.opened_at) : 'Kasa je zatvorena'"></p>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2">
+                    <div class="h-3 w-3 rounded-full" :class="session ? 'bg-green-500' : 'bg-gray-300'"></div>
+                    <span class="text-sm font-medium text-gray-700" x-text="session ? 'Kasa otvorena' : 'Kasa zatvorena'"></span>
+                </div>
+                <template x-if="session">
+                    <div class="flex items-center gap-6 text-sm text-gray-500">
+                        <span>Promet: <strong class="text-green-600" x-text="formatPrice(session.total_revenue) + ' RSD'"></strong></span>
+                        <span>Racuni: <strong x-text="session.receipt_count"></strong></span>
+                        <span>Pocetno: <strong x-text="formatPrice(session.opening_cash) + ' RSD'"></strong></span>
+                    </div>
+                </template>
             </div>
             <div>
-                <!-- Otvori kasu -->
                 <template x-if="!session">
                     <button @click="showOpenModal = true"
                             class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
-                        <svg class="-ml-0.5 mr-1.5 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                         Otvori kasu
                     </button>
                 </template>
-                <!-- Zatvori kasu -->
                 <template x-if="session">
                     <button @click="showCloseModal = true"
                             class="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
-                        <svg class="-ml-0.5 mr-1.5 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                         Zatvori kasu
                     </button>
                 </template>
             </div>
         </div>
-
-        <!-- Quick Stats when open -->
-        <template x-if="session">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-4 mt-6 pt-6 border-t border-gray-200">
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">Pocetno stanje</dt>
-                    <dd class="text-lg font-semibold text-gray-900" x-text="formatPrice(session.opening_cash) + ' RSD'"></dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">Ukupan promet</dt>
-                    <dd class="text-lg font-semibold text-green-600" x-text="formatPrice(session.total_revenue) + ' RSD'"></dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">Broj racuna</dt>
-                    <dd class="text-lg font-semibold text-gray-900" x-text="session.receipt_count"></dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">Lokacija</dt>
-                    <dd class="text-lg font-semibold text-gray-900" x-text="currentLocationName || '-'"></dd>
-                </div>
-            </div>
-        </template>
     </div>
 
-    <!-- Kreiranje racuna (samo kad je kasa otvorena) -->
+    <!-- Main POS Area (only when register open) -->
     <template x-if="session">
-        <div class="bg-white shadow rounded-lg mb-6">
-            <!-- Novi racun header -->
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Novi racun</h3>
-                    <template x-if="!activeReceipt">
-                        <button @click="createReceipt()"
-                                class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
-                            <svg class="-ml-0.5 mr-1.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
-                            Kreiraj racun
-                        </button>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- LEFT: Search + Items List -->
+            <div class="lg:col-span-2">
+                <div class="bg-white shadow rounded-lg">
+                    <!-- Receipt Header -->
+                    <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                        <div>
+                            <template x-if="activeReceipt">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-sm font-medium text-gray-900">Racun: <strong x-text="activeReceipt.receipt_number"></strong></span>
+                                    <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">DRAFT</span>
+                                </div>
+                            </template>
+                            <template x-if="!activeReceipt">
+                                <span class="text-sm text-gray-500">Nema aktivnog racuna</span>
+                            </template>
+                        </div>
+                        <template x-if="!activeReceipt">
+                            <button @click="createReceipt()"
+                                    class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
+                                <svg class="-ml-0.5 mr-1.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
+                                Novi racun <span class="ml-1 text-xs opacity-70">(F1)</span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <!-- Search Bar -->
+                    <template x-if="activeReceipt">
+                        <div class="p-4 border-b border-gray-200">
+                            <div class="relative">
+                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                </div>
+                                <input x-ref="searchInput" type="text" x-model="searchQuery"
+                                       @input.debounce.300ms="searchItems()"
+                                       @keydown.escape="searchQuery = ''; searchResults = []"
+                                       @keydown.enter="if(searchResults.length === 1) addSearchItem(searchResults[0])"
+                                       placeholder="Pretrazi artikl po imenu, barkodu ili sifri..."
+                                       class="block w-full rounded-md border-gray-300 pl-10 pr-3 py-3 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                            </div>
+
+                            <!-- Search Results Dropdown -->
+                            <div x-show="searchResults.length > 0" class="mt-2 rounded-md border border-gray-200 bg-white shadow-lg max-h-64 overflow-y-auto">
+                                <template x-for="result in searchResults" :key="result.type + '-' + result.id">
+                                    <button @click="addSearchItem(result)"
+                                            class="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 flex items-center justify-between">
+                                        <div>
+                                            <span class="text-sm font-medium text-gray-900" x-text="result.name"></span>
+                                            <div class="flex items-center gap-2 mt-0.5">
+                                                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                                                      :class="{
+                                                          'bg-purple-100 text-purple-700': result.type === 'GOODS',
+                                                          'bg-orange-100 text-orange-700': result.type === 'SPARE_PART',
+                                                          'bg-cyan-100 text-cyan-700': result.type === 'PHONE',
+                                                      }" x-text="result.type === 'GOODS' ? 'Roba' : result.type === 'SPARE_PART' ? 'Deo' : 'Telefon'"></span>
+                                                <span class="text-xs text-gray-400" x-show="result.barcode" x-text="result.barcode"></span>
+                                                <span class="text-xs text-gray-400" x-text="'Stanje: ' + result.stock"></span>
+                                            </div>
+                                        </div>
+                                        <span class="text-sm font-semibold text-gray-900" x-text="formatPrice(result.price) + ' RSD'"></span>
+                                    </button>
+                                </template>
+                            </div>
+
+                            <!-- No results -->
+                            <div x-show="searchQuery.length >= 2 && searchResults.length === 0 && !searching" class="mt-2 text-sm text-gray-500 text-center py-3">
+                                Nema rezultata za "<span x-text="searchQuery"></span>"
+                            </div>
+
+                            <!-- Manual add toggle -->
+                            <div class="mt-3 flex items-center gap-2">
+                                <button @click="showManualAdd = !showManualAdd"
+                                        class="text-xs text-primary-600 hover:text-primary-800 font-medium">
+                                    <span x-text="showManualAdd ? 'Sakrij rucni unos' : '+ Rucni unos stavke'"></span>
+                                </button>
+                            </div>
+
+                            <!-- Manual Item Add -->
+                            <div x-show="showManualAdd" x-collapse class="mt-3 p-3 bg-gray-50 rounded-lg">
+                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                                    <div class="sm:col-span-2">
+                                        <input type="text" x-model="manualItem.item_name" placeholder="Naziv stavke"
+                                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                                    </div>
+                                    <div>
+                                        <input type="number" x-model.number="manualItem.unit_price" placeholder="Cena" step="0.01"
+                                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                                    </div>
+                                    <div>
+                                        <button @click="addManualItem()" :disabled="!manualItem.item_name || !manualItem.unit_price"
+                                                class="w-full rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 disabled:opacity-50">
+                                            Dodaj
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </template>
+
+                    <!-- Items Table -->
+                    <div class="p-4" x-show="receiptItems.length > 0">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead>
+                                <tr>
+                                    <th class="py-3 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Stavka</th>
+                                    <th class="px-3 py-3 text-center text-sm font-semibold text-gray-900">Kol.</th>
+                                    <th class="px-3 py-3 text-right text-sm font-semibold text-gray-900">Cena</th>
+                                    <th class="px-3 py-3 text-right text-sm font-semibold text-gray-900">Ukupno</th>
+                                    <th class="relative py-3 pl-3 pr-4 w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <template x-for="item in receiptItems" :key="item.id">
+                                    <tr>
+                                        <td class="py-3 pl-4 pr-3">
+                                            <div class="text-sm font-medium text-gray-900" x-text="item.item_name"></div>
+                                            <div class="text-xs text-gray-500" x-text="itemTypeLabel(item.item_type)"></div>
+                                        </td>
+                                        <td class="px-3 py-3 text-center text-sm text-gray-700" x-text="item.quantity"></td>
+                                        <td class="px-3 py-3 text-right text-sm text-gray-700" x-text="formatPrice(item.unit_price)"></td>
+                                        <td class="px-3 py-3 text-right text-sm font-semibold text-gray-900" x-text="formatPrice(item.line_total)"></td>
+                                        <td class="py-3 pl-3 pr-4 text-right">
+                                            <button @click="removeItem(item.id)" class="text-red-500 hover:text-red-700">
+                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div x-show="activeReceipt && receiptItems.length === 0" class="p-8 text-center text-gray-400">
+                        <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+                        <p class="mt-2 text-sm">Pretrazi artikl ili skeniraj barkod da dodas stavku</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- Active Receipt -->
-            <template x-if="activeReceipt">
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-sm text-gray-500">Racun: <strong x-text="activeReceipt.receipt_number"></strong></span>
-                        <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800" x-text="activeReceipt.status"></span>
-                    </div>
-
-                    <!-- Dodaj stavku forma -->
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-6 mb-4 p-4 bg-gray-50 rounded-lg">
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700">Tip</label>
-                            <select x-model="newItem.item_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
-                                <option value="SERVICE">Usluga</option>
-                                <option value="PHONE">Telefon</option>
-                                <option value="SPARE_PART">Deo</option>
-                                <option value="CUSTOM">Ostalo</option>
-                            </select>
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700">Naziv</label>
-                            <input type="text" x-model="newItem.item_name" placeholder="Naziv stavke"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Cena (RSD)</label>
-                            <input type="number" x-model.number="newItem.unit_price" step="0.01"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
-                        </div>
-                        <div class="flex items-end">
-                            <button @click="addItem()" :disabled="!newItem.item_name || !newItem.unit_price"
-                                    class="w-full inline-flex justify-center items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 disabled:opacity-50">
-                                Dodaj
-                            </button>
+            <!-- RIGHT: Payment Panel -->
+            <div class="lg:col-span-1">
+                <div class="bg-white shadow rounded-lg sticky top-4">
+                    <!-- Total -->
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="text-center">
+                            <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Ukupno</p>
+                            <p class="mt-1 text-4xl font-bold text-gray-900" x-text="formatPrice(receiptTotal) + ' RSD'"></p>
+                            <p class="mt-1 text-xs text-gray-400" x-text="receiptItems.length + ' stavki'"></p>
                         </div>
                     </div>
 
-                    <!-- Stavke tabela -->
-                    <table class="min-w-full divide-y divide-gray-300" x-show="receiptItems.length > 0">
-                        <thead>
-                            <tr>
-                                <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Stavka</th>
-                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Tip</th>
-                                <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Kol.</th>
-                                <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Cena</th>
-                                <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Ukupno</th>
-                                <th class="relative py-3.5 pl-3 pr-4"><span class="sr-only">Ukloni</span></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <template x-for="item in receiptItems" :key="item.id">
-                                <tr>
-                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900" x-text="item.item_name"></td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" x-text="item.item_type"></td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right" x-text="item.quantity"></td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right" x-text="formatPrice(item.unit_price)"></td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm font-semibold text-gray-900 text-right" x-text="formatPrice(item.line_total)"></td>
-                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm">
-                                        <button @click="removeItem(item.id)" class="text-red-600 hover:text-red-900">Ukloni</button>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="4" class="py-4 pl-4 pr-3 text-sm font-bold text-gray-900 text-right">UKUPNO:</td>
-                                <td class="py-4 px-3 text-sm font-bold text-gray-900 text-right" x-text="formatPrice(receiptTotal) + ' RSD'"></td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                    <!-- Payment Method -->
+                    <div class="p-6 border-b border-gray-200" x-show="receiptItems.length > 0">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Nacin placanja</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button @click="paymentMethod = 'CASH'" class="rounded-lg px-3 py-2 text-sm font-medium border-2 transition-colors"
+                                    :class="paymentMethod === 'CASH' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'">
+                                Gotovina
+                            </button>
+                            <button @click="paymentMethod = 'CARD'" class="rounded-lg px-3 py-2 text-sm font-medium border-2 transition-colors"
+                                    :class="paymentMethod === 'CARD' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'">
+                                Kartica
+                            </button>
+                            <button @click="paymentMethod = 'TRANSFER'" class="rounded-lg px-3 py-2 text-sm font-medium border-2 transition-colors"
+                                    :class="paymentMethod === 'TRANSFER' ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'">
+                                Transfer
+                            </button>
+                            <button @click="paymentMethod = 'MIXED'" class="rounded-lg px-3 py-2 text-sm font-medium border-2 transition-colors"
+                                    :class="paymentMethod === 'MIXED' ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'">
+                                Kombinovano
+                            </button>
+                        </div>
 
-                    <!-- Izdaj racun -->
-                    <div class="mt-6 flex items-center justify-between pt-4 border-t border-gray-200" x-show="receiptItems.length > 0">
-                        <div class="flex items-center gap-4">
-                            <label class="text-sm font-medium text-gray-700">Nacin placanja:</label>
-                            <select x-model="paymentMethod" class="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
-                                <option value="CASH">Gotovina</option>
-                                <option value="CARD">Kartica</option>
-                                <option value="TRANSFER">Transfer</option>
-                                <option value="MIXED">Kombinovano</option>
-                            </select>
+                        <!-- Cash received / change -->
+                        <div x-show="paymentMethod === 'CASH'" class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700">Primljeno (RSD)</label>
+                            <input type="number" x-model.number="cashReceived" step="100" min="0"
+                                   @input="cashChange = cashReceived - receiptTotal"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                            <div class="mt-2 flex justify-between text-sm" x-show="cashReceived > 0">
+                                <span class="text-gray-500">Kusur:</span>
+                                <span class="font-bold" :class="cashChange >= 0 ? 'text-green-600' : 'text-red-600'"
+                                      x-text="formatPrice(cashChange) + ' RSD'"></span>
+                            </div>
                         </div>
-                        <div class="flex gap-2">
-                            <button @click="voidReceipt()" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-red-700 shadow-sm ring-1 ring-inset ring-red-300 hover:bg-red-50">
-                                Storniraj
+
+                        <!-- B2B buyer -->
+                        <div class="mt-4">
+                            <button @click="showBuyerFields = !showBuyerFields" class="text-xs text-primary-600 hover:text-primary-800 font-medium">
+                                <span x-text="showBuyerFields ? 'Sakrij B2B polja' : '+ B2B kupac (PIB)'"></span>
                             </button>
-                            <button @click="issueReceipt()" class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
-                                <svg class="-ml-0.5 mr-1.5 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                Izdaj racun
-                            </button>
+                            <div x-show="showBuyerFields" x-collapse class="mt-2 space-y-2">
+                                <input type="text" x-model="buyerPib" placeholder="PIB kupca"
+                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                                <input type="text" x-model="buyerName" placeholder="Naziv kupca"
+                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="p-6 space-y-3">
+                        <button @click="issueReceipt()" :disabled="receiptItems.length === 0 || issuing"
+                                class="w-full inline-flex justify-center items-center rounded-md bg-green-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg class="-ml-0.5 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span x-text="issuing ? 'Izdavanje...' : 'Izdaj racun'"></span>
+                            <span class="ml-1 text-xs opacity-70">(F2)</span>
+                        </button>
+                        <button @click="voidReceipt()" x-show="activeReceipt"
+                                class="w-full inline-flex justify-center items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-red-700 shadow-sm ring-1 ring-inset ring-red-300 hover:bg-red-50">
+                            Storniraj
+                        </button>
                     </div>
                 </div>
-            </template>
+            </div>
         </div>
     </template>
 
-    <!-- Poslednji racuni -->
-    <div class="bg-white shadow rounded-lg" x-show="recentReceipts.length > 0">
-        <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Poslednji racuni</h3>
+    <!-- Recent Receipts -->
+    <div class="mt-6 bg-white shadow rounded-lg" x-show="recentReceipts.length > 0">
+        <div class="p-4 border-b border-gray-200">
+            <h3 class="text-sm font-semibold text-gray-900">Poslednji racuni</h3>
         </div>
         <ul class="divide-y divide-gray-200">
             <template x-for="r in recentReceipts" :key="r.id">
-                <li class="p-4 flex items-center justify-between">
-                    <div>
-                        <span class="text-sm font-medium text-gray-900" x-text="r.receipt_number"></span>
-                        <span class="ml-2 text-sm text-gray-500" x-text="formatPrice(r.total_amount) + ' RSD'"></span>
-                    </div>
+                <li class="px-4 py-3 flex items-center justify-between">
                     <div class="flex items-center gap-3">
+                        <span class="text-sm font-medium text-gray-900" x-text="r.receipt_number"></span>
+                        <span class="text-sm text-gray-500" x-text="formatPrice(r.total_amount) + ' RSD'"></span>
+                    </div>
+                    <div class="flex items-center gap-2">
                         <span class="text-xs text-gray-400" x-text="r.payment_method"></span>
                         <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                               :class="{
@@ -215,7 +315,12 @@
         </ul>
     </div>
 
-    <!-- Open Modal -->
+    <!-- Keyboard Shortcuts Help -->
+    <div class="mt-4 text-center text-xs text-gray-400" x-show="session">
+        F1 = Novi racun &middot; F2 = Izdaj racun &middot; ESC = Zatvori modal
+    </div>
+
+    <!-- Open Register Modal -->
     <div x-show="showOpenModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape="showOpenModal = false">
         <div class="flex min-h-full items-center justify-center p-4">
             <div class="fixed inset-0 bg-gray-500/75" @click="showOpenModal = false"></div>
@@ -232,8 +337,9 @@
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700">Pocetno stanje gotovine (RSD)</label>
-                    <input type="number" x-model.number="openingCash" step="0.01" min="0"
+                    <input type="number" x-model.number="openingCash" step="100" min="0"
                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                    <p class="mt-1 text-xs text-gray-400">Opciono — moze i 0</p>
                 </div>
                 <div class="flex justify-end gap-3">
                     <button @click="showOpenModal = false" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Otkazi</button>
@@ -243,7 +349,7 @@
         </div>
     </div>
 
-    <!-- Close Modal -->
+    <!-- Close Register Modal -->
     <div x-show="showCloseModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape="showCloseModal = false">
         <div class="flex min-h-full items-center justify-center p-4">
             <div class="fixed inset-0 bg-gray-500/75" @click="showCloseModal = false"></div>
@@ -251,7 +357,7 @@
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Zatvori kasu</h3>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700">Krajnje stanje gotovine (RSD)</label>
-                    <input type="number" x-model.number="closingCash" step="0.01" min="0"
+                    <input type="number" x-model.number="closingCash" step="100" min="0"
                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
                 </div>
                 <div class="flex justify-end gap-3">
@@ -298,6 +404,7 @@
 <script>
 function posRegister() {
     return {
+        // State
         session: null,
         activeReceipt: null,
         receiptItems: [],
@@ -305,26 +412,84 @@ function posRegister() {
         currentLocationId: null,
         currentLocationName: '',
         locations: [],
+
+        // Modals
         showOpenModal: false,
         showCloseModal: false,
         showVoidModal: false,
+
+        // Form state
         openingCash: 0,
         closingCash: 0,
         paymentMethod: 'CASH',
+        cashReceived: 0,
+        cashChange: 0,
         voidReason: '',
-        newItem: { item_type: 'SERVICE', item_name: '', unit_price: null, quantity: 1 },
+        issuing: false,
+
+        // Search
+        searchQuery: '',
+        searchResults: [],
+        searching: false,
+        showManualAdd: false,
+        manualItem: { item_name: '', unit_price: null },
+
+        // B2B
+        showBuyerFields: false,
+        buyerPib: '',
+        buyerName: '',
+
+        // Toast
         toast: { show: false, message: '', type: 'success' },
 
         get receiptTotal() {
             return this.receiptItems.reduce((sum, i) => sum + (i.line_total || 0), 0);
         },
 
+        // ==========================================
+        // INIT
+        // ==========================================
         async init() {
             await this.loadUserLocation();
             await this.checkCurrentRegister();
             await this.loadRecentReceipts();
         },
 
+        // ==========================================
+        // KEYBOARD SHORTCUTS
+        // ==========================================
+        handleKeyboard(e) {
+            // Don't intercept if inside an input/textarea/select
+            const tag = e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+                if (e.key === 'Escape') {
+                    e.target.blur();
+                    this.searchQuery = '';
+                    this.searchResults = [];
+                }
+                return;
+            }
+
+            if (e.key === 'F1') {
+                e.preventDefault();
+                if (this.session && !this.activeReceipt) {
+                    this.createReceipt();
+                }
+            } else if (e.key === 'F2') {
+                e.preventDefault();
+                if (this.activeReceipt && this.receiptItems.length > 0) {
+                    this.issueReceipt();
+                }
+            } else if (e.key === 'Escape') {
+                this.showOpenModal = false;
+                this.showCloseModal = false;
+                this.showVoidModal = false;
+            }
+        },
+
+        // ==========================================
+        // LOCATION & SESSION
+        // ==========================================
         async loadUserLocation() {
             try {
                 const res = await api('/api/v1/auth/me');
@@ -370,7 +535,7 @@ function posRegister() {
             });
             if (res.ok) {
                 const data = await res.json();
-                this.session = { ...data, total_revenue: 0, receipt_count: 0 };
+                this.session = { ...data, total_revenue: 0, receipt_count: 0, opened_at: new Date().toISOString() };
                 this.showOpenModal = false;
                 this.showToast('Kasa otvorena', 'success');
             } else {
@@ -396,27 +561,81 @@ function posRegister() {
             }
         },
 
+        // ==========================================
+        // RECEIPT
+        // ==========================================
         async createReceipt() {
             const res = await api('/api/v1/pos/receipts', 'POST', { session_id: this.session.session_id });
             if (res.ok) {
                 this.activeReceipt = await res.json();
                 this.receiptItems = [];
+                this.paymentMethod = 'CASH';
+                this.cashReceived = 0;
+                this.cashChange = 0;
+                this.buyerPib = '';
+                this.buyerName = '';
+                this.showBuyerFields = false;
+                // Focus search bar
+                this.$nextTick(() => {
+                    if (this.$refs.searchInput) this.$refs.searchInput.focus();
+                });
             } else {
                 const err = await res.json();
                 this.showToast(err.error || 'Greska', 'error');
             }
         },
 
-        async addItem() {
+        // ==========================================
+        // SEARCH & ADD ITEMS
+        // ==========================================
+        async searchItems() {
+            if (this.searchQuery.length < 2) {
+                this.searchResults = [];
+                return;
+            }
+            this.searching = true;
+            try {
+                const res = await api(`/api/v1/pos/search-items?q=${encodeURIComponent(this.searchQuery)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    this.searchResults = data.items || [];
+                }
+            } catch (e) {
+                console.error('Search failed', e);
+            }
+            this.searching = false;
+        },
+
+        async addSearchItem(result) {
             const res = await api(`/api/v1/pos/receipts/${this.activeReceipt.receipt_id}/items`, 'POST', {
-                item_type: this.newItem.item_type,
-                item_name: this.newItem.item_name,
-                unit_price: this.newItem.unit_price,
-                quantity: this.newItem.quantity || 1,
+                item_type: result.type,
+                item_id: result.id,
+                quantity: 1,
+                unit_price: result.price,
+                purchase_price: result.purchase_price,
+                item_name: result.name,
             });
             if (res.ok) {
                 await this.refreshReceipt();
-                this.newItem = { item_type: 'SERVICE', item_name: '', unit_price: null, quantity: 1 };
+                this.searchQuery = '';
+                this.searchResults = [];
+                if (this.$refs.searchInput) this.$refs.searchInput.focus();
+            } else {
+                const err = await res.json();
+                this.showToast(err.error || 'Greska pri dodavanju', 'error');
+            }
+        },
+
+        async addManualItem() {
+            const res = await api(`/api/v1/pos/receipts/${this.activeReceipt.receipt_id}/items`, 'POST', {
+                item_type: 'CUSTOM',
+                item_name: this.manualItem.item_name,
+                unit_price: this.manualItem.unit_price,
+                quantity: 1,
+            });
+            if (res.ok) {
+                await this.refreshReceipt();
+                this.manualItem = { item_name: '', unit_price: null };
             } else {
                 const err = await res.json();
                 this.showToast(err.error || 'Greska', 'error');
@@ -439,19 +658,50 @@ function posRegister() {
             }
         },
 
+        // ==========================================
+        // ISSUE / VOID
+        // ==========================================
         async issueReceipt() {
-            const res = await api(`/api/v1/pos/receipts/${this.activeReceipt.receipt_id}/issue`, 'POST', {
+            if (this.issuing) return; // idempotency guard
+            this.issuing = true;
+
+            const idempotencyKey = `receipt-${this.activeReceipt.receipt_id}-${Date.now()}`;
+            const body = {
                 payment_method: this.paymentMethod,
-            });
-            if (res.ok) {
-                this.showToast('Racun izdat', 'success');
-                this.activeReceipt = null;
-                this.receiptItems = [];
-                await this.checkCurrentRegister();
-                await this.loadRecentReceipts();
-            } else {
-                const err = await res.json();
-                this.showToast(err.error || 'Greska', 'error');
+                idempotency_key: idempotencyKey,
+            };
+            if (this.paymentMethod === 'CASH' && this.cashReceived > 0) {
+                body.cash_received = this.cashReceived;
+            }
+            if (this.buyerPib) {
+                body.buyer_pib = this.buyerPib;
+                body.buyer_name = this.buyerName;
+            }
+
+            try {
+                const res = await api(`/api/v1/pos/receipts/${this.activeReceipt.receipt_id}/issue`, 'POST', body);
+                if (res.ok) {
+                    const data = await res.json();
+                    let msg = 'Racun izdat';
+                    if (data.cash_change && data.cash_change > 0) {
+                        msg += ` — Kusur: ${this.formatPrice(data.cash_change)} RSD`;
+                    }
+                    if (data.fiscal_status) {
+                        msg += ` (fiskalni status: ${data.fiscal_status})`;
+                    }
+                    this.showToast(msg, 'success');
+                    this.activeReceipt = null;
+                    this.receiptItems = [];
+                    this.searchQuery = '';
+                    this.searchResults = [];
+                    await this.checkCurrentRegister();
+                    await this.loadRecentReceipts();
+                } else {
+                    const err = await res.json();
+                    this.showToast(err.error || 'Greska', 'error');
+                }
+            } finally {
+                this.issuing = false;
             }
         },
 
@@ -476,6 +726,9 @@ function posRegister() {
             }
         },
 
+        // ==========================================
+        // RECENT RECEIPTS
+        // ==========================================
         async loadRecentReceipts() {
             const res = await api('/api/v1/pos/receipts?per_page=10');
             if (res.ok) {
@@ -484,9 +737,22 @@ function posRegister() {
             }
         },
 
+        // ==========================================
+        // HELPERS
+        // ==========================================
+        itemTypeLabel(type) {
+            const labels = { GOODS: 'Roba', SPARE_PART: 'Deo', PHONE: 'Telefon', SERVICE: 'Usluga', TICKET: 'Servis', CUSTOM: 'Ostalo' };
+            return labels[type] || type;
+        },
+
         formatPrice(val) {
-            if (val == null) return '0';
+            if (val == null) return '0,00';
             return Number(val).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+
+        formatDate(d) {
+            if (!d) return '';
+            return new Date(d).toLocaleDateString('sr-RS');
         },
 
         formatTime(iso) {
@@ -496,7 +762,7 @@ function posRegister() {
 
         showToast(message, type) {
             this.toast = { show: true, message, type };
-            setTimeout(() => { this.toast.show = false; }, 3000);
+            setTimeout(() => { this.toast.show = false; }, 4000);
         }
     };
 }

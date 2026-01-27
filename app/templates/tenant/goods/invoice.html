@@ -1,0 +1,221 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Nova ulazna faktura{% endblock %}
+
+{% block page_content %}
+<div x-data="invoiceForm()" x-init="init()">
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">Nova ulazna faktura</h2>
+            <p class="mt-1 text-sm text-gray-500">Prijem robe od dobavljaca</p>
+        </div>
+        <a href="/goods/invoices" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Nazad</a>
+    </div>
+
+    <!-- Invoice Header -->
+    <div class="bg-white shadow rounded-lg mb-6 p-6">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Dobavljac *</label>
+                <input type="text" x-model="header.supplier_name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">PIB dobavljaca</label>
+                <input type="text" x-model="header.supplier_pib" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Broj fakture *</label>
+                <input type="text" x-model="header.invoice_number" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+            </div>
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 mt-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Datum fakture *</label>
+                <input type="date" x-model="header.invoice_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="block text-sm font-medium text-gray-700">Napomena</label>
+                <input type="text" x-model="header.notes" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+            </div>
+        </div>
+
+        <div class="mt-4" x-show="!invoiceId">
+            <button @click="createInvoice()" :disabled="!header.supplier_name || !header.invoice_number || !header.invoice_date"
+                    class="rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 disabled:opacity-50">
+                Kreiraj fakturu
+            </button>
+        </div>
+        <div class="mt-4" x-show="invoiceId">
+            <span class="text-sm text-green-600 font-medium">Faktura kreirana (ID: <span x-text="invoiceId"></span>)</span>
+        </div>
+    </div>
+
+    <!-- Items -->
+    <template x-if="invoiceId">
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Stavke fakture</h3>
+            </div>
+
+            <!-- Add Item -->
+            <div class="p-4 bg-gray-50 border-b border-gray-200">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-6">
+                    <div class="sm:col-span-2">
+                        <input type="text" x-model="newItem.item_name" placeholder="Naziv artikla *"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                    </div>
+                    <div>
+                        <input type="number" x-model.number="newItem.quantity" placeholder="Kol." min="1"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                    </div>
+                    <div>
+                        <input type="number" x-model.number="newItem.purchase_price" placeholder="Nabavna *" step="0.01"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                    </div>
+                    <div>
+                        <input type="number" x-model.number="newItem.selling_price" placeholder="Prodajna" step="0.01"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                    </div>
+                    <div>
+                        <button @click="addItem()" :disabled="!newItem.item_name || !newItem.purchase_price"
+                                class="w-full rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 disabled:opacity-50">
+                            Dodaj
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items List -->
+            <table class="min-w-full divide-y divide-gray-300" x-show="items.length > 0">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="py-3 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Artikl</th>
+                        <th class="px-3 py-3 text-right text-sm font-semibold text-gray-900">Kol.</th>
+                        <th class="px-3 py-3 text-right text-sm font-semibold text-gray-900">Nabavna</th>
+                        <th class="px-3 py-3 text-right text-sm font-semibold text-gray-900">Prodajna</th>
+                        <th class="px-3 py-3 text-right text-sm font-semibold text-gray-900">Ukupno</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <template x-for="item in items" :key="item.item_id">
+                        <tr>
+                            <td class="py-3 pl-4 pr-3 text-sm font-medium text-gray-900" x-text="item.item_name"></td>
+                            <td class="px-3 py-3 text-right text-sm text-gray-700" x-text="item.quantity"></td>
+                            <td class="px-3 py-3 text-right text-sm text-gray-700" x-text="formatPrice(item.purchase_price)"></td>
+                            <td class="px-3 py-3 text-right text-sm text-gray-700" x-text="formatPrice(item.selling_price)"></td>
+                            <td class="px-3 py-3 text-right text-sm font-semibold text-gray-900" x-text="formatPrice(item.line_total)"></td>
+                        </tr>
+                    </template>
+                </tbody>
+                <tfoot>
+                    <tr class="bg-gray-50">
+                        <td colspan="4" class="py-3 pl-4 pr-3 text-right text-sm font-bold text-gray-900">UKUPNO:</td>
+                        <td class="px-3 py-3 text-right text-sm font-bold text-gray-900" x-text="formatPrice(invoiceTotal) + ' RSD'"></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- Receive Button -->
+            <div class="p-6 border-t border-gray-200" x-show="items.length > 0 && !received">
+                <button @click="receiveInvoice()"
+                        class="rounded-md bg-green-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-green-500">
+                    Primi fakturu (azuriraj stanje)
+                </button>
+            </div>
+            <div class="p-6 border-t border-gray-200" x-show="received">
+                <span class="text-sm font-medium text-green-600">Faktura primljena — stanje azurirano</span>
+            </div>
+        </div>
+    </template>
+
+    <!-- Toast -->
+    <div x-show="toast.show" x-cloak x-transition
+         class="fixed bottom-4 right-4 z-50 rounded-lg p-4 shadow-lg"
+         :class="toast.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'">
+        <span x-text="toast.message"></span>
+    </div>
+</div>
+
+<script>
+function invoiceForm() {
+    return {
+        invoiceId: null,
+        received: false,
+        header: {
+            supplier_name: '',
+            supplier_pib: '',
+            invoice_number: '',
+            invoice_date: new Date().toISOString().split('T')[0],
+            notes: '',
+        },
+        items: [],
+        newItem: { item_name: '', quantity: 1, purchase_price: null, selling_price: null },
+        toast: { show: false, message: '', type: 'success' },
+
+        get invoiceTotal() {
+            return this.items.reduce((sum, i) => sum + (i.line_total || 0), 0);
+        },
+
+        async init() {},
+
+        async createInvoice() {
+            const res = await api('/api/v1/goods/invoices', 'POST', this.header);
+            if (res.ok) {
+                const data = await res.json();
+                this.invoiceId = data.invoice_id;
+                this.showToast('Faktura kreirana', 'success');
+            } else {
+                const err = await res.json();
+                this.showToast(err.error || 'Greska', 'error');
+            }
+        },
+
+        async addItem() {
+            const res = await api(`/api/v1/goods/invoices/${this.invoiceId}/items`, 'POST', {
+                item_name: this.newItem.item_name,
+                quantity: this.newItem.quantity || 1,
+                purchase_price: this.newItem.purchase_price,
+                selling_price: this.newItem.selling_price,
+            });
+            if (res.ok) {
+                const data = await res.json();
+                this.items.push({
+                    item_id: data.item_id,
+                    item_name: this.newItem.item_name,
+                    quantity: this.newItem.quantity || 1,
+                    purchase_price: this.newItem.purchase_price,
+                    selling_price: this.newItem.selling_price,
+                    line_total: data.line_total,
+                });
+                this.newItem = { item_name: '', quantity: 1, purchase_price: null, selling_price: null };
+                this.showToast('Stavka dodata', 'success');
+            } else {
+                const err = await res.json();
+                this.showToast(err.error || 'Greska', 'error');
+            }
+        },
+
+        async receiveInvoice() {
+            const res = await api(`/api/v1/goods/invoices/${this.invoiceId}/receive`, 'POST');
+            if (res.ok) {
+                this.received = true;
+                this.showToast('Faktura primljena — stanje azurirano', 'success');
+            } else {
+                const err = await res.json();
+                this.showToast(err.error || 'Greska', 'error');
+            }
+        },
+
+        formatPrice(val) {
+            if (val == null) return '-';
+            return Number(val).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+
+        showToast(message, type) {
+            this.toast = { show: true, message, type };
+            setTimeout(() => { this.toast.show = false; }, 3000);
+        }
+    };
+}
+</script>
+{% endblock %}

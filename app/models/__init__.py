@@ -46,6 +46,12 @@ from .credits import (
     CreditBalance, CreditTransaction, CreditPurchase, PromoCode,
     OwnerType, CreditTransactionType, DiscountType, CreditPaymentStatus
 )
+from .goods import (
+    GoodsItem, PurchaseInvoice, PurchaseInvoiceItem,
+    StockAdjustment, PosAuditLog,
+    InvoiceStatus, StockAdjustmentType,
+    suggest_selling_price
+)
 from .financial_audit import FinancialAuditLog, FinancialCategory
 from .bank_import import (
     BankStatementImport, BankTransaction,
@@ -180,6 +186,15 @@ __all__ = [
     'SparePartUsage',
     'SparePartLog',
     'StockActionType',
+    # Goods & Warehouse
+    'GoodsItem',
+    'PurchaseInvoice',
+    'PurchaseInvoiceItem',
+    'StockAdjustment',
+    'PosAuditLog',
+    'InvoiceStatus',
+    'StockAdjustmentType',
+    'suggest_selling_price',
     # Financial Audit
     'FinancialAuditLog',
     'FinancialCategory',
