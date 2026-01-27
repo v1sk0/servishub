@@ -323,10 +323,20 @@ def list_parts():
     user = g.current_user
     tenant = g.current_tenant
 
+    # Location scoping — prikaži delove sa dozvoljenih lokacija + deljene (location_id=NULL)
+    allowed_locations = user.get_accessible_location_ids()
     query = SparePart.query.filter(
         SparePart.tenant_id == tenant.id,
-        SparePart.is_active == True
+        SparePart.is_active == True,
+        db.or_(
+            SparePart.location_id.in_(allowed_locations),
+            SparePart.location_id.is_(None)
+        )
     )
+
+    location_id = request.args.get('location_id', type=int)
+    if location_id and location_id in allowed_locations:
+        query = query.filter(SparePart.location_id == location_id)
 
     # Filter visibility
     visibility = request.args.get('visibility')

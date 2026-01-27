@@ -14,7 +14,7 @@ from .admin import PlatformAdmin, AdminRole
 from .audit import AuditLog, AuditAction, calculate_changes
 from .admin_activity import AdminActivityLog, AdminActionType
 from .ticket import ServiceTicket, TicketStatus, TicketPriority, TicketNotificationLog, get_next_ticket_number
-from .inventory import PhoneListing, SparePart, PhoneCondition, PartVisibility, PartCategory
+from .inventory import PhoneListing, SparePart, PhoneCondition, PartVisibility, PartCategory, SparePartUsage, SparePartLog, StockActionType
 from .supplier import Supplier, SupplierListing, SupplierUser, SupplierStatus
 from .order import PartOrder, PartOrderItem, PartOrderMessage, OrderStatus, SellerType, generate_order_number
 from .representative import ServiceRepresentative, RepresentativeStatus, SubscriptionPayment, PaymentStatus
@@ -46,6 +46,7 @@ from .credits import (
     CreditBalance, CreditTransaction, CreditPurchase, PromoCode,
     OwnerType, CreditTransactionType, DiscountType, CreditPaymentStatus
 )
+from .financial_audit import FinancialAuditLog, FinancialCategory
 from .bank_import import (
     BankStatementImport, BankTransaction,
     ImportStatus, BankCode, MatchStatus, TransactionType
@@ -175,6 +176,13 @@ __all__ = [
     'CreditTransactionType',
     'DiscountType',
     'CreditPaymentStatus',
+    # Inventory dopune (task-014)
+    'SparePartUsage',
+    'SparePartLog',
+    'StockActionType',
+    # Financial Audit
+    'FinancialAuditLog',
+    'FinancialCategory',
     # Bank Import (v303 Billing Enhancement)
     'BankStatementImport',
     'BankTransaction',

@@ -15,7 +15,8 @@ from ..middleware.auth import jwt_required, tenant_required, location_access_req
 from ...extensions import db
 from ...models import (
     ServiceTicket, TicketStatus, TicketPriority, TicketNotificationLog,
-    get_next_ticket_number, AuditLog, AuditAction, TenantUser
+    get_next_ticket_number, AuditLog, AuditAction, TenantUser,
+    SparePart, SparePartUsage, SparePartLog, StockActionType
 )
 from datetime import timezone as tz
 import json
@@ -1269,3 +1270,155 @@ def get_ticket_trend():
         'completed': completed,
         'collected': collected
     }), 200
+
+
+# =============================================================================
+# SPARE PART USAGE — delovi utrošeni na tiketu
+# =============================================================================
+
+
+@bp.route('/<int:ticket_id>/parts', methods=['GET'])
+@jwt_required
+@tenant_required
+def list_ticket_parts(ticket_id):
+    """Lista delova utrošenih na tiketu."""
+    user = g.current_user
+    tenant = g.current_tenant
+
+    ticket = ServiceTicket.query.filter_by(id=ticket_id, tenant_id=tenant.id).first()
+    if not ticket:
+        return jsonify({'error': 'Not Found', 'message': 'Nalog nije pronadjen'}), 404
+    if not user.has_location_access(ticket.location_id):
+        return jsonify({'error': 'Forbidden', 'message': 'Nemate pristup ovoj lokaciji'}), 403
+
+    usages = SparePartUsage.query.filter_by(
+        tenant_id=tenant.id, service_ticket_id=ticket_id
+    ).all()
+
+    total_cost = sum(
+        float(u.unit_price * u.quantity_used) for u in usages if u.unit_price
+    )
+
+    return jsonify({
+        'items': [u.to_dict() for u in usages],
+        'total_cost': total_cost,
+    }), 200
+
+
+@bp.route('/<int:ticket_id>/parts', methods=['POST'])
+@jwt_required
+@tenant_required
+def add_ticket_part(ticket_id):
+    """Dodaj deo na tiket — atomično smanjenje zalihe."""
+    user = g.current_user
+    tenant = g.current_tenant
+    data = request.get_json()
+
+    ticket = ServiceTicket.query.filter_by(id=ticket_id, tenant_id=tenant.id).first()
+    if not ticket:
+        return jsonify({'error': 'Not Found', 'message': 'Nalog nije pronadjen'}), 404
+    if not user.has_location_access(ticket.location_id):
+        return jsonify({'error': 'Forbidden', 'message': 'Nemate pristup ovoj lokaciji'}), 403
+
+    spare_part_id = data.get('spare_part_id')
+    quantity = data.get('quantity', 1)
+    if not spare_part_id or quantity < 1:
+        return jsonify({'error': 'Validation Error', 'message': 'spare_part_id i quantity su obavezni'}), 400
+
+    part = SparePart.query.filter_by(id=spare_part_id, tenant_id=tenant.id).first()
+    if not part:
+        return jsonify({'error': 'Not Found', 'message': 'Deo nije pronadjen'}), 404
+
+    # Atomično smanjenje zalihe (SELECT FOR UPDATE)
+    qty_before = part.quantity
+    rows = db.session.execute(
+        db.text(
+            "UPDATE spare_part SET quantity = quantity - :qty, "
+            "updated_at = NOW() "
+            "WHERE id = :pid AND tenant_id = :tid AND quantity >= :qty "
+            "RETURNING quantity"
+        ),
+        {'qty': quantity, 'pid': spare_part_id, 'tid': tenant.id}
+    )
+    result = rows.fetchone()
+    if not result:
+        return jsonify({'error': 'Insufficient Stock', 'message': 'Nema dovoljno na stanju'}), 409
+
+    # Kreiraj usage zapis
+    usage = SparePartUsage(
+        tenant_id=tenant.id,
+        service_ticket_id=ticket_id,
+        spare_part_id=spare_part_id,
+        quantity_used=quantity,
+        unit_price=part.selling_price,
+        currency=part.currency or 'RSD',
+        added_by_id=user.id,
+    )
+    db.session.add(usage)
+
+    # Stock log
+    log = SparePartLog(
+        tenant_id=tenant.id,
+        spare_part_id=spare_part_id,
+        action_type=StockActionType.USE_TICKET,
+        quantity_before=qty_before,
+        quantity_after=result[0],
+        quantity_change=-quantity,
+        description=f'Utrošen na tiket #{ticket.ticket_number}',
+        reference_type='ticket',
+        reference_id=ticket_id,
+        user_id=user.id,
+    )
+    db.session.add(log)
+    db.session.commit()
+
+    # Refresh part object after raw SQL
+    db.session.refresh(part)
+
+    return jsonify(usage.to_dict()), 201
+
+
+@bp.route('/<int:ticket_id>/parts/<int:usage_id>', methods=['DELETE'])
+@jwt_required
+@tenant_required
+def remove_ticket_part(ticket_id, usage_id):
+    """Ukloni deo sa tiketa — vraćanje zalihe."""
+    user = g.current_user
+    tenant = g.current_tenant
+
+    ticket = ServiceTicket.query.filter_by(id=ticket_id, tenant_id=tenant.id).first()
+    if not ticket:
+        return jsonify({'error': 'Not Found', 'message': 'Nalog nije pronadjen'}), 404
+    if not user.has_location_access(ticket.location_id):
+        return jsonify({'error': 'Forbidden', 'message': 'Nemate pristup ovoj lokaciji'}), 403
+
+    usage = SparePartUsage.query.filter_by(
+        id=usage_id, service_ticket_id=ticket_id, tenant_id=tenant.id
+    ).first()
+    if not usage:
+        return jsonify({'error': 'Not Found', 'message': 'Usage zapis nije pronadjen'}), 404
+
+    part = SparePart.query.get(usage.spare_part_id)
+    qty_before = part.quantity if part else 0
+
+    # Vrati zalihu
+    if part:
+        part.quantity += usage.quantity_used
+        log = SparePartLog(
+            tenant_id=tenant.id,
+            spare_part_id=part.id,
+            action_type=StockActionType.RETURN,
+            quantity_before=qty_before,
+            quantity_after=part.quantity,
+            quantity_change=usage.quantity_used,
+            description=f'Vraćen sa tiketa #{ticket.ticket_number}',
+            reference_type='ticket',
+            reference_id=ticket_id,
+            user_id=user.id,
+        )
+        db.session.add(log)
+
+    db.session.delete(usage)
+    db.session.commit()
+
+    return jsonify({'message': 'Deo uklonjen sa tiketa'}), 200

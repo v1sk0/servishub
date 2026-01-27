@@ -300,3 +300,102 @@ class SparePart(db.Model):
             data['currency'] = self.currency
 
         return data
+
+
+class StockActionType(enum.Enum):
+    """Tip akcije nad zalihom."""
+    CREATE = 'CREATE'
+    UPDATE = 'UPDATE'
+    DELETE = 'DELETE'
+    RECEIVE = 'RECEIVE'
+    USE_TICKET = 'USE_TICKET'
+    RETURN = 'RETURN'
+    ADJUST = 'ADJUST'
+    DAMAGE = 'DAMAGE'
+    TRANSFER = 'TRANSFER'
+
+
+class SparePartUsage(db.Model):
+    """Utrošeni deo na servisnom nalogu."""
+    __tablename__ = 'spare_part_usage'
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    tenant_id = db.Column(
+        db.Integer,
+        db.ForeignKey('tenant.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True
+    )
+    service_ticket_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('service_ticket.id', ondelete='CASCADE'),
+        nullable=False
+    )
+    spare_part_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('spare_part.id', ondelete='RESTRICT'),
+        nullable=False
+    )
+    quantity_used = db.Column(db.Integer, nullable=False, default=1)
+    unit_price = db.Column(db.Numeric(10, 2))
+    currency = db.Column(db.String(3), default='RSD')
+    added_by_id = db.Column(db.Integer, db.ForeignKey('tenant_user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relacije
+    tenant = db.relationship('Tenant')
+    ticket = db.relationship('ServiceTicket', backref='used_parts')
+    spare_part = db.relationship('SparePart')
+    added_by = db.relationship('TenantUser')
+
+    __table_args__ = (
+        db.UniqueConstraint('service_ticket_id', 'spare_part_id', name='uq_usage_ticket_part'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'spare_part_id': self.spare_part_id,
+            'part_name': self.spare_part.part_name if self.spare_part else None,
+            'quantity_used': self.quantity_used,
+            'unit_price': float(self.unit_price) if self.unit_price else None,
+            'currency': self.currency,
+            'total': float(self.unit_price * self.quantity_used) if self.unit_price else None,
+            'created_at': self.created_at.isoformat(),
+        }
+
+
+class SparePartLog(db.Model):
+    """Audit trail za promene zaliha."""
+    __tablename__ = 'spare_part_log'
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    tenant_id = db.Column(
+        db.Integer,
+        db.ForeignKey('tenant.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True
+    )
+    spare_part_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('spare_part.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True
+    )
+    action_type = db.Column(db.Enum(StockActionType), nullable=False)
+    quantity_before = db.Column(db.Integer, nullable=False)
+    quantity_after = db.Column(db.Integer, nullable=False)
+    quantity_change = db.Column(db.Integer, nullable=False)
+    description = db.Column(db.String(255))
+    reference_type = db.Column(db.String(50))  # 'ticket', 'pos_receipt', etc.
+    reference_id = db.Column(db.BigInteger)
+    user_id = db.Column(db.Integer, db.ForeignKey('tenant_user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relacije
+    spare_part = db.relationship('SparePart', backref='stock_logs')
+    user = db.relationship('TenantUser')
+
+    __table_args__ = (
+        db.Index('ix_part_log_part_created', 'spare_part_id', 'created_at'),
+    )
