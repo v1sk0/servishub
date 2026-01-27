@@ -2572,39 +2572,56 @@ function settingsPage() {
 
         // Format working hours object to readable string for locations
         formatLocationWorkingHours(wh) {
-            if (!wh || typeof wh !== 'object') return '';
+            // Handle null, undefined, empty string
+            if (!wh) return '';
+
+            // Handle string (might be JSON string)
+            if (typeof wh === 'string') {
+                try {
+                    wh = JSON.parse(wh);
+                } catch (e) {
+                    return wh; // Return as-is if not valid JSON
+                }
+            }
+
+            // Must be object
+            if (typeof wh !== 'object') return '';
+
+            // Check if empty object
+            if (Object.keys(wh).length === 0) return '';
 
             const dayNames = {
-                mon: 'Pon', tue: 'Uto', wed: 'Sre', thu: 'Cet', fri: 'Pet', sat: 'Sub', sun: 'Ned'
+                mon: 'Pon', tue: 'Uto', wed: 'Sre', thu: 'Čet', fri: 'Pet', sat: 'Sub', sun: 'Ned'
             };
             const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
             const parts = [];
 
             for (const day of days) {
+                // Simple format: { mon: "09:00-17:00" } or { mon: "09-17" }
+                if (wh[day] && typeof wh[day] === 'string') {
+                    parts.push(`${dayNames[day]}: ${wh[day]}`);
+                    continue;
+                }
+
+                // Complex format: { mon_open: "09:00", mon_close: "17:00", mon_closed: false }
                 const openKey = `${day}_open`;
                 const closeKey = `${day}_close`;
                 const closedKey = `${day}_closed`;
 
-                // Check if this day has data
                 if (wh[closedKey] === true) {
-                    // Skip closed days or add "Zatvoreno"
-                    continue;
+                    continue; // Skip closed days
                 }
 
                 if (wh[openKey] && wh[closeKey]) {
                     parts.push(`${dayNames[day]}: ${wh[openKey]}-${wh[closeKey]}`);
-                } else if (wh[day]) {
-                    // Old format: { mon: "09:00-17:00" }
-                    parts.push(`${dayNames[day]}: ${wh[day]}`);
                 }
             }
 
-            // Try to group consecutive days with same hours
             if (parts.length === 0) return '';
-            if (parts.length <= 2) return parts.join(', ');
+            if (parts.length <= 3) return parts.join(', ');
 
-            // Return abbreviated version for many days
-            return parts.slice(0, 3).join(', ') + (parts.length > 3 ? '...' : '');
+            // Abbreviate for many days
+            return parts.slice(0, 3).join(', ') + '...';
         },
 
         // ==================== PUBLIC PROFILE ====================
