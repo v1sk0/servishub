@@ -20,3 +20,14 @@ def register_routes():
 
     bp.register_blueprint(tickets.bp)
     bp.register_blueprint(marketplace.bp)
+
+    # B2C Public User API (task-010)
+    from ..public_user import auth as pu_auth
+    from ..public_user import requests as pu_requests
+    from ..public_user import marketplace as pu_marketplace
+    from ..public_user import credits as pu_credits
+
+    bp.register_blueprint(pu_auth.bp)
+    bp.register_blueprint(pu_requests.bp)
+    bp.register_blueprint(pu_marketplace.bp)
+    bp.register_blueprint(pu_credits.bp)
