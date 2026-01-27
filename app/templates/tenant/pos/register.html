@@ -221,6 +221,15 @@
             <div class="fixed inset-0 bg-gray-500/75" @click="showOpenModal = false"></div>
             <div class="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Otvori kasu</h3>
+                <div class="mb-4" x-show="locations.length > 1">
+                    <label class="block text-sm font-medium text-gray-700">Lokacija</label>
+                    <select x-model.number="currentLocationId"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        <template x-for="loc in locations" :key="loc.id">
+                            <option :value="loc.id" x-text="loc.name"></option>
+                        </template>
+                    </select>
+                </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700">Pocetno stanje gotovine (RSD)</label>
                     <input type="number" x-model.number="openingCash" step="0.01" min="0"
@@ -293,7 +302,9 @@ function posRegister() {
         activeReceipt: null,
         receiptItems: [],
         recentReceipts: [],
+        currentLocationId: null,
         currentLocationName: '',
+        locations: [],
         showOpenModal: false,
         showCloseModal: false,
         showVoidModal: false,
@@ -309,8 +320,34 @@ function posRegister() {
         },
 
         async init() {
+            await this.loadUserLocation();
             await this.checkCurrentRegister();
             await this.loadRecentReceipts();
+        },
+
+        async loadUserLocation() {
+            try {
+                const res = await api('/api/v1/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    this.locations = data.locations || [];
+                    if (this.locations.length === 1) {
+                        this.currentLocationId = this.locations[0].id;
+                        this.currentLocationName = this.locations[0].name;
+                    } else if (this.locations.length > 1) {
+                        const primary = this.locations.find(l => l.is_primary);
+                        if (primary) {
+                            this.currentLocationId = primary.id;
+                            this.currentLocationName = primary.name;
+                        } else {
+                            this.currentLocationId = this.locations[0].id;
+                            this.currentLocationName = this.locations[0].name;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load user location', e);
+            }
         },
 
         async checkCurrentRegister() {
@@ -327,7 +364,10 @@ function posRegister() {
         },
 
         async openRegister() {
-            const res = await api('/api/v1/pos/register/open', 'POST', { opening_cash: this.openingCash });
+            const res = await api('/api/v1/pos/register/open', 'POST', {
+                opening_cash: this.openingCash,
+                location_id: this.currentLocationId
+            });
             if (res.ok) {
                 const data = await res.json();
                 this.session = { ...data, total_revenue: 0, receipt_count: 0 };
