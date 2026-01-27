@@ -1,0 +1,218 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Kupi kredite - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="purchasePage()" x-init="loadPackages()">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-8">
+        <div class="min-w-0 flex-1">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl">Kupi kredite</h2>
+            <p class="mt-1 text-sm text-gray-500">Izaberite paket i nacin placanja</p>
+        </div>
+        <div class="mt-4 md:ml-4 md:mt-0">
+            <a href="/credits" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                &larr; Nazad na stanje
+            </a>
+        </div>
+    </div>
+
+    <!-- Paketi -->
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+        <template x-for="pkg in packages" :key="pkg.code">
+            <div class="bg-white rounded-xl shadow-sm border-2 p-6 cursor-pointer transition-all hover:shadow-md"
+                 :class="selectedPackage === pkg.code ? 'border-primary-500 ring-2 ring-primary-200' : 'border-gray-200'"
+                 @click="selectedPackage = pkg.code">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-900 capitalize" x-text="pkg.code"></h3>
+                    <span x-show="pkg.discount_percent > 0"
+                          class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800"
+                          x-text="'-' + pkg.discount_percent + '%'"></span>
+                </div>
+                <div class="text-3xl font-bold text-gray-900 mb-1" x-text="pkg.credits + ' kredita'"></div>
+                <div class="text-sm text-gray-500 mb-4">
+                    <span x-text="pkg.price_per_credit_eur + ' EUR/kredit'"></span>
+                </div>
+                <div class="border-t pt-4">
+                    <div class="text-lg font-bold text-primary-600" x-text="pkg.price_eur.toFixed(2) + ' EUR'"></div>
+                    <div class="text-sm text-gray-500" x-text="'~' + formatPrice(pkg.price_rsd) + ' RSD'"></div>
+                </div>
+                <div class="mt-4" x-show="selectedPackage === pkg.code">
+                    <div class="inline-flex items-center text-sm text-primary-600 font-medium">
+                        <svg class="h-5 w-5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg>
+                        Izabrano
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- Promo kod + Placanje -->
+    <div class="bg-white shadow rounded-lg p-6" x-show="selectedPackage">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <!-- Promo kod -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Promo kod (opciono)</h3>
+                <div class="flex gap-2">
+                    <input type="text" x-model="promoCode" placeholder="Unesite promo kod"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    <button @click="validatePromo()" :disabled="!promoCode"
+                            class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap">
+                        Proveri
+                    </button>
+                </div>
+                <p x-show="promoResult" class="mt-2 text-sm"
+                   :class="promoResult?.valid ? 'text-green-600' : 'text-red-600'"
+                   x-text="promoResult?.valid ? 'Popust: ' + promoResult.discount.toFixed(2) + ' EUR' : promoResult?.reason"></p>
+            </div>
+
+            <!-- Nacin placanja -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Nacin placanja</h3>
+                <div class="space-y-3">
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer"
+                           :class="paymentMethod === 'bank_transfer' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'">
+                        <input type="radio" value="bank_transfer" x-model="paymentMethod" class="text-primary-600 focus:ring-primary-500">
+                        <span class="ml-3">
+                            <span class="block text-sm font-medium text-gray-900">Bankarski transfer</span>
+                            <span class="block text-xs text-gray-500">Placanje putem IPS QR koda ili uplatnice</span>
+                        </span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer"
+                           :class="paymentMethod === 'card' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'">
+                        <input type="radio" value="card" x-model="paymentMethod" class="text-primary-600 focus:ring-primary-500">
+                        <span class="ml-3">
+                            <span class="block text-sm font-medium text-gray-900">Kartica</span>
+                            <span class="block text-xs text-gray-500">Visa, Mastercard (uskoro)</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kupovina dugme -->
+        <div class="mt-6 pt-6 border-t border-gray-200 flex items-center justify-between">
+            <div>
+                <span class="text-sm text-gray-500">Ukupno za placanje:</span>
+                <span class="text-xl font-bold text-gray-900 ml-2" x-text="getFinalPrice() + ' EUR'"></span>
+            </div>
+            <button @click="purchase()" :disabled="!selectedPackage || purchasing"
+                    class="inline-flex items-center rounded-md bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 disabled:opacity-50">
+                <template x-if="purchasing">
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                </template>
+                Kupi kredite
+            </button>
+        </div>
+    </div>
+
+    <!-- QR Modal (bank transfer result) -->
+    <div x-show="showQR" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape="showQR = false">
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="fixed inset-0 bg-gray-500/75" @click="showQR = false"></div>
+            <div class="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md text-center">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Skenirajte QR kod za placanje</h3>
+                <img :src="'data:image/png;base64,' + qrCode" class="mx-auto mb-4" x-show="qrCode" alt="IPS QR kod">
+                <p class="text-sm text-gray-500 mb-2">Referenca: <strong x-text="paymentRef"></strong></p>
+                <p class="text-xs text-gray-400">Krediti ce biti dodati nakon potvrde uplate</p>
+                <button @click="showQR = false; window.location.href = '/credits'"
+                        class="mt-4 rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
+                    Zatvori
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div x-show="toast.show" x-cloak
+         x-transition class="fixed bottom-4 right-4 z-50 rounded-lg p-4 shadow-lg"
+         :class="toast.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'">
+        <span x-text="toast.message"></span>
+    </div>
+</div>
+
+<script>
+function purchasePage() {
+    return {
+        packages: [],
+        selectedPackage: null,
+        promoCode: '',
+        promoResult: null,
+        paymentMethod: 'bank_transfer',
+        purchasing: false,
+        showQR: false,
+        qrCode: '',
+        paymentRef: '',
+        toast: { show: false, message: '', type: 'success' },
+
+        async loadPackages() {
+            try {
+                const res = await api('/api/v1/credits/packages');
+                if (res.ok) {
+                    const data = await res.json();
+                    this.packages = data.packages || [];
+                }
+            } catch (e) {
+                console.error('Failed to load packages:', e);
+            }
+        },
+
+        async validatePromo() {
+            const res = await api('/api/v1/credits/validate-promo', 'POST', {
+                code: this.promoCode,
+                package: this.selectedPackage,
+            });
+            if (res.ok) {
+                this.promoResult = await res.json();
+            }
+        },
+
+        getFinalPrice() {
+            const pkg = this.packages.find(p => p.code === this.selectedPackage);
+            if (!pkg) return '0.00';
+            let price = pkg.price_eur;
+            if (this.promoResult?.valid) {
+                price = Math.max(0, price - this.promoResult.discount);
+            }
+            return price.toFixed(2);
+        },
+
+        async purchase() {
+            this.purchasing = true;
+            const idempotencyKey = crypto.randomUUID();
+            const res = await api('/api/v1/credits/purchase', 'POST', {
+                package: this.selectedPackage,
+                promo_code: this.promoCode || undefined,
+                payment_method: this.paymentMethod,
+                idempotency_key: idempotencyKey,
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.qr_code) {
+                    this.qrCode = data.qr_code;
+                    this.paymentRef = data.payment_reference;
+                    this.showQR = true;
+                } else {
+                    this.showToast('Kupovina kreirana', 'success');
+                    setTimeout(() => window.location.href = '/credits', 1500);
+                }
+            } else {
+                const err = await res.json();
+                this.showToast(err.error || 'Greska pri kupovini', 'error');
+            }
+            this.purchasing = false;
+        },
+
+        formatPrice(val) {
+            if (val == null) return '0';
+            return Number(val).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+
+        showToast(message, type) {
+            this.toast = { show: true, message, type };
+            setTimeout(() => { this.toast.show = false; }, 3000);
+        }
+    };
+}
+</script>
+{% endblock %}

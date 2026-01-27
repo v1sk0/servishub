@@ -19,7 +19,7 @@ from app.models import (
 )
 from sqlalchemy import or_
 
-bp = Blueprint('public_marketplace', __name__, url_prefix='/marketplace')
+bp = Blueprint('public_marketplace_legacy', __name__, url_prefix='/marketplace')
 
 
 # ============== Routes ==============

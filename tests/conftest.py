@@ -8,9 +8,46 @@ Setup: 2 tenanta, svaki sa lokacijama i korisnicima.
 import pytest
 from datetime import datetime
 
+import sqlalchemy as sa
+from sqlalchemy import BigInteger, Integer
+
 from app import create_app
 from app.config import TestingConfig
 from app.extensions import db as _db
+
+
+# SQLite ne podržava BigInteger autoincrement PK.
+# Kompajliramo BigInteger kao INTEGER za SQLite dijalekt.
+from sqlalchemy.dialects import sqlite
+sqlite.dialect.type_descriptor = sqlite.dialect.type_descriptor  # ensure loaded
+
+
+# Registruj NOW() funkciju za SQLite (PostgreSQL kompatibilnost)
+@sa.event.listens_for(sa.engine.Engine, "connect")
+def _register_sqlite_functions(dbapi_connection, connection_record):
+    import sqlite3
+    if isinstance(dbapi_connection, sqlite3.Connection):
+        dbapi_connection.create_function("NOW", 0, lambda: datetime.utcnow().isoformat())
+
+# Registruj BigInteger -> Integer variant za SQLite
+BigInteger_original = sa.BigInteger
+
+
+class _BigIntegerSQLite(sa.TypeDecorator):
+    impl = sa.BigInteger
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'sqlite':
+            return dialect.type_descriptor(sa.Integer())
+        return dialect.type_descriptor(sa.BigInteger())
+
+
+# Monkey-patch: zameni BigInteger sa SQLite-kompatibilnom verzijom
+sa.BigInteger = _BigIntegerSQLite
+sa.types.BigInteger = _BigIntegerSQLite
+import sqlalchemy.types as _sat
+_sat.BigInteger = _BigIntegerSQLite
 from app.models.tenant import Tenant, ServiceLocation, TenantStatus, LocationStatus
 from app.models.user import TenantUser, UserLocation, UserRole
 from app.api.middleware.jwt_utils import create_access_token

@@ -77,6 +77,12 @@ def admin_payments_list():
 
 # ============== Billing ==============
 
+@bp.route('/admin/billing/dashboard')
+def admin_billing_dashboard():
+    """Billing dashboard sa KPI karticama i pregledom duznika."""
+    return render_template('admin/billing/dashboard.html')
+
+
 @bp.route('/admin/billing/bank-import')
 def admin_bank_import():
     """Uvoz bankovnih izvoda."""

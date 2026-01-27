@@ -1585,3 +1585,17 @@ def get_public_profile_preview():
             'custom_domain': f'https://{profile.custom_domain}' if profile.custom_domain and profile.custom_domain_verified else None
         }
     }
+
+
+# ============== Feature Flags ==============
+
+@bp.route('/features', methods=['GET'])
+@jwt_required
+def get_features():
+    """Vrati aktivne feature flagove za tenant."""
+    from app.models.feature_flag import is_feature_enabled
+    return {
+        'pos_enabled': is_feature_enabled('pos_enabled', g.tenant_id),
+        'credits_enabled': is_feature_enabled('credits_enabled', g.tenant_id),
+        'b2c_marketplace_enabled': is_feature_enabled('b2c_marketplace_enabled', g.tenant_id),
+    }

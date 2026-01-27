@@ -186,6 +186,42 @@ def team_detail(user_id):
 
 # ============== Settings ==============
 
+# ============== POS / Kasa ==============
+
+@bp.route('/pos')
+def pos_register():
+    """POS kasa - otvaranje/zatvaranje, kreiranje racuna."""
+    return render_template('tenant/pos/register.html')
+
+
+@bp.route('/pos/receipts')
+def pos_receipts():
+    """Lista svih racuna."""
+    return render_template('tenant/pos/receipts.html')
+
+
+@bp.route('/pos/daily-report')
+def pos_daily_report():
+    """Dnevni izvestaj POS prometa."""
+    return render_template('tenant/pos/daily_report.html')
+
+
+# ============== Credits / Krediti ==============
+
+@bp.route('/credits')
+def credits_balance():
+    """Stanje kredita i istorija transakcija."""
+    return render_template('tenant/credits/balance.html')
+
+
+@bp.route('/credits/purchase')
+def credits_purchase():
+    """Kupovina paketa kredita."""
+    return render_template('tenant/credits/purchase.html')
+
+
+# ============== Settings ==============
+
 @bp.route('/settings')
 def settings():
     """Podesavanja servisa."""

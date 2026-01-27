@@ -1,0 +1,207 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Dnevni izvestaj - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="dailyReportPage()" x-init="loadReport()">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-8">
+        <div class="min-w-0 flex-1">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl">Dnevni izvestaj</h2>
+            <p class="mt-1 text-sm text-gray-500">Pregled prometa po danu</p>
+        </div>
+        <div class="mt-4 flex gap-2 md:ml-4 md:mt-0">
+            <a href="/pos" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Nazad na kasu</a>
+        </div>
+    </div>
+
+    <!-- Date picker -->
+    <div class="bg-white shadow rounded-lg mb-6 p-4">
+        <div class="flex items-center gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Datum</label>
+                <input type="date" x-model="selectedDate" @change="loadReport()"
+                       class="mt-1 block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+            </div>
+            <div class="flex items-end gap-2">
+                <button @click="changeDate(-1)" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">&larr; Prethodni</button>
+                <button @click="selectedDate = today(); loadReport()" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Danas</button>
+                <button @click="changeDate(1)" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Sledeci &rarr;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report found -->
+    <template x-if="report">
+        <div>
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-4 mb-6">
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <dt class="text-sm font-medium text-gray-500 truncate">Ukupan promet</dt>
+                        <dd class="mt-1 text-2xl font-bold text-gray-900" x-text="formatPrice(report.total_revenue) + ' RSD'"></dd>
+                    </div>
+                </div>
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <dt class="text-sm font-medium text-gray-500 truncate">Profit</dt>
+                        <dd class="mt-1 text-2xl font-bold text-green-600" x-text="formatPrice(report.total_profit) + ' RSD'"></dd>
+                        <dd class="text-sm text-gray-500" x-text="report.profit_margin_pct + '% marza'"></dd>
+                    </div>
+                </div>
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <dt class="text-sm font-medium text-gray-500 truncate">Broj racuna</dt>
+                        <dd class="mt-1 text-2xl font-bold text-gray-900" x-text="report.receipt_count"></dd>
+                        <dd class="text-sm text-red-500" x-show="report.voided_count > 0" x-text="report.voided_count + ' stornirano'"></dd>
+                    </div>
+                </div>
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <dt class="text-sm font-medium text-gray-500 truncate">Razlika kase</dt>
+                        <dd class="mt-1 text-2xl font-bold"
+                            :class="report.cash_difference >= 0 ? 'text-green-600' : 'text-red-600'"
+                            x-text="formatPrice(report.cash_difference) + ' RSD'"></dd>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalji -->
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <!-- Promet po nacinu placanja -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Promet po nacinu placanja</h3>
+                    <dl class="space-y-3">
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-500">Gotovina</dt>
+                            <dd class="text-sm font-semibold text-gray-900" x-text="formatPrice(report.total_cash) + ' RSD'"></dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-500">Kartica</dt>
+                            <dd class="text-sm font-semibold text-gray-900" x-text="formatPrice(report.total_card) + ' RSD'"></dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-500">Transfer</dt>
+                            <dd class="text-sm font-semibold text-gray-900" x-text="formatPrice(report.total_transfer) + ' RSD'"></dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <!-- Kasa stanje -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Stanje kase</h3>
+                    <dl class="space-y-3">
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-500">Pocetno stanje</dt>
+                            <dd class="text-sm font-semibold text-gray-900" x-text="formatPrice(report.opening_cash) + ' RSD'"></dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-500">Krajnje stanje</dt>
+                            <dd class="text-sm font-semibold text-gray-900" x-text="formatPrice(report.closing_cash) + ' RSD'"></dd>
+                        </div>
+                        <div class="flex justify-between border-t pt-3">
+                            <dt class="text-sm font-medium text-gray-900">Razlika</dt>
+                            <dd class="text-sm font-bold"
+                                :class="report.cash_difference >= 0 ? 'text-green-600' : 'text-red-600'"
+                                x-text="formatPrice(report.cash_difference) + ' RSD'"></dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <!-- Prodaja po kategoriji -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Prodaja po kategoriji</h3>
+                    <dl class="space-y-3">
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-500">Telefoni</dt>
+                            <dd class="text-sm font-semibold text-gray-900" x-text="report.phones_sold || 0"></dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-500">Delovi</dt>
+                            <dd class="text-sm font-semibold text-gray-900" x-text="report.parts_sold || 0"></dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-500">Usluge</dt>
+                            <dd class="text-sm font-semibold text-gray-900" x-text="report.services_sold || 0"></dd>
+                        </div>
+                        <div class="flex justify-between border-t pt-3">
+                            <dt class="text-sm font-medium text-gray-900">Ukupno stavki</dt>
+                            <dd class="text-sm font-bold text-gray-900" x-text="report.items_sold || 0"></dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <!-- Troskovi -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Finansijski pregled</h3>
+                    <dl class="space-y-3">
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-500">Prihod</dt>
+                            <dd class="text-sm font-semibold text-gray-900" x-text="formatPrice(report.total_revenue) + ' RSD'"></dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-sm text-gray-500">Nabavna vrednost</dt>
+                            <dd class="text-sm font-semibold text-gray-900" x-text="formatPrice(report.total_cost) + ' RSD'"></dd>
+                        </div>
+                        <div class="flex justify-between border-t pt-3">
+                            <dt class="text-sm font-medium text-gray-900">Neto profit</dt>
+                            <dd class="text-sm font-bold text-green-600" x-text="formatPrice(report.total_profit) + ' RSD'"></dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- No report -->
+    <template x-if="!report && !loading">
+        <div class="bg-white shadow rounded-lg p-12 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <p class="mt-2 text-sm text-gray-500">Nema izvestaja za izabrani datum</p>
+            <p class="text-xs text-gray-400 mt-1">Izvestaj se kreira automatski pri zatvaranju kase</p>
+        </div>
+    </template>
+</div>
+
+<script>
+function dailyReportPage() {
+    return {
+        report: null,
+        loading: false,
+        selectedDate: new Date().toISOString().split('T')[0],
+
+        today() {
+            return new Date().toISOString().split('T')[0];
+        },
+
+        changeDate(delta) {
+            const d = new Date(this.selectedDate);
+            d.setDate(d.getDate() + delta);
+            this.selectedDate = d.toISOString().split('T')[0];
+            this.loadReport();
+        },
+
+        async loadReport() {
+            this.loading = true;
+            this.report = null;
+            try {
+                const res = await api(`/api/v1/pos/reports/daily?date=${this.selectedDate}`);
+                if (res.ok) {
+                    this.report = await res.json();
+                }
+            } catch (e) {
+                console.error('Failed to load report:', e);
+            }
+            this.loading = false;
+        },
+
+        formatPrice(val) {
+            if (val == null) return '0';
+            return Number(val).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    };
+}
+</script>
+{% endblock %}

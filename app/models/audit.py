@@ -103,7 +103,7 @@ class AuditLog(db.Model):
         return f'<AuditLog {self.id}: {self.action.value} {self.entity_type}:{self.entity_id}>'
 
     @classmethod
-    def log(cls, entity_type, entity_id, action, changes=None, tenant_id=None, user=None):
+    def log(cls, entity_type, entity_id, action, changes=None, tenant_id=None, user=None, user_id=None):
         """
         Kreira novi audit log zapis.
 
@@ -142,7 +142,7 @@ class AuditLog(db.Model):
             entity_type=entity_type,
             entity_id=entity_id,
             action=action,
-            user_id=user.id if user else None,
+            user_id=user.id if user else user_id,
             user_email=user.email if user else None,
             changes_json=changes or {},
             ip_address=ip_address,

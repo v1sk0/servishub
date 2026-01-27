@@ -1,0 +1,168 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Billing Dashboard - ServisHub Admin{% endblock %}
+
+{% block head %}
+{% include "admin/_admin_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
+     x-data="billingDashboard()" x-init="loadData()">
+    <div class="admin-wrapper min-h-screen bg-gray-100">
+        {% set active_page = 'billing_dashboard' %}
+        {% include "admin/_sidebar.html" %}
+
+        <!-- Main content -->
+        <div class="ml-64">
+            <!-- Top bar -->
+            <div class="admin-topbar bg-white shadow-sm h-16 flex items-center justify-between px-8">
+                <h1 class="text-xl font-semibold text-gray-900">Billing Dashboard</h1>
+                <div class="text-sm text-gray-500" x-text="'Stanje na dan: ' + asOf"></div>
+            </div>
+
+            <div class="p-8">
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+                    <!-- Mesecni prihod -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+                        <dt class="text-sm font-medium text-gray-500">Naplaceno ovog meseca</dt>
+                        <dd class="mt-2 text-2xl font-bold text-gray-900" x-text="formatPrice(stats.paid?.amount) + ' RSD'"></dd>
+                        <dd class="text-sm text-green-600" x-text="stats.paid?.count + ' faktura'"></dd>
+                    </div>
+
+                    <!-- Na cekanju -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
+                        <dt class="text-sm font-medium text-gray-500">Na cekanju</dt>
+                        <dd class="mt-2 text-2xl font-bold text-gray-900" x-text="formatPrice(stats.pending?.amount) + ' RSD'"></dd>
+                        <dd class="text-sm text-yellow-600" x-text="stats.pending?.count + ' faktura'"></dd>
+                    </div>
+
+                    <!-- Zakasnele -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500">
+                        <dt class="text-sm font-medium text-gray-500">Zakasnele</dt>
+                        <dd class="mt-2 text-2xl font-bold text-red-600" x-text="formatPrice(stats.overdue?.amount) + ' RSD'"></dd>
+                        <dd class="text-sm text-red-600" x-text="stats.overdue?.count + ' faktura'"></dd>
+                    </div>
+
+                    <!-- Ukupno mesecno -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+                        <dt class="text-sm font-medium text-gray-500">Ukupno mesecno</dt>
+                        <dd class="mt-2 text-2xl font-bold text-gray-900" x-text="formatPrice(stats.monthly_total) + ' RSD'"></dd>
+                    </div>
+                </div>
+
+                <!-- Top duznici -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-semibold text-gray-900">Pregled po servisima</h2>
+                            <a href="/admin/payments" class="text-sm text-primary-600 hover:text-primary-500">Sve fakture &rarr;</a>
+                        </div>
+                    </div>
+                    <table class="min-w-full divide-y divide-gray-300">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="py-3.5 pl-6 pr-3 text-left text-sm font-semibold text-gray-900">Servis</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                                <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Dugovanje</th>
+                                <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Na cekanju</th>
+                                <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Zakasnele</th>
+                                <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Placeno</th>
+                                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Poslednja uplata</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <template x-for="t in tenants" :key="t.id">
+                                <tr class="hover:bg-gray-50 cursor-pointer" @click="window.location.href = '/admin/tenants/' + t.id">
+                                    <td class="whitespace-nowrap py-4 pl-6 pr-3">
+                                        <div class="text-sm font-medium text-gray-900" x-text="t.name"></div>
+                                        <div class="text-xs text-gray-500" x-text="t.email"></div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4">
+                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                                              :class="{
+                                                  'bg-green-100 text-green-800': t.status === 'ACTIVE' || t.status === 'PROMO',
+                                                  'bg-yellow-100 text-yellow-800': t.status === 'GRACE' || t.status === 'TRIAL',
+                                                  'bg-red-100 text-red-800': t.status === 'SUSPENDED' || t.status === 'CANCELLED',
+                                                  'bg-gray-100 text-gray-800': t.status === 'DEMO'
+                                              }"
+                                              x-text="t.status"></span>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-right font-semibold"
+                                        :class="t.current_debt > 0 ? 'text-red-600' : 'text-gray-500'"
+                                        x-text="formatPrice(t.current_debt) + ' RSD'"></td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-right text-yellow-600" x-text="t.pending_count || 0"></td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-right text-red-600" x-text="t.overdue_count || 0"></td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-right text-green-600" x-text="formatPrice(t.paid_amount)"></td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" x-text="t.last_payment_at ? formatDate(t.last_payment_at) : '-'"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                    <div x-show="tenants.length === 0 && !loading" class="text-center py-12">
+                        <p class="text-sm text-gray-500">Nema podataka</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function billingDashboard() {
+    return {
+        theme: localStorage.getItem('admin_theme') || 'light',
+        stats: {},
+        tenants: [],
+        loading: false,
+        asOf: '',
+
+        setTheme(t) {
+            this.theme = t;
+            localStorage.setItem('admin_theme', t);
+        },
+
+        async loadData() {
+            this.loading = true;
+            await Promise.all([this.loadStats(), this.loadTenants()]);
+            this.loading = false;
+        },
+
+        async loadStats() {
+            try {
+                const res = await adminApi('/api/admin/payments/stats');
+                if (res.ok) {
+                    this.stats = await res.json();
+                    this.asOf = this.stats.as_of || new Date().toISOString().split('T')[0];
+                }
+            } catch (e) {
+                console.error('Failed to load stats:', e);
+            }
+        },
+
+        async loadTenants() {
+            try {
+                const res = await adminApi('/api/admin/payments/by-tenant');
+                if (res.ok) {
+                    const data = await res.json();
+                    this.tenants = data.tenants || [];
+                }
+            } catch (e) {
+                console.error('Failed to load tenants:', e);
+            }
+        },
+
+        formatPrice(val) {
+            if (val == null) return '0';
+            return Number(val).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+
+        formatDate(iso) {
+            if (!iso) return '-';
+            return new Date(iso).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+    };
+}
+</script>
+{% endblock %}

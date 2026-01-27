@@ -40,7 +40,7 @@ class MockPayment:
     invoice_number: str = "SH-2026-000001"
     total_amount: Decimal = Decimal("5400.00")
     currency: str = "RSD"
-    payment_reference: str = "97000042000001"
+    payment_reference: str = "970000422026000001"
     payment_reference_model: str = "97"
     ips_qr_string: str = None
     created_at: datetime = None
@@ -81,19 +81,19 @@ def test_payment_reference_generation():
     print("\n=== Test: Payment Reference Generation ===")
     from app.services.ips_service import IPSService
 
-    # Format: 97 + tenant_id(6 cifara) + seq(5 cifara) = 13 cifara
-    # Ovo omogucava max 25 karaktera za RO tag u IPS QR
+    # Format v3.04: 97 + tenant_id(6 cifara) + year(4) + seq(6 cifara) = 18 cifara
+    year = 2026
     test_cases = [
-        (42, 1, "9700004200001"),      # 97 + 000042 + 00001
-        (123, 456, "9700012300456"),   # 97 + 000123 + 00456
-        (1, 99999, "9700000199999"),   # 97 + 000001 + 99999
+        (42, 1, "970000422026000001"),      # 97 + 000042 + 2026 + 000001
+        (123, 456, "970001232026000456"),    # 97 + 000123 + 2026 + 000456
+        (1, 99999, "970000012026099999"),    # 97 + 000001 + 2026 + 099999
     ]
 
     for tenant_id, seq, expected in test_cases:
-        result = IPSService.generate_payment_reference(tenant_id, seq)
+        result = IPSService.generate_payment_reference(tenant_id, seq, year=year)
         status = "[OK]" if result['full'] == expected else "[FAIL]"
         print(f"  {status} tenant={tenant_id}, seq={seq} -> '{result['full']}' (expected: {expected})")
-        print(f"      display: '{result['display']}', formatted: '{result['formatted']}'")
+        print(f"      display: '{result['display']}'")
 
     print("  Done.")
 
