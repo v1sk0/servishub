@@ -40,7 +40,7 @@
             <button x-show="isAdmin()" @click="activeTab = 'team'"
                     :class="activeTab === 'team' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                Tim
+                Tim (Zaposleni)
             </button>
             <button x-show="isAdmin()" @click="activeTab = 'locations'"
                     :class="activeTab === 'locations' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
@@ -424,7 +424,7 @@
     <!-- ==================== TEAM TAB ==================== -->
     <div x-show="!loading && activeTab === 'team'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
         <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-900">Tim</h2>
+            <h2 class="text-lg font-semibold text-gray-900">Tim (Zaposleni)</h2>
             <a href="/team/new" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -2586,26 +2586,55 @@ function settingsPage() {
             }
 
             // Must be object
-            if (typeof wh !== 'object') return '';
+            if (typeof wh !== 'object' || wh === null) return '';
             if (Object.keys(wh).length === 0) return '';
+
+            // Map various day formats to standard abbreviations
+            const dayAliases = {
+                mon: 'mon', monday: 'mon', ponedeljak: 'mon', pon: 'mon',
+                tue: 'tue', tuesday: 'tue', utorak: 'tue', uto: 'tue',
+                wed: 'wed', wednesday: 'wed', sreda: 'wed', sre: 'wed',
+                thu: 'thu', thursday: 'thu', cetvrtak: 'thu', cet: 'thu',
+                fri: 'fri', friday: 'fri', petak: 'fri', pet: 'fri',
+                sat: 'sat', saturday: 'sat', subota: 'sat', sub: 'sat',
+                sun: 'sun', sunday: 'sun', nedelja: 'sun', ned: 'sun'
+            };
 
             const dayNames = {
                 mon: 'Pon', tue: 'Uto', wed: 'Sre', thu: 'Čet', fri: 'Pet', sat: 'Sub', sun: 'Ned'
             };
             const weekdays = ['mon', 'tue', 'wed', 'thu', 'fri'];
 
-            // Helper to get hours for a day (handles both formats)
+            // Normalize the working hours object to standard format
+            const normalized = {};
+            for (const [key, value] of Object.entries(wh)) {
+                const lowerKey = key.toLowerCase();
+                const stdDay = dayAliases[lowerKey];
+                if (stdDay && typeof value === 'string') {
+                    normalized[stdDay] = value;
+                } else if (lowerKey.includes('_open') || lowerKey.includes('_close') || lowerKey.includes('_closed')) {
+                    // Complex format keys (mon_open, etc.)
+                    normalized[lowerKey] = value;
+                } else if (typeof value === 'object' && value !== null) {
+                    // Nested format: { mon: { open: "09:00", close: "17:00" } }
+                    if (stdDay && value.open && value.close) {
+                        normalized[stdDay] = `${value.open}-${value.close}`;
+                    }
+                }
+            }
+
+            // Helper to get hours for a day
             const getHours = (day) => {
                 // Simple format: { mon: "09:00-17:00" }
-                if (wh[day] && typeof wh[day] === 'string') {
-                    return wh[day];
+                if (normalized[day] && typeof normalized[day] === 'string') {
+                    return normalized[day];
                 }
-                // Complex format: { mon_open: "09:00", mon_close: "17:00", mon_closed: false }
-                if (wh[`${day}_closed`] === true) {
+                // Complex format: { mon_open: "09:00", mon_close: "17:00" }
+                if (normalized[`${day}_closed`] === true) {
                     return 'closed';
                 }
-                if (wh[`${day}_open`] && wh[`${day}_close`]) {
-                    return `${wh[`${day}_open`]}-${wh[`${day}_close`]}`;
+                if (normalized[`${day}_open`] && normalized[`${day}_close`]) {
+                    return `${normalized[`${day}_open`]}-${normalized[`${day}_close`]}`;
                 }
                 return null;
             };
@@ -2614,6 +2643,17 @@ function settingsPage() {
             const hours = {};
             for (const day of [...weekdays, 'sat', 'sun']) {
                 hours[day] = getHours(day);
+            }
+
+            // Check if any day has hours
+            const anyHours = Object.values(hours).some(h => h && h !== 'closed');
+            if (!anyHours) {
+                // Fallback: just show first few key-value pairs
+                const entries = Object.entries(wh).slice(0, 3);
+                if (entries.length > 0) {
+                    return entries.map(([k, v]) => `${k}: ${v}`).join(', ');
+                }
+                return '';
             }
 
             // Check if all weekdays have the same hours
