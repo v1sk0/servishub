@@ -2571,6 +2571,7 @@ function settingsPage() {
         },
 
         // Format working hours object to readable string for locations
+        // Smart grouping: "Radnim danima: 09-17, Sub: 09-14, Ned: ne radi"
         formatLocationWorkingHours(wh) {
             // Handle null, undefined, empty string
             if (!wh) return '';
@@ -2586,42 +2587,80 @@ function settingsPage() {
 
             // Must be object
             if (typeof wh !== 'object') return '';
-
-            // Check if empty object
             if (Object.keys(wh).length === 0) return '';
 
             const dayNames = {
                 mon: 'Pon', tue: 'Uto', wed: 'Sre', thu: 'Čet', fri: 'Pet', sat: 'Sub', sun: 'Ned'
             };
-            const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+            const weekdays = ['mon', 'tue', 'wed', 'thu', 'fri'];
+
+            // Helper to get hours for a day (handles both formats)
+            const getHours = (day) => {
+                // Simple format: { mon: "09:00-17:00" }
+                if (wh[day] && typeof wh[day] === 'string') {
+                    return wh[day];
+                }
+                // Complex format: { mon_open: "09:00", mon_close: "17:00", mon_closed: false }
+                if (wh[`${day}_closed`] === true) {
+                    return 'closed';
+                }
+                if (wh[`${day}_open`] && wh[`${day}_close`]) {
+                    return `${wh[`${day}_open`]}-${wh[`${day}_close`]}`;
+                }
+                return null;
+            };
+
+            // Get hours for all days
+            const hours = {};
+            for (const day of [...weekdays, 'sat', 'sun']) {
+                hours[day] = getHours(day);
+            }
+
+            // Check if all weekdays have the same hours
+            const weekdayHours = weekdays.map(d => hours[d]).filter(h => h && h !== 'closed');
+            const uniqueWeekdayHours = [...new Set(weekdayHours)];
+            const allWeekdaysSame = uniqueWeekdayHours.length === 1 && weekdayHours.length === 5;
+
             const parts = [];
 
-            for (const day of days) {
-                // Simple format: { mon: "09:00-17:00" } or { mon: "09-17" }
-                if (wh[day] && typeof wh[day] === 'string') {
-                    parts.push(`${dayNames[day]}: ${wh[day]}`);
-                    continue;
-                }
+            if (allWeekdaysSame) {
+                // All weekdays same: "Radnim danima: 09-17"
+                parts.push(`Radnim danima: ${uniqueWeekdayHours[0]}`);
+            } else {
+                // Show weekdays that differ or all individually
+                const commonHours = uniqueWeekdayHours.length === 1 ? uniqueWeekdayHours[0] : null;
 
-                // Complex format: { mon_open: "09:00", mon_close: "17:00", mon_closed: false }
-                const openKey = `${day}_open`;
-                const closeKey = `${day}_close`;
-                const closedKey = `${day}_closed`;
-
-                if (wh[closedKey] === true) {
-                    continue; // Skip closed days
-                }
-
-                if (wh[openKey] && wh[closeKey]) {
-                    parts.push(`${dayNames[day]}: ${wh[openKey]}-${wh[closeKey]}`);
+                if (commonHours && weekdayHours.length >= 3) {
+                    // Most weekdays same, show exceptions
+                    parts.push(`Radnim danima: ${commonHours}`);
+                    for (const day of weekdays) {
+                        if (hours[day] && hours[day] !== commonHours && hours[day] !== 'closed') {
+                            parts.push(`${dayNames[day]}: ${hours[day]}`);
+                        }
+                    }
+                } else {
+                    // Show each weekday
+                    for (const day of weekdays) {
+                        if (hours[day] && hours[day] !== 'closed') {
+                            parts.push(`${dayNames[day]}: ${hours[day]}`);
+                        }
+                    }
                 }
             }
 
-            if (parts.length === 0) return '';
-            if (parts.length <= 3) return parts.join(', ');
+            // Saturday
+            if (hours.sat && hours.sat !== 'closed') {
+                parts.push(`Sub: ${hours.sat}`);
+            }
 
-            // Abbreviate for many days
-            return parts.slice(0, 3).join(', ') + '...';
+            // Sunday
+            if (hours.sun === 'closed' || !hours.sun) {
+                parts.push('Ned: ne radi');
+            } else {
+                parts.push(`Ned: ${hours.sun}`);
+            }
+
+            return parts.join(', ');
         },
 
         // ==================== PUBLIC PROFILE ====================
