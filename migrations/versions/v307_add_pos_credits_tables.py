@@ -184,8 +184,8 @@ def upgrade():
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('owner_type', sa.Enum('tenant', 'supplier', 'public_user', name='ownertype'), nullable=False),
         sa.Column('tenant_id', sa.Integer(), nullable=True),
-        sa.Column('supplier_id', sa.Integer(), nullable=True),
-        sa.Column('public_user_id', sa.BigInteger(), nullable=True),
+        sa.Column('supplier_id', sa.Integer(), nullable=True),  # FK deferred - supplier table TBD
+        sa.Column('public_user_id', sa.BigInteger(), nullable=True),  # FK deferred - public_user table TBD
         sa.Column('balance', sa.Numeric(precision=10, scale=2), nullable=False),
         sa.Column('total_purchased', sa.Numeric(precision=10, scale=2), nullable=False),
         sa.Column('total_spent', sa.Numeric(precision=10, scale=2), nullable=False),
@@ -195,8 +195,7 @@ def upgrade():
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.Column('updated_at', sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(['tenant_id'], ['tenant.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['supplier_id'], ['supplier.id'], ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['public_user_id'], ['public_user.id'], ondelete='CASCADE'),
+        # supplier and public_user FKs deferred until those tables exist
         sa.CheckConstraint('balance >= 0', name='check_balance_non_negative'),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('owner_type', 'tenant_id', name='uq_credit_balance_tenant'),
