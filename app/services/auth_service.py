@@ -220,6 +220,15 @@ class AuthService:
             )
             db.session.commit()
 
+            # Welcome krediti za novog tenanta
+            try:
+                from app.services.credit_service import grant_welcome_credits
+                from app.models.credits import OwnerType
+                grant_welcome_credits(OwnerType.TENANT, tenant.id)
+                db.session.commit()
+            except Exception:
+                pass  # Welcome credits nisu kritični za registraciju
+
             return tenant, owner
 
         except Exception as e:
