@@ -291,6 +291,115 @@ def delete_logo():
     return {'message': 'Logo obrisan'}
 
 
+@bp.route('/upload/id-card/<side>', methods=['POST'])
+@jwt_required
+def upload_id_card(side):
+    """
+    Upload ID card image (front or back) to Cloudinary.
+
+    Args:
+        side: 'front' or 'back'
+
+    Expects multipart/form-data with 'image' file field.
+    Only OWNER and ADMIN can upload.
+    """
+    from app.utils.cloudinary_upload import upload_image
+
+    if side not in ['front', 'back']:
+        return {'error': 'Side must be "front" or "back"'}, 400
+
+    user = TenantUser.query.get(g.user_id)
+    if not user or user.role.value not in ['OWNER', 'ADMIN']:
+        return {'error': 'Admin access required'}, 403
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    # Get existing representative
+    representative = ServiceRepresentative.query.filter_by(
+        tenant_id=tenant.id,
+        is_primary=True
+    ).first()
+
+    if not representative:
+        return {'error': 'Najpre unesite podatke odgovornog lica'}, 400
+
+    # Check if file is in request
+    if 'image' not in request.files:
+        return {'error': 'Fajl nije prosleđen'}, 400
+
+    file = request.files['image']
+
+    # Upload to Cloudinary - folder: servishub/tenant_{id}/documents/lk_{side}
+    filename = f'lk_{side}'
+    result = upload_image(file, tenant.id, 'documents', filename)
+
+    if not result['success']:
+        return {'error': result['error']}, 400
+
+    # Save URL to representative
+    if side == 'front':
+        representative.lk_front_url = result['url']
+    else:
+        representative.lk_back_url = result['url']
+
+    representative.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    return {
+        'message': f'Lična karta ({side}) uspešno uploadovana',
+        'url': result['url'],
+        'side': side
+    }
+
+
+@bp.route('/upload/id-card/<side>', methods=['DELETE'])
+@jwt_required
+def delete_id_card(side):
+    """
+    Delete ID card image from Cloudinary.
+
+    Args:
+        side: 'front' or 'back'
+    """
+    from app.utils.cloudinary_upload import delete_image
+
+    if side not in ['front', 'back']:
+        return {'error': 'Side must be "front" or "back"'}, 400
+
+    user = TenantUser.query.get(g.user_id)
+    if not user or user.role.value not in ['OWNER', 'ADMIN']:
+        return {'error': 'Admin access required'}, 403
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    representative = ServiceRepresentative.query.filter_by(
+        tenant_id=tenant.id,
+        is_primary=True
+    ).first()
+
+    if not representative:
+        return {'error': 'Nema podataka o odgovornom licu'}, 400
+
+    # Delete from Cloudinary
+    filename = f'lk_{side}'
+    delete_image(tenant.id, 'documents', filename)
+
+    # Clear URL
+    if side == 'front':
+        representative.lk_front_url = None
+    else:
+        representative.lk_back_url = None
+
+    representative.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    return {'message': f'Slika lične karte ({side}) obrisana'}
+
+
 @bp.route('/login-info', methods=['GET'])
 @jwt_required
 def get_login_info():
@@ -970,7 +1079,9 @@ def get_kyc_status():
             'ime': representative.ime,
             'prezime': representative.prezime,
             'email': representative.email,
-            'telefon': representative.telefon
+            'telefon': representative.telefon,
+            'lk_front_url': representative.lk_front_url,
+            'lk_back_url': representative.lk_back_url
         }
     }
 
