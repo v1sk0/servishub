@@ -38,6 +38,10 @@ from .service_request import (
 )
 from .rating import Rating, RatingType
 from .content_report import ContentReport, ReportReason, ReportStatus
+from .pos import (
+    CashRegisterSession, Receipt, ReceiptItem, DailyReport,
+    PaymentMethod, ReceiptStatus, ReceiptType, CashRegisterStatus, SaleItemType
+)
 from .credits import (
     CreditBalance, CreditTransaction, CreditPurchase, PromoCode,
     OwnerType, CreditTransactionType, DiscountType, CreditPaymentStatus
@@ -152,6 +156,16 @@ __all__ = [
     'ContentReport',
     'ReportReason',
     'ReportStatus',
+    # POS/Kasa modeli
+    'CashRegisterSession',
+    'Receipt',
+    'ReceiptItem',
+    'DailyReport',
+    'PaymentMethod',
+    'ReceiptStatus',
+    'ReceiptType',
+    'CashRegisterStatus',
+    'SaleItemType',
     # Credit System modeli
     'CreditBalance',
     'CreditTransaction',
