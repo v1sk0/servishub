@@ -994,11 +994,11 @@ def submit_kyc():
         is_primary=True
     ).first()
 
+    # Only block if already verified
     if existing and existing.status.value == 'VERIFIED':
-        return {'error': 'KYC already verified'}, 400
+        return {'error': 'Već je verifikovano'}, 400
 
-    if existing and existing.status.value == 'PENDING':
-        return {'error': 'KYC already pending review'}, 400
+    # Allow updates while PENDING (user can correct mistakes)
 
     # Parse date
     datum_rodjenja = None
@@ -1048,7 +1048,7 @@ def submit_kyc():
     db.session.commit()
 
     return {
-        'message': 'KYC submitted for review',
+        'message': 'Podaci poslati na verifikaciju',
         'representative_id': representative.id
     }, 201
 
