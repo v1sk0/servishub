@@ -3,400 +3,408 @@
 {% block title %}Kasa - ServisHub{% endblock %}
 
 {% block page_content %}
-<div x-data="posRegister()" x-init="init()" @keydown.window="handleKeyboard($event)">
-    <!-- Header with Dual-Mode Badge -->
-    <div class="md:flex md:items-center md:justify-between mb-6">
-        <div class="min-w-0 flex-1">
+<style>
+    /* TiM Kasa stil — fullscreen, keyboard-first */
+    .kasa-wrapper { display: flex; flex-direction: column; height: calc(100vh - 64px); overflow: hidden; background: #f3f4f6; }
+    .kasa-header { flex-shrink: 0; }
+    .kasa-body { flex: 1; display: flex; overflow: hidden; gap: 0; }
+    .kasa-table-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .kasa-right-panel { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; border-left: 1px solid #e5e7eb; background: #fff; }
+    .kasa-input-area { flex-shrink: 0; border-top: 1px solid #e5e7eb; background: #fff; }
+    .kasa-bottom-bar { flex-shrink: 0; }
+    .kasa-total { font-size: 3rem; font-weight: 700; color: #dc2626; font-family: 'Courier New', monospace; }
+    .kasa-table-scroll { flex: 1; overflow-y: auto; }
+    .kasa-table th { background: #374151; color: #fff; position: sticky; top: 0; z-index: 1; }
+    .kasa-table tr.selected { background: #dbeafe; }
+    .kasa-table tr:hover:not(.selected) { background: #f9fafb; }
+    .kasa-fn-btn { display: inline-flex; flex-direction: column; align-items: center; padding: 6px 14px; border: 1px solid #d1d5db;
+                   border-radius: 6px; background: #f9fafb; font-size: 12px; cursor: pointer; min-width: 80px; }
+    .kasa-fn-btn:hover { background: #e5e7eb; }
+    .kasa-fn-btn .fn-key { font-weight: 700; color: #374151; font-size: 11px; }
+    .kasa-fn-btn .fn-label { color: #6b7280; font-size: 11px; }
+    .last-receipt-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 13px; }
+    .last-receipt-label { color: #6b7280; }
+    .last-receipt-value { font-weight: 600; color: #111827; font-family: monospace; }
+
+    /* Artikl lista modal */
+    .artikl-modal { max-height: 70vh; }
+    .artikl-item { cursor: pointer; transition: background 0.1s; }
+    .artikl-item:hover { background: #eff6ff; }
+    .artikl-item.selected { background: #dbeafe; }
+</style>
+
+<div x-data="posRegister()" x-init="init()" @keydown.window="handleKeyboard($event)" x-cloak>
+    <div class="kasa-wrapper">
+
+        <!-- ============ HEADER ============ -->
+        <div class="kasa-header bg-white border-b border-gray-300 px-4 py-2 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <span class="font-bold text-gray-800 text-sm">Promet</span>
+                <span class="font-bold text-gray-800 text-sm">Prodaja</span>
+                <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-bold uppercase"
+                      :class="fiscalMode ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'"
+                      x-text="fiscalMode ? 'Fiskalna' : 'Interna'"></span>
+                <span class="text-xs text-gray-500" x-text="currentLocationName"></span>
+                <span class="text-xs text-gray-400" x-text="todayFormatted"></span>
+            </div>
             <div class="flex items-center gap-3">
-                <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl">Kasa</h2>
-                <template x-if="session">
-                    <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide"
-                          :class="session.fiscal_mode ? 'bg-green-100 text-green-800 ring-1 ring-green-600/20' : 'bg-blue-100 text-blue-800 ring-1 ring-blue-600/20'"
-                          x-text="session.fiscal_mode ? 'FISKALNA KASA' : 'INTERNA KASA'"></span>
-                </template>
+                <a href="/pos/receipts" class="text-xs text-gray-500 hover:text-gray-700">Svi racuni</a>
+                <a href="/dashboard" class="text-xs text-gray-500 hover:text-gray-700">Nazad</a>
             </div>
-            <p class="mt-1 text-sm text-gray-500">
-                <span x-text="currentLocationName || ''"></span>
-                <span class="mx-1" x-show="session">&middot;</span>
-                <span x-show="session" x-text="session ? formatDate(session.date) : ''"></span>
-            </p>
         </div>
-        <div class="mt-4 flex gap-2 md:ml-4 md:mt-0">
-            <a href="/pos/receipts" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                <svg class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                Svi racuni
-            </a>
-            <a href="/pos/daily-report" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                <svg class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                Dnevni izvestaj
-            </a>
-        </div>
-    </div>
 
-    <!-- Kasa Status Bar -->
-    <div class="bg-white shadow rounded-lg mb-6 p-4">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-6">
-                <div class="flex items-center gap-2">
-                    <div class="h-3 w-3 rounded-full" :class="session ? 'bg-green-500' : 'bg-gray-300'"></div>
-                    <span class="text-sm font-medium text-gray-700" x-text="session ? 'Kasa otvorena' : 'Kasa zatvorena'"></span>
+        <!-- ============ BODY ============ -->
+        <div class="kasa-body">
+
+            <!-- LEFT: Table + Input -->
+            <div class="kasa-table-area">
+                <!-- Table -->
+                <div class="kasa-table-scroll bg-white">
+                    <table class="kasa-table w-full text-sm">
+                        <thead>
+                            <tr>
+                                <th class="text-left py-2 px-3 w-12">#</th>
+                                <th class="text-left py-2 px-3 w-28">Sifra</th>
+                                <th class="text-left py-2 px-3">Naziv</th>
+                                <th class="text-center py-2 px-3 w-20">Kolicina</th>
+                                <th class="text-right py-2 px-3 w-24">Cena</th>
+                                <th class="text-center py-2 px-3 w-20">Popust(%)</th>
+                                <th class="text-right py-2 px-3 w-28">Vrednost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="(item, idx) in items" :key="idx">
+                                <tr @click="selectedIndex = idx" :class="{'selected': selectedIndex === idx}"
+                                    class="border-b border-gray-100 cursor-pointer">
+                                    <td class="py-2 px-3 text-gray-400" x-text="idx + 1"></td>
+                                    <td class="py-2 px-3 text-gray-600 font-mono text-xs" x-text="item.barcode || item.sku || '-'"></td>
+                                    <td class="py-2 px-3 font-medium text-gray-900" x-text="item.name"></td>
+                                    <td class="py-2 px-3 text-center" x-text="item.quantity"></td>
+                                    <td class="py-2 px-3 text-right font-mono" x-text="fmtPrice(item.price)"></td>
+                                    <td class="py-2 px-3 text-center" x-text="item.discount > 0 ? item.discount + '%' : ''"></td>
+                                    <td class="py-2 px-3 text-right font-bold font-mono" x-text="fmtPrice(itemTotal(item))"></td>
+                                </tr>
+                            </template>
+                            <!-- Prazni redovi za vizuelni efekat -->
+                            <template x-if="items.length === 0">
+                                <tr><td colspan="7" class="py-12 text-center text-gray-300 text-sm">Skenirajte barkod ili unesite sifru artikla</td></tr>
+                            </template>
+                        </tbody>
+                    </table>
                 </div>
-                <template x-if="session">
-                    <div class="flex items-center gap-6 text-sm text-gray-500">
-                        <span>Promet: <strong class="text-green-600" x-text="formatPrice(session.total_revenue) + ' RSD'"></strong></span>
-                        <span>Racuni: <strong x-text="session.receipt_count"></strong></span>
-                        <span>Pocetno: <strong x-text="formatPrice(session.opening_cash) + ' RSD'"></strong></span>
-                    </div>
-                </template>
-            </div>
-            <div>
-                <template x-if="!session">
-                    <button @click="showOpenModal = true"
-                            class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
-                        Otvori kasu
-                    </button>
-                </template>
-                <template x-if="session">
-                    <button @click="showCloseModal = true"
-                            class="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
-                        Zatvori kasu
-                    </button>
-                </template>
-            </div>
-        </div>
-    </div>
 
-    <!-- Main POS Area (only when register open) -->
-    <template x-if="session">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- LEFT: Search + Items List -->
-            <div class="lg:col-span-2">
-                <div class="bg-white shadow rounded-lg">
-                    <!-- Receipt Header -->
-                    <div class="p-4 border-b border-gray-200 flex items-center justify-between">
-                        <div>
-                            <template x-if="activeReceipt">
-                                <div class="flex items-center gap-3">
-                                    <span class="text-sm font-medium text-gray-900">Racun: <strong x-text="activeReceipt.receipt_number"></strong></span>
-                                    <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">DRAFT</span>
-                                </div>
-                            </template>
-                            <template x-if="!activeReceipt">
-                                <span class="text-sm text-gray-500">Nema aktivnog racuna</span>
-                            </template>
-                        </div>
-                        <template x-if="!activeReceipt">
-                            <button @click="createReceipt()"
-                                    class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
-                                <svg class="-ml-0.5 mr-1.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
-                                Novi racun <span class="ml-1 text-xs opacity-70">(F1)</span>
-                            </button>
-                        </template>
-                    </div>
-
-                    <!-- Search Bar -->
-                    <template x-if="activeReceipt">
-                        <div class="p-4 border-b border-gray-200">
-                            <div class="relative">
-                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                                </div>
-                                <input x-ref="searchInput" type="text" x-model="searchQuery"
-                                       @input.debounce.300ms="searchItems()"
-                                       @keydown.escape="searchQuery = ''; searchResults = []"
-                                       @keydown.enter="if(searchResults.length === 1) addSearchItem(searchResults[0])"
-                                       placeholder="Pretrazi artikl po imenu, barkodu ili sifri..."
-                                       class="block w-full rounded-md border-gray-300 pl-10 pr-3 py-3 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500">
-                            </div>
-
-                            <!-- Search Results Dropdown -->
-                            <div x-show="searchResults.length > 0" class="mt-2 rounded-md border border-gray-200 bg-white shadow-lg max-h-64 overflow-y-auto">
-                                <template x-for="result in searchResults" :key="result.type + '-' + result.id">
-                                    <button @click="addSearchItem(result)"
-                                            class="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 flex items-center justify-between">
-                                        <div>
-                                            <span class="text-sm font-medium text-gray-900" x-text="result.name"></span>
-                                            <div class="flex items-center gap-2 mt-0.5">
-                                                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                                                      :class="{
-                                                          'bg-purple-100 text-purple-700': result.type === 'GOODS',
-                                                          'bg-orange-100 text-orange-700': result.type === 'SPARE_PART',
-                                                          'bg-cyan-100 text-cyan-700': result.type === 'PHONE',
-                                                      }" x-text="result.type === 'GOODS' ? 'Roba' : result.type === 'SPARE_PART' ? 'Deo' : 'Telefon'"></span>
-                                                <span class="text-xs text-gray-400" x-show="result.barcode" x-text="result.barcode"></span>
-                                                <span class="text-xs text-gray-400" x-text="'Stanje: ' + result.stock"></span>
-                                            </div>
-                                        </div>
-                                        <span class="text-sm font-semibold text-gray-900" x-text="formatPrice(result.price) + ' RSD'"></span>
-                                    </button>
-                                </template>
-                            </div>
-
-                            <!-- No results -->
-                            <div x-show="searchQuery.length >= 2 && searchResults.length === 0 && !searching" class="mt-2 text-sm text-gray-500 text-center py-3">
-                                Nema rezultata za "<span x-text="searchQuery"></span>"
-                            </div>
-
-                            <!-- Manual add toggle -->
-                            <div class="mt-3 flex items-center gap-2">
-                                <button @click="showManualAdd = !showManualAdd"
-                                        class="text-xs text-primary-600 hover:text-primary-800 font-medium">
-                                    <span x-text="showManualAdd ? 'Sakrij rucni unos' : '+ Rucni unos stavke'"></span>
+                <!-- Input zona -->
+                <div class="kasa-input-area p-4">
+                    <div class="flex gap-6">
+                        <!-- Leva strana: inputi -->
+                        <div class="flex-1 space-y-2">
+                            <!-- Sifra -->
+                            <div class="flex items-center gap-2">
+                                <label class="text-sm font-medium text-gray-700 w-20">Sifra:</label>
+                                <input x-ref="barcodeInput" type="text" x-model="searchQuery"
+                                       @keydown.enter.prevent="onBarcodeEnter()"
+                                       class="flex-1 rounded border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                       placeholder="Barkod / sifra" autofocus>
+                                <button @click="showArtiklModal = true" class="px-3 py-1.5 border border-gray-300 rounded bg-gray-50 hover:bg-gray-100 text-sm"
+                                        title="Lista artikala">
+                                    <svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                                 </button>
                             </div>
-
-                            <!-- Manual Item Add -->
-                            <div x-show="showManualAdd" x-collapse class="mt-3 p-3 bg-gray-50 rounded-lg">
-                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
-                                    <div class="sm:col-span-2">
-                                        <input type="text" x-model="manualItem.item_name" placeholder="Naziv stavke"
-                                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
-                                    </div>
-                                    <div>
-                                        <input type="number" x-model.number="manualItem.unit_price" placeholder="Cena" step="0.01"
-                                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
-                                    </div>
-                                    <div>
-                                        <button @click="addManualItem()" :disabled="!manualItem.item_name || !manualItem.unit_price"
-                                                class="w-full rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 disabled:opacity-50">
-                                            Dodaj
-                                        </button>
-                                    </div>
-                                </div>
+                            <!-- Naziv (readonly) -->
+                            <div class="flex items-center gap-2">
+                                <label class="text-sm font-medium text-gray-700 w-20">Naziv:</label>
+                                <input type="text" x-model="pendingItem.name" readonly tabindex="-1"
+                                       class="flex-1 rounded border-gray-200 bg-gray-50 px-3 py-1.5 text-sm">
+                            </div>
+                            <!-- Kolicina + Rezim -->
+                            <div class="flex items-center gap-2">
+                                <label class="text-sm font-medium text-gray-700 w-20">Kolicina:</label>
+                                <input x-ref="qtyInput" type="number" x-model.number="pendingItem.quantity" min="1" step="1"
+                                       @keydown.enter.prevent="confirmPendingItem()"
+                                       class="w-20 rounded border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <select x-model="qtyMode" class="rounded border-gray-300 px-2 py-1.5 text-xs text-gray-600">
+                                    <option value="auto">Bez unosa kolicine</option>
+                                    <option value="manual">Unos kolicine</option>
+                                </select>
+                                <button @click="confirmPendingItem()" x-show="pendingItem.name"
+                                        class="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-500">
+                                    Dodaj
+                                </button>
+                            </div>
+                            <!-- Cena + Izmena cene -->
+                            <div class="flex items-center gap-2">
+                                <label class="text-sm font-medium text-gray-700 w-20">Cena:</label>
+                                <input type="number" x-model.number="pendingItem.price" step="0.01"
+                                       :readonly="!allowPriceEdit" :class="allowPriceEdit ? '' : 'bg-gray-50'"
+                                       class="w-28 rounded border-gray-300 px-3 py-1.5 text-sm shadow-sm">
+                                <label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                                    <input type="checkbox" x-model="allowPriceEdit" class="rounded border-gray-300 text-blue-600">
+                                    Izmena cene
+                                </label>
+                            </div>
+                            <!-- Popust -->
+                            <div class="flex items-center gap-2">
+                                <label class="text-sm font-medium text-gray-700 w-20">Popust:</label>
+                                <select x-model="pendingItem.discount" class="rounded border-gray-300 px-2 py-1.5 text-sm text-gray-600">
+                                    <option value="0">Bez popusta</option>
+                                    <option value="5">5%</option>
+                                    <option value="10">10%</option>
+                                    <option value="15">15%</option>
+                                    <option value="20">20%</option>
+                                    <option value="25">25%</option>
+                                    <option value="30">30%</option>
+                                </select>
                             </div>
                         </div>
-                    </template>
-
-                    <!-- Items Table -->
-                    <div class="p-4" x-show="receiptItems.length > 0">
-                        <table class="min-w-full divide-y divide-gray-300">
-                            <thead>
-                                <tr>
-                                    <th class="py-3 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Stavka</th>
-                                    <th class="px-3 py-3 text-center text-sm font-semibold text-gray-900">Kol.</th>
-                                    <th class="px-3 py-3 text-right text-sm font-semibold text-gray-900">Cena</th>
-                                    <th class="px-3 py-3 text-right text-sm font-semibold text-gray-900">Ukupno</th>
-                                    <th class="relative py-3 pl-3 pr-4 w-10"></th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                <template x-for="item in receiptItems" :key="item.id">
-                                    <tr>
-                                        <td class="py-3 pl-4 pr-3">
-                                            <div class="text-sm font-medium text-gray-900" x-text="item.item_name"></div>
-                                            <div class="text-xs text-gray-500" x-text="itemTypeLabel(item.item_type)"></div>
-                                        </td>
-                                        <td class="px-3 py-3 text-center text-sm text-gray-700" x-text="item.quantity"></td>
-                                        <td class="px-3 py-3 text-right text-sm text-gray-700" x-text="formatPrice(item.unit_price)"></td>
-                                        <td class="px-3 py-3 text-right text-sm font-semibold text-gray-900" x-text="formatPrice(item.line_total)"></td>
-                                        <td class="py-3 pl-3 pr-4 text-right">
-                                            <button @click="removeItem(item.id)" class="text-red-500 hover:text-red-700">
-                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Empty state -->
-                    <div x-show="activeReceipt && receiptItems.length === 0" class="p-8 text-center text-gray-400">
-                        <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
-                        <p class="mt-2 text-sm">Pretrazi artikl ili skeniraj barkod da dodas stavku</p>
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT: Payment Panel -->
-            <div class="lg:col-span-1">
-                <div class="bg-white shadow rounded-lg sticky top-4">
-                    <!-- Total -->
-                    <div class="p-6 border-b border-gray-200">
-                        <div class="text-center">
-                            <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Ukupno</p>
-                            <p class="mt-1 text-4xl font-bold text-gray-900" x-text="formatPrice(receiptTotal) + ' RSD'"></p>
-                            <p class="mt-1 text-xs text-gray-400" x-text="receiptItems.length + ' stavki'"></p>
+            <!-- RIGHT PANEL: Total + Poslednji racun -->
+            <div class="kasa-right-panel">
+                <!-- Total -->
+                <div class="flex-1 flex flex-col items-center justify-center p-6">
+                    <div class="kasa-total" x-text="fmtPrice(total)"></div>
+                    <div class="text-xs text-gray-400 mt-1">RSD</div>
+                </div>
+
+                <!-- Poslednji racun -->
+                <div class="border-t border-gray-200 p-4" x-show="lastReceipt">
+                    <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Poslednji racun</div>
+                    <div class="space-y-1">
+                        <div class="last-receipt-row">
+                            <span class="last-receipt-label">Iznos:</span>
+                            <span class="last-receipt-value" x-text="lastReceipt ? fmtPrice(lastReceipt.total) : '0,00'"></span>
+                        </div>
+                        <div class="last-receipt-row">
+                            <span class="last-receipt-label">Kartica:</span>
+                            <span class="last-receipt-value" x-text="lastReceipt ? fmtPrice(lastReceipt.card || 0) : '0,00'"></span>
+                        </div>
+                        <div class="last-receipt-row">
+                            <span class="last-receipt-label">Gotovina:</span>
+                            <span class="last-receipt-value" x-text="lastReceipt ? fmtPrice(lastReceipt.cash || 0) : '0,00'"></span>
+                        </div>
+                        <div class="last-receipt-row">
+                            <span class="last-receipt-label">Povracaj:</span>
+                            <span class="last-receipt-value" x-text="lastReceipt ? fmtPrice(lastReceipt.change || 0) : '0,00'"></span>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Payment Method -->
-                    <div class="p-6 border-b border-gray-200" x-show="receiptItems.length > 0">
-                        <label class="block text-sm font-medium text-gray-700 mb-3">Nacin placanja</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button @click="paymentMethod = 'CASH'" class="rounded-lg px-3 py-2 text-sm font-medium border-2 transition-colors"
-                                    :class="paymentMethod === 'CASH' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'">
+        <!-- ============ BOTTOM BAR — Function keys ============ -->
+        <div class="kasa-bottom-bar bg-white border-t border-gray-300 px-4 py-2 flex items-center gap-2 flex-wrap">
+            <button class="kasa-fn-btn" @click="openCashDrawer()">
+                <span class="fn-key">F5</span><span class="fn-label">Fioka</span>
+            </button>
+            <button class="kasa-fn-btn" @click="openPaymentModal()" :disabled="items.length === 0"
+                    :class="items.length === 0 ? 'opacity-40 cursor-not-allowed' : ''">
+                <span class="fn-key">F6</span><span class="fn-label">Racun</span>
+            </button>
+            <button class="kasa-fn-btn" @click="editQuantity()">
+                <span class="fn-key">F7</span><span class="fn-label">Kolicina</span>
+            </button>
+            <button class="kasa-fn-btn" @click="deleteItem()">
+                <span class="fn-key">F8</span><span class="fn-label">Brisanje</span>
+            </button>
+            <button class="kasa-fn-btn" @click="applyDiscount()">
+                <span class="fn-key">ALT+P</span><span class="fn-label">Popust</span>
+            </button>
+            <div class="flex-1"></div>
+            <button class="kasa-fn-btn" @click="generateZReport()">
+                <span class="fn-key">Z</span><span class="fn-label">Dnevni izvestaj</span>
+            </button>
+            <button class="kasa-fn-btn" @click="showXReport()">
+                <span class="fn-key">X</span><span class="fn-label">Tekuci promet</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ============ F6 PAYMENT MODAL ============ -->
+    <div x-show="paymentModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center"
+         @keydown.escape.window="if(paymentModal) paymentModal = false">
+        <div class="fixed inset-0 bg-black/50" @click="paymentModal = false"></div>
+        <div class="relative bg-white rounded-lg shadow-2xl w-full max-w-2xl mx-4" @keydown.enter.prevent="confirmPayment()">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-bold text-gray-900">Izdavanje racuna</h3>
+            </div>
+            <div class="flex">
+                <!-- Leva strana: iznosi -->
+                <div class="w-1/2 p-6 border-r border-gray-200">
+                    <div class="mb-6">
+                        <div class="text-sm text-gray-500">Ukupno:</div>
+                        <div class="text-3xl font-bold text-gray-900 font-mono" x-text="fmtPrice(total)"></div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3">
+                            <button @click="payMethod = 'CARD'; focusPaymentInput()"
+                                    class="w-24 text-left px-3 py-2 rounded text-sm font-medium border"
+                                    :class="payMethod === 'CARD' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200'">
+                                Kartica <span class="text-xs text-gray-400">F6</span>
+                            </button>
+                            <input type="number" x-model.number="pay.card" step="0.01" min="0" @input="recalcCash()"
+                                   class="flex-1 rounded border-gray-300 px-3 py-2 text-sm text-right font-mono">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button @click="payMethod = 'TRANSFER'; focusPaymentInput()"
+                                    class="w-24 text-left px-3 py-2 rounded text-sm font-medium border"
+                                    :class="payMethod === 'TRANSFER' ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200'">
+                                Prenos
+                            </button>
+                            <input type="number" x-model.number="pay.transfer" step="0.01" min="0" @input="recalcCash()"
+                                   class="flex-1 rounded border-gray-300 px-3 py-2 text-sm text-right font-mono">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button @click="payMethod = 'CASH'; focusPaymentInput()"
+                                    class="w-24 text-left px-3 py-2 rounded text-sm font-bold border"
+                                    :class="payMethod === 'CASH' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200'">
                                 Gotovina
                             </button>
-                            <button @click="paymentMethod = 'CARD'" class="rounded-lg px-3 py-2 text-sm font-medium border-2 transition-colors"
-                                    :class="paymentMethod === 'CARD' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'">
-                                Kartica
-                            </button>
-                            <button @click="paymentMethod = 'TRANSFER'" class="rounded-lg px-3 py-2 text-sm font-medium border-2 transition-colors"
-                                    :class="paymentMethod === 'TRANSFER' ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'">
-                                Transfer
-                            </button>
-                            <button @click="paymentMethod = 'MIXED'" class="rounded-lg px-3 py-2 text-sm font-medium border-2 transition-colors"
-                                    :class="paymentMethod === 'MIXED' ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'">
-                                Kombinovano
-                            </button>
+                            <input x-ref="cashInput" type="number" x-model.number="pay.cash" step="0.01" min="0"
+                                   @input="calcChange()"
+                                   class="flex-1 rounded border-gray-300 px-3 py-2 text-sm text-right font-mono font-bold bg-blue-50 border-blue-300 focus:border-blue-500 focus:ring-blue-500">
                         </div>
+                    </div>
 
-                        <!-- Cash received / change -->
-                        <div x-show="paymentMethod === 'CASH'" class="mt-4">
-                            <label class="block text-sm font-medium text-gray-700">Primljeno (RSD)</label>
-                            <input type="number" x-model.number="cashReceived" step="100" min="0"
-                                   @input="cashChange = cashReceived - receiptTotal"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
-                            <div class="mt-2 flex justify-between text-sm" x-show="cashReceived > 0">
-                                <span class="text-gray-500">Kusur:</span>
-                                <span class="font-bold" :class="cashChange >= 0 ? 'text-green-600' : 'text-red-600'"
-                                      x-text="formatPrice(cashChange) + ' RSD'"></span>
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-bold text-gray-700">Povracaj:</span>
+                            <span class="text-2xl font-bold font-mono" :class="payChange >= 0 ? 'text-gray-900' : 'text-red-600'"
+                                  x-text="fmtPrice(payChange)"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desna strana: opcije -->
+                <div class="w-1/2 p-6">
+                    <div class="space-y-4">
+                        <!-- Popust na ceo racun -->
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Popust na ceo racun:</label>
+                            <div class="flex items-center gap-2 mt-1">
+                                <input type="number" x-model.number="receiptDiscount" step="0.01" min="0" max="100"
+                                       @input="recalcCash()"
+                                       class="w-20 rounded border-gray-300 px-3 py-1.5 text-sm text-right">
+                                <span class="text-sm text-gray-500">%</span>
                             </div>
                         </div>
 
-                        <!-- B2B buyer -->
-                        <div class="mt-4">
-                            <button @click="showBuyerFields = !showBuyerFields" class="text-xs text-primary-600 hover:text-primary-800 font-medium">
-                                <span x-text="showBuyerFields ? 'Sakrij B2B polja' : '+ B2B kupac (PIB)'"></span>
-                            </button>
-                            <div x-show="showBuyerFields" x-collapse class="mt-2 space-y-2">
-                                <input type="text" x-model="buyerPib" placeholder="PIB kupca"
-                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                        <!-- B2B -->
+                        <div>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                <input type="checkbox" x-model="showB2B" class="rounded border-gray-300 text-blue-600">
+                                <span class="font-medium text-gray-700">Racun za komitenta</span>
+                            </label>
+                            <div x-show="showB2B" class="mt-2 space-y-2">
+                                <input type="text" x-model="buyerPib" placeholder="PIB kupca (9 cifara)"
+                                       class="w-full rounded border-gray-300 px-3 py-1.5 text-sm">
                                 <input type="text" x-model="buyerName" placeholder="Naziv kupca"
-                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                                       class="w-full rounded border-gray-300 px-3 py-1.5 text-sm">
                             </div>
+                        </div>
+
+                        <!-- Napomena -->
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Napomena:</label>
+                            <textarea x-model="receiptNote" rows="2"
+                                      class="mt-1 w-full rounded border-gray-300 px-3 py-1.5 text-sm"></textarea>
                         </div>
                     </div>
 
-                    <!-- Action Buttons -->
-                    <div class="p-6 space-y-3">
-                        <button @click="issueReceipt()" :disabled="receiptItems.length === 0 || issuing"
-                                class="w-full inline-flex justify-center items-center rounded-md bg-green-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <svg class="-ml-0.5 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            <span x-text="issuing ? 'Izdavanje...' : 'Izdaj racun'"></span>
-                            <span class="ml-1 text-xs opacity-70">(F2)</span>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button @click="confirmPayment()" :disabled="issuing"
+                                class="px-6 py-2.5 bg-blue-600 text-white rounded font-bold text-sm hover:bg-blue-500 disabled:opacity-50">
+                            <span x-text="issuing ? 'Izdavanje...' : 'Potvrdi'"></span>
                         </button>
-                        <button @click="voidReceipt()" x-show="activeReceipt"
-                                class="w-full inline-flex justify-center items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-red-700 shadow-sm ring-1 ring-inset ring-red-300 hover:bg-red-50">
-                            Storniraj
+                        <button @click="paymentModal = false"
+                                class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded font-medium text-sm hover:bg-gray-200">
+                            Odustani <span class="text-xs text-gray-400">ESC</span>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
-    </template>
+    </div>
 
-    <!-- Recent Receipts -->
-    <div class="mt-6 bg-white shadow rounded-lg" x-show="recentReceipts.length > 0">
-        <div class="p-4 border-b border-gray-200">
-            <h3 class="text-sm font-semibold text-gray-900">Poslednji racuni</h3>
+    <!-- ============ ARTIKL LISTA MODAL ============ -->
+    <div x-show="showArtiklModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center"
+         @keydown.escape.window="if(showArtiklModal) showArtiklModal = false">
+        <div class="fixed inset-0 bg-black/50" @click="showArtiklModal = false"></div>
+        <div class="relative bg-white rounded-lg shadow-2xl w-full max-w-xl mx-4 artikl-modal flex flex-col">
+            <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="text-sm font-bold text-gray-900">Odabir artikla</h3>
+                <button @click="showArtiklModal = false" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div class="px-4 py-3 border-b border-gray-100">
+                <input x-ref="artiklSearch" type="text" x-model="artiklSearchQuery"
+                       @input.debounce.300ms="searchArtikli()"
+                       placeholder="Pretrazi po imenu, barkodu, sifri..."
+                       class="w-full rounded border-gray-300 px-3 py-2 text-sm">
+            </div>
+            <div class="flex-1 overflow-y-auto">
+                <template x-for="a in artiklResults" :key="a.type + '-' + a.id">
+                    <div @click="selectArtikl(a)" class="artikl-item px-4 py-2 border-b border-gray-50 flex items-center justify-between">
+                        <div>
+                            <div class="text-sm font-medium text-gray-900" x-text="a.name"></div>
+                            <div class="flex items-center gap-2 mt-0.5">
+                                <span class="text-xs px-1.5 py-0.5 rounded"
+                                      :class="{'bg-purple-100 text-purple-700': a.type==='GOODS', 'bg-orange-100 text-orange-700': a.type==='SPARE_PART', 'bg-cyan-100 text-cyan-700': a.type==='PHONE'}"
+                                      x-text="a.type==='GOODS' ? 'Roba' : a.type==='SPARE_PART' ? 'Deo' : 'Telefon'"></span>
+                                <span class="text-xs text-gray-400" x-show="a.barcode" x-text="a.barcode"></span>
+                                <span class="text-xs text-gray-400" x-text="'Stanje: ' + a.stock"></span>
+                            </div>
+                        </div>
+                        <span class="text-sm font-bold font-mono text-gray-900" x-text="fmtPrice(a.price)"></span>
+                    </div>
+                </template>
+                <div x-show="artiklSearchQuery && artiklResults.length === 0" class="p-6 text-center text-sm text-gray-400">
+                    Nema rezultata
+                </div>
+                <div x-show="!artiklSearchQuery" class="p-6 text-center text-sm text-gray-400">
+                    Unesite tekst za pretragu
+                </div>
+            </div>
         </div>
-        <ul class="divide-y divide-gray-200">
-            <template x-for="r in recentReceipts" :key="r.id">
-                <li class="px-4 py-3 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <span class="text-sm font-medium text-gray-900" x-text="r.receipt_number"></span>
-                        <span class="text-sm text-gray-500" x-text="formatPrice(r.total_amount) + ' RSD'"></span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs text-gray-400" x-text="r.payment_method"></span>
-                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                              :class="{
-                                  'bg-green-100 text-green-800': r.status === 'ISSUED',
-                                  'bg-red-100 text-red-800': r.status === 'VOIDED',
-                                  'bg-yellow-100 text-yellow-800': r.status === 'DRAFT',
-                                  'bg-blue-100 text-blue-800': r.status === 'REFUNDED'
-                              }"
-                              x-text="r.status"></span>
-                    </div>
-                </li>
+    </div>
+
+    <!-- ============ X REPORT MODAL ============ -->
+    <div x-show="showXReportModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center"
+         @keydown.escape.window="if(showXReportModal) showXReportModal = false">
+        <div class="fixed inset-0 bg-black/50" @click="showXReportModal = false"></div>
+        <div class="relative bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">X Izvestaj - Tekuci promet</h3>
+            <template x-if="xReportData">
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between"><span class="text-gray-500">Promet:</span><span class="font-bold font-mono" x-text="fmtPrice(xReportData.total_revenue) + ' RSD'"></span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">Trosak:</span><span class="font-mono" x-text="fmtPrice(xReportData.total_cost) + ' RSD'"></span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">Profit:</span><span class="font-bold font-mono text-green-600" x-text="fmtPrice(xReportData.total_profit) + ' RSD'"></span></div>
+                    <div class="border-t border-gray-200 pt-2"></div>
+                    <div class="flex justify-between"><span class="text-gray-500">Gotovina:</span><span class="font-mono" x-text="fmtPrice(xReportData.total_cash) + ' RSD'"></span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">Kartica:</span><span class="font-mono" x-text="fmtPrice(xReportData.total_card) + ' RSD'"></span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">Prenos:</span><span class="font-mono" x-text="fmtPrice(xReportData.total_transfer) + ' RSD'"></span></div>
+                    <div class="border-t border-gray-200 pt-2"></div>
+                    <div class="flex justify-between"><span class="text-gray-500">Racuni:</span><span class="font-mono" x-text="xReportData.receipt_count"></span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">Stornirani:</span><span class="font-mono" x-text="xReportData.voided_count"></span></div>
+                </div>
             </template>
-        </ul>
-    </div>
-
-    <!-- Keyboard Shortcuts Help -->
-    <div class="mt-4 text-center text-xs text-gray-400" x-show="session">
-        F1 = Novi racun &middot; F2 = Izdaj racun &middot; ESC = Zatvori modal
-    </div>
-
-    <!-- Open Register Modal -->
-    <div x-show="showOpenModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape="showOpenModal = false">
-        <div class="flex min-h-full items-center justify-center p-4">
-            <div class="fixed inset-0 bg-gray-500/75" @click="showOpenModal = false"></div>
-            <div class="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Otvori kasu</h3>
-                <div class="mb-4" x-show="locations.length > 1">
-                    <label class="block text-sm font-medium text-gray-700">Lokacija</label>
-                    <select x-model.number="currentLocationId"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
-                        <template x-for="loc in locations" :key="loc.id">
-                            <option :value="loc.id" x-text="loc.name"></option>
-                        </template>
-                    </select>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">Pocetno stanje gotovine (RSD)</label>
-                    <input type="number" x-model.number="openingCash" step="100" min="0"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
-                    <p class="mt-1 text-xs text-gray-400">Opciono — moze i 0</p>
-                </div>
-                <div class="flex justify-end gap-3">
-                    <button @click="showOpenModal = false" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Otkazi</button>
-                    <button @click="openRegister()" class="rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">Otvori</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Close Register Modal -->
-    <div x-show="showCloseModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape="showCloseModal = false">
-        <div class="flex min-h-full items-center justify-center p-4">
-            <div class="fixed inset-0 bg-gray-500/75" @click="showCloseModal = false"></div>
-            <div class="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Zatvori kasu</h3>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">Krajnje stanje gotovine (RSD)</label>
-                    <input type="number" x-model.number="closingCash" step="100" min="0"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
-                </div>
-                <div class="flex justify-end gap-3">
-                    <button @click="showCloseModal = false" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Otkazi</button>
-                    <button @click="closeRegister()" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">Zatvori</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Void Reason Modal -->
-    <div x-show="showVoidModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape="showVoidModal = false">
-        <div class="flex min-h-full items-center justify-center p-4">
-            <div class="fixed inset-0 bg-gray-500/75" @click="showVoidModal = false"></div>
-            <div class="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Storniraj racun</h3>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">Razlog storniranja</label>
-                    <textarea x-model="voidReason" rows="3"
-                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"></textarea>
-                </div>
-                <div class="flex justify-end gap-3">
-                    <button @click="showVoidModal = false" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Otkazi</button>
-                    <button @click="confirmVoid()" :disabled="!voidReason" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:opacity-50">Storniraj</button>
-                </div>
+            <div class="mt-4 text-right">
+                <button @click="showXReportModal = false" class="px-4 py-2 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200">Zatvori</button>
             </div>
         </div>
     </div>
 
     <!-- Toast -->
     <div x-show="toast.show" x-cloak
-         x-transition:enter="transform ease-out duration-300 transition"
+         x-transition:enter="transform ease-out duration-300"
          x-transition:enter-start="translate-y-2 opacity-0"
          x-transition:enter-end="translate-y-0 opacity-100"
          x-transition:leave="transition ease-in duration-200"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed bottom-4 right-4 z-50 rounded-lg p-4 shadow-lg"
-         :class="toast.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'">
+         class="fixed bottom-16 right-4 z-50 rounded-lg p-4 shadow-lg max-w-sm"
+         :class="toast.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'">
         <span x-text="toast.message"></span>
     </div>
 </div>
@@ -404,46 +412,62 @@
 <script>
 function posRegister() {
     return {
-        // State
+        // Session
         session: null,
-        activeReceipt: null,
-        receiptItems: [],
-        recentReceipts: [],
+        fiscalMode: false,
         currentLocationId: null,
         currentLocationName: '',
         locations: [],
 
-        // Modals
-        showOpenModal: false,
-        showCloseModal: false,
-        showVoidModal: false,
+        // Items (lokalni — ne cuvaju se na serveru dok se ne izda)
+        items: [],
+        selectedIndex: -1,
 
-        // Form state
-        openingCash: 0,
-        closingCash: 0,
-        paymentMethod: 'CASH',
-        cashReceived: 0,
-        cashChange: 0,
-        voidReason: '',
-        issuing: false,
-
-        // Search
+        // Pending item (dok se unosi)
+        pendingItem: { name: '', price: 0, quantity: 1, discount: 0, type: '', id: null, barcode: '', purchase_price: 0 },
         searchQuery: '',
-        searchResults: [],
-        searching: false,
-        showManualAdd: false,
-        manualItem: { item_name: '', unit_price: null },
+        qtyMode: 'auto', // 'auto' = bez unosa kol, 'manual' = unos kol
+        allowPriceEdit: false,
 
-        // B2B
-        showBuyerFields: false,
+        // Payment modal
+        paymentModal: false,
+        payMethod: 'CASH',
+        pay: { cash: 0, card: 0, transfer: 0 },
+        payChange: 0,
+        receiptDiscount: 0,
+        receiptNote: '',
+        showB2B: false,
         buyerPib: '',
         buyerName: '',
+        issuing: false,
+
+        // Artikl modal
+        showArtiklModal: false,
+        artiklSearchQuery: '',
+        artiklResults: [],
+
+        // Last receipt
+        lastReceipt: null,
+
+        // X Report
+        showXReportModal: false,
+        xReportData: null,
 
         // Toast
         toast: { show: false, message: '', type: 'success' },
 
-        get receiptTotal() {
-            return this.receiptItems.reduce((sum, i) => sum + (i.line_total || 0), 0);
+        // Computed
+        get total() {
+            return this.items.reduce((sum, i) => sum + this.itemTotal(i), 0);
+        },
+
+        get todayFormatted() {
+            return new Date().toLocaleDateString('sr-RS');
+        },
+
+        itemTotal(item) {
+            const base = item.price * item.quantity;
+            return item.discount > 0 ? base * (1 - item.discount / 100) : base;
         },
 
         // ==========================================
@@ -451,339 +475,354 @@ function posRegister() {
         // ==========================================
         async init() {
             await this.loadUserLocation();
-            await this.checkCurrentRegister();
-            if (this.session) {
-                await this.resumeDraftReceipt();
-            }
-            await this.loadRecentReceipts();
+            await this.loadSession();
+            this.$nextTick(() => {
+                if (this.$refs.barcodeInput) this.$refs.barcodeInput.focus();
+            });
         },
 
-        // ==========================================
-        // KEYBOARD SHORTCUTS
-        // ==========================================
-        handleKeyboard(e) {
-            // Don't intercept if inside an input/textarea/select
-            const tag = e.target.tagName;
-            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-                if (e.key === 'Escape') {
-                    e.target.blur();
-                    this.searchQuery = '';
-                    this.searchResults = [];
-                }
-                return;
-            }
-
-            if (e.key === 'F1') {
-                e.preventDefault();
-                if (this.session && !this.activeReceipt) {
-                    this.createReceipt();
-                }
-            } else if (e.key === 'F2') {
-                e.preventDefault();
-                if (this.activeReceipt && this.receiptItems.length > 0) {
-                    this.issueReceipt();
-                }
-            } else if (e.key === 'Escape') {
-                this.showOpenModal = false;
-                this.showCloseModal = false;
-                this.showVoidModal = false;
-            }
-        },
-
-        // ==========================================
-        // LOCATION & SESSION
-        // ==========================================
         async loadUserLocation() {
             try {
                 const res = await api('/api/v1/auth/me');
                 if (res.ok) {
                     const data = await res.json();
                     this.locations = data.locations || [];
-                    if (this.locations.length === 1) {
-                        this.currentLocationId = this.locations[0].id;
-                        this.currentLocationName = this.locations[0].name;
-                    } else if (this.locations.length > 1) {
-                        const primary = this.locations.find(l => l.is_primary);
-                        if (primary) {
-                            this.currentLocationId = primary.id;
-                            this.currentLocationName = primary.name;
-                        } else {
-                            this.currentLocationId = this.locations[0].id;
-                            this.currentLocationName = this.locations[0].name;
-                        }
+                    if (this.locations.length >= 1) {
+                        const primary = this.locations.find(l => l.is_primary) || this.locations[0];
+                        this.currentLocationId = primary.id;
+                        this.currentLocationName = primary.name;
                     }
                 }
-            } catch (e) {
-                console.error('Failed to load user location', e);
-            }
+            } catch (e) { console.error('Failed to load location', e); }
         },
 
-        async resumeDraftReceipt() {
-            // Check for orphaned DRAFT receipts in current session
+        async loadSession() {
+            if (!this.currentLocationId) return;
             try {
-                const res = await api(`/api/v1/pos/receipts?session_id=${this.session.session_id}&status=DRAFT&per_page=1`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.receipts && data.receipts.length > 0) {
-                        const draft = data.receipts[0];
-                        // Load full receipt with items
-                        const detailRes = await api(`/api/v1/pos/receipts/${draft.id}`);
-                        if (detailRes.ok) {
-                            const detail = await detailRes.json();
-                            this.activeReceipt = { receipt_id: detail.id, receipt_number: detail.receipt_number, status: detail.status };
-                            this.receiptItems = detail.items || [];
-                        }
-                    }
-                }
-            } catch (e) {
-                console.error('Failed to resume draft receipt', e);
-            }
-        },
-
-        async checkCurrentRegister() {
-            try {
-                const res = await api('/api/v1/pos/register/current');
+                const res = await api(`/api/v1/pos/register/current?location_id=${this.currentLocationId}`);
                 if (res.ok) {
                     this.session = await res.json();
+                    this.fiscalMode = this.session.fiscal_mode || false;
+                }
+            } catch (e) { console.error('Failed to load session', e); }
+        },
+
+        // ==========================================
+        // KEYBOARD
+        // ==========================================
+        handleKeyboard(e) {
+            // Dozvoli F-keys uvek
+            if (e.key === 'F5') { e.preventDefault(); this.openCashDrawer(); }
+            else if (e.key === 'F6') { e.preventDefault(); if (this.items.length > 0) this.openPaymentModal(); }
+            else if (e.key === 'F7') { e.preventDefault(); this.editQuantity(); }
+            else if (e.key === 'F8') { e.preventDefault(); this.deleteItem(); }
+            else if (e.altKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); this.applyDiscount(); }
+            else if (e.key === 'Escape') {
+                if (this.paymentModal) { this.paymentModal = false; }
+                else if (this.showArtiklModal) { this.showArtiklModal = false; }
+                else if (this.showXReportModal) { this.showXReportModal = false; }
+            }
+        },
+
+        // ==========================================
+        // BARCODE / SEARCH
+        // ==========================================
+        async onBarcodeEnter() {
+            const q = this.searchQuery.trim();
+            if (!q) return;
+
+            try {
+                const res = await api(`/api/v1/pos/search-items?q=${encodeURIComponent(q)}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                const results = data.items || [];
+
+                if (results.length === 0) {
+                    this.showToast('Artikal nije pronadjen: ' + q, 'error');
+                    return;
+                }
+
+                if (results.length === 1) {
+                    this.selectArtikl(results[0]);
                 } else {
-                    this.session = null;
+                    // Vise rezultata — otvori modal
+                    this.artiklResults = results;
+                    this.artiklSearchQuery = q;
+                    this.showArtiklModal = true;
                 }
             } catch (e) {
-                this.session = null;
+                this.showToast('Greska pri pretrazi', 'error');
             }
         },
 
-        async openRegister() {
-            const res = await api('/api/v1/pos/register/open', 'POST', {
-                opening_cash: this.openingCash,
-                location_id: this.currentLocationId
-            });
-            if (res.ok) {
-                const data = await res.json();
-                this.session = { ...data, total_revenue: 0, receipt_count: 0, opened_at: new Date().toISOString() };
-                this.showOpenModal = false;
-                this.showToast('Kasa otvorena', 'success');
+        selectArtikl(a) {
+            this.pendingItem = {
+                name: a.name,
+                price: a.price,
+                quantity: 1,
+                discount: 0,
+                type: a.type,
+                id: a.id,
+                barcode: a.barcode || '',
+                purchase_price: a.purchase_price || 0,
+            };
+            this.showArtiklModal = false;
+            this.searchQuery = '';
+
+            if (this.qtyMode === 'auto') {
+                // Odmah dodaj sa qty=1
+                this.confirmPendingItem();
             } else {
-                const err = await res.json();
-                this.showToast(err.error || 'Greska', 'error');
-            }
-        },
-
-        async closeRegister() {
-            const res = await api('/api/v1/pos/register/close', 'POST', {
-                session_id: this.session.session_id,
-                closing_cash: this.closingCash
-            });
-            if (res.ok) {
-                this.session = null;
-                this.activeReceipt = null;
-                this.receiptItems = [];
-                this.showCloseModal = false;
-                this.showToast('Kasa zatvorena', 'success');
-            } else {
-                const err = await res.json();
-                this.showToast(err.error || 'Greska', 'error');
-            }
-        },
-
-        // ==========================================
-        // RECEIPT
-        // ==========================================
-        async createReceipt() {
-            const res = await api('/api/v1/pos/receipts', 'POST', { session_id: this.session.session_id });
-            if (res.ok) {
-                this.activeReceipt = await res.json();
-                this.receiptItems = [];
-                this.paymentMethod = 'CASH';
-                this.cashReceived = 0;
-                this.cashChange = 0;
-                this.buyerPib = '';
-                this.buyerName = '';
-                this.showBuyerFields = false;
-                // Focus search bar
+                // Focus na kolicinu
                 this.$nextTick(() => {
-                    if (this.$refs.searchInput) this.$refs.searchInput.focus();
+                    if (this.$refs.qtyInput) this.$refs.qtyInput.focus();
                 });
-            } else {
-                const err = await res.json();
-                this.showToast(err.error || 'Greska', 'error');
             }
         },
 
-        // ==========================================
-        // SEARCH & ADD ITEMS
-        // ==========================================
-        async searchItems() {
-            if (this.searchQuery.length < 2) {
-                this.searchResults = [];
-                return;
+        confirmPendingItem() {
+            if (!this.pendingItem.name) return;
+
+            // Proveri da li vec postoji isti artikal — povecaj kolicinu
+            const existing = this.items.find(i => i.type === this.pendingItem.type && i.id === this.pendingItem.id && i.id !== null);
+            if (existing && this.qtyMode === 'auto') {
+                existing.quantity += this.pendingItem.quantity;
+            } else {
+                this.items.push({ ...this.pendingItem });
             }
-            this.searching = true;
+
+            // Reset
+            this.pendingItem = { name: '', price: 0, quantity: 1, discount: 0, type: '', id: null, barcode: '', purchase_price: 0 };
+            this.searchQuery = '';
+            this.selectedIndex = this.items.length - 1;
+
+            this.$nextTick(() => {
+                if (this.$refs.barcodeInput) this.$refs.barcodeInput.focus();
+            });
+        },
+
+        // ==========================================
+        // ARTIKL MODAL SEARCH
+        // ==========================================
+        async searchArtikli() {
+            if (this.artiklSearchQuery.length < 2) { this.artiklResults = []; return; }
             try {
-                const res = await api(`/api/v1/pos/search-items?q=${encodeURIComponent(this.searchQuery)}`);
+                const res = await api(`/api/v1/pos/search-items?q=${encodeURIComponent(this.artiklSearchQuery)}`);
                 if (res.ok) {
                     const data = await res.json();
-                    this.searchResults = data.items || [];
+                    this.artiklResults = data.items || [];
                 }
-            } catch (e) {
-                console.error('Search failed', e);
-            }
-            this.searching = false;
-        },
-
-        async addSearchItem(result) {
-            const res = await api(`/api/v1/pos/receipts/${this.activeReceipt.receipt_id}/items`, 'POST', {
-                item_type: result.type,
-                item_id: result.id,
-                quantity: 1,
-                unit_price: result.price,
-                purchase_price: result.purchase_price,
-                item_name: result.name,
-            });
-            if (res.ok) {
-                await this.refreshReceipt();
-                this.searchQuery = '';
-                this.searchResults = [];
-                if (this.$refs.searchInput) this.$refs.searchInput.focus();
-            } else {
-                const err = await res.json();
-                this.showToast(err.error || 'Greska pri dodavanju', 'error');
-            }
-        },
-
-        async addManualItem() {
-            const res = await api(`/api/v1/pos/receipts/${this.activeReceipt.receipt_id}/items`, 'POST', {
-                item_type: 'CUSTOM',
-                item_name: this.manualItem.item_name,
-                unit_price: this.manualItem.unit_price,
-                quantity: 1,
-            });
-            if (res.ok) {
-                await this.refreshReceipt();
-                this.manualItem = { item_name: '', unit_price: null };
-            } else {
-                const err = await res.json();
-                this.showToast(err.error || 'Greska', 'error');
-            }
-        },
-
-        async removeItem(itemId) {
-            const res = await api(`/api/v1/pos/receipts/${this.activeReceipt.receipt_id}/items/${itemId}`, 'DELETE');
-            if (res.ok) {
-                await this.refreshReceipt();
-            }
-        },
-
-        async refreshReceipt() {
-            const rid = this.activeReceipt.receipt_id || this.activeReceipt.id;
-            const res = await api(`/api/v1/pos/receipts/${rid}`);
-            if (res.ok) {
-                const data = await res.json();
-                this.activeReceipt = { receipt_id: data.id, receipt_number: data.receipt_number, status: data.status };
-                this.receiptItems = data.items || [];
-            }
+            } catch (e) { console.error(e); }
         },
 
         // ==========================================
-        // ISSUE / VOID
+        // ITEM OPERATIONS (F7, F8, ALT+P)
         // ==========================================
-        async issueReceipt() {
-            if (this.issuing) return; // idempotency guard
+        editQuantity() {
+            if (this.selectedIndex < 0 || this.selectedIndex >= this.items.length) {
+                this.showToast('Izaberite stavku u tabeli', 'error');
+                return;
+            }
+            const newQty = prompt('Nova kolicina:', this.items[this.selectedIndex].quantity);
+            if (newQty !== null && !isNaN(newQty) && parseInt(newQty) > 0) {
+                this.items[this.selectedIndex].quantity = parseInt(newQty);
+            }
+        },
+
+        deleteItem() {
+            if (this.selectedIndex < 0 || this.selectedIndex >= this.items.length) {
+                this.showToast('Izaberite stavku u tabeli', 'error');
+                return;
+            }
+            this.items.splice(this.selectedIndex, 1);
+            if (this.selectedIndex >= this.items.length) this.selectedIndex = this.items.length - 1;
+        },
+
+        applyDiscount() {
+            if (this.selectedIndex < 0 || this.selectedIndex >= this.items.length) {
+                this.showToast('Izaberite stavku u tabeli', 'error');
+                return;
+            }
+            const disc = prompt('Popust (%):', this.items[this.selectedIndex].discount);
+            if (disc !== null && !isNaN(disc) && parseFloat(disc) >= 0 && parseFloat(disc) <= 100) {
+                this.items[this.selectedIndex].discount = parseFloat(disc);
+            }
+        },
+
+        openCashDrawer() {
+            this.showToast('Fioka otvorena (stub)', 'success');
+        },
+
+        // ==========================================
+        // F6 — PAYMENT MODAL
+        // ==========================================
+        openPaymentModal() {
+            if (this.items.length === 0) return;
+
+            this.payMethod = 'CASH';
+            this.pay = { cash: this.total, card: 0, transfer: 0 };
+            this.payChange = 0;
+            this.receiptDiscount = 0;
+            this.receiptNote = '';
+            this.showB2B = false;
+            this.buyerPib = '';
+            this.buyerName = '';
+            this.paymentModal = true;
+
+            this.$nextTick(() => {
+                if (this.$refs.cashInput) {
+                    this.$refs.cashInput.focus();
+                    this.$refs.cashInput.select();
+                }
+            });
+        },
+
+        recalcCash() {
+            // Gotovina = ukupno - kartica - prenos (sa popustom)
+            const discountedTotal = this.getDiscountedTotal();
+            this.pay.cash = Math.max(0, discountedTotal - (this.pay.card || 0) - (this.pay.transfer || 0));
+            this.calcChange();
+        },
+
+        calcChange() {
+            const discountedTotal = this.getDiscountedTotal();
+            const totalPaid = (this.pay.cash || 0) + (this.pay.card || 0) + (this.pay.transfer || 0);
+            this.payChange = Math.max(0, totalPaid - discountedTotal);
+        },
+
+        getDiscountedTotal() {
+            if (this.receiptDiscount > 0) {
+                return this.total * (1 - this.receiptDiscount / 100);
+            }
+            return this.total;
+        },
+
+        focusPaymentInput() {
+            this.$nextTick(() => {
+                if (this.$refs.cashInput) this.$refs.cashInput.focus();
+            });
+        },
+
+        // ==========================================
+        // CONFIRM PAYMENT — POST /receipts/quick
+        // ==========================================
+        async confirmPayment() {
+            if (this.issuing || this.items.length === 0) return;
             this.issuing = true;
 
-            const idempotencyKey = `receipt-${this.activeReceipt.receipt_id}-${Date.now()}`;
+            // Determine payment method
+            let pm = 'CASH';
+            if (this.pay.card > 0 && this.pay.cash <= 0 && this.pay.transfer <= 0) pm = 'CARD';
+            else if (this.pay.transfer > 0 && this.pay.cash <= 0 && this.pay.card <= 0) pm = 'TRANSFER';
+            else if ((this.pay.card > 0 || this.pay.transfer > 0) && this.pay.cash > 0) pm = 'MIXED';
+
             const body = {
-                payment_method: this.paymentMethod,
-                idempotency_key: idempotencyKey,
+                location_id: this.currentLocationId,
+                items: this.items.map(i => ({
+                    type: i.type || 'CUSTOM',
+                    id: i.id || null,
+                    quantity: i.quantity,
+                    unit_price: i.price,
+                    discount_pct: i.discount || 0,
+                    item_name: i.name,
+                    purchase_price: i.purchase_price || 0,
+                })),
+                payment_method: pm,
+                idempotency_key: `pos-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
             };
-            if (this.paymentMethod === 'CASH' && this.cashReceived > 0) {
-                body.cash_received = this.cashReceived;
-            }
-            if (this.buyerPib) {
+
+            if (this.pay.cash > 0) body.cash_received = this.pay.cash;
+            if (this.pay.card > 0) body.card_amount = this.pay.card;
+            if (this.pay.transfer > 0) body.transfer_amount = this.pay.transfer;
+            if (this.receiptDiscount > 0) body.discount_pct = this.receiptDiscount;
+            if (this.showB2B && this.buyerPib) {
                 body.buyer_pib = this.buyerPib;
                 body.buyer_name = this.buyerName;
             }
 
             try {
-                const res = await api(`/api/v1/pos/receipts/${this.activeReceipt.receipt_id}/issue`, 'POST', body);
+                const res = await api('/api/v1/pos/receipts/quick', 'POST', body);
                 if (res.ok) {
                     const data = await res.json();
-                    let msg = 'Racun izdat';
+
+                    // Sacuvaj poslednji racun info
+                    this.lastReceipt = {
+                        total: data.total_amount,
+                        card: this.pay.card,
+                        cash: this.pay.cash,
+                        change: data.cash_change || 0,
+                        number: data.receipt_number,
+                    };
+
+                    this.items = [];
+                    this.selectedIndex = -1;
+                    this.paymentModal = false;
+
+                    let msg = `Racun ${data.receipt_number} izdat`;
                     if (data.cash_change && data.cash_change > 0) {
-                        msg += ` — Kusur: ${this.formatPrice(data.cash_change)} RSD`;
-                    }
-                    if (data.fiscal_status) {
-                        msg += ` (fiskalni status: ${data.fiscal_status})`;
+                        msg += ` — Povracaj: ${this.fmtPrice(data.cash_change)} RSD`;
                     }
                     this.showToast(msg, 'success');
-                    this.activeReceipt = null;
-                    this.receiptItems = [];
-                    this.searchQuery = '';
-                    this.searchResults = [];
-                    await this.checkCurrentRegister();
-                    await this.loadRecentReceipts();
+
+                    // Reload session stats
+                    await this.loadSession();
+
+                    this.$nextTick(() => {
+                        if (this.$refs.barcodeInput) this.$refs.barcodeInput.focus();
+                    });
                 } else {
                     const err = await res.json();
-                    this.showToast(err.error || 'Greska', 'error');
+                    this.showToast(err.error || 'Greska pri izdavanju', 'error');
                 }
+            } catch (e) {
+                this.showToast('Greska: ' + e.message, 'error');
             } finally {
                 this.issuing = false;
             }
         },
 
-        voidReceipt() {
-            this.showVoidModal = true;
-        },
-
-        async confirmVoid() {
-            const res = await api(`/api/v1/pos/receipts/${this.activeReceipt.receipt_id}/void`, 'POST', {
-                reason: this.voidReason
-            });
-            if (res.ok) {
-                this.showToast('Racun storniran', 'success');
-                this.activeReceipt = null;
-                this.receiptItems = [];
-                this.showVoidModal = false;
-                this.voidReason = '';
-                await this.loadRecentReceipts();
-            } else {
-                const err = await res.json();
-                this.showToast(err.error || 'Greska', 'error');
+        // ==========================================
+        // REPORTS
+        // ==========================================
+        async showXReport() {
+            try {
+                const res = await api(`/api/v1/pos/reports/x?location_id=${this.currentLocationId}`);
+                if (res.ok) {
+                    this.xReportData = await res.json();
+                    this.showXReportModal = true;
+                } else {
+                    const err = await res.json();
+                    this.showToast(err.error || 'Nema podataka', 'error');
+                }
+            } catch (e) {
+                this.showToast('Greska', 'error');
             }
         },
 
-        // ==========================================
-        // RECENT RECEIPTS
-        // ==========================================
-        async loadRecentReceipts() {
-            const res = await api('/api/v1/pos/receipts?per_page=10');
-            if (res.ok) {
-                const data = await res.json();
-                this.recentReceipts = (data.receipts || []).filter(r => r.status !== 'DRAFT');
+        async generateZReport() {
+            if (!confirm('Generisi dnevni Z izvestaj?')) return;
+            try {
+                const res = await api('/api/v1/pos/reports/z', 'POST', {
+                    location_id: this.currentLocationId
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    this.showToast(`Z izvestaj generisan — Promet: ${this.fmtPrice(data.total_revenue)} RSD`, 'success');
+                } else {
+                    const err = await res.json();
+                    this.showToast(err.error || 'Greska', 'error');
+                }
+            } catch (e) {
+                this.showToast('Greska', 'error');
             }
         },
 
         // ==========================================
         // HELPERS
         // ==========================================
-        itemTypeLabel(type) {
-            const labels = { GOODS: 'Roba', SPARE_PART: 'Deo', PHONE: 'Telefon', SERVICE: 'Usluga', TICKET: 'Servis', CUSTOM: 'Ostalo' };
-            return labels[type] || type;
-        },
-
-        formatPrice(val) {
+        fmtPrice(val) {
             if (val == null) return '0,00';
             return Number(val).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        },
-
-        formatDate(d) {
-            if (!d) return '';
-            return new Date(d).toLocaleDateString('sr-RS');
-        },
-
-        formatTime(iso) {
-            if (!iso) return '';
-            return new Date(iso).toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' });
         },
 
         showToast(message, type) {

@@ -136,9 +136,31 @@ def init_scheduler(app):
         replace_existing=True
     )
 
+    # =========================================================================
+    # JOB 4: POS Daily Close - svaki dan u 23:59
+    # =========================================================================
+    @run_with_context
+    def pos_daily_close_job():
+        from .pos_service import POSService
+        from ..extensions import db
+        app.logger.info("[SCHEDULER] Starting pos_daily_close_job...")
+
+        closed = POSService.auto_daily_close()
+        db.session.commit()
+
+        app.logger.info(f"[SCHEDULER] pos_daily_close: closed={len(closed)} sessions")
+
+    scheduler.add_job(
+        func=pos_daily_close_job,
+        trigger=CronTrigger(hour=23, minute=59),  # 23:59 lokalno
+        id='pos_daily_close',
+        name='POS dnevno zatvaranje kasa',
+        replace_existing=True
+    )
+
     # Pokreni scheduler
     scheduler.start()
-    app.logger.info("[SCHEDULER] Started with 3 jobs: billing_daily, generate_invoices, send_reminders")
+    app.logger.info("[SCHEDULER] Started with 4 jobs: billing_daily, generate_invoices, send_reminders, pos_daily_close")
 
     # Zaustavi scheduler kada se app ugasi
     atexit.register(lambda: scheduler.shutdown(wait=False))

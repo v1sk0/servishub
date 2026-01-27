@@ -36,20 +36,19 @@ def _check_pos_enabled():
 @bp.route('/register/open', methods=['POST'])
 @jwt_required
 def open_register():
-    """Otvori kasu za trenutnu lokaciju."""
+    """Otvori/vrati kasu za trenutnu lokaciju (always-open)."""
     check = _check_pos_enabled()
     if check:
         return check
 
     data = request.get_json() or {}
-    opening_cash = data.get('opening_cash', 0)
     location_id = getattr(g, 'current_location_id', None) or data.get('location_id')
 
     if not location_id:
         return {'error': 'location_id je obavezan'}, 400
 
     try:
-        session = POSService.open_register(g.tenant_id, location_id, g.user_id, opening_cash)
+        session = POSService.get_or_create_session(g.tenant_id, location_id, g.user_id)
         db.session.commit()
         return {
             'message': 'Kasa otvorena',
@@ -115,15 +114,13 @@ def current_register():
         return check
 
     location_id = request.args.get('location_id') or getattr(g, 'current_location_id', None)
-    session = CashRegisterSession.query.filter_by(
-        tenant_id=g.tenant_id,
-        location_id=location_id,
-        date=date.today(),
-        status=CashRegisterStatus.OPEN
-    ).first()
 
-    if not session:
-        return {'error': 'Nema otvorene kase'}, 404
+    if not location_id:
+        return {'error': 'location_id je obavezan'}, 400
+
+    # Auto-kreiranje sesije — kasa je uvek otvorena
+    session = POSService.get_or_create_session(g.tenant_id, int(location_id), g.user_id)
+    db.session.commit()
 
     return {
         'session_id': session.id,
@@ -225,10 +222,56 @@ def search_items():
 # RAČUNI
 # ============================================
 
+@bp.route('/receipts/quick', methods=['POST'])
+@jwt_required
+def quick_issue():
+    """Atomic: kreira + izdaje račun u jednom koraku (TiM Kasa stil)."""
+    check = _check_pos_enabled()
+    if check:
+        return check
+
+    data = request.get_json() or {}
+    location_id = getattr(g, 'current_location_id', None) or data.get('location_id')
+    if not location_id:
+        return {'error': 'location_id je obavezan'}, 400
+
+    items = data.get('items', [])
+    if not items:
+        return {'error': 'Račun mora imati stavke'}, 400
+
+    try:
+        receipt = POSService.quick_issue(
+            tenant_id=g.tenant_id,
+            location_id=int(location_id),
+            user_id=g.user_id,
+            items=items,
+            payment_method=data.get('payment_method', 'CASH'),
+            cash_received=data.get('cash_received'),
+            card_amount=data.get('card_amount'),
+            transfer_amount=data.get('transfer_amount'),
+            buyer_pib=data.get('buyer_pib'),
+            buyer_name=data.get('buyer_name'),
+            discount_pct=data.get('discount_pct'),
+            idempotency_key=data.get('idempotency_key'),
+        )
+        db.session.commit()
+        return {
+            'receipt_id': receipt.id,
+            'receipt_number': receipt.receipt_number,
+            'total_amount': float(receipt.total_amount or 0),
+            'cash_received': float(receipt.cash_received) if receipt.cash_received else None,
+            'cash_change': float(receipt.cash_change) if receipt.cash_change else None,
+            'fiscal_status': receipt.fiscal_status,
+        }, 201
+    except ValueError as e:
+        db.session.rollback()
+        return {'error': str(e)}, 400
+
+
 @bp.route('/receipts', methods=['POST'])
 @jwt_required
 def create_receipt():
-    """Kreiraj prazan DRAFT račun."""
+    """Kreiraj prazan DRAFT račun (legacy — koristi /receipts/quick umesto)."""
     check = _check_pos_enabled()
     if check:
         return check
@@ -665,38 +708,23 @@ def x_report():
 @bp.route('/reports/z', methods=['POST'])
 @jwt_required
 def z_report():
-    """Z izvestaj — dnevni obracun (zatvara kasu, generise DailyReport)."""
+    """Z izvestaj — dnevni obracun. Generiše/ažurira DailyReport, kasa ostaje otvorena."""
     check = _check_pos_enabled()
     if check:
         return check
 
-    data = request.get_json() or {}
-    closing_cash = data.get('closing_cash')
-    if closing_cash is None:
-        return {'error': 'closing_cash je obavezan'}, 400
-
-    location_id = data.get('location_id') or getattr(g, 'current_location_id', None)
+    location_id = (request.get_json() or {}).get('location_id') or getattr(g, 'current_location_id', None)
     session = CashRegisterSession.query.filter_by(
         tenant_id=g.tenant_id,
         location_id=location_id,
         date=date.today(),
-        status=CashRegisterStatus.OPEN
     ).first()
 
     if not session:
-        return {'error': 'Nema otvorene kase'}, 404
-
-    # Zabrana duplog Z izveštaja za isti dan/lokaciju
-    existing_report = DailyReport.query.filter_by(
-        tenant_id=g.tenant_id,
-        location_id=session.location_id,
-        date=session.date,
-    ).first()
-    if existing_report:
-        return {'error': 'Z izveštaj već postoji za ovaj dan'}, 409
+        return {'error': 'Nema kase za danas'}, 404
 
     try:
-        session, report = POSService.close_register(session.id, g.user_id, closing_cash)
+        report = POSService.generate_daily_report(session.id, g.user_id)
         db.session.commit()
         return {
             'report_type': 'Z',
