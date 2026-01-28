@@ -81,6 +81,14 @@ class RegisterRequest(BaseModel):
             raise ValueError('Lozinka mora sadrzati bar jedan broj')
         return v
 
+    @field_validator('owner_prezime', mode='before')
+    @classmethod
+    def validate_prezime(cls, v):
+        """Pretvara prazan string u None."""
+        if v is None or (isinstance(v, str) and v.strip() == ''):
+            return None
+        return v.strip() if isinstance(v, str) else v
+
     @field_validator('pib')
     @classmethod
     def validate_pib(cls, v):
