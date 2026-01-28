@@ -25,9 +25,10 @@ class PlatformSettings(db.Model):
     currency = db.Column(db.String(3), default='RSD')  # Valuta cenovnika
 
     # Trial i pretplate
-    trial_days = db.Column(db.Integer, default=90)  # Trajanje trial perioda
+    trial_days = db.Column(db.Integer, default=90)  # DEPRECATED: koristi promo_months
     demo_days = db.Column(db.Integer, default=7)  # Trajanje demo perioda
     grace_period_days = db.Column(db.Integer, default=7)  # Grace period pre suspenzije
+    promo_months = db.Column(db.Integer, default=2)  # v3.05: PROMO period u mesecima
 
     # Dobavljaci
     default_commission = db.Column(db.Numeric(4, 2), default=Decimal('5.00'))  # % provizije
@@ -105,7 +106,7 @@ class PlatformSettings(db.Model):
         # Polja koja se mogu menjati
         allowed_fields = [
             'base_price', 'location_price', 'currency',
-            'trial_days', 'demo_days', 'grace_period_days',
+            'trial_days', 'demo_days', 'grace_period_days', 'promo_months',
             'default_commission',
             # Company data (includes social for landing page)
             'company_name', 'company_address', 'company_city',
@@ -137,11 +138,14 @@ class PlatformSettings(db.Model):
 
     def to_dict(self):
         """Konvertuje u dictionary za API response."""
+        promo_months = self.promo_months or 2
         return {
             'base_price': float(self.base_price) if self.base_price else 3600,
             'location_price': float(self.location_price) if self.location_price else 1800,
             'currency': self.currency or 'RSD',
-            'trial_days': self.trial_days or 90,
+            'trial_days': self.trial_days or 90,  # DEPRECATED: koristi promo_days
+            'promo_months': promo_months,
+            'promo_days': promo_months * 30,  # Aproksimacija za prikaz
             'demo_days': self.demo_days or 7,
             'grace_period_days': self.grace_period_days or 7,
             'default_commission': float(self.default_commission) if self.default_commission else 5.0,

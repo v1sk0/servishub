@@ -21,15 +21,18 @@ def get_pricing():
             "base_price": 3600.0,
             "location_price": 1800.0,
             "currency": "RSD",
-            "trial_days": 90
+            "trial_days": 60,
+            "promo_months": 2
         }
     """
     settings = PlatformSettings.get_settings()
+    promo_months = settings.promo_months or 2
 
     return jsonify({
         'base_price': float(settings.base_price) if settings.base_price else 3600.0,
         'location_price': float(settings.location_price) if settings.location_price else 1800.0,
         'currency': settings.currency or 'RSD',
-        'trial_days': settings.trial_days or 90,
+        'trial_days': promo_months * 30,  # Promo period u danima za landing
+        'promo_months': promo_months,
         'contact': settings.get_contact_data()
     })
