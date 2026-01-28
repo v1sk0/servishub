@@ -122,14 +122,26 @@ def current_register():
     session = POSService.get_or_create_session(g.tenant_id, int(location_id), g.user_id)
     db.session.commit()
 
+    # Dinamički računaj iz stvarnih računa (pouzdanije od keširanih vrednosti)
+    stats = db.session.query(
+        func.count(Receipt.id),
+        func.coalesce(func.sum(Receipt.total_amount), 0)
+    ).filter(
+        Receipt.session_id == session.id,
+        Receipt.status == ReceiptStatus.ISSUED
+    ).first()
+
+    receipt_count = stats[0] or 0
+    total_revenue = float(stats[1] or 0)
+
     return {
         'session_id': session.id,
         'date': str(session.date),
         'location_id': session.location_id,
         'opening_cash': float(session.opening_cash),
         'opened_at': session.opened_at.isoformat() if session.opened_at else None,
-        'receipt_count': session.receipt_count,
-        'total_revenue': float(session.total_revenue),
+        'receipt_count': receipt_count,
+        'total_revenue': total_revenue,
         'fiscal_mode': session.fiscal_mode or False,
     }, 200
 
