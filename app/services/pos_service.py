@@ -714,7 +714,7 @@ class POSService:
         session = POSService.get_or_create_session(tenant_id, location_id, user_id)
 
         # Kreiraj receipt number
-        today_str = today.strftime('%Y%m%d')
+        today_str = date.today().strftime('%Y%m%d')
         count = Receipt.query.filter(
             Receipt.tenant_id == tenant_id,
             Receipt.receipt_number.like(f'{today_str}-%')

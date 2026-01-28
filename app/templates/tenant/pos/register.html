@@ -4,219 +4,548 @@
 
 {% block page_content %}
 <style>
-    /* TiM Kasa stil — fullscreen, keyboard-first */
-    .kasa-wrapper { display: flex; flex-direction: column; height: calc(100vh - 64px); overflow: hidden; background: #f3f4f6; }
-    .kasa-header { flex-shrink: 0; }
-    .kasa-body { flex: 1; display: flex; overflow: hidden; gap: 0; }
-    .kasa-table-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .kasa-right-panel { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; border-left: 1px solid #e5e7eb; background: #fff; }
-    .kasa-input-area { flex-shrink: 0; border-top: 1px solid #e5e7eb; background: #fff; }
-    .kasa-bottom-bar { flex-shrink: 0; }
-    .kasa-total { font-size: 3rem; font-weight: 700; color: #dc2626; font-family: 'Courier New', monospace; }
-    .kasa-table-scroll { flex: 1; overflow-y: auto; }
-    .kasa-table th { background: #374151; color: #fff; position: sticky; top: 0; z-index: 1; }
-    .kasa-table tr.selected { background: #dbeafe; }
-    .kasa-table tr:hover:not(.selected) { background: #f9fafb; }
-    .kasa-fn-btn { display: inline-flex; flex-direction: column; align-items: center; padding: 6px 14px; border: 1px solid #d1d5db;
-                   border-radius: 6px; background: #f9fafb; font-size: 12px; cursor: pointer; min-width: 80px; }
-    .kasa-fn-btn:hover { background: #e5e7eb; }
-    .kasa-fn-btn .fn-key { font-weight: 700; color: #374151; font-size: 11px; }
-    .kasa-fn-btn .fn-label { color: #6b7280; font-size: 11px; }
-    .last-receipt-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 13px; }
-    .last-receipt-label { color: #6b7280; }
-    .last-receipt-value { font-weight: 600; color: #111827; font-family: monospace; }
+    /* ============================================
+       POS REGISTER — GLASSMORPHISM DESIGN
+       Works with both Light & Dark (.glass-theme)
+       ============================================ */
 
-    /* Artikl lista modal */
-    .artikl-modal { max-height: 70vh; }
-    .artikl-item { cursor: pointer; transition: background 0.1s; }
-    .artikl-item:hover { background: #eff6ff; }
-    .artikl-item.selected { background: #dbeafe; }
+    /* Break out of parent padding for fullscreen */
+    .pos-fullscreen {
+        margin: -1.5rem -1rem;
+        height: calc(100vh - 64px);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+    }
+    @media (min-width: 640px) { .pos-fullscreen { margin: -1.5rem -1.5rem; } }
+    @media (min-width: 1024px) { .pos-fullscreen { margin: -1.5rem -2rem; } }
+
+    /* ---- LIGHT THEME ---- */
+    .pos-fullscreen {
+        background: linear-gradient(160deg, #f0f4ff 0%, #e8edf5 40%, #f5f3ff 100%);
+    }
+    .pos-header {
+        background: rgba(255,255,255,0.72);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border-bottom: 1px solid rgba(148,163,184,0.2);
+    }
+    .pos-card {
+        background: rgba(255,255,255,0.65);
+        backdrop-filter: blur(16px) saturate(180%);
+        -webkit-backdrop-filter: blur(16px) saturate(180%);
+        border: 1px solid rgba(148,163,184,0.18);
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .pos-card-solid {
+        background: rgba(255,255,255,0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(148,163,184,0.15);
+        border-radius: 14px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+    }
+    .pos-table thead th {
+        background: rgba(241,245,249,0.9);
+        color: #475569;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid rgba(148,163,184,0.2);
+    }
+    .pos-table tbody tr { border-bottom: 1px solid rgba(148,163,184,0.08); transition: background 0.15s; }
+    .pos-table tbody tr:hover { background: rgba(59,130,246,0.04); }
+    .pos-table tbody tr.selected { background: rgba(59,130,246,0.08); }
+    .pos-table td { color: #334155; }
+
+    .pos-total-display {
+        background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(241,245,249,0.6));
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(148,163,184,0.15);
+        border-radius: 16px;
+    }
+    .pos-total-value { color: #dc2626; }
+    .pos-total-label { color: #94a3b8; }
+
+    .pos-bottom-bar {
+        background: rgba(255,255,255,0.72);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border-top: 1px solid rgba(148,163,184,0.2);
+    }
+    .pos-fn-btn {
+        background: rgba(255,255,255,0.6);
+        border: 1px solid rgba(148,163,184,0.2);
+        border-radius: 10px;
+        transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .pos-fn-btn:hover { background: rgba(255,255,255,0.9); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .pos-fn-btn:active { transform: translateY(0); }
+    .pos-fn-btn .fn-key { color: #3b82f6; }
+    .pos-fn-btn .fn-label { color: #64748b; }
+
+    .pos-input {
+        background: rgba(255,255,255,0.7) !important;
+        border: 1px solid rgba(148,163,184,0.25) !important;
+        border-radius: 10px !important;
+        color: #1e293b !important;
+        transition: all 0.2s !important;
+    }
+    .pos-input:focus {
+        background: rgba(255,255,255,0.95) !important;
+        border-color: rgba(59,130,246,0.5) !important;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.1), 0 2px 8px rgba(59,130,246,0.08) !important;
+    }
+    .pos-input::placeholder { color: #94a3b8 !important; }
+
+    .pos-badge { border-radius: 8px; font-weight: 600; letter-spacing: 0.03em; }
+    .pos-badge-fiscal { background: rgba(34,197,94,0.12); color: #16a34a; border: 1px solid rgba(34,197,94,0.2); }
+    .pos-badge-internal { background: rgba(59,130,246,0.12); color: #2563eb; border: 1px solid rgba(59,130,246,0.2); }
+
+    .pos-last-receipt { color: #475569; }
+    .pos-last-receipt .lr-label { color: #94a3b8; }
+    .pos-last-receipt .lr-value { color: #1e293b; }
+
+    /* Modal overlay */
+    .pos-modal-overlay { background: rgba(15,23,42,0.4); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .pos-modal {
+        background: rgba(255,255,255,0.92);
+        backdrop-filter: blur(24px) saturate(200%);
+        -webkit-backdrop-filter: blur(24px) saturate(200%);
+        border: 1px solid rgba(148,163,184,0.2);
+        border-radius: 20px;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06);
+    }
+    .pos-modal h3 { color: #0f172a; }
+    .pos-modal .modal-divider { border-color: rgba(148,163,184,0.15); }
+
+    /* Payment method buttons */
+    .pay-method-btn {
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.2s;
+        border: 1.5px solid rgba(148,163,184,0.2);
+        background: rgba(255,255,255,0.5);
+        color: #475569;
+    }
+    .pay-method-btn:hover { background: rgba(255,255,255,0.8); }
+    .pay-method-btn.pay-active-cash { border-color: rgba(34,197,94,0.5); background: rgba(34,197,94,0.08); color: #16a34a; }
+    .pay-method-btn.pay-active-card { border-color: rgba(59,130,246,0.5); background: rgba(59,130,246,0.08); color: #2563eb; }
+    .pay-method-btn.pay-active-transfer { border-color: rgba(139,92,246,0.5); background: rgba(139,92,246,0.08); color: #7c3aed; }
+
+    .pos-btn-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-weight: 700;
+        box-shadow: 0 4px 14px rgba(59,130,246,0.3);
+        transition: all 0.2s;
+    }
+    .pos-btn-primary:hover { box-shadow: 0 6px 20px rgba(59,130,246,0.4); transform: translateY(-1px); }
+    .pos-btn-primary:active { transform: translateY(0); }
+    .pos-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .pos-btn-secondary {
+        background: rgba(148,163,184,0.12);
+        color: #475569;
+        border: 1px solid rgba(148,163,184,0.2);
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    .pos-btn-secondary:hover { background: rgba(148,163,184,0.2); }
+
+    /* Artikl item in list */
+    .pos-artikl-item {
+        transition: all 0.15s;
+        border-radius: 10px;
+        border: 1px solid transparent;
+    }
+    .pos-artikl-item:hover { background: rgba(59,130,246,0.06); border-color: rgba(59,130,246,0.12); }
+
+    .pos-change-positive { color: #16a34a; }
+    .pos-change-negative { color: #dc2626; }
+
+    /* Empty state */
+    .pos-empty-icon { color: rgba(148,163,184,0.4); }
+    .pos-empty-text { color: #94a3b8; }
+
+    /* Toast */
+    .pos-toast {
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    }
+    .pos-toast-success { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.2); color: #16a34a; }
+    .pos-toast-error { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.2); color: #dc2626; }
+
+    /* Scrollbar */
+    .pos-scroll::-webkit-scrollbar { width: 6px; }
+    .pos-scroll::-webkit-scrollbar-track { background: transparent; }
+    .pos-scroll::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.25); border-radius: 3px; }
+    .pos-scroll::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.4); }
+
+    /* ---- DARK / GLASS THEME ---- */
+    .glass-theme .pos-fullscreen {
+        background: radial-gradient(ellipse at 20% 0%, rgba(59,130,246,0.08) 0%, transparent 50%),
+                    radial-gradient(ellipse at 80% 100%, rgba(139,92,246,0.06) 0%, transparent 50%),
+                    linear-gradient(160deg, #0c1222 0%, #0a0f1a 50%, #0d1117 100%) !important;
+    }
+    .glass-theme .pos-header {
+        background: rgba(15,23,42,0.7) !important;
+        border-bottom-color: rgba(255,255,255,0.06) !important;
+    }
+    .glass-theme .pos-card {
+        background: rgba(255,255,255,0.04) !important;
+        border-color: rgba(255,255,255,0.06) !important;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+    }
+    .glass-theme .pos-card-solid {
+        background: rgba(255,255,255,0.06) !important;
+        border-color: rgba(255,255,255,0.08) !important;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.15) !important;
+    }
+    .glass-theme .pos-table thead th {
+        background: rgba(255,255,255,0.03) !important;
+        color: #64748b !important;
+        border-bottom-color: rgba(255,255,255,0.06) !important;
+    }
+    .glass-theme .pos-table tbody tr { border-bottom-color: rgba(255,255,255,0.04) !important; }
+    .glass-theme .pos-table tbody tr:hover { background: rgba(255,255,255,0.04) !important; }
+    .glass-theme .pos-table tbody tr.selected { background: rgba(59,130,246,0.1) !important; }
+    .glass-theme .pos-table td { color: #cbd5e1 !important; }
+
+    .glass-theme .pos-total-display {
+        background: rgba(255,255,255,0.03) !important;
+        border-color: rgba(255,255,255,0.06) !important;
+    }
+    .glass-theme .pos-total-value { color: #f87171 !important; }
+    .glass-theme .pos-total-label { color: #64748b !important; }
+
+    .glass-theme .pos-bottom-bar {
+        background: rgba(15,23,42,0.7) !important;
+        border-top-color: rgba(255,255,255,0.06) !important;
+    }
+    .glass-theme .pos-fn-btn {
+        background: rgba(255,255,255,0.05) !important;
+        border-color: rgba(255,255,255,0.08) !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
+    }
+    .glass-theme .pos-fn-btn:hover { background: rgba(255,255,255,0.1) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
+    .glass-theme .pos-fn-btn .fn-key { color: #60a5fa !important; }
+    .glass-theme .pos-fn-btn .fn-label { color: #94a3b8 !important; }
+
+    .glass-theme .pos-input {
+        background: rgba(255,255,255,0.04) !important;
+        border-color: rgba(255,255,255,0.1) !important;
+        color: #f1f5f9 !important;
+    }
+    .glass-theme .pos-input:focus {
+        background: rgba(255,255,255,0.08) !important;
+        border-color: rgba(96,165,250,0.4) !important;
+        box-shadow: 0 0 0 3px rgba(96,165,250,0.1), 0 2px 8px rgba(96,165,250,0.06) !important;
+    }
+    .glass-theme .pos-input::placeholder { color: #475569 !important; }
+
+    .glass-theme .pos-badge-fiscal { background: rgba(34,197,94,0.15) !important; color: #4ade80 !important; border-color: rgba(34,197,94,0.2) !important; }
+    .glass-theme .pos-badge-internal { background: rgba(96,165,250,0.15) !important; color: #60a5fa !important; border-color: rgba(96,165,250,0.2) !important; }
+
+    .glass-theme .pos-last-receipt { color: #94a3b8 !important; }
+    .glass-theme .pos-last-receipt .lr-label { color: #64748b !important; }
+    .glass-theme .pos-last-receipt .lr-value { color: #e2e8f0 !important; }
+
+    .glass-theme .pos-modal-overlay { background: rgba(0,0,0,0.6) !important; }
+    .glass-theme .pos-modal {
+        background: rgba(15,23,42,0.92) !important;
+        border-color: rgba(255,255,255,0.08) !important;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+    }
+    .glass-theme .pos-modal h3 { color: #f1f5f9 !important; }
+    .glass-theme .pos-modal .modal-divider { border-color: rgba(255,255,255,0.06) !important; }
+
+    .glass-theme .pay-method-btn {
+        border-color: rgba(255,255,255,0.08) !important;
+        background: rgba(255,255,255,0.04) !important;
+        color: #94a3b8 !important;
+    }
+    .glass-theme .pay-method-btn:hover { background: rgba(255,255,255,0.08) !important; }
+    .glass-theme .pay-method-btn.pay-active-cash { border-color: rgba(34,197,94,0.4) !important; background: rgba(34,197,94,0.1) !important; color: #4ade80 !important; }
+    .glass-theme .pay-method-btn.pay-active-card { border-color: rgba(96,165,250,0.4) !important; background: rgba(96,165,250,0.1) !important; color: #60a5fa !important; }
+    .glass-theme .pay-method-btn.pay-active-transfer { border-color: rgba(167,139,250,0.4) !important; background: rgba(139,92,246,0.1) !important; color: #a78bfa !important; }
+
+    .glass-theme .pos-btn-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%) !important;
+        box-shadow: 0 4px 14px rgba(59,130,246,0.25) !important;
+    }
+    .glass-theme .pos-btn-secondary {
+        background: rgba(255,255,255,0.06) !important;
+        color: #94a3b8 !important;
+        border-color: rgba(255,255,255,0.1) !important;
+    }
+    .glass-theme .pos-btn-secondary:hover { background: rgba(255,255,255,0.1) !important; }
+
+    .glass-theme .pos-artikl-item:hover { background: rgba(255,255,255,0.06) !important; border-color: rgba(96,165,250,0.15) !important; }
+
+    .glass-theme .pos-change-positive { color: #4ade80 !important; }
+    .glass-theme .pos-change-negative { color: #f87171 !important; }
+
+    .glass-theme .pos-empty-icon { color: rgba(255,255,255,0.08) !important; }
+    .glass-theme .pos-empty-text { color: #475569 !important; }
+
+    .glass-theme .pos-toast-success { background: rgba(34,197,94,0.15) !important; border-color: rgba(34,197,94,0.25) !important; color: #4ade80 !important; }
+    .glass-theme .pos-toast-error { background: rgba(239,68,68,0.15) !important; border-color: rgba(239,68,68,0.25) !important; color: #f87171 !important; }
+
+    .glass-theme .pos-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1) !important; }
+    .glass-theme .pos-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2) !important; }
+
+    /* Checkbox styling */
+    .glass-theme .pos-checkbox {
+        background: rgba(255,255,255,0.06) !important;
+        border-color: rgba(255,255,255,0.15) !important;
+    }
+
+    /* ---- ANIMATIONS ---- */
+    @keyframes pos-fade-in { from { opacity: 0; transform: scale(0.97) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    @keyframes pos-slide-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .pos-animate-in { animation: pos-fade-in 0.25s cubic-bezier(0.4,0,0.2,1); }
+    .pos-animate-slide { animation: pos-slide-up 0.2s cubic-bezier(0.4,0,0.2,1); }
+
+    /* ---- RESPONSIVE ---- */
+    @media (max-width: 1024px) {
+        .pos-body { flex-direction: column !important; }
+        .pos-right-panel { width: 100% !important; flex-direction: row !important; border-left: none !important; border-top: 1px solid rgba(148,163,184,0.15); }
+    }
 </style>
 
 <div x-data="posRegister()" x-init="init()" @keydown.window="handleKeyboard($event)" x-cloak>
-    <div class="kasa-wrapper">
+    <div class="pos-fullscreen">
 
         <!-- ============ HEADER ============ -->
-        <div class="kasa-header bg-white border-b border-gray-300 px-4 py-2 flex items-center justify-between">
+        <div class="pos-header flex-shrink-0 px-5 py-2.5 flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <span class="font-bold text-gray-800 text-sm">Promet</span>
-                <span class="font-bold text-gray-800 text-sm">Prodaja</span>
-                <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-bold uppercase"
-                      :class="fiscalMode ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'"
+                <!-- Logo / branding -->
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <span class="font-bold text-sm tracking-tight" style="color: inherit;">Kasa</span>
+                </div>
+                <div class="h-4 w-px bg-gray-300 dark:bg-gray-700 hidden sm:block"></div>
+                <span class="pos-badge px-2.5 py-1 text-[10px] uppercase"
+                      :class="fiscalMode ? 'pos-badge-fiscal' : 'pos-badge-internal'"
                       x-text="fiscalMode ? 'Fiskalna' : 'Interna'"></span>
-                <span class="text-xs text-gray-500" x-text="currentLocationName"></span>
-                <span class="text-xs text-gray-400" x-text="todayFormatted"></span>
+                <span class="text-xs font-medium hidden sm:inline" style="color: inherit; opacity:0.6" x-text="currentLocationName"></span>
+                <span class="text-[11px] hidden md:inline" style="color: inherit; opacity:0.4" x-text="todayFormatted"></span>
             </div>
-            <div class="flex items-center gap-3">
-                <a href="/pos/receipts" class="text-xs text-gray-500 hover:text-gray-700">Svi racuni</a>
-                <a href="/dashboard" class="text-xs text-gray-500 hover:text-gray-700">Nazad</a>
+            <div class="flex items-center gap-2">
+                <a href="/pos/receipts" class="pos-btn-secondary px-3 py-1.5 text-xs inline-flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Racuni
+                </a>
+                <a href="/dashboard" class="pos-btn-secondary px-3 py-1.5 text-xs inline-flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 17l-5-5m0 0l5-5m-5 5h12"/></svg>
+                    Nazad
+                </a>
             </div>
         </div>
 
         <!-- ============ BODY ============ -->
-        <div class="kasa-body">
+        <div class="pos-body flex-1 flex overflow-hidden p-3 gap-3" style="min-height: 0;">
 
             <!-- LEFT: Table + Input -->
-            <div class="kasa-table-area">
-                <!-- Table -->
-                <div class="kasa-table-scroll bg-white">
-                    <table class="kasa-table w-full text-sm">
-                        <thead>
-                            <tr>
-                                <th class="text-left py-2 px-3 w-12">#</th>
-                                <th class="text-left py-2 px-3 w-28">Sifra</th>
-                                <th class="text-left py-2 px-3">Naziv</th>
-                                <th class="text-center py-2 px-3 w-20">Kolicina</th>
-                                <th class="text-right py-2 px-3 w-24">Cena</th>
-                                <th class="text-center py-2 px-3 w-20">Popust(%)</th>
-                                <th class="text-right py-2 px-3 w-28">Vrednost</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template x-for="(item, idx) in items" :key="idx">
-                                <tr @click="selectedIndex = idx" :class="{'selected': selectedIndex === idx}"
-                                    class="border-b border-gray-100 cursor-pointer">
-                                    <td class="py-2 px-3 text-gray-400" x-text="idx + 1"></td>
-                                    <td class="py-2 px-3 text-gray-600 font-mono text-xs" x-text="item.barcode || item.sku || '-'"></td>
-                                    <td class="py-2 px-3 font-medium text-gray-900" x-text="item.name"></td>
-                                    <td class="py-2 px-3 text-center" x-text="item.quantity"></td>
-                                    <td class="py-2 px-3 text-right font-mono" x-text="fmtPrice(item.price)"></td>
-                                    <td class="py-2 px-3 text-center" x-text="item.discount > 0 ? item.discount + '%' : ''"></td>
-                                    <td class="py-2 px-3 text-right font-bold font-mono" x-text="fmtPrice(itemTotal(item))"></td>
+            <div class="flex-1 flex flex-col gap-3 min-w-0">
+                <!-- Table Card -->
+                <div class="pos-card flex-1 flex flex-col overflow-hidden min-h-0">
+                    <div class="pos-scroll flex-1 overflow-y-auto">
+                        <table class="pos-table w-full text-sm" style="border-collapse: separate; border-spacing: 0;">
+                            <thead>
+                                <tr>
+                                    <th class="text-left py-2.5 px-4 w-10 sticky top-0 z-10">#</th>
+                                    <th class="text-left py-2.5 px-3 w-24 sticky top-0 z-10">Sifra</th>
+                                    <th class="text-left py-2.5 px-3 sticky top-0 z-10">Naziv</th>
+                                    <th class="text-center py-2.5 px-3 w-16 sticky top-0 z-10">Kol.</th>
+                                    <th class="text-right py-2.5 px-3 w-24 sticky top-0 z-10">Cena</th>
+                                    <th class="text-center py-2.5 px-3 w-16 sticky top-0 z-10">Pop.%</th>
+                                    <th class="text-right py-2.5 px-4 w-28 sticky top-0 z-10">Vrednost</th>
                                 </tr>
-                            </template>
-                            <!-- Prazni redovi za vizuelni efekat -->
-                            <template x-if="items.length === 0">
-                                <tr><td colspan="7" class="py-12 text-center text-gray-300 text-sm">Skenirajte barkod ili unesite sifru artikla</td></tr>
-                            </template>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <template x-for="(item, idx) in items" :key="idx">
+                                    <tr @click="selectedIndex = idx"
+                                        :class="{'selected': selectedIndex === idx}"
+                                        class="cursor-pointer pos-animate-slide">
+                                        <td class="py-2.5 px-4 tabular-nums" style="opacity:0.4" x-text="idx + 1"></td>
+                                        <td class="py-2.5 px-3 font-mono text-xs" style="opacity:0.6" x-text="item.barcode || item.sku || '-'"></td>
+                                        <td class="py-2.5 px-3 font-semibold" x-text="item.name"></td>
+                                        <td class="py-2.5 px-3 text-center tabular-nums font-medium" x-text="item.quantity"></td>
+                                        <td class="py-2.5 px-3 text-right tabular-nums font-mono" x-text="fmtPrice(item.price)"></td>
+                                        <td class="py-2.5 px-3 text-center tabular-nums" x-text="item.discount > 0 ? item.discount + '%' : ''"></td>
+                                        <td class="py-2.5 px-4 text-right tabular-nums font-bold font-mono" x-text="fmtPrice(itemTotal(item))"></td>
+                                    </tr>
+                                </template>
+                                <template x-if="items.length === 0">
+                                    <tr>
+                                        <td colspan="7" class="py-16 text-center">
+                                            <div class="flex flex-col items-center gap-3">
+                                                <svg class="w-12 h-12 pos-empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                                                </svg>
+                                                <span class="pos-empty-text text-sm">Skenirajte barkod ili unesite sifru artikla</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <!-- Input zona -->
-                <div class="kasa-input-area p-4">
-                    <div class="flex gap-6">
-                        <!-- Leva strana: inputi -->
-                        <div class="flex-1 space-y-2">
-                            <!-- Sifra -->
-                            <div class="flex items-center gap-2">
-                                <label class="text-sm font-medium text-gray-700 w-20">Sifra:</label>
-                                <input x-ref="barcodeInput" type="text" x-model="searchQuery"
-                                       @keydown.enter.prevent="onBarcodeEnter()"
-                                       class="flex-1 rounded border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                       placeholder="Barkod / sifra" autofocus>
-                                <button @click="showArtiklModal = true" class="px-3 py-1.5 border border-gray-300 rounded bg-gray-50 hover:bg-gray-100 text-sm"
-                                        title="Lista artikala">
-                                    <svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                                </button>
-                            </div>
-                            <!-- Naziv (readonly) -->
-                            <div class="flex items-center gap-2">
-                                <label class="text-sm font-medium text-gray-700 w-20">Naziv:</label>
-                                <input type="text" x-model="pendingItem.name" readonly tabindex="-1"
-                                       class="flex-1 rounded border-gray-200 bg-gray-50 px-3 py-1.5 text-sm">
-                            </div>
-                            <!-- Kolicina + Rezim -->
-                            <div class="flex items-center gap-2">
-                                <label class="text-sm font-medium text-gray-700 w-20">Kolicina:</label>
-                                <input x-ref="qtyInput" type="number" x-model.number="pendingItem.quantity" min="1" step="1"
-                                       @keydown.enter.prevent="confirmPendingItem()"
-                                       class="w-20 rounded border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <select x-model="qtyMode" class="rounded border-gray-300 px-2 py-1.5 text-xs text-gray-600">
-                                    <option value="auto">Bez unosa kolicine</option>
-                                    <option value="manual">Unos kolicine</option>
-                                </select>
-                                <button @click="confirmPendingItem()" x-show="pendingItem.name"
-                                        class="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-500">
-                                    Dodaj
-                                </button>
-                            </div>
-                            <!-- Cena + Izmena cene -->
-                            <div class="flex items-center gap-2">
-                                <label class="text-sm font-medium text-gray-700 w-20">Cena:</label>
-                                <input type="number" x-model.number="pendingItem.price" step="0.01"
-                                       :readonly="!allowPriceEdit" :class="allowPriceEdit ? '' : 'bg-gray-50'"
-                                       class="w-28 rounded border-gray-300 px-3 py-1.5 text-sm shadow-sm">
-                                <label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
-                                    <input type="checkbox" x-model="allowPriceEdit" class="rounded border-gray-300 text-blue-600">
-                                    Izmena cene
-                                </label>
-                            </div>
-                            <!-- Popust -->
-                            <div class="flex items-center gap-2">
-                                <label class="text-sm font-medium text-gray-700 w-20">Popust:</label>
-                                <select x-model="pendingItem.discount" class="rounded border-gray-300 px-2 py-1.5 text-sm text-gray-600">
-                                    <option value="0">Bez popusta</option>
-                                    <option value="5">5%</option>
-                                    <option value="10">10%</option>
-                                    <option value="15">15%</option>
-                                    <option value="20">20%</option>
-                                    <option value="25">25%</option>
-                                    <option value="30">30%</option>
-                                </select>
-                            </div>
+                <!-- Input Card -->
+                <div class="pos-card-solid flex-shrink-0 p-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-2.5">
+                        <!-- Sifra -->
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs font-semibold uppercase tracking-wide w-16 flex-shrink-0" style="opacity:0.5">Sifra</label>
+                            <input x-ref="barcodeInput" type="text" x-model="searchQuery"
+                                   @keydown.enter.prevent="onBarcodeEnter()"
+                                   class="pos-input flex-1 px-3 py-2 text-sm" placeholder="Barkod / sifra" autofocus>
+                            <button @click="showArtiklModal = true" class="pos-fn-btn p-2" title="Lista artikala">
+                                <svg class="w-4 h-4" style="opacity:0.6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                            </button>
+                        </div>
+                        <!-- Naziv -->
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs font-semibold uppercase tracking-wide w-16 flex-shrink-0" style="opacity:0.5">Naziv</label>
+                            <input type="text" x-model="pendingItem.name" readonly tabindex="-1"
+                                   class="pos-input flex-1 px-3 py-2 text-sm" style="opacity:0.7">
+                        </div>
+                        <!-- Kolicina + Rezim -->
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs font-semibold uppercase tracking-wide w-16 flex-shrink-0" style="opacity:0.5">Kol.</label>
+                            <input x-ref="qtyInput" type="number" x-model.number="pendingItem.quantity" min="1" step="1"
+                                   @keydown.enter.prevent="confirmPendingItem()"
+                                   class="pos-input w-20 px-3 py-2 text-sm text-center">
+                            <select x-model="qtyMode" class="pos-input px-2 py-2 text-xs flex-1">
+                                <option value="auto">Bez unosa kolicine</option>
+                                <option value="manual">Unos kolicine</option>
+                            </select>
+                            <button @click="confirmPendingItem()" x-show="pendingItem.name"
+                                    class="pos-btn-primary px-4 py-2 text-xs">
+                                Dodaj
+                            </button>
+                        </div>
+                        <!-- Cena + Popust -->
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs font-semibold uppercase tracking-wide w-16 flex-shrink-0" style="opacity:0.5">Cena</label>
+                            <input type="number" x-model.number="pendingItem.price" step="0.01"
+                                   :readonly="!allowPriceEdit"
+                                   class="pos-input w-28 px-3 py-2 text-sm text-right" :style="!allowPriceEdit ? 'opacity:0.5' : ''">
+                            <label class="flex items-center gap-1.5 text-[11px] cursor-pointer flex-shrink-0" style="opacity:0.6">
+                                <input type="checkbox" x-model="allowPriceEdit" class="pos-checkbox rounded w-3.5 h-3.5">
+                                Izmena cene
+                            </label>
+                            <div class="h-4 w-px" style="background: rgba(148,163,184,0.15)"></div>
+                            <label class="text-xs font-semibold uppercase tracking-wide flex-shrink-0" style="opacity:0.5">Pop.</label>
+                            <select x-model="pendingItem.discount" class="pos-input w-24 px-2 py-2 text-xs">
+                                <option value="0">Bez</option>
+                                <option value="5">5%</option>
+                                <option value="10">10%</option>
+                                <option value="15">15%</option>
+                                <option value="20">20%</option>
+                                <option value="25">25%</option>
+                                <option value="30">30%</option>
+                            </select>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT PANEL: Total + Poslednji racun -->
-            <div class="kasa-right-panel">
-                <!-- Total -->
-                <div class="flex-1 flex flex-col items-center justify-center p-6">
-                    <div class="kasa-total" x-text="fmtPrice(total)"></div>
-                    <div class="text-xs text-gray-400 mt-1">RSD</div>
+            <!-- RIGHT PANEL: Total + Last Receipt -->
+            <div class="pos-right-panel w-64 xl:w-72 flex-shrink-0 flex flex-col gap-3">
+                <!-- Total display -->
+                <div class="pos-total-display flex-1 flex flex-col items-center justify-center p-6">
+                    <div class="pos-total-label text-[10px] uppercase font-bold tracking-widest mb-2">Ukupno</div>
+                    <div class="pos-total-value text-4xl xl:text-5xl font-extrabold tabular-nums tracking-tight" style="font-family: 'Inter', system-ui, -apple-system, sans-serif;"
+                         x-text="fmtPrice(total)"></div>
+                    <div class="pos-total-label text-xs mt-1.5 font-medium">RSD</div>
                 </div>
 
-                <!-- Poslednji racun -->
-                <div class="border-t border-gray-200 p-4" x-show="lastReceipt">
-                    <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Poslednji racun</div>
-                    <div class="space-y-1">
-                        <div class="last-receipt-row">
-                            <span class="last-receipt-label">Iznos:</span>
-                            <span class="last-receipt-value" x-text="lastReceipt ? fmtPrice(lastReceipt.total) : '0,00'"></span>
+                <!-- Last receipt info -->
+                <div class="pos-card-solid p-4 pos-last-receipt" x-show="lastReceipt" x-transition>
+                    <div class="text-[10px] font-bold uppercase tracking-widest mb-3" style="opacity:0.5">Poslednji racun</div>
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-xs">
+                            <span class="lr-label">Broj:</span>
+                            <span class="lr-value font-mono font-semibold" x-text="lastReceipt?.number || '-'"></span>
                         </div>
-                        <div class="last-receipt-row">
-                            <span class="last-receipt-label">Kartica:</span>
-                            <span class="last-receipt-value" x-text="lastReceipt ? fmtPrice(lastReceipt.card || 0) : '0,00'"></span>
+                        <div class="flex justify-between text-xs">
+                            <span class="lr-label">Iznos:</span>
+                            <span class="lr-value font-mono font-bold" x-text="lastReceipt ? fmtPrice(lastReceipt.total) : '0,00'"></span>
                         </div>
-                        <div class="last-receipt-row">
-                            <span class="last-receipt-label">Gotovina:</span>
-                            <span class="last-receipt-value" x-text="lastReceipt ? fmtPrice(lastReceipt.cash || 0) : '0,00'"></span>
+                        <div class="flex justify-between text-xs">
+                            <span class="lr-label">Kartica:</span>
+                            <span class="lr-value font-mono" x-text="lastReceipt ? fmtPrice(lastReceipt.card || 0) : '0,00'"></span>
                         </div>
-                        <div class="last-receipt-row">
-                            <span class="last-receipt-label">Povracaj:</span>
-                            <span class="last-receipt-value" x-text="lastReceipt ? fmtPrice(lastReceipt.change || 0) : '0,00'"></span>
+                        <div class="flex justify-between text-xs">
+                            <span class="lr-label">Gotovina:</span>
+                            <span class="lr-value font-mono" x-text="lastReceipt ? fmtPrice(lastReceipt.cash || 0) : '0,00'"></span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="lr-label">Povracaj:</span>
+                            <span class="lr-value font-mono pos-change-positive" x-text="lastReceipt ? fmtPrice(lastReceipt.change || 0) : '0,00'"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session stats mini -->
+                <div class="pos-card-solid p-4 pos-last-receipt" x-show="session">
+                    <div class="text-[10px] font-bold uppercase tracking-widest mb-3" style="opacity:0.5">Danas</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="text-center">
+                            <div class="lr-value text-lg font-bold font-mono" x-text="session?.receipt_count || 0"></div>
+                            <div class="lr-label text-[10px]">Racuna</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="lr-value text-lg font-bold font-mono" x-text="fmtPrice(session?.total_revenue || 0)"></div>
+                            <div class="lr-label text-[10px]">Promet</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ============ BOTTOM BAR — Function keys ============ -->
-        <div class="kasa-bottom-bar bg-white border-t border-gray-300 px-4 py-2 flex items-center gap-2 flex-wrap">
-            <button class="kasa-fn-btn" @click="openCashDrawer()">
-                <span class="fn-key">F5</span><span class="fn-label">Fioka</span>
+        <!-- ============ BOTTOM BAR ============ -->
+        <div class="pos-bottom-bar flex-shrink-0 px-4 py-2 flex items-center gap-2 flex-wrap">
+            <button class="pos-fn-btn flex flex-col items-center px-3 py-1.5 min-w-[68px]" @click="openCashDrawer()">
+                <span class="fn-key text-[11px] font-bold">F5</span><span class="fn-label text-[10px]">Fioka</span>
             </button>
-            <button class="kasa-fn-btn" @click="openPaymentModal()" :disabled="items.length === 0"
-                    :class="items.length === 0 ? 'opacity-40 cursor-not-allowed' : ''">
-                <span class="fn-key">F6</span><span class="fn-label">Racun</span>
+            <button class="pos-fn-btn flex flex-col items-center px-3 py-1.5 min-w-[68px]"
+                    @click="openPaymentModal()" :disabled="items.length === 0"
+                    :style="items.length === 0 ? 'opacity:0.35; cursor:not-allowed' : ''">
+                <span class="fn-key text-[11px] font-bold">F6</span><span class="fn-label text-[10px]">Racun</span>
             </button>
-            <button class="kasa-fn-btn" @click="editQuantity()">
-                <span class="fn-key">F7</span><span class="fn-label">Kolicina</span>
+            <button class="pos-fn-btn flex flex-col items-center px-3 py-1.5 min-w-[68px]" @click="editQuantity()">
+                <span class="fn-key text-[11px] font-bold">F7</span><span class="fn-label text-[10px]">Kolicina</span>
             </button>
-            <button class="kasa-fn-btn" @click="deleteItem()">
-                <span class="fn-key">F8</span><span class="fn-label">Brisanje</span>
+            <button class="pos-fn-btn flex flex-col items-center px-3 py-1.5 min-w-[68px]" @click="deleteItem()">
+                <span class="fn-key text-[11px] font-bold">F8</span><span class="fn-label text-[10px]">Brisanje</span>
             </button>
-            <button class="kasa-fn-btn" @click="applyDiscount()">
-                <span class="fn-key">ALT+P</span><span class="fn-label">Popust</span>
+            <button class="pos-fn-btn flex flex-col items-center px-3 py-1.5 min-w-[68px]" @click="applyDiscount()">
+                <span class="fn-key text-[11px] font-bold leading-tight" style="font-size:9px">ALT+P</span><span class="fn-label text-[10px]">Popust</span>
             </button>
             <div class="flex-1"></div>
-            <button class="kasa-fn-btn" @click="generateZReport()">
-                <span class="fn-key">Z</span><span class="fn-label">Dnevni izvestaj</span>
+            <button class="pos-fn-btn flex flex-col items-center px-3 py-1.5 min-w-[80px]" @click="generateZReport()">
+                <span class="fn-key text-[11px] font-bold">Z</span><span class="fn-label text-[10px]">Dnevni izv.</span>
             </button>
-            <button class="kasa-fn-btn" @click="showXReport()">
-                <span class="fn-key">X</span><span class="fn-label">Tekuci promet</span>
+            <button class="pos-fn-btn flex flex-col items-center px-3 py-1.5 min-w-[80px]" @click="showXReport()">
+                <span class="fn-key text-[11px] font-bold">X</span><span class="fn-label text-[10px]">Promet</span>
             </button>
         </div>
     </div>
@@ -224,103 +553,113 @@
     <!-- ============ F6 PAYMENT MODAL ============ -->
     <div x-show="paymentModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center"
          @keydown.escape.window="if(paymentModal) paymentModal = false">
-        <div class="fixed inset-0 bg-black/50" @click="paymentModal = false"></div>
-        <div class="relative bg-white rounded-lg shadow-2xl w-full max-w-2xl mx-4" @keydown.enter.prevent="confirmPayment()">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-bold text-gray-900">Izdavanje racuna</h3>
+        <div class="pos-modal-overlay fixed inset-0" @click="paymentModal = false"></div>
+        <div class="pos-modal pos-animate-in relative w-full max-w-2xl mx-4" @keydown.enter.prevent="confirmPayment()">
+            <!-- Header -->
+            <div class="px-6 py-4 flex items-center justify-between">
+                <h3 class="text-lg font-bold">Izdavanje racuna</h3>
+                <button @click="paymentModal = false" class="pos-btn-secondary w-8 h-8 flex items-center justify-center rounded-full text-sm">&times;</button>
             </div>
+            <div class="modal-divider border-b"></div>
+
             <div class="flex">
-                <!-- Leva strana: iznosi -->
-                <div class="w-1/2 p-6 border-r border-gray-200">
-                    <div class="mb-6">
-                        <div class="text-sm text-gray-500">Ukupno:</div>
-                        <div class="text-3xl font-bold text-gray-900 font-mono" x-text="fmtPrice(total)"></div>
+                <!-- Left: amounts -->
+                <div class="w-1/2 p-6">
+                    <!-- Total -->
+                    <div class="mb-5">
+                        <div class="text-xs font-semibold uppercase tracking-wide mb-1" style="opacity:0.5">Ukupno</div>
+                        <div class="text-3xl font-extrabold tabular-nums" style="font-family: 'Inter', system-ui, sans-serif;"
+                             x-text="fmtPrice(getDiscountedTotal())"></div>
                     </div>
 
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-3">
+                    <!-- Payment methods -->
+                    <div class="space-y-2.5">
+                        <div class="flex items-center gap-2.5">
                             <button @click="payMethod = 'CARD'; focusPaymentInput()"
-                                    class="w-24 text-left px-3 py-2 rounded text-sm font-medium border"
-                                    :class="payMethod === 'CARD' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200'">
-                                Kartica <span class="text-xs text-gray-400">F6</span>
+                                    class="pay-method-btn w-24 text-left px-3 py-2 text-sm"
+                                    :class="payMethod === 'CARD' ? 'pay-active-card' : ''">
+                                Kartica
                             </button>
                             <input type="number" x-model.number="pay.card" step="0.01" min="0" @input="recalcCash()"
-                                   class="flex-1 rounded border-gray-300 px-3 py-2 text-sm text-right font-mono">
+                                   class="pos-input flex-1 px-3 py-2 text-sm text-right tabular-nums font-mono">
                         </div>
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2.5">
                             <button @click="payMethod = 'TRANSFER'; focusPaymentInput()"
-                                    class="w-24 text-left px-3 py-2 rounded text-sm font-medium border"
-                                    :class="payMethod === 'TRANSFER' ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200'">
+                                    class="pay-method-btn w-24 text-left px-3 py-2 text-sm"
+                                    :class="payMethod === 'TRANSFER' ? 'pay-active-transfer' : ''">
                                 Prenos
                             </button>
                             <input type="number" x-model.number="pay.transfer" step="0.01" min="0" @input="recalcCash()"
-                                   class="flex-1 rounded border-gray-300 px-3 py-2 text-sm text-right font-mono">
+                                   class="pos-input flex-1 px-3 py-2 text-sm text-right tabular-nums font-mono">
                         </div>
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2.5">
                             <button @click="payMethod = 'CASH'; focusPaymentInput()"
-                                    class="w-24 text-left px-3 py-2 rounded text-sm font-bold border"
-                                    :class="payMethod === 'CASH' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200'">
+                                    class="pay-method-btn w-24 text-left px-3 py-2 text-sm font-bold"
+                                    :class="payMethod === 'CASH' ? 'pay-active-cash' : ''">
                                 Gotovina
                             </button>
                             <input x-ref="cashInput" type="number" x-model.number="pay.cash" step="0.01" min="0"
                                    @input="calcChange()"
-                                   class="flex-1 rounded border-gray-300 px-3 py-2 text-sm text-right font-mono font-bold bg-blue-50 border-blue-300 focus:border-blue-500 focus:ring-blue-500">
+                                   class="pos-input flex-1 px-3 py-2 text-sm text-right tabular-nums font-mono font-bold"
+                                   style="border-width: 2px !important;">
                         </div>
                     </div>
 
-                    <div class="mt-4 pt-4 border-t border-gray-200">
+                    <!-- Change -->
+                    <div class="mt-5 pt-4" style="border-top: 1px solid rgba(148,163,184,0.15);">
                         <div class="flex justify-between items-center">
-                            <span class="text-sm font-bold text-gray-700">Povracaj:</span>
-                            <span class="text-2xl font-bold font-mono" :class="payChange >= 0 ? 'text-gray-900' : 'text-red-600'"
+                            <span class="text-sm font-bold" style="opacity:0.7">Povracaj:</span>
+                            <span class="text-2xl font-extrabold tabular-nums font-mono"
+                                  :class="payChange >= 0 ? 'pos-change-positive' : 'pos-change-negative'"
                                   x-text="fmtPrice(payChange)"></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Desna strana: opcije -->
-                <div class="w-1/2 p-6">
-                    <div class="space-y-4">
-                        <!-- Popust na ceo racun -->
+                <!-- Right: options -->
+                <div class="w-1/2 p-6" style="border-left: 1px solid rgba(148,163,184,0.1);">
+                    <div class="space-y-5">
+                        <!-- Discount -->
                         <div>
-                            <label class="text-sm font-medium text-gray-700">Popust na ceo racun:</label>
-                            <div class="flex items-center gap-2 mt-1">
+                            <label class="text-xs font-semibold uppercase tracking-wide" style="opacity:0.5">Popust na ceo racun</label>
+                            <div class="flex items-center gap-2 mt-1.5">
                                 <input type="number" x-model.number="receiptDiscount" step="0.01" min="0" max="100"
                                        @input="recalcCash()"
-                                       class="w-20 rounded border-gray-300 px-3 py-1.5 text-sm text-right">
-                                <span class="text-sm text-gray-500">%</span>
+                                       class="pos-input w-20 px-3 py-2 text-sm text-right tabular-nums">
+                                <span class="text-sm font-medium" style="opacity:0.5">%</span>
                             </div>
                         </div>
 
                         <!-- B2B -->
                         <div>
                             <label class="flex items-center gap-2 text-sm cursor-pointer">
-                                <input type="checkbox" x-model="showB2B" class="rounded border-gray-300 text-blue-600">
-                                <span class="font-medium text-gray-700">Racun za komitenta</span>
+                                <input type="checkbox" x-model="showB2B" class="pos-checkbox rounded w-4 h-4">
+                                <span class="font-semibold text-xs">Racun za komitenta (B2B)</span>
                             </label>
-                            <div x-show="showB2B" class="mt-2 space-y-2">
+                            <div x-show="showB2B" x-transition class="mt-2.5 space-y-2">
                                 <input type="text" x-model="buyerPib" placeholder="PIB kupca (9 cifara)"
-                                       class="w-full rounded border-gray-300 px-3 py-1.5 text-sm">
+                                       class="pos-input w-full px-3 py-2 text-sm">
                                 <input type="text" x-model="buyerName" placeholder="Naziv kupca"
-                                       class="w-full rounded border-gray-300 px-3 py-1.5 text-sm">
+                                       class="pos-input w-full px-3 py-2 text-sm">
                             </div>
                         </div>
 
-                        <!-- Napomena -->
+                        <!-- Note -->
                         <div>
-                            <label class="text-sm font-medium text-gray-700">Napomena:</label>
+                            <label class="text-xs font-semibold uppercase tracking-wide" style="opacity:0.5">Napomena</label>
                             <textarea x-model="receiptNote" rows="2"
-                                      class="mt-1 w-full rounded border-gray-300 px-3 py-1.5 text-sm"></textarea>
+                                      class="pos-input mt-1.5 w-full px-3 py-2 text-sm resize-none"></textarea>
                         </div>
                     </div>
 
-                    <div class="mt-6 flex justify-end gap-3">
+                    <div class="mt-6 flex justify-end gap-2.5">
                         <button @click="confirmPayment()" :disabled="issuing"
-                                class="px-6 py-2.5 bg-blue-600 text-white rounded font-bold text-sm hover:bg-blue-500 disabled:opacity-50">
+                                class="pos-btn-primary px-6 py-2.5 text-sm">
                             <span x-text="issuing ? 'Izdavanje...' : 'Potvrdi'"></span>
                         </button>
                         <button @click="paymentModal = false"
-                                class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded font-medium text-sm hover:bg-gray-200">
-                            Odustani <span class="text-xs text-gray-400">ESC</span>
+                                class="pos-btn-secondary px-4 py-2.5 text-sm">
+                            Odustani <span style="opacity:0.4; font-size:10px">ESC</span>
                         </button>
                     </div>
                 </div>
@@ -331,39 +670,40 @@
     <!-- ============ ARTIKL LISTA MODAL ============ -->
     <div x-show="showArtiklModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center"
          @keydown.escape.window="if(showArtiklModal) showArtiklModal = false">
-        <div class="fixed inset-0 bg-black/50" @click="showArtiklModal = false"></div>
-        <div class="relative bg-white rounded-lg shadow-2xl w-full max-w-xl mx-4 artikl-modal flex flex-col">
-            <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                <h3 class="text-sm font-bold text-gray-900">Odabir artikla</h3>
-                <button @click="showArtiklModal = false" class="text-gray-400 hover:text-gray-600">&times;</button>
+        <div class="pos-modal-overlay fixed inset-0" @click="showArtiklModal = false"></div>
+        <div class="pos-modal pos-animate-in relative w-full max-w-xl mx-4 flex flex-col" style="max-height: 70vh;">
+            <div class="px-5 py-3.5 flex items-center justify-between">
+                <h3 class="text-sm font-bold">Odabir artikla</h3>
+                <button @click="showArtiklModal = false" class="pos-btn-secondary w-7 h-7 flex items-center justify-center rounded-full text-xs">&times;</button>
             </div>
-            <div class="px-4 py-3 border-b border-gray-100">
+            <div class="modal-divider border-b"></div>
+            <div class="px-5 py-3">
                 <input x-ref="artiklSearch" type="text" x-model="artiklSearchQuery"
                        @input.debounce.300ms="searchArtikli()"
                        placeholder="Pretrazi po imenu, barkodu, sifri..."
-                       class="w-full rounded border-gray-300 px-3 py-2 text-sm">
+                       class="pos-input w-full px-3 py-2.5 text-sm">
             </div>
-            <div class="flex-1 overflow-y-auto">
+            <div class="flex-1 overflow-y-auto pos-scroll px-3 pb-3">
                 <template x-for="a in artiklResults" :key="a.type + '-' + a.id">
-                    <div @click="selectArtikl(a)" class="artikl-item px-4 py-2 border-b border-gray-50 flex items-center justify-between">
+                    <div @click="selectArtikl(a)" class="pos-artikl-item px-3 py-2.5 flex items-center justify-between cursor-pointer mb-0.5">
                         <div>
-                            <div class="text-sm font-medium text-gray-900" x-text="a.name"></div>
-                            <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-xs px-1.5 py-0.5 rounded"
-                                      :class="{'bg-purple-100 text-purple-700': a.type==='GOODS', 'bg-orange-100 text-orange-700': a.type==='SPARE_PART', 'bg-cyan-100 text-cyan-700': a.type==='PHONE'}"
+                            <div class="text-sm font-semibold" x-text="a.name"></div>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="pos-badge px-1.5 py-0.5 text-[10px]"
+                                      :class="{'pos-badge-internal': a.type==='GOODS', 'pos-badge-fiscal': a.type==='SPARE_PART'}"
                                       x-text="a.type==='GOODS' ? 'Roba' : a.type==='SPARE_PART' ? 'Deo' : 'Telefon'"></span>
-                                <span class="text-xs text-gray-400" x-show="a.barcode" x-text="a.barcode"></span>
-                                <span class="text-xs text-gray-400" x-text="'Stanje: ' + a.stock"></span>
+                                <span class="text-[11px]" style="opacity:0.4" x-show="a.barcode" x-text="a.barcode"></span>
+                                <span class="text-[11px]" style="opacity:0.4" x-text="'Stanje: ' + a.stock"></span>
                             </div>
                         </div>
-                        <span class="text-sm font-bold font-mono text-gray-900" x-text="fmtPrice(a.price)"></span>
+                        <span class="text-sm font-bold font-mono tabular-nums" x-text="fmtPrice(a.price)"></span>
                     </div>
                 </template>
-                <div x-show="artiklSearchQuery && artiklResults.length === 0" class="p-6 text-center text-sm text-gray-400">
-                    Nema rezultata
+                <div x-show="artiklSearchQuery && artiklResults.length === 0" class="py-8 text-center">
+                    <span class="pos-empty-text text-sm">Nema rezultata</span>
                 </div>
-                <div x-show="!artiklSearchQuery" class="p-6 text-center text-sm text-gray-400">
-                    Unesite tekst za pretragu
+                <div x-show="!artiklSearchQuery" class="py-8 text-center">
+                    <span class="pos-empty-text text-sm">Unesite tekst za pretragu</span>
                 </div>
             </div>
         </div>
@@ -372,40 +712,48 @@
     <!-- ============ X REPORT MODAL ============ -->
     <div x-show="showXReportModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center"
          @keydown.escape.window="if(showXReportModal) showXReportModal = false">
-        <div class="fixed inset-0 bg-black/50" @click="showXReportModal = false"></div>
-        <div class="relative bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 p-6">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">X Izvestaj - Tekuci promet</h3>
+        <div class="pos-modal-overlay fixed inset-0" @click="showXReportModal = false"></div>
+        <div class="pos-modal pos-animate-in relative w-full max-w-md mx-4 p-6">
+            <h3 class="text-lg font-bold mb-5">X Izvestaj — Tekuci promet</h3>
             <template x-if="xReportData">
-                <div class="space-y-2 text-sm">
-                    <div class="flex justify-between"><span class="text-gray-500">Promet:</span><span class="font-bold font-mono" x-text="fmtPrice(xReportData.total_revenue) + ' RSD'"></span></div>
-                    <div class="flex justify-between"><span class="text-gray-500">Trosak:</span><span class="font-mono" x-text="fmtPrice(xReportData.total_cost) + ' RSD'"></span></div>
-                    <div class="flex justify-between"><span class="text-gray-500">Profit:</span><span class="font-bold font-mono text-green-600" x-text="fmtPrice(xReportData.total_profit) + ' RSD'"></span></div>
-                    <div class="border-t border-gray-200 pt-2"></div>
-                    <div class="flex justify-between"><span class="text-gray-500">Gotovina:</span><span class="font-mono" x-text="fmtPrice(xReportData.total_cash) + ' RSD'"></span></div>
-                    <div class="flex justify-between"><span class="text-gray-500">Kartica:</span><span class="font-mono" x-text="fmtPrice(xReportData.total_card) + ' RSD'"></span></div>
-                    <div class="flex justify-between"><span class="text-gray-500">Prenos:</span><span class="font-mono" x-text="fmtPrice(xReportData.total_transfer) + ' RSD'"></span></div>
-                    <div class="border-t border-gray-200 pt-2"></div>
-                    <div class="flex justify-between"><span class="text-gray-500">Racuni:</span><span class="font-mono" x-text="xReportData.receipt_count"></span></div>
-                    <div class="flex justify-between"><span class="text-gray-500">Stornirani:</span><span class="font-mono" x-text="xReportData.voided_count"></span></div>
+                <div class="space-y-2.5 text-sm">
+                    <div class="flex justify-between"><span style="opacity:0.5">Promet:</span><span class="font-bold tabular-nums font-mono" x-text="fmtPrice(xReportData.total_revenue) + ' RSD'"></span></div>
+                    <div class="flex justify-between"><span style="opacity:0.5">Trosak:</span><span class="tabular-nums font-mono" x-text="fmtPrice(xReportData.total_cost) + ' RSD'"></span></div>
+                    <div class="flex justify-between"><span style="opacity:0.5">Profit:</span><span class="font-bold tabular-nums font-mono pos-change-positive" x-text="fmtPrice(xReportData.total_profit) + ' RSD'"></span></div>
+                    <div class="modal-divider border-b my-2"></div>
+                    <div class="flex justify-between"><span style="opacity:0.5">Gotovina:</span><span class="tabular-nums font-mono" x-text="fmtPrice(xReportData.total_cash) + ' RSD'"></span></div>
+                    <div class="flex justify-between"><span style="opacity:0.5">Kartica:</span><span class="tabular-nums font-mono" x-text="fmtPrice(xReportData.total_card) + ' RSD'"></span></div>
+                    <div class="flex justify-between"><span style="opacity:0.5">Prenos:</span><span class="tabular-nums font-mono" x-text="fmtPrice(xReportData.total_transfer) + ' RSD'"></span></div>
+                    <div class="modal-divider border-b my-2"></div>
+                    <div class="flex justify-between"><span style="opacity:0.5">Racuni:</span><span class="tabular-nums font-mono font-bold" x-text="xReportData.receipt_count"></span></div>
+                    <div class="flex justify-between"><span style="opacity:0.5">Stornirani:</span><span class="tabular-nums font-mono" x-text="xReportData.voided_count"></span></div>
                 </div>
             </template>
-            <div class="mt-4 text-right">
-                <button @click="showXReportModal = false" class="px-4 py-2 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200">Zatvori</button>
+            <div class="mt-5 text-right">
+                <button @click="showXReportModal = false" class="pos-btn-secondary px-5 py-2 text-sm">Zatvori</button>
             </div>
         </div>
     </div>
 
-    <!-- Toast -->
+    <!-- ============ TOAST ============ -->
     <div x-show="toast.show" x-cloak
          x-transition:enter="transform ease-out duration-300"
-         x-transition:enter-start="translate-y-2 opacity-0"
-         x-transition:enter-end="translate-y-0 opacity-100"
+         x-transition:enter-start="translate-y-3 opacity-0 scale-95"
+         x-transition:enter-end="translate-y-0 opacity-100 scale-100"
          x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed bottom-16 right-4 z-50 rounded-lg p-4 shadow-lg max-w-sm"
-         :class="toast.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'">
-        <span x-text="toast.message"></span>
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="fixed bottom-16 right-4 z-[60] pos-toast p-4 max-w-sm"
+         :class="toast.type === 'success' ? 'pos-toast-success' : 'pos-toast-error'">
+        <div class="flex items-center gap-2">
+            <template x-if="toast.type === 'success'">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            </template>
+            <template x-if="toast.type === 'error'">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </template>
+            <span class="text-sm font-medium" x-text="toast.message"></span>
+        </div>
     </div>
 </div>
 
@@ -426,7 +774,7 @@ function posRegister() {
         // Pending item (dok se unosi)
         pendingItem: { name: '', price: 0, quantity: 1, discount: 0, type: '', id: null, barcode: '', purchase_price: 0 },
         searchQuery: '',
-        qtyMode: 'auto', // 'auto' = bez unosa kol, 'manual' = unos kol
+        qtyMode: 'auto',
         allowPriceEdit: false,
 
         // Payment modal
@@ -511,7 +859,6 @@ function posRegister() {
         // KEYBOARD
         // ==========================================
         handleKeyboard(e) {
-            // Dozvoli F-keys uvek
             if (e.key === 'F5') { e.preventDefault(); this.openCashDrawer(); }
             else if (e.key === 'F6') { e.preventDefault(); if (this.items.length > 0) this.openPaymentModal(); }
             else if (e.key === 'F7') { e.preventDefault(); this.editQuantity(); }
@@ -545,7 +892,6 @@ function posRegister() {
                 if (results.length === 1) {
                     this.selectArtikl(results[0]);
                 } else {
-                    // Vise rezultata — otvori modal
                     this.artiklResults = results;
                     this.artiklSearchQuery = q;
                     this.showArtiklModal = true;
@@ -570,10 +916,8 @@ function posRegister() {
             this.searchQuery = '';
 
             if (this.qtyMode === 'auto') {
-                // Odmah dodaj sa qty=1
                 this.confirmPendingItem();
             } else {
-                // Focus na kolicinu
                 this.$nextTick(() => {
                     if (this.$refs.qtyInput) this.$refs.qtyInput.focus();
                 });
@@ -583,7 +927,6 @@ function posRegister() {
         confirmPendingItem() {
             if (!this.pendingItem.name) return;
 
-            // Proveri da li vec postoji isti artikal — povecaj kolicinu
             const existing = this.items.find(i => i.type === this.pendingItem.type && i.id === this.pendingItem.id && i.id !== null);
             if (existing && this.qtyMode === 'auto') {
                 existing.quantity += this.pendingItem.quantity;
@@ -591,7 +934,6 @@ function posRegister() {
                 this.items.push({ ...this.pendingItem });
             }
 
-            // Reset
             this.pendingItem = { name: '', price: 0, quantity: 1, discount: 0, type: '', id: null, barcode: '', purchase_price: 0 };
             this.searchQuery = '';
             this.selectedIndex = this.items.length - 1;
@@ -616,7 +958,7 @@ function posRegister() {
         },
 
         // ==========================================
-        // ITEM OPERATIONS (F7, F8, ALT+P)
+        // ITEM OPERATIONS
         // ==========================================
         editQuantity() {
             if (this.selectedIndex < 0 || this.selectedIndex >= this.items.length) {
@@ -650,7 +992,7 @@ function posRegister() {
         },
 
         openCashDrawer() {
-            this.showToast('Fioka otvorena (stub)', 'success');
+            this.showToast('Fioka otvorena', 'success');
         },
 
         // ==========================================
@@ -678,7 +1020,6 @@ function posRegister() {
         },
 
         recalcCash() {
-            // Gotovina = ukupno - kartica - prenos (sa popustom)
             const discountedTotal = this.getDiscountedTotal();
             this.pay.cash = Math.max(0, discountedTotal - (this.pay.card || 0) - (this.pay.transfer || 0));
             this.calcChange();
@@ -704,13 +1045,12 @@ function posRegister() {
         },
 
         // ==========================================
-        // CONFIRM PAYMENT — POST /receipts/quick
+        // CONFIRM PAYMENT
         // ==========================================
         async confirmPayment() {
             if (this.issuing || this.items.length === 0) return;
             this.issuing = true;
 
-            // Determine payment method
             let pm = 'CASH';
             if (this.pay.card > 0 && this.pay.cash <= 0 && this.pay.transfer <= 0) pm = 'CARD';
             else if (this.pay.transfer > 0 && this.pay.cash <= 0 && this.pay.card <= 0) pm = 'TRANSFER';
@@ -745,7 +1085,6 @@ function posRegister() {
                 if (res.ok) {
                     const data = await res.json();
 
-                    // Sacuvaj poslednji racun info
                     this.lastReceipt = {
                         total: data.total_amount,
                         card: this.pay.card,
@@ -764,7 +1103,6 @@ function posRegister() {
                     }
                     this.showToast(msg, 'success');
 
-                    // Reload session stats
                     await this.loadSession();
 
                     this.$nextTick(() => {
