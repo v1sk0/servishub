@@ -227,7 +227,8 @@ class AuthService:
                 grant_welcome_credits(OwnerType.TENANT, tenant.id)
                 db.session.commit()
             except Exception:
-                pass  # Welcome credits nisu kritični za registraciju
+                db.session.rollback()  # Očisti neuspelu transakciju
+                # Welcome credits nisu kritični za registraciju
 
             return tenant, owner
 
