@@ -1,0 +1,96 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Prodaja telefona - Finansije{% endblock %}
+
+{% block page_content %}
+<div x-data="phonesReport()" x-init="loadData()">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div class="min-w-0 flex-1">
+            <nav class="flex mb-2" aria-label="Breadcrumb">
+                <ol class="flex items-center space-x-2">
+                    <li><a href="/finance" class="text-gray-400 hover:text-gray-500">Finansije</a></li>
+                    <li><span class="text-gray-400">/</span></li>
+                    <li class="text-gray-700 font-medium">Prodaja telefona</li>
+                </ol>
+            </nav>
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl">Prodaja telefona</h2>
+        </div>
+        <div class="mt-4 flex gap-2 md:ml-4 md:mt-0">
+            <div class="inline-flex rounded-md shadow-sm">
+                <button @click="setPeriod(7)" :class="days == 7 ? 'bg-primary-600 text-white' : 'bg-white text-gray-700'" class="px-3 py-2 text-sm font-medium rounded-l-md border border-gray-300">7 dana</button>
+                <button @click="setPeriod(30)" :class="days == 30 ? 'bg-primary-600 text-white' : 'bg-white text-gray-700'" class="px-3 py-2 text-sm font-medium border-t border-b border-gray-300 -ml-px">30 dana</button>
+                <button @click="setPeriod(90)" :class="days == 90 ? 'bg-primary-600 text-white' : 'bg-white text-gray-700'" class="px-3 py-2 text-sm font-medium border-t border-b border-gray-300 -ml-px">90 dana</button>
+                <button @click="setPeriod(365)" :class="days == 365 ? 'bg-primary-600 text-white' : 'bg-white text-gray-700'" class="px-3 py-2 text-sm font-medium rounded-r-md border border-gray-300 -ml-px">Godina</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <div>
+                <p class="text-sm font-medium text-gray-500">Ukupan promet</p>
+                <p class="mt-1 text-3xl font-semibold text-gray-900" x-text="formatPrice(data.total || 0)"></p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500">Profit</p>
+                <p class="mt-1 text-3xl font-semibold text-green-600" x-text="formatPrice(data.profit || 0)"></p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500">Prodato telefona</p>
+                <p class="mt-1 text-3xl font-semibold text-gray-900" x-text="data.count || 0"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-300">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Model</th>
+                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Prodajna</th>
+                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Nabavna</th>
+                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Profit</th>
+                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Datum</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                <template x-for="item in data.items || []" :key="item.id">
+                    <tr>
+                        <td class="py-3 pl-4 pr-3 text-sm font-medium text-gray-900" x-text="item.model"></td>
+                        <td class="px-3 py-3 text-right text-sm font-medium text-gray-900" x-text="formatPrice(item.price)"></td>
+                        <td class="px-3 py-3 text-right text-sm text-gray-500" x-text="formatPrice(item.cost)"></td>
+                        <td class="px-3 py-3 text-right text-sm font-medium" :class="item.profit > 0 ? 'text-green-600' : 'text-red-600'" x-text="formatPrice(item.profit)"></td>
+                        <td class="px-3 py-3 text-right text-sm text-gray-500" x-text="item.date"></td>
+                    </tr>
+                </template>
+                <tr x-show="!data.items || data.items.length === 0">
+                    <td colspan="5" class="px-6 py-12 text-center text-sm text-gray-500">Nema podataka za izabrani period</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function phonesReport() {
+    return {
+        days: 30,
+        data: {},
+        async loadData() {
+            const token = localStorage.getItem('access_token');
+            const res = await fetch(`/api/v1/finance/phones?days=${this.days}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) this.data = await res.json();
+        },
+        setPeriod(d) { this.days = d; this.loadData(); },
+        formatPrice(val) {
+            return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD', maximumFractionDigits: 0 }).format(val || 0);
+        }
+    }
+}
+</script>
+{% endblock %}

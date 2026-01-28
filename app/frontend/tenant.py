@@ -226,6 +226,38 @@ def goods_invoice_new():
     return render_template('tenant/goods/invoice.html')
 
 
+# ============== Finance / Finansije ==============
+
+@bp.route('/finance')
+def finance_index():
+    """Pregled finansija - svi tipovi prometa."""
+    return render_template('tenant/finance/index.html')
+
+
+@bp.route('/finance/tickets')
+def finance_tickets():
+    """Promet od servisnih naloga."""
+    return render_template('tenant/finance/tickets.html')
+
+
+@bp.route('/finance/phones')
+def finance_phones():
+    """Promet od prodaje telefona."""
+    return render_template('tenant/finance/phones.html')
+
+
+@bp.route('/finance/goods')
+def finance_goods():
+    """Promet od prodaje opreme."""
+    return render_template('tenant/finance/goods.html')
+
+
+@bp.route('/finance/pos')
+def finance_pos():
+    """Dnevni prometi po kasi."""
+    return render_template('tenant/finance/pos.html')
+
+
 # ============== Credits / Krediti ==============
 
 @bp.route('/credits')

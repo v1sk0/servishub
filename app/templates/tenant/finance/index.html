@@ -1,0 +1,218 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}Finansije - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="financeApp()" x-init="loadSummary()">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div class="min-w-0 flex-1">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl">Finansije</h2>
+            <p class="mt-1 text-sm text-gray-500">Pregled prometa i profita</p>
+        </div>
+        <div class="mt-4 flex gap-2 md:ml-4 md:mt-0">
+            <!-- Period selector -->
+            <div class="inline-flex rounded-md shadow-sm">
+                <button @click="setPeriod(7)"
+                        :class="days == 7 ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
+                        class="px-3 py-2 text-sm font-medium rounded-l-md border border-gray-300">
+                    7 dana
+                </button>
+                <button @click="setPeriod(30)"
+                        :class="days == 30 ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
+                        class="px-3 py-2 text-sm font-medium border-t border-b border-gray-300 -ml-px">
+                    30 dana
+                </button>
+                <button @click="setPeriod(90)"
+                        :class="days == 90 ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
+                        class="px-3 py-2 text-sm font-medium border-t border-b border-gray-300 -ml-px">
+                    90 dana
+                </button>
+                <button @click="setPeriod(365)"
+                        :class="days == 365 ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
+                        class="px-3 py-2 text-sm font-medium rounded-r-md border border-gray-300 -ml-px">
+                    Godina
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div x-show="loading" class="text-center py-12">
+        <svg class="animate-spin mx-auto h-8 w-8 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="mt-2 text-sm text-gray-500">Ucitavam podatke...</p>
+    </div>
+
+    <!-- Cards -->
+    <div x-show="!loading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        <!-- Servisni nalozi -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Servisni nalozi</dt>
+                            <dd class="text-2xl font-semibold text-gray-900" x-text="formatPrice(summary.tickets?.total || 0)"></dd>
+                            <dd class="text-xs text-gray-400" x-text="(summary.tickets?.count || 0) + ' naloga'"></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <a href="/finance/tickets" class="text-sm font-medium text-primary-600 hover:text-primary-500">
+                    Detalji &rarr;
+                </a>
+            </div>
+        </div>
+
+        <!-- Prodaja telefona -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Prodaja telefona</dt>
+                            <dd class="text-2xl font-semibold text-gray-900" x-text="formatPrice(summary.phones?.total || 0)"></dd>
+                            <dd class="text-xs text-green-600" x-text="'Profit: ' + formatPrice(summary.phones?.profit || 0)"></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <a href="/finance/phones" class="text-sm font-medium text-primary-600 hover:text-primary-500">
+                    Detalji &rarr;
+                </a>
+            </div>
+        </div>
+
+        <!-- Prodaja opreme -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Prodaja opreme</dt>
+                            <dd class="text-2xl font-semibold text-gray-900" x-text="formatPrice(summary.goods?.total || 0)"></dd>
+                            <dd class="text-xs text-green-600" x-text="'Profit: ' + formatPrice(summary.goods?.profit || 0)"></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <a href="/finance/goods" class="text-sm font-medium text-primary-600 hover:text-primary-500">
+                    Detalji &rarr;
+                </a>
+            </div>
+        </div>
+
+        <!-- Kasa promet -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Kasa promet</dt>
+                            <dd class="text-2xl font-semibold text-gray-900" x-text="formatPrice(summary.pos?.total || 0)"></dd>
+                            <dd class="text-xs text-gray-400">
+                                <span x-text="'Gotovina: ' + formatPrice(summary.pos?.total_cash || 0)"></span>
+                                <span class="mx-1">|</span>
+                                <span x-text="'Kartica: ' + formatPrice(summary.pos?.total_card || 0)"></span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <a href="/finance/pos" class="text-sm font-medium text-primary-600 hover:text-primary-500">
+                    Detalji &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total card -->
+    <div x-show="!loading" class="bg-gradient-to-r from-primary-600 to-primary-700 shadow-lg rounded-lg overflow-hidden">
+        <div class="px-6 py-8 text-center">
+            <h3 class="text-lg font-medium text-primary-100">Ukupan promet</h3>
+            <p class="mt-2 text-4xl font-bold text-white" x-text="formatPrice(totalRevenue)"></p>
+            <p class="mt-2 text-sm text-primary-200" x-text="'Period: ' + (summary.period?.start || '') + ' - ' + (summary.period?.end || '')"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+function financeApp() {
+    return {
+        days: 30,
+        summary: {},
+        loading: true,
+
+        get totalRevenue() {
+            return (this.summary.tickets?.total || 0) +
+                   (this.summary.phones?.total || 0) +
+                   (this.summary.goods?.total || 0);
+        },
+
+        async loadSummary() {
+            this.loading = true;
+            try {
+                const token = localStorage.getItem('access_token');
+                const res = await fetch(`/api/v1/finance/summary?days=${this.days}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    this.summary = await res.json();
+                }
+            } catch (e) {
+                console.error('Failed to load summary:', e);
+            }
+            this.loading = false;
+        },
+
+        setPeriod(d) {
+            this.days = d;
+            this.loadSummary();
+        },
+
+        formatPrice(val) {
+            return new Intl.NumberFormat('sr-RS', {
+                style: 'currency',
+                currency: 'RSD',
+                maximumFractionDigits: 0
+            }).format(val || 0);
+        }
+    }
+}
+</script>
+{% endblock %}
