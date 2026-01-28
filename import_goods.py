@@ -79,6 +79,7 @@ def main():
         imported = 0
         skipped = 0
         errors = 0
+        seen_barcodes = set()
 
         for row in data_rows:
             if len(row) < 7:
@@ -113,6 +114,13 @@ def main():
             if purchase_price <= 0:
                 skipped += 1
                 continue
+
+            barcode_val = sifra.upper().strip()
+            if barcode_val in seen_barcodes:
+                print(f"  SKIP duplicate barcode: {barcode_val} ({naziv[:40]})")
+                skipped += 1
+                continue
+            seen_barcodes.add(barcode_val)
 
             selling_price = suggest_selling_price(purchase_price)
 
