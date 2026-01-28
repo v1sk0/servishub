@@ -220,6 +220,10 @@ class POSService:
         if session.fiscal_mode:
             receipt.fiscal_status = 'pending'
 
+        # Ažuriraj session stats
+        session.receipt_count = (session.receipt_count or 0) + 1
+        session.total_revenue = (session.total_revenue or Decimal('0')) + (receipt.total_amount or Decimal('0'))
+
         AuditLog.log(
             entity_type='receipt',
             entity_id=receipt.id,
