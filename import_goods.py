@@ -48,7 +48,7 @@ def main():
         existing = GoodsItem.query.filter_by(tenant_id=TENANT_ID).count()
         print(f"Existing GoodsItem for tenant {TENANT_ID}: {existing}")
 
-        with open(CSV_PATH, 'r', encoding='utf-8-sig') as f:
+        with open(CSV_PATH, 'r', encoding='cp1250') as f:
             reader = csv.reader(f, delimiter=';')
             rows = list(reader)
 
