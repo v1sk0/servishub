@@ -39,7 +39,7 @@ class ServiceRepresentative(db.Model):
 
     # Licni podaci
     ime = db.Column(db.String(50), nullable=False)
-    prezime = db.Column(db.String(50), nullable=False)
+    prezime = db.Column(db.String(50), nullable=True)   # Opciono
     jmbg = db.Column(db.String(13))                      # Enkriptovati u produkciji!
     broj_licne_karte = db.Column(db.String(20))
     datum_rodjenja = db.Column(db.Date)
@@ -90,7 +90,9 @@ class ServiceRepresentative(db.Model):
     @property
     def full_name(self):
         """Puno ime predstavnika."""
-        return f'{self.ime} {self.prezime}'
+        if self.prezime:
+            return f'{self.ime} {self.prezime}'
+        return self.ime
 
     @property
     def is_verified(self):

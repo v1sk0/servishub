@@ -83,7 +83,7 @@ class TenantUser(db.Model):
 
     # Profil
     ime = db.Column(db.String(50), nullable=False)      # Ime
-    prezime = db.Column(db.String(50), nullable=False)  # Prezime
+    prezime = db.Column(db.String(50), nullable=True)   # Prezime (opciono)
     phone = db.Column(db.String(30))                    # Kontakt telefon
     adresa = db.Column(db.String(200))                  # Adresa stanovanja
 
@@ -152,7 +152,9 @@ class TenantUser(db.Model):
     @property
     def full_name(self):
         """Puno ime korisnika."""
-        return f'{self.ime} {self.prezime}'
+        if self.prezime:
+            return f'{self.ime} {self.prezime}'
+        return self.ime
 
     def set_password(self, password):
         """

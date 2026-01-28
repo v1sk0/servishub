@@ -52,7 +52,7 @@ class RegisterRequest(BaseModel):
     owner_email: EmailStr = Field(..., description="Email vlasnika za login")
     owner_password: Optional[str] = Field(None, max_length=100, description="Lozinka (opciono za OAuth)")
     owner_ime: str = Field(..., min_length=2, max_length=50, description="Ime vlasnika")
-    owner_prezime: str = Field(..., min_length=2, max_length=50, description="Prezime vlasnika")
+    owner_prezime: Optional[str] = Field(None, max_length=50, description="Prezime vlasnika (opciono)")
     owner_phone: str = Field(..., max_length=30, description="Mobilni telefon vlasnika")
 
     # KYC podaci (Korak 4) - OPCIONI, potrebni samo za B2C marketplace
