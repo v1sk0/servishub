@@ -1739,6 +1739,7 @@ def set_google_place():
 def search_google_place():
     """
     Pretražuje Google Places po nazivu.
+    Vraća listu rezultata za selekciju.
     """
     from app.services.google_integration_service import google_service
 
@@ -1749,20 +1750,21 @@ def search_google_place():
     query = request.args.get('q', tenant.name)
 
     try:
-        place = google_service.search_place_by_name(query, tenant.adresa_sedista)
-        if place:
-            return {
-                'found': True,
-                'place': {
-                    'id': place.get('id'),
-                    'name': place.get('displayName', {}).get('text'),
-                    'address': place.get('formattedAddress'),
-                    'rating': place.get('rating'),
-                    'reviews_count': place.get('userRatingCount'),
-                }
-            }
-        return {'found': False}
+        places = google_service.search_place_by_name(query)
+
+        results = []
+        for place in places[:10]:  # Limit to 10 results
+            results.append({
+                'place_id': place.get('id'),
+                'name': place.get('displayName', {}).get('text'),
+                'address': place.get('formattedAddress'),
+                'rating': place.get('rating'),
+                'reviews_count': place.get('userRatingCount'),
+            })
+
+        return {'results': results}
     except Exception as e:
+        current_app.logger.error(f"Google search error: {e}")
         return {'error': str(e)}, 500
 
 

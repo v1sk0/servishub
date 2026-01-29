@@ -127,16 +127,16 @@ class GoogleIntegrationService:
 
         return response.json()
 
-    def search_place_by_name(self, business_name: str, address: str = None) -> Optional[Dict]:
+    def search_place_by_name(self, business_name: str, address: str = None) -> List[Dict]:
         """
-        Search for a business on Google Places by name.
+        Search for businesses on Google Places by name.
 
         Args:
             business_name: Name of the business
             address: Optional address to narrow search
 
         Returns:
-            Place data dict or None if not found
+            List of place data dicts
         """
         if not self.places_api_key:
             raise ValueError("GOOGLE_PLACES_API_KEY not configured")
@@ -153,6 +153,8 @@ class GoogleIntegrationService:
             'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount',
         }
 
+        logger.info(f"Searching Google Places for: {query}")
+
         response = requests.post(url, headers=headers, json={
             'textQuery': query,
             'languageCode': 'sr',
@@ -160,16 +162,14 @@ class GoogleIntegrationService:
         })
 
         if response.status_code != 200:
-            logger.error(f"Place search failed: {response.text}")
-            return None
+            logger.error(f"Place search failed: {response.status_code} - {response.text}")
+            raise Exception(f"Google API error: {response.status_code}")
 
         data = response.json()
         places = data.get('places', [])
 
-        if not places:
-            return None
-
-        return places[0]  # Return first match
+        logger.info(f"Found {len(places)} places")
+        return places
 
     def get_place_details(self, place_id: str) -> Optional[Dict]:
         """
