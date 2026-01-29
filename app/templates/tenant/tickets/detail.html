@@ -807,8 +807,8 @@ function ticketDetailPage(ticketId) {
                     this.showCollectModal = false;
 
                     // Show success message with receipt number if available
-                    if (data.receipt_number) {
-                        showToast(`Naplaćeno! Račun #${data.receipt_number}`, 'success');
+                    if (data.receipt?.receipt_number) {
+                        showToast(`Naplaćeno! Račun #${data.receipt.receipt_number}`, 'success');
                     } else {
                         showToast('Uređaj uspešno preuzet i naplaćen', 'success');
                     }
