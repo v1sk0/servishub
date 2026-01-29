@@ -1712,101 +1712,108 @@
         </div>
     </div>
 
-    <!-- Collect Modal (POS Integrated) -->
-    <div x-show="showCollectModal" x-cloak class="modal-overlay" @click.self="showCollectModal = false">
-        <div class="modal-content" style="max-width: 480px;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #10b981, #059669);">
-                <h3 style="color: white;">Naplati i izdaj uređaj</h3>
-                <button class="modal-close" @click="showCollectModal = false" style="color: rgba(255,255,255,0.7);">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <!-- Collect Modal (POS Integrated) - Modern Design -->
+    <div x-show="showCollectModal" x-cloak class="modal-overlay" @click.self="showCollectModal = false" style="backdrop-filter: blur(4px);">
+        <div class="modal-content" style="max-width: 420px; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
+            <!-- Header with subtle gradient -->
+            <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 20px 24px; position: relative;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <svg style="width: 22px; height: 22px; color: #22c55e;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 style="color: white; font-size: 16px; font-weight: 600; margin: 0;">Naplata i preuzimanje</h3>
+                        <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin: 2px 0 0 0;" x-text="'Nalog #' + collectTicketData?.ticket_number_formatted"></p>
+                    </div>
+                </div>
+                <button @click="showCollectModal = false" style="position: absolute; right: 16px; top: 16px; width: 32px; height: 32px; border-radius: 8px; border: none; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                    <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
-            <div class="modal-body">
-                <!-- Ticket info card -->
-                <div class="notify-info-card">
-                    <div class="notify-info-row">
-                        <span>Broj naloga:</span>
-                        <span x-text="'#' + collectTicketData?.ticket_number_formatted"></span>
-                    </div>
-                    <div class="notify-info-row">
-                        <span>Klijent:</span>
-                        <span x-text="collectTicketData?.customer_name"></span>
-                    </div>
-                    <div class="notify-info-row">
-                        <span>Uređaj:</span>
-                        <span x-text="(collectTicketData?.brand || '') + ' ' + (collectTicketData?.model || '')"></span>
+
+            <!-- Body -->
+            <div style="padding: 20px 24px; background: #fff;">
+                <!-- Device & Customer info - compact card -->
+                <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <p style="font-size: 15px; font-weight: 600; color: #1e293b; margin: 0;" x-text="(collectTicketData?.brand || '') + ' ' + (collectTicketData?.model || '')"></p>
+                            <p style="font-size: 13px; color: #64748b; margin: 4px 0 0 0;" x-text="collectTicketData?.customer_name"></p>
+                        </div>
+                        <span style="background: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">Spremno</span>
                     </div>
                 </div>
 
                 <!-- Currency conversion (if EUR) -->
-                <div x-show="collectCurrency && collectCurrency !== 'RSD'" class="currency-conversion-box" style="background: #fef9c3; border: 1px solid #fcd34d; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-                    <p style="font-size: 13px; font-weight: 500; color: #854d0e; margin-bottom: 10px;">
-                        <svg style="display: inline; width: 16px; height: 16px; margin-right: 4px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div x-show="collectCurrency && collectCurrency !== 'RSD'" style="background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; border: 1px solid #fde047;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                        <svg style="width: 16px; height: 16px; color: #ca8a04;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                         </svg>
-                        Konverzija valute
-                    </p>
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                        <span style="font-size: 13px; color: #666; width: 80px;">Originalno:</span>
-                        <span style="font-family: monospace; font-weight: 500;" x-text="collectOriginalPrice + ' ' + collectCurrency"></span>
+                        <span style="font-size: 13px; font-weight: 600; color: #854d0e;">Konverzija valute</span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                        <label style="font-size: 13px; color: #666; width: 80px;">Kurs:</label>
-                        <span style="font-size: 13px;">1 <span x-text="collectCurrency"></span> =</span>
-                        <input type="number" x-model.number="collectExchangeRate" @input="collectPrice = Math.round(collectOriginalPrice * collectExchangeRate)"
-                               step="0.01" min="1" style="width: 80px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px;">
-                        <span style="font-size: 13px;">RSD</span>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="font-size: 13px; color: #78716c;">Originalno:</span>
+                        <span style="font-family: 'SF Mono', monospace; font-weight: 600; color: #1e293b;" x-text="collectOriginalPrice + ' ' + collectCurrency"></span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <label style="font-size: 13px; color: #666; width: 80px;">RSD cena:</label>
+                        <span style="font-size: 13px; color: #78716c;">Kurs:</span>
+                        <input type="number" x-model.number="collectExchangeRate" @input="collectPrice = Math.round(collectOriginalPrice * collectExchangeRate)"
+                               step="0.01" min="1" style="width: 70px; padding: 6px 10px; border: 1px solid #fde047; border-radius: 6px; font-size: 13px; background: white;">
+                        <span style="font-size: 13px; color: #78716c; flex: 1;">→</span>
                         <input type="number" x-model.number="collectPrice" @input="if(collectOriginalPrice > 0) collectExchangeRate = (collectPrice / collectOriginalPrice).toFixed(2)"
-                               step="100" min="0" style="flex: 1; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px;">
-                        <span style="font-size: 13px;">RSD</span>
+                               step="100" min="0" style="width: 100px; padding: 6px 10px; border: 1px solid #fde047; border-radius: 6px; font-size: 13px; font-weight: 600; background: white;">
+                        <span style="font-size: 13px; color: #78716c;">RSD</span>
                     </div>
                 </div>
 
                 <!-- Price input (RSD only) -->
-                <div class="collect-price-section" x-show="!collectCurrency || collectCurrency === 'RSD'">
-                    <label>Iznos za naplatu</label>
-                    <div class="price-inputs">
-                        <input type="number" x-model.number="collectPrice" placeholder="0" min="0">
-                        <span style="padding: 8px 12px; background: #f3f4f6; border-radius: 4px;">RSD</span>
+                <div x-show="!collectCurrency || collectCurrency === 'RSD'" style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 8px;">Iznos za naplatu</label>
+                    <div style="position: relative;">
+                        <input type="number" x-model.number="collectPrice" placeholder="0" min="0"
+                               style="width: 100%; padding: 12px 60px 12px 16px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 18px; font-weight: 600; color: #1e293b; transition: border-color 0.2s;"
+                               onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
+                        <span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 500; color: #94a3b8;">RSD</span>
                     </div>
                 </div>
 
                 <!-- Owner collect -->
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px;">Preuzima</label>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 8px;">Preuzima uređaj</label>
                     <input type="text" x-model="collectOwner" :placeholder="collectTicketData?.customer_name"
-                           style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                           style="width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; color: #1e293b; transition: border-color 0.2s;"
+                           onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
                 </div>
 
-                <!-- Payment method selection -->
-                <div style="margin-bottom: 16px;">
-                    <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 8px;">Način plaćanja</label>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                <!-- Payment method selection - pill style -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 10px;">Način plaćanja</label>
+                    <div style="display: flex; gap: 8px; background: #f1f5f9; padding: 4px; border-radius: 12px;">
                         <button type="button" @click="collectPaymentMethod = 'CASH'"
-                                :style="collectPaymentMethod === 'CASH' ? 'background: #10b981; color: white; border: 2px solid #10b981;' : 'background: #f3f4f6; color: #374151; border: 2px solid #e5e7eb;'"
-                                style="padding: 12px 8px; border-radius: 8px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                            <svg style="width: 20px; height: 20px; margin: 0 auto 4px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                :style="collectPaymentMethod === 'CASH' ? 'background: white; color: #059669; box-shadow: 0 2px 8px rgba(0,0,0,0.08);' : 'background: transparent; color: #64748b;'"
+                                style="flex: 1; padding: 10px 8px; border-radius: 8px; border: none; font-weight: 500; font-size: 13px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <svg style="width: 20px; height: 20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                             </svg>
                             Gotovina
                         </button>
                         <button type="button" @click="collectPaymentMethod = 'CARD'"
-                                :style="collectPaymentMethod === 'CARD' ? 'background: #3b82f6; color: white; border: 2px solid #3b82f6;' : 'background: #f3f4f6; color: #374151; border: 2px solid #e5e7eb;'"
-                                style="padding: 12px 8px; border-radius: 8px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                            <svg style="width: 20px; height: 20px; margin: 0 auto 4px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                :style="collectPaymentMethod === 'CARD' ? 'background: white; color: #2563eb; box-shadow: 0 2px 8px rgba(0,0,0,0.08);' : 'background: transparent; color: #64748b;'"
+                                style="flex: 1; padding: 10px 8px; border-radius: 8px; border: none; font-weight: 500; font-size: 13px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <svg style="width: 20px; height: 20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                             </svg>
                             Kartica
                         </button>
                         <button type="button" @click="collectPaymentMethod = 'TRANSFER'"
-                                :style="collectPaymentMethod === 'TRANSFER' ? 'background: #8b5cf6; color: white; border: 2px solid #8b5cf6;' : 'background: #f3f4f6; color: #374151; border: 2px solid #e5e7eb;'"
-                                style="padding: 12px 8px; border-radius: 8px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                            <svg style="width: 20px; height: 20px; margin: 0 auto 4px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                :style="collectPaymentMethod === 'TRANSFER' ? 'background: white; color: #7c3aed; box-shadow: 0 2px 8px rgba(0,0,0,0.08);' : 'background: transparent; color: #64748b;'"
+                                style="flex: 1; padding: 10px 8px; border-radius: 8px; border: none; font-weight: 500; font-size: 13px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <svg style="width: 20px; height: 20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
                             </svg>
                             Prenos
@@ -1814,36 +1821,53 @@
                     </div>
                 </div>
 
-                <!-- Cash received (for cash payments) -->
-                <div x-show="collectPaymentMethod === 'CASH'" style="background: #f9fafb; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-                    <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px;">Primljeno</label>
+                <!-- Cash received (for cash payments) - sleek design -->
+                <div x-show="collectPaymentMethod === 'CASH'" x-transition style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; border: 1px solid #86efac;">
+                    <label style="display: block; font-size: 13px; font-weight: 500; color: #166534; margin-bottom: 8px;">Primljeni iznos</label>
                     <input type="number" x-model.number="collectCashReceived" :placeholder="collectPrice"
-                           style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; margin-bottom: 8px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;" x-show="collectCashReceived >= collectPrice">
-                        <span style="font-size: 13px; color: #666;">Kusur:</span>
-                        <span style="font-size: 18px; font-weight: bold; color: #10b981;" x-text="(collectCashReceived - collectPrice).toLocaleString('sr-RS') + ' RSD'"></span>
+                           style="width: 100%; padding: 10px 14px; border: 2px solid #86efac; border-radius: 8px; font-size: 16px; font-weight: 600; background: white; color: #166534;"
+                           onfocus="this.style.borderColor='#22c55e'" onblur="this.style.borderColor='#86efac'">
+                    <div x-show="collectCashReceived > 0" style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 13px; color: #166534;">Kusur:</span>
+                        <span :style="(collectCashReceived - collectPrice) >= 0 ? 'color: #166534;' : 'color: #dc2626;'"
+                              style="font-size: 18px; font-weight: 700;"
+                              x-text="(collectCashReceived - collectPrice).toLocaleString('sr-RS') + ' RSD'"></span>
                     </div>
-                    <p x-show="collectCashReceived > 0 && collectCashReceived < collectPrice" style="font-size: 13px; color: #dc2626; margin-top: 4px;">
-                        Nedovoljno primljeno
-                    </p>
                 </div>
 
-                <!-- Total -->
-                <div style="border-top: 1px solid #e5e7eb; padding-top: 16px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 16px; font-weight: 500; color: #374151;">Ukupno:</span>
-                    <span style="font-size: 24px; font-weight: bold; color: #111827;" x-text="Number(collectPrice).toLocaleString('sr-RS') + ' RSD'"></span>
+                <!-- Total display - premium look -->
+                <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 12px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.7);">UKUPNO ZA NAPLATU</span>
+                    <span style="font-size: 24px; font-weight: 700; color: #22c55e;" x-text="Number(collectPrice).toLocaleString('sr-RS') + ' RSD'"></span>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" @click="showCollectModal = false">Otkaži</button>
-                <button class="btn-primary" @click="confirmCollect()" :disabled="!collectPaymentMethod || collectPrice <= 0 || collecting"
-                        style="background: linear-gradient(135deg, #10b981, #059669);">
-                    <span x-show="!collecting">Naplati i izdaj</span>
-                    <span x-show="collecting">Obrada...</span>
+
+            <!-- Footer - clean buttons -->
+            <div style="padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 12px;">
+                <button @click="showCollectModal = false"
+                        style="flex: 1; padding: 12px 20px; border: 2px solid #e2e8f0; border-radius: 10px; background: white; color: #64748b; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s;"
+                        onmouseover="this.style.borderColor='#cbd5e1'; this.style.color='#475569'" onmouseout="this.style.borderColor='#e2e8f0'; this.style.color='#64748b'">
+                    Otkaži
+                </button>
+                <button @click="confirmCollect()" :disabled="!collectPaymentMethod || collectPrice <= 0 || collecting"
+                        style="flex: 1.5; padding: 12px 20px; border: none; border-radius: 10px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;"
+                        :style="(!collectPaymentMethod || collectPrice <= 0 || collecting) ? 'opacity: 0.5; cursor: not-allowed;' : ''"
+                        onmouseover="if(!this.disabled) this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <svg x-show="!collecting" style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <svg x-show="collecting" style="width: 18px; height: 18px; animation: spin 1s linear infinite;" fill="none" viewBox="0 0 24 24">
+                        <circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path style="opacity: 0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <span x-text="collecting ? 'Obrada...' : 'Potvrdi naplatu'"></span>
                 </button>
             </div>
         </div>
     </div>
+    <style>
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
 
     <!-- Reject Modal -->
     <div x-show="showRejectModal" x-cloak class="modal-overlay" @click.self="showRejectModal = false">
