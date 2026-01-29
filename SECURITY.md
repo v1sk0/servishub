@@ -1,10 +1,26 @@
 # ServisHub Security Architecture
 
 **Last Updated:** 2026-01-29
-**Version:** 1.0
+**Version:** 1.1
 
 Ovaj dokument opisuje sigurnosnu arhitekturu ServisHub aplikacije.
 Namenjen je developerima i AI asistentima (Claude) za razumevanje security mehanizama.
+
+---
+
+## CURRENT STATUS (VAŽNO!)
+
+| Feature | Status | Napomena |
+|---------|--------|----------|
+| Token Blacklist | **DISABLED** | `TOKEN_BLACKLIST_ENABLED=false` - nema Redis |
+| Redis | **NOT CONFIGURED** | Potrebno dodati Heroku Redis addon |
+| JWT with jti | Implemented | Svi novi tokeni imaju jti claim |
+| File Security | Implemented | MIME, executable, macro detection |
+| Production Config | Implemented | SECRET_KEY/JWT_SECRET_KEY validacija |
+
+**Za punu security funkcionalnost potrebno je:**
+1. Dodati Redis addon: `heroku addons:create heroku-redis:mini`
+2. Omogućiti blacklist: `heroku config:set TOKEN_BLACKLIST_ENABLED=true`
 
 ---
 
@@ -139,21 +155,16 @@ Session se postavlja na uspesnom login-u i brise na logout-u.
 | `API` | 100 | 60s | 60s |
 | `SENSITIVE` | 10 | 60s | 300s |
 
-### 3.2 Redis Rate Limiter
+### 3.2 Trenutna Implementacija
 
-Za produkciju sa vise dynos-a, koristi `RedisRateLimiter` sa atomskim Lua skriptom:
+Trenutno koristi `InMemoryRateLimiter`:
+- Radi samo za jedan dyno/process
+- Ne perzistentno preko restarta
 
-```lua
--- Atomski: cleanup + count + add
-ZREMRANGEBYSCORE key -inf cutoff
-count = ZCARD key
-if count >= max then return BLOCKED
-ZADD key now request_id
-EXPIRE key ttl
-return OK, remaining
-```
+### 3.3 Redis Rate Limiter (TODO - NIJE IMPLEMENTIRANO)
 
-**Fail-Mode:** FAIL-OPEN (dozvoli ako Redis nije dostupan)
+Planirano za produkciju sa vise dynos-a - `RedisRateLimiter` sa atomskim Lua skriptom.
+Vidi SECURITY_HARDENING_PLAN.md za detalje.
 
 ---
 
@@ -194,10 +205,12 @@ if not is_valid:
 ### 5.1 TOTP Implementacija
 
 - Koristi `pyotp` library
-- `valid_window=0` (samo trenutni 30-sekundni interval)
+- `valid_window=1` (trenutni + prethodni 30-sekundni interval)
 - QR kod generisan sa `qrcode` library
 
-### 5.2 Lockout Politika
+### 5.2 Lockout Politika (TODO - NIJE IMPLEMENTIRANO)
+
+Planirano ali nije implementirano:
 
 | Failed Attempts | Lockout Duration |
 |----------------|------------------|
@@ -205,11 +218,11 @@ if not is_valid:
 | 10 | 2 sata |
 | 15 | 24 sata |
 
-### 5.3 Anti-DoS (Per-IP Tracking)
+### 5.3 Anti-DoS Per-IP Tracking (TODO - NIJE IMPLEMENTIRANO)
 
-Pored per-user lockout-a, postoji per-IP tracking:
-- 10+ neuspelih pokusaja sa iste IP za BILO KOJI nalog = IP block 1 sat
-- Sprecava napadaca da namerno zakljucava tudje naloge
+Planirano ali nije implementirano:
+- Per-IP tracking za sprečavanje DoS napada na 2FA
+- Vidi SECURITY_HARDENING_PLAN.md za detalje implementacije
 
 ---
 
@@ -247,14 +260,14 @@ SecurityEventLogger.log_event(
 
 ### 7.1 Environment Variables
 
-| Variable | Description | Required in Prod |
-|----------|-------------|------------------|
-| `SECRET_KEY` | Flask session secret | YES (32+ chars) |
-| `JWT_SECRET_KEY` | JWT signing key | YES (32+ chars) |
-| `REDIS_URL` | Redis connection | YES |
-| `SECURITY_STRICT` | Fail-closed mode | Auto (True in prod) |
-| `TOKEN_BLACKLIST_ENABLED` | Blacklist on/off | Default: True |
-| `CORS_ORIGINS` | Allowed origins | Auto-whitelist in prod |
+| Variable | Description | Required in Prod | Current |
+|----------|-------------|------------------|---------|
+| `SECRET_KEY` | Flask session secret | YES (32+ chars) | ✓ Set |
+| `JWT_SECRET_KEY` | JWT signing key | YES (32+ chars) | ✓ Set |
+| `REDIS_URL` | Redis connection | For blacklist | ✗ NOT SET |
+| `SECURITY_STRICT` | Fail-closed mode | Auto (True in prod) | ✓ True |
+| `TOKEN_BLACKLIST_ENABLED` | Blacklist on/off | Default: True | ✗ false |
+| `CORS_ORIGINS` | Allowed origins | Auto-whitelist in prod | ✓ Auto |
 
 ### 7.2 Production Config
 
