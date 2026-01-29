@@ -76,6 +76,7 @@ class PublicProfileUpdate(BaseModel):
     working_hours: Optional[Dict[str, str]] = None
 
     # Branding
+    theme: Optional[str] = Field(None, max_length=20)  # 'starter', 'premium', 'elite'
     logo_url: Optional[str] = Field(None, max_length=500)
     cover_image_url: Optional[str] = Field(None, max_length=500)
     primary_color: Optional[str] = Field(None, max_length=7)
@@ -1309,6 +1310,9 @@ def update_public_profile():
     # Fields that are hex colors
     color_fields = {'primary_color', 'secondary_color'}
 
+    # Valid theme values
+    valid_themes = {'starter', 'premium', 'elite'}
+
     for field, value in update_data.items():
         if not hasattr(profile, field):
             continue
@@ -1320,6 +1324,10 @@ def update_public_profile():
             value = sanitize_url(value)
         elif field in color_fields and value:
             value = validate_hex_color(value)
+        elif field == 'theme' and value:
+            # Validate theme value
+            if value not in valid_themes:
+                value = 'starter'  # Default to starter if invalid
 
         setattr(profile, field, value)
 

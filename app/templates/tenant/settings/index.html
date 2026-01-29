@@ -1240,6 +1240,75 @@
 
                 <!-- Branding Sub-tab -->
                 <div x-show="publicSubTab === 'branding'" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
+
+                    <!-- THEME SELECTOR -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Tema sajta</label>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Starter Theme -->
+                            <div @click="publicProfile.theme = 'starter'"
+                                 class="cursor-pointer border-2 rounded-xl p-4 transition-all"
+                                 :class="(publicProfile.theme || 'starter') === 'starter' ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20' : 'border-gray-200 hover:border-blue-300'">
+                                <div class="h-24 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 mb-3 flex items-center justify-center">
+                                    <div class="text-center text-white">
+                                        <div class="text-xs font-bold">STARTER</div>
+                                        <div class="text-[10px] opacity-80">Cist & Profesionalan</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-4 h-4 rounded-full bg-blue-500"></div>
+                                    <div>
+                                        <p class="font-medium text-gray-900 text-sm">Starter</p>
+                                        <p class="text-xs text-gray-500">Plava, profesionalna</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Premium Theme -->
+                            <div @click="publicProfile.theme = 'premium'"
+                                 class="cursor-pointer border-2 rounded-xl p-4 transition-all"
+                                 :class="publicProfile.theme === 'premium' ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-500/20' : 'border-gray-200 hover:border-purple-300'">
+                                <div class="h-24 rounded-lg bg-gradient-to-br from-purple-500 via-indigo-500 to-blue-500 mb-3 flex items-center justify-center relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
+                                    <div class="text-center text-white relative z-10">
+                                        <div class="text-xs font-bold">PREMIUM</div>
+                                        <div class="text-[10px] opacity-80">Glassmorphism</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-4 h-4 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500"></div>
+                                    <div>
+                                        <p class="font-medium text-gray-900 text-sm">Premium</p>
+                                        <p class="text-xs text-gray-500">Ljubicasta, moderna</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Elite Theme -->
+                            <div @click="publicProfile.theme = 'elite'"
+                                 class="cursor-pointer border-2 rounded-xl p-4 transition-all"
+                                 :class="publicProfile.theme === 'elite' ? 'border-amber-500 bg-amber-50 ring-2 ring-amber-500/20' : 'border-gray-200 hover:border-amber-300'">
+                                <div class="h-24 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 mb-3 flex items-center justify-center relative">
+                                    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(251,191,36,0.15),transparent_70%)]"></div>
+                                    <div class="text-center relative z-10">
+                                        <div class="text-xs font-bold text-amber-400">ELITE</div>
+                                        <div class="text-[10px] text-amber-200/80">Luksuzna & Tamna</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-4 h-4 rounded-full bg-gradient-to-r from-amber-400 to-amber-600"></div>
+                                    <div>
+                                        <p class="font-medium text-gray-900 text-sm">Elite</p>
+                                        <p class="text-xs text-gray-500">Zlatna, ekskluzivna</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Izaberite vizuelni stil vase javne stranice</p>
+                    </div>
+
+                    <hr class="border-gray-200">
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
                         <input type="url" x-model="publicProfile.logo_url" maxlength="500"
