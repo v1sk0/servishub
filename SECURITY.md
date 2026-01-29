@@ -12,15 +12,16 @@ Namenjen je developerima i AI asistentima (Claude) za razumevanje security mehan
 
 | Feature | Status | Napomena |
 |---------|--------|----------|
-| Token Blacklist | **DISABLED** | `TOKEN_BLACKLIST_ENABLED=false` - nema Redis |
-| Redis | **NOT CONFIGURED** | Potrebno dodati Heroku Redis addon |
+| Token Blacklist | **ENABLED** | `TOKEN_BLACKLIST_ENABLED=true` |
+| Redis | **CONFIGURED** | Heroku Redis Mini addon aktivan |
 | JWT with jti | Implemented | Svi novi tokeni imaju jti claim |
 | File Security | Implemented | MIME, executable, macro detection |
 | Production Config | Implemented | SECRET_KEY/JWT_SECRET_KEY validacija |
 
-**Za punu security funkcionalnost potrebno je:**
-1. Dodati Redis addon: `heroku addons:create heroku-redis:mini`
-2. Omogućiti blacklist: `heroku config:set TOKEN_BLACKLIST_ENABLED=true`
+**Security Features AKTIVNI:**
+- ✅ Redis token blacklist - logout invalidira JWT tokene
+- ✅ FAIL-CLOSED mode u produkciji (SECURITY_STRICT=True)
+- ✅ User-wide blacklist za password change
 
 ---
 
