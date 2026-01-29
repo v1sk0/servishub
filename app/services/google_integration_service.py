@@ -27,8 +27,8 @@ class GoogleIntegrationService:
     OAUTH_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
     OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
 
-    # Places API endpoints
-    PLACES_API_BASE = "https://places.googleapis.com/v1"
+    # Places API endpoints (Legacy API - more widely enabled)
+    PLACES_API_BASE = "https://maps.googleapis.com/maps/api/place"
 
     # Required OAuth scopes
     SCOPES = [
@@ -136,7 +136,7 @@ class GoogleIntegrationService:
             address: Optional address to narrow search
 
         Returns:
-            List of place data dicts
+            List of place data dicts (normalized format)
         """
         if not self.places_api_key:
             raise ValueError("GOOGLE_PLACES_API_KEY not configured")
@@ -145,24 +145,21 @@ class GoogleIntegrationService:
         if address:
             query = f"{business_name} {address}"
 
-        # Use Places API (New) Text Search
-        url = f"{self.PLACES_API_BASE}/places:searchText"
-        headers = {
-            'Content-Type': 'application/json',
-            'X-Goog-Api-Key': self.places_api_key,
-            'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount',
-        }
+        # Use Legacy Places API Text Search
+        url = f"{self.PLACES_API_BASE}/textsearch/json"
 
         logger.info(f"Searching Google Places for: {query}")
         logger.info(f"Request URL: {url}")
-        logger.info(f"API Key (first 10 chars): {self.places_api_key[:10]}...")
 
         # Try with Serbian region first
-        response = requests.post(url, headers=headers, json={
-            'textQuery': query,
-            'languageCode': 'sr',
-            'regionCode': 'RS',
-        })
+        params = {
+            'query': query,
+            'key': self.places_api_key,
+            'language': 'sr',
+            'region': 'rs',
+        }
+
+        response = requests.get(url, params=params)
 
         logger.info(f"Response status: {response.status_code}")
         logger.info(f"Response body: {response.text[:500] if response.text else 'empty'}")
@@ -172,20 +169,42 @@ class GoogleIntegrationService:
             raise Exception(f"Google API error: {response.status_code}")
 
         data = response.json()
-        places = data.get('places', [])
+
+        # Check for API errors
+        if data.get('status') not in ['OK', 'ZERO_RESULTS']:
+            error_msg = data.get('error_message', data.get('status', 'Unknown error'))
+            logger.error(f"Place search API error: {error_msg}")
+            raise Exception(f"Google API error: {error_msg}")
+
+        results = data.get('results', [])
 
         # If no results, try without region restriction
-        if not places:
+        if not results:
             logger.info(f"No results with region restriction, trying global search")
-            response = requests.post(url, headers=headers, json={
-                'textQuery': query,
-            })
+            params_global = {
+                'query': query,
+                'key': self.places_api_key,
+            }
+            response = requests.get(url, params=params_global)
             if response.status_code == 200:
                 data = response.json()
-                places = data.get('places', [])
-                logger.info(f"Global search found {len(places)} places")
+                if data.get('status') == 'OK':
+                    results = data.get('results', [])
+                    logger.info(f"Global search found {len(results)} places")
 
-        logger.info(f"Found {len(places)} places total")
+        logger.info(f"Found {len(results)} places total")
+
+        # Normalize to match expected format
+        places = []
+        for r in results:
+            places.append({
+                'id': r.get('place_id'),
+                'displayName': {'text': r.get('name', '')},
+                'formattedAddress': r.get('formatted_address', ''),
+                'rating': r.get('rating'),
+                'userRatingCount': r.get('user_ratings_total'),
+            })
+
         if places:
             logger.info(f"First place: {places[0]}")
         return places
@@ -198,25 +217,63 @@ class GoogleIntegrationService:
             place_id: Google Place ID
 
         Returns:
-            Place details dict
+            Place details dict (normalized format)
         """
         if not self.places_api_key:
             raise ValueError("GOOGLE_PLACES_API_KEY not configured")
 
-        url = f"{self.PLACES_API_BASE}/places/{place_id}"
-        headers = {
-            'Content-Type': 'application/json',
-            'X-Goog-Api-Key': self.places_api_key,
-            'X-Goog-FieldMask': 'id,displayName,formattedAddress,rating,userRatingCount,reviews',
+        # Use Legacy Places API Place Details
+        url = f"{self.PLACES_API_BASE}/details/json"
+        params = {
+            'place_id': place_id,
+            'key': self.places_api_key,
+            'fields': 'place_id,name,formatted_address,rating,user_ratings_total,reviews',
+            'language': 'sr',
+            'reviews_sort': 'newest',
         }
 
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, params=params)
 
         if response.status_code != 200:
             logger.error(f"Place details failed: {response.text}")
             return None
 
-        return response.json()
+        data = response.json()
+
+        if data.get('status') != 'OK':
+            logger.error(f"Place details API error: {data.get('error_message', data.get('status'))}")
+            return None
+
+        result = data.get('result', {})
+
+        # Normalize to match expected format
+        normalized = {
+            'id': result.get('place_id'),
+            'displayName': {'text': result.get('name', '')},
+            'formattedAddress': result.get('formatted_address', ''),
+            'rating': result.get('rating'),
+            'userRatingCount': result.get('user_ratings_total'),
+            'reviews': [],
+        }
+
+        # Normalize reviews
+        for review in result.get('reviews', []):
+            normalized['reviews'].append({
+                'name': f"reviews/{review.get('time', '')}",  # Create unique ID from timestamp
+                'authorAttribution': {
+                    'displayName': review.get('author_name', 'Anonymous'),
+                    'photoUri': review.get('profile_photo_url'),
+                },
+                'rating': review.get('rating'),
+                'text': {
+                    'text': review.get('text', ''),
+                    'languageCode': review.get('language'),
+                },
+                'publishTime': datetime.utcfromtimestamp(review.get('time', 0)).isoformat() + 'Z' if review.get('time') else None,
+                'relativeTimeDescription': review.get('relative_time_description'),
+            })
+
+        return normalized
 
     def connect_tenant(self, tenant_id: int, code: str, redirect_uri: str) -> TenantGoogleIntegration:
         """
