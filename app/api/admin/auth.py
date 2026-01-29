@@ -93,6 +93,10 @@ def admin_login():
         # 2FA nije omogucen - vrati tokene direktno
         SecurityEventLogger.log_admin_login(admin.id, admin.email, success=True)
 
+        # Postavi session flag za frontend auth
+        session['admin_authenticated'] = True
+        session['admin_id'] = admin.id
+
         return jsonify({
             'admin': admin.to_dict(),
             'tokens': {
@@ -189,6 +193,10 @@ def admin_login_2fa():
         email=admin.email
     )
 
+    # Postavi session flag za frontend auth
+    session['admin_authenticated'] = True
+    session['admin_id'] = admin.id
+
     return jsonify({
         'admin': admin.to_dict(),
         'tokens': {
@@ -263,16 +271,32 @@ def admin_logout():
     """
     Odjava admina.
 
+    SECURITY: Blacklist-uje trenutni token tako da se ne moze ponovo koristiti.
+
     Returns:
         200: Uspesna odjava
     """
     admin = g.current_admin
 
+    # SECURITY: Blacklist current token
+    token_blacklisted = False
+    try:
+        from ...services.token_blacklist_service import token_blacklist
+        token_blacklisted = token_blacklist.blacklist_token(g.token_payload)
+    except Exception as e:
+        # Log ali ne blokiraj logout
+        import logging
+        logging.warning(f"Failed to blacklist token on logout: {e}")
+
+    # Obrisi session flag za frontend auth
+    session.pop('admin_authenticated', None)
+    session.pop('admin_id', None)
+
     AuditLog.log(
         entity_type='admin_auth',
         entity_id=admin.id,
         action=AuditAction.LOGOUT,
-        changes={}
+        changes={'token_blacklisted': token_blacklisted}
     )
     db.session.commit()
 

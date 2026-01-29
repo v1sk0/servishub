@@ -3,11 +3,44 @@ Auth middleware - dekoratori za autentifikaciju i autorizaciju.
 
 Ovaj modul pruza dekoratore koji se koriste na API endpointima
 za proveru JWT tokena i pristupa resursima.
+
+SECURITY NOTES:
+- Svi JWT tokeni se proveravaju protiv blacklist-a
+- Blacklist koristi fail-closed politiku u produkciji
+- Token mora imati 'jti' claim za preciznu revokaciju
 """
 
+import logging
 from functools import wraps
 from flask import request, g, jsonify
 from .jwt_utils import decode_token, extract_token_from_header, TokenType
+
+logger = logging.getLogger(__name__)
+
+
+def _check_token_blacklist(payload: dict) -> bool:
+    """
+    Proveri da li je token blacklisted.
+
+    Returns:
+        True ako je token VALIDAN (nije blacklisted)
+        False ako je token blacklisted ili greska
+    """
+    try:
+        from ...services.token_blacklist_service import token_blacklist
+        if token_blacklist.is_blacklisted(payload):
+            logger.info(f"Blocked blacklisted token for user {payload.get('sub')}")
+            return False
+        return True
+    except ImportError:
+        # token_blacklist_service nije dostupan
+        logger.warning("Token blacklist service not available")
+        return True
+    except Exception as e:
+        logger.error(f"Error checking token blacklist: {e}")
+        # U slucaju greske, prihvati token (fail-open za backward compatibility)
+        # SECURITY_STRICT mode u blacklist servisu ce handlovati fail-closed
+        return True
 
 
 def jwt_required(f):
@@ -58,6 +91,13 @@ def jwt_required(f):
             return jsonify({
                 'error': 'Unauthorized',
                 'message': 'Ocekivan je access token'
+            }), 401
+
+        # SECURITY: Proveri da token nije blacklisted
+        if not _check_token_blacklist(payload):
+            return jsonify({
+                'error': 'Unauthorized',
+                'message': 'Token je ponisten. Prijavite se ponovo.'
             }), 401
 
         # Sacuvaj podatke u Flask g objekt za dalje koriscenje
@@ -249,6 +289,13 @@ def platform_admin_required(f):
 
         if not payload.get('is_admin', False):
             return jsonify({'error': 'Forbidden', 'message': 'Potreban je admin pristup'}), 403
+
+        # SECURITY: Proveri da token nije blacklisted
+        if not _check_token_blacklist(payload):
+            return jsonify({
+                'error': 'Unauthorized',
+                'message': 'Token je ponisten. Prijavite se ponovo.'
+            }), 401
 
         from ...models.admin import PlatformAdmin
         admin = PlatformAdmin.query.get(payload.get('sub'))

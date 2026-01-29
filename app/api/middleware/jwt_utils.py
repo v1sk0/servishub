@@ -3,9 +3,15 @@ JWT utilities - pomocne funkcije za rad sa JWT tokenima.
 
 Ovaj modul pruza funkcije za kreiranje i validaciju JWT tokena
 za autentifikaciju korisnika (tenant users) i platform admina.
+
+SECURITY NOTES:
+- Svaki token MORA imati 'jti' (JWT ID) claim za preciznu revokaciju
+- jti se koristi u token_blacklist_service za invalidaciju
+- Nikad ne koristi iste payload podatke za razlicite tokene
 """
 
 import jwt
+import uuid
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 from flask import current_app
@@ -15,6 +21,18 @@ class TokenType:
     """Tipovi tokena koje koristimo."""
     ACCESS = 'access'
     REFRESH = 'refresh'
+
+
+def _generate_jti() -> str:
+    """
+    Generise unique JWT ID.
+
+    JTI se koristi za:
+    - Preciznu revokaciju pojedinacnog tokena
+    - Sprecavanje replay napada
+    - Audit trail
+    """
+    return str(uuid.uuid4())
 
 
 def create_access_token(user_id: int, tenant_id: int, role: str) -> str:
@@ -37,6 +55,7 @@ def create_access_token(user_id: int, tenant_id: int, role: str) -> str:
 
     payload = {
         'sub': user_id,           # Subject - ID korisnika
+        'jti': _generate_jti(),   # JWT ID za revokaciju
         'tenant_id': tenant_id,   # Tenant kome pripada
         'role': role,             # Rola u preduzecu
         'type': TokenType.ACCESS, # Tip tokena
@@ -70,6 +89,7 @@ def create_refresh_token(user_id: int, tenant_id: int) -> str:
 
     payload = {
         'sub': user_id,
+        'jti': _generate_jti(),   # JWT ID za revokaciju
         'tenant_id': tenant_id,
         'type': TokenType.REFRESH,
         'exp': expire,
@@ -102,6 +122,7 @@ def create_admin_access_token(admin_id: int, role: str) -> str:
 
     payload = {
         'sub': admin_id,
+        'jti': _generate_jti(),    # JWT ID za revokaciju
         'role': role,
         'type': TokenType.ACCESS,
         'is_admin': True,          # Oznaka da je platform admin
@@ -131,6 +152,7 @@ def create_admin_refresh_token(admin_id: int) -> str:
 
     payload = {
         'sub': admin_id,
+        'jti': _generate_jti(),    # JWT ID za revokaciju
         'type': TokenType.REFRESH,
         'is_admin': True,
         'exp': expire,
