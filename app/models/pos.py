@@ -184,6 +184,9 @@ class Receipt(db.Model):
     total_cost = db.Column(db.Numeric(12, 2), default=0)
     profit = db.Column(db.Numeric(12, 2), default=0)
 
+    # Valuta računa (RSD za fiskalnu kasu, može biti EUR za internu)
+    currency = db.Column(db.String(3), default='RSD', nullable=False)
+
     # Plaćanje
     payment_method = db.Column(db.Enum(PaymentMethod))
     cash_received = db.Column(db.Numeric(10, 2))
@@ -308,10 +311,16 @@ class DailyReport(db.Model):
     total_profit = db.Column(db.Numeric(12, 2), default=0)
     profit_margin_pct = db.Column(db.Numeric(5, 2))
 
-    # Plaćanja
+    # Plaćanja (RSD)
     total_cash = db.Column(db.Numeric(12, 2), default=0)
     total_card = db.Column(db.Numeric(12, 2), default=0)
     total_transfer = db.Column(db.Numeric(12, 2), default=0)
+
+    # Plaćanja (EUR) - za internu kasu koja prima EUR
+    total_revenue_eur = db.Column(db.Numeric(12, 2), default=0)
+    total_cash_eur = db.Column(db.Numeric(12, 2), default=0)
+    total_card_eur = db.Column(db.Numeric(12, 2), default=0)
+    total_transfer_eur = db.Column(db.Numeric(12, 2), default=0)
 
     # Kasa
     opening_cash = db.Column(db.Numeric(10, 2))

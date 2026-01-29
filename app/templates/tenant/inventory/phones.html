@@ -311,36 +311,163 @@
         </div>
     </div>
 
-    <!-- Sell Modal -->
+    <!-- Sell Modal (POS Integrated) -->
     <div x-show="showSellModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="showSellModal = false"></div>
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
-                <form @submit.prevent="sellPhone()">
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Prodaj telefon</h3>
-                        <p class="text-sm text-gray-600 mb-4" x-text="selectedPhone?.brand + ' ' + selectedPhone?.model"></p>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Prodaja telefona</h3>
 
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Ime kupca</label>
-                                <input type="text" x-model="sellForm.buyer_name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Prodajna cena</label>
-                                <input type="number" x-model="sellForm.sales_price" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    <!-- Telefon info -->
+                    <div class="bg-gray-50 rounded-lg p-3 mb-4">
+                        <p class="font-medium text-gray-900" x-text="selectedPhone?.brand + ' ' + selectedPhone?.model"></p>
+                        <p class="text-sm text-gray-500" x-text="selectedPhone?.imei ? 'IMEI: ' + selectedPhone.imei : ''"></p>
+                    </div>
+
+                    <!-- Currency Conversion (prikazuje se samo ako je currency != 'RSD') -->
+                    <div x-show="sellForm.originalCurrency && sellForm.originalCurrency !== 'RSD'" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                        <p class="text-sm font-medium text-yellow-800 mb-3">
+                            <svg class="inline w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                            </svg>
+                            Konverzija valute
+                        </p>
+
+                        <!-- Originalna cena (readonly) -->
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="text-sm text-gray-600 w-24">Originalno:</span>
+                            <span class="font-mono font-medium" x-text="formatCurrency(sellForm.originalPrice, sellForm.originalCurrency)"></span>
+                        </div>
+
+                        <!-- Kurs input -->
+                        <div class="flex items-center gap-2 mb-3">
+                            <label class="text-sm text-gray-600 w-24">Kurs:</label>
+                            <div class="flex-1 flex items-center gap-2">
+                                <span class="text-sm">1 <span x-text="sellForm.originalCurrency"></span> =</span>
+                                <input type="number" x-model.number="sellForm.exchangeRate"
+                                       @input="calculateRsdFromRate()"
+                                       step="0.01" min="1"
+                                       class="w-24 rounded-md border-gray-300 text-sm">
+                                <span class="text-sm">RSD</span>
                             </div>
                         </div>
+
+                        <!-- RSD cena (editable) -->
+                        <div class="flex items-center gap-2">
+                            <label class="text-sm text-gray-600 w-24">RSD cena:</label>
+                            <input type="number" x-model.number="sellForm.sales_price"
+                                   @input="calculateRateFromRsd()"
+                                   step="100" min="0"
+                                   class="flex-1 rounded-md border-gray-300">
+                            <span class="text-sm">RSD</span>
+                        </div>
+
+                        <!-- Info o implicitnom kursu -->
+                        <p class="text-xs text-gray-500 mt-2" x-show="sellForm.sales_price > 0 && sellForm.originalPrice > 0">
+                            Implicitni kurs: 1 <span x-text="sellForm.originalCurrency"></span> =
+                            <span x-text="(sellForm.sales_price / sellForm.originalPrice).toFixed(2)"></span> RSD
+                        </p>
                     </div>
-                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                        <button type="submit" class="w-full inline-flex justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto">
-                            Potvrdi prodaju
-                        </button>
-                        <button type="button" @click="showSellModal = false" class="mt-3 w-full inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">
-                            Otkazi
-                        </button>
+
+                    <!-- Prodajna cena (za RSD ili nakon konverzije) -->
+                    <div class="mb-4" x-show="!sellForm.originalCurrency || sellForm.originalCurrency === 'RSD'">
+                        <label class="block text-sm font-medium text-gray-700">Prodajna cena</label>
+                        <div class="mt-1 relative">
+                            <input type="number" x-model.number="sellForm.sales_price"
+                                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm pr-12">
+                            <span class="absolute right-3 top-2 text-gray-500 text-sm">RSD</span>
+                        </div>
+                        <p class="mt-1 text-sm text-green-600" x-show="sellForm.sales_price > 0">
+                            Profit: <span x-text="formatPrice(sellForm.sales_price - (selectedPhone?.purchase_price || 0))"></span> RSD
+                        </p>
                     </div>
-                </form>
+
+                    <!-- Kupac (opciono) -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700">Kupac (opciono)</label>
+                        <input type="text" x-model="sellForm.buyer_name"
+                               placeholder="Ime kupca"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+
+                    <!-- Način plaćanja -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Plaćanje</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button"
+                                    @click="sellForm.payment_method = 'CASH'"
+                                    :class="sellForm.payment_method === 'CASH' ? 'bg-green-600 text-white ring-2 ring-green-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                                    class="py-3 rounded-lg font-medium transition-colors">
+                                <svg class="w-5 h-5 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                Gotovina
+                            </button>
+                            <button type="button"
+                                    @click="sellForm.payment_method = 'CARD'"
+                                    :class="sellForm.payment_method === 'CARD' ? 'bg-blue-600 text-white ring-2 ring-blue-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                                    class="py-3 rounded-lg font-medium transition-colors">
+                                <svg class="w-5 h-5 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                                Kartica
+                            </button>
+                            <button type="button"
+                                    @click="sellForm.payment_method = 'TRANSFER'"
+                                    :class="sellForm.payment_method === 'TRANSFER' ? 'bg-purple-600 text-white ring-2 ring-purple-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                                    class="py-3 rounded-lg font-medium transition-colors">
+                                <svg class="w-5 h-5 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                                </svg>
+                                Prenos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Kusur (za gotovinu) -->
+                    <div x-show="sellForm.payment_method === 'CASH'" class="mb-4 bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Primljeno</label>
+                        <input type="number" x-model.number="sellForm.cash_received"
+                               :placeholder="sellForm.sales_price"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <div class="mt-2 flex justify-between items-center" x-show="sellForm.cash_received >= sellForm.sales_price">
+                            <span class="text-sm text-gray-600">Kusur:</span>
+                            <span class="text-lg font-bold text-green-600" x-text="formatPrice(sellForm.cash_received - sellForm.sales_price) + ' RSD'"></span>
+                        </div>
+                        <p class="mt-1 text-sm text-red-600" x-show="sellForm.cash_received > 0 && sellForm.cash_received < sellForm.sales_price">
+                            Nedovoljno primljeno
+                        </p>
+                    </div>
+
+                    <!-- Ukupno za naplatu -->
+                    <div class="border-t pt-4 mt-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-medium text-gray-700">Ukupno:</span>
+                            <span class="text-2xl font-bold text-gray-900" x-text="formatPrice(sellForm.sales_price) + ' RSD'"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Akcije -->
+                <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-2">
+                    <button @click="sellPhonePOS()"
+                            :disabled="!sellForm.payment_method || sellForm.sales_price <= 0 || selling"
+                            class="w-full inline-flex justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg x-show="!selling" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <svg x-show="selling" class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span x-text="selling ? 'Obrada...' : 'Prodaj'"></span>
+                    </button>
+                    <button type="button" @click="showSellModal = false"
+                            class="mt-3 w-full inline-flex justify-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">
+                        Odustani
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -365,9 +492,18 @@ function phonesPage() {
         showEditModal: false,
         showSellModal: false,
         selectedPhone: null,
+        selling: false,
 
         form: { brand: '', model: '', imei: '', condition: 'GOOD', color: '', capacity: '', purchase_price: '', sales_price: '', supplier_name: '' },
-        sellForm: { buyer_name: '', sales_price: '' },
+        sellForm: {
+            buyer_name: '',
+            sales_price: 0,
+            originalPrice: 0,
+            originalCurrency: 'RSD',
+            exchangeRate: 117,
+            payment_method: 'CASH',
+            cash_received: 0
+        },
 
         conditionLabels: { 'NEW': 'Novo', 'LIKE_NEW': 'Kao novo', 'GOOD': 'Dobro', 'FAIR': 'Prosecno', 'POOR': 'Lose' },
 
@@ -440,8 +576,45 @@ function phonesPage() {
 
         openSellModal(phone) {
             this.selectedPhone = phone;
-            this.sellForm = { buyer_name: '', sales_price: phone.sales_price || '' };
+            const currency = phone.sales_currency || 'RSD';
+            const price = phone.sales_price || 0;
+
+            this.sellForm = {
+                buyer_name: '',
+                sales_price: currency === 'RSD' ? price : Math.round(price * 117),
+                originalPrice: price,
+                originalCurrency: currency,
+                exchangeRate: 117,
+                payment_method: 'CASH',
+                cash_received: 0
+            };
+
+            // Ako je valuta EUR, preračunaj početnu RSD cenu
+            if (currency !== 'RSD') {
+                this.calculateRsdFromRate();
+            }
+
             this.showSellModal = true;
+        },
+
+        calculateRsdFromRate() {
+            if (this.sellForm.originalPrice > 0 && this.sellForm.exchangeRate > 0) {
+                this.sellForm.sales_price = Math.round(this.sellForm.originalPrice * this.sellForm.exchangeRate);
+            }
+        },
+
+        calculateRateFromRsd() {
+            if (this.sellForm.originalPrice > 0 && this.sellForm.sales_price > 0) {
+                this.sellForm.exchangeRate = parseFloat((this.sellForm.sales_price / this.sellForm.originalPrice).toFixed(2));
+            }
+        },
+
+        formatCurrency(amount, currency) {
+            if (!amount) return '-';
+            if (currency === 'EUR') {
+                return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(amount);
+            }
+            return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD', maximumFractionDigits: 0 }).format(amount);
         },
 
         closeModals() {
@@ -477,23 +650,40 @@ function phonesPage() {
             }
         },
 
-        async sellPhone() {
+        async sellPhonePOS() {
+            if (this.selling) return;
+
+            // Validacija za gotovinu
+            if (this.sellForm.payment_method === 'CASH' && this.sellForm.cash_received > 0 && this.sellForm.cash_received < this.sellForm.sales_price) {
+                showToast('Nedovoljno primljeno', 'error');
+                return;
+            }
+
+            this.selling = true;
             try {
-                const response = await api(`/api/v1/inventory/phones/${this.selectedPhone.id}/sell`, {
+                const response = await api(`/api/v1/inventory/phones/${this.selectedPhone.id}/sell-pos`, {
                     method: 'POST',
-                    body: JSON.stringify(this.sellForm)
+                    body: JSON.stringify({
+                        sales_price: this.sellForm.sales_price,
+                        buyer_name: this.sellForm.buyer_name || null,
+                        payment_method: this.sellForm.payment_method,
+                        cash_received: this.sellForm.payment_method === 'CASH' ? (this.sellForm.cash_received || this.sellForm.sales_price) : null
+                    })
                 });
 
                 if (response.ok) {
-                    showToast('Telefon prodat', 'success');
+                    const data = await response.json();
+                    showToast(`Telefon prodat! Račun #${data.receipt_number}`, 'success');
                     this.showSellModal = false;
                     this.loadPhones();
                 } else {
                     const err = await response.json();
-                    showToast(err.message || 'Greska', 'error');
+                    showToast(err.message || 'Greška pri prodaji', 'error');
                 }
             } catch (e) {
-                showToast('Greska pri prodaji', 'error');
+                showToast('Greška pri prodaji: ' + e.message, 'error');
+            } finally {
+                this.selling = false;
             }
         },
 

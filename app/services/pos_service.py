@@ -255,12 +255,22 @@ class POSService:
             status=ReceiptStatus.ISSUED
         ).all()
 
-        total_revenue = sum(r.total_amount or 0 for r in receipts)
-        total_cost = sum(r.total_cost or 0 for r in receipts)
-        total_profit = sum(r.profit or 0 for r in receipts)
-        total_cash = sum(r.cash_received - (r.cash_change or 0) for r in receipts if r.payment_method == PaymentMethod.CASH and r.cash_received)
-        total_card = sum(r.card_amount or 0 for r in receipts if r.card_amount)
-        total_transfer = sum(r.transfer_amount or 0 for r in receipts if r.transfer_amount)
+        # RSD računi (fiskalna kasa ili interna sa RSD)
+        rsd_receipts = [r for r in receipts if (r.currency or 'RSD') == 'RSD']
+        total_revenue = sum(r.total_amount or 0 for r in rsd_receipts)
+        total_cost = sum(r.total_cost or 0 for r in rsd_receipts)
+        total_profit = sum(r.profit or 0 for r in rsd_receipts)
+        total_cash = sum(r.cash_received - (r.cash_change or 0) for r in rsd_receipts if r.payment_method == PaymentMethod.CASH and r.cash_received)
+        total_card = sum(r.card_amount or 0 for r in rsd_receipts if r.card_amount)
+        total_transfer = sum(r.transfer_amount or 0 for r in rsd_receipts if r.transfer_amount)
+
+        # EUR računi (samo interna kasa)
+        eur_receipts = [r for r in receipts if r.currency == 'EUR']
+        total_revenue_eur = sum(r.total_amount or 0 for r in eur_receipts)
+        total_cash_eur = sum(r.cash_received - (r.cash_change or 0) for r in eur_receipts if r.payment_method == PaymentMethod.CASH and r.cash_received)
+        total_card_eur = sum(r.card_amount or 0 for r in eur_receipts if r.card_amount)
+        total_transfer_eur = sum(r.transfer_amount or 0 for r in eur_receipts if r.transfer_amount)
+
         receipt_count = len(receipts)
         voided_count = Receipt.query.filter_by(session_id=session_id, status=ReceiptStatus.VOIDED).count()
 
@@ -284,6 +294,11 @@ class POSService:
             total_cash=total_cash,
             total_card=total_card,
             total_transfer=total_transfer,
+            # EUR totali (interna kasa)
+            total_revenue_eur=total_revenue_eur,
+            total_cash_eur=total_cash_eur,
+            total_card_eur=total_card_eur,
+            total_transfer_eur=total_transfer_eur,
             opening_cash=session.opening_cash,
             closing_cash=total_cash,
             cash_difference=Decimal('0'),
@@ -794,6 +809,143 @@ class POSService:
         return receipt
 
     @staticmethod
+    def create_phone_receipt(phone_id, payment_method, user_id, location_id,
+                             sales_price=None, buyer_name=None, cash_received=None):
+        """Kreiraj račun za prodaju telefona.
+
+        Args:
+            phone_id: ID telefona iz PhoneListing
+            payment_method: 'CASH', 'CARD', 'TRANSFER'
+            user_id: ID korisnika koji prodaje
+            location_id: ID lokacije
+            sales_price: Prodajna cena (opciono, override)
+            buyer_name: Ime kupca (opciono)
+            cash_received: Primljeno za kusur (opciono)
+
+        Returns:
+            Receipt objekat (ISSUED)
+
+        Raises:
+            ValueError: Ako je telefon već prodat
+        """
+        phone = PhoneListing.query.get(phone_id)
+        if not phone:
+            raise ValueError(f'Telefon {phone_id} nije pronađen')
+
+        # Idempotency — sprečava duplu prodaju istog telefona
+        idempotency_key = f'phone-sale-{phone_id}'
+        existing = Receipt.query.filter_by(idempotency_key=idempotency_key).first()
+        if existing:
+            return existing
+
+        # Provera: već prodat?
+        if phone.sold:
+            raise ValueError(f'Telefon {phone_id} je već prodat')
+
+        tenant_id = phone.tenant_id
+
+        # Cena
+        final_price = Decimal(str(sales_price if sales_price is not None else (phone.sales_price or 0)))
+        if final_price <= 0:
+            raise ValueError('Prodajna cena mora biti pozitivna')
+
+        purchase_price = Decimal(str(phone.purchase_price or 0))
+        profit = final_price - purchase_price
+
+        # Get/create session
+        session = POSService.get_or_create_session(tenant_id, location_id, user_id)
+
+        # Kreiraj receipt number
+        today_str = date.today().strftime('%Y%m%d')
+        count = Receipt.query.filter(
+            Receipt.tenant_id == tenant_id,
+            Receipt.receipt_number.like(f'{today_str}-%')
+        ).count()
+        receipt_number = f'{today_str}-{count + 1:03d}'
+
+        # Item name
+        item_name = f'{phone.brand or ""} {phone.model or ""}'.strip()
+        if phone.imei:
+            item_name += f' (IMEI: {phone.imei[-4:]})'  # Last 4 digits
+
+        receipt = Receipt(
+            tenant_id=tenant_id,
+            session_id=session.id,
+            location_id=location_id,
+            receipt_number=receipt_number,
+            receipt_type=ReceiptType.SALE,
+            status=ReceiptStatus.ISSUED,
+            issued_by_id=user_id,
+            issued_at=datetime.utcnow(),
+            payment_method=PaymentMethod(payment_method) if isinstance(payment_method, str) else payment_method,
+            subtotal=final_price,
+            total_amount=final_price,
+            total_cost=purchase_price,
+            profit=profit,
+            customer_name=buyer_name,
+            idempotency_key=idempotency_key,
+        )
+
+        # Cash handling
+        if payment_method == 'CASH':
+            if cash_received and cash_received > 0:
+                receipt.cash_received = Decimal(str(cash_received))
+                receipt.cash_change = Decimal(str(cash_received)) - final_price
+            else:
+                receipt.cash_received = final_price
+                receipt.cash_change = Decimal('0')
+
+        # Fiskalizacija
+        if session.fiscal_mode:
+            receipt.fiscal_status = 'pending'
+
+        db.session.add(receipt)
+        db.session.flush()
+
+        # Stavka
+        item = ReceiptItem(
+            receipt_id=receipt.id,
+            item_type=SaleItemType.PHONE,
+            item_name=item_name,
+            phone_listing_id=phone.id,
+            quantity=1,
+            purchase_price=purchase_price,
+            unit_price=final_price,
+            discount_pct=Decimal('0'),
+            line_total=final_price,
+            line_cost=purchase_price,
+            line_profit=profit,
+        )
+        db.session.add(item)
+
+        # Označi telefon kao prodat
+        phone.sold = True
+        phone.sold_at = datetime.utcnow()
+        phone.sold_to = buyer_name
+        phone.sales_price = final_price
+        phone.collected = True
+        phone.collected_at = datetime.utcnow()
+
+        # Audit log
+        AuditLog.log(
+            entity_type='receipt',
+            entity_id=receipt.id,
+            action=AuditAction.CREATE,
+            changes={
+                'action': 'PHONE_SALE',
+                'phone_id': phone.id,
+                'total': float(final_price),
+                'profit': float(profit),
+                'payment_method': payment_method
+            },
+            tenant_id=tenant_id,
+            user_id=user_id,
+        )
+
+        db.session.flush()
+        return receipt
+
+    @staticmethod
     def close_register(session_id, user_id, closing_cash):
         """Zatvori kasu i generiši DailyReport."""
         session = CashRegisterSession.query.get(session_id)
@@ -808,12 +960,22 @@ class POSService:
             status=ReceiptStatus.ISSUED
         ).all()
 
-        total_revenue = sum(r.total_amount or 0 for r in receipts)
-        total_cost = sum(r.total_cost or 0 for r in receipts)
-        total_profit = sum(r.profit or 0 for r in receipts)
-        total_cash = sum(r.cash_received - (r.cash_change or 0) for r in receipts if r.payment_method == PaymentMethod.CASH and r.cash_received)
-        total_card = sum(r.card_amount or 0 for r in receipts if r.card_amount)
-        total_transfer = sum(r.transfer_amount or 0 for r in receipts if r.transfer_amount)
+        # RSD računi (fiskalna kasa ili interna sa RSD)
+        rsd_receipts = [r for r in receipts if (r.currency or 'RSD') == 'RSD']
+        total_revenue = sum(r.total_amount or 0 for r in rsd_receipts)
+        total_cost = sum(r.total_cost or 0 for r in rsd_receipts)
+        total_profit = sum(r.profit or 0 for r in rsd_receipts)
+        total_cash = sum(r.cash_received - (r.cash_change or 0) for r in rsd_receipts if r.payment_method == PaymentMethod.CASH and r.cash_received)
+        total_card = sum(r.card_amount or 0 for r in rsd_receipts if r.card_amount)
+        total_transfer = sum(r.transfer_amount or 0 for r in rsd_receipts if r.transfer_amount)
+
+        # EUR računi (samo interna kasa)
+        eur_receipts = [r for r in receipts if r.currency == 'EUR']
+        total_revenue_eur = sum(r.total_amount or 0 for r in eur_receipts)
+        total_cash_eur = sum(r.cash_received - (r.cash_change or 0) for r in eur_receipts if r.payment_method == PaymentMethod.CASH and r.cash_received)
+        total_card_eur = sum(r.card_amount or 0 for r in eur_receipts if r.card_amount)
+        total_transfer_eur = sum(r.transfer_amount or 0 for r in eur_receipts if r.transfer_amount)
+
         receipt_count = len(receipts)
         voided_count = Receipt.query.filter_by(session_id=session_id, status=ReceiptStatus.VOIDED).count()
 
@@ -862,6 +1024,11 @@ class POSService:
             total_cash=total_cash,
             total_card=total_card,
             total_transfer=total_transfer,
+            # EUR totali (interna kasa)
+            total_revenue_eur=total_revenue_eur,
+            total_cash_eur=total_cash_eur,
+            total_card_eur=total_card_eur,
+            total_transfer_eur=total_transfer_eur,
             opening_cash=session.opening_cash,
             closing_cash=closing_cash,
             cash_difference=cash_difference,

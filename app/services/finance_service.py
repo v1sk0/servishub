@@ -103,9 +103,14 @@ class FinanceService:
         ).order_by(DailyReport.date.desc()).all()
 
         return {
+            # RSD totali
             'total_cash': sum(float(r.total_cash or 0) for r in reports),
             'total_card': sum(float(r.total_card or 0) for r in reports),
             'total': sum(float(r.total_revenue or 0) for r in reports),
+            # EUR totali (za internu kasu)
+            'total_cash_eur': sum(float(r.total_cash_eur or 0) for r in reports),
+            'total_card_eur': sum(float(r.total_card_eur or 0) for r in reports),
+            'total_eur': sum(float(r.total_revenue_eur or 0) for r in reports),
             'days': [{
                 'date': r.date.strftime('%Y-%m-%d'),
                 'location': r.location.name if r.location else 'N/A',
@@ -113,6 +118,9 @@ class FinanceService:
                 'cash': float(r.total_cash or 0),
                 'card': float(r.total_card or 0),
                 'total': float(r.total_revenue or 0),
+                'cash_eur': float(r.total_cash_eur or 0) if r.total_cash_eur else 0,
+                'card_eur': float(r.total_card_eur or 0) if r.total_card_eur else 0,
+                'total_eur': float(r.total_revenue_eur or 0) if r.total_revenue_eur else 0,
                 'receipt_count': r.receipt_count or 0
             } for r in reports]
         }

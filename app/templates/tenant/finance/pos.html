@@ -27,8 +27,9 @@
         </div>
     </div>
 
-    <!-- Summary -->
+    <!-- Summary RSD -->
     <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Promet (RSD)</h3>
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
             <div>
                 <p class="text-sm font-medium text-gray-500">Ukupan promet</p>
@@ -41,6 +42,25 @@
             <div>
                 <p class="text-sm font-medium text-gray-500">Kartica</p>
                 <p class="mt-1 text-3xl font-semibold text-blue-600" x-text="formatPrice(data.total_card || 0)"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary EUR (prikazuje se samo ako ima EUR prometa) -->
+    <div class="bg-yellow-50 border border-yellow-200 shadow rounded-lg p-6 mb-6" x-show="(data.total_eur || 0) > 0">
+        <h3 class="text-lg font-medium text-yellow-800 mb-4">Promet (EUR) — Interna kasa</h3>
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <div>
+                <p class="text-sm font-medium text-yellow-700">Ukupan promet</p>
+                <p class="mt-1 text-3xl font-semibold text-yellow-900" x-text="formatEur(data.total_eur || 0)"></p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-yellow-700">Gotovina</p>
+                <p class="mt-1 text-3xl font-semibold text-green-600" x-text="formatEur(data.total_cash_eur || 0)"></p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-yellow-700">Kartica</p>
+                <p class="mt-1 text-3xl font-semibold text-blue-600" x-text="formatEur(data.total_card_eur || 0)"></p>
             </div>
         </div>
     </div>
@@ -92,6 +112,9 @@ function posReport() {
         setPeriod(d) { this.days = d; this.loadData(); },
         formatPrice(val) {
             return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD', maximumFractionDigits: 0 }).format(val || 0);
+        },
+        formatEur(val) {
+            return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(val || 0);
         }
     }
 }

@@ -13,6 +13,7 @@ from ...models import (
     SparePart, PartVisibility, PartCategory,
     AuditLog, AuditAction
 )
+from ...services.pos_service import POSService
 
 bp = Blueprint('inventory', __name__, url_prefix='/inventory')
 
@@ -261,6 +262,75 @@ def sell_phone(phone_id):
     db.session.commit()
 
     return jsonify(phone.to_dict()), 200
+
+
+@bp.route('/phones/<int:phone_id>/sell-pos', methods=['POST'])
+@jwt_required
+@tenant_required
+def sell_phone_pos(phone_id):
+    """
+    Prodaj telefon kroz POS (kreira Receipt).
+
+    Za razliku od /sell, ovaj endpoint:
+    - Kreira CashRegisterSession (ako ne postoji)
+    - Kreira Receipt sa ReceiptItem(PHONE)
+    - Ažurira DailyReport
+    - Beleži payment_method i kusur
+
+    Request body:
+        - payment_method: CASH, CARD, TRANSFER (default: CASH)
+        - sales_price: Prodajna cena (opciono, koristi se postojeća ako nije navedena)
+        - buyer_name: Ime kupca (opciono)
+        - cash_received: Primljeni iznos za kusur (opciono)
+        - location_id: Lokacija kase (opciono, koristi se user default)
+    """
+    user = g.current_user
+    tenant = g.current_tenant
+    data = request.get_json() or {}
+
+    # Provera pristupa telefonu
+    phone = PhoneListing.query.filter_by(
+        id=phone_id,
+        tenant_id=tenant.id
+    ).first()
+
+    if not phone:
+        return jsonify({'error': 'Not Found', 'message': 'Telefon nije pronađen'}), 404
+
+    # Odredi location_id
+    location_id = data.get('location_id')
+    if not location_id:
+        # Pokušaj da uzme default lokaciju korisnika
+        location_id = user.default_location_id or phone.location_id
+
+    if not location_id:
+        return jsonify({'error': 'Bad Request', 'message': 'Potrebna je lokacija za POS'}), 400
+
+    try:
+        receipt = POSService.create_phone_receipt(
+            phone_id=phone_id,
+            payment_method=data.get('payment_method', 'CASH'),
+            user_id=user.id,
+            location_id=location_id,
+            sales_price=data.get('sales_price'),
+            buyer_name=data.get('buyer_name'),
+            cash_received=data.get('cash_received')
+        )
+
+        return jsonify({
+            'success': True,
+            'receipt_id': receipt.id,
+            'receipt_number': receipt.receipt_number,
+            'phone_id': phone_id,
+            'total_amount': float(receipt.total_amount),
+            'profit': float(receipt.profit or 0)
+        }), 200
+
+    except ValueError as e:
+        return jsonify({'error': 'Bad Request', 'message': str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Server Error', 'message': str(e)}), 500
 
 
 @bp.route('/phones/<int:phone_id>/collect', methods=['POST'])
