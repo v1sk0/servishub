@@ -464,20 +464,22 @@ class GoogleIntegrationService:
 
         return False
 
-    def get_visible_reviews(self, tenant_id: int, limit: int = 6) -> List[TenantGoogleReview]:
+    def get_visible_reviews(self, tenant_id: int, limit: int = 6, min_rating: int = 4) -> List[TenantGoogleReview]:
         """
         Get visible reviews for display on public site.
 
         Args:
             tenant_id: ID of the tenant
             limit: Maximum number of reviews to return
+            min_rating: Minimum rating to include (default 4)
 
         Returns:
-            List of visible reviews
+            List of visible reviews with rating >= min_rating
         """
-        return TenantGoogleReview.query.filter_by(
-            tenant_id=tenant_id,
-            is_visible=True
+        return TenantGoogleReview.query.filter(
+            TenantGoogleReview.tenant_id == tenant_id,
+            TenantGoogleReview.is_visible == True,
+            TenantGoogleReview.rating >= min_rating
         ).order_by(
             TenantGoogleReview.review_time.desc()
         ).limit(limit).all()
