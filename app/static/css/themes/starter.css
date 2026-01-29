@@ -1,25 +1,24 @@
 /**
  * ServisHub Theme: STARTER
  *
- * Karakteristike:
- * - Cista, profesionalna, trust-focused
- * - Plava paleta (#3b82f6 primary)
- * - Beli background, puno white space
- * - Centered hero, jednostavne animacije
- * - Font: Inter
+ * MODERN PROFESSIONAL - Clean but Impactful
+ * Soft gradients, crisp shadows, micro-interactions
  */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 [data-theme="starter"] {
     /* ========================================
-       COLORS
+       COLORS - Fresh Blue Palette
        ======================================== */
-    --sh-primary: #3b82f6;
-    --sh-primary-hover: #2563eb;
+    --sh-primary: #2563eb;
+    --sh-primary-hover: #1d4ed8;
     --sh-primary-light: #dbeafe;
-    --sh-secondary: #1e40af;
-    --sh-accent: #60a5fa;
+    --sh-primary-rgb: 37, 99, 235;
+    --sh-secondary: #0ea5e9;
+    --sh-accent: #06b6d4;
 
-    /* Background */
+    /* Background - Soft gradient base */
     --sh-bg-base: #ffffff;
     --sh-bg-muted: #f8fafc;
     --sh-bg-card: #ffffff;
@@ -32,94 +31,141 @@
     /* Borders */
     --sh-border-color: #e2e8f0;
 
-    /* Shadows */
-    --sh-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --sh-shadow-base: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --sh-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --sh-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    /* Premium Shadows */
+    --sh-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+    --sh-shadow-base: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --sh-shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    --sh-shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    --sh-shadow-glow: 0 0 40px rgba(37, 99, 235, 0.15);
 
-    /* ========================================
-       TYPOGRAPHY
-       ======================================== */
-    --sh-font-heading: 'Inter', system-ui, -apple-system, sans-serif;
-    --sh-font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    /* Typography */
+    --sh-font-heading: 'Inter', system-ui, sans-serif;
+    --sh-font-body: 'Inter', system-ui, sans-serif;
 
-    /* ========================================
-       HERO
-       ======================================== */
-    --sh-hero-bg: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    /* Hero */
+    --sh-hero-bg: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #0ea5e9 100%);
     --sh-hero-text: #ffffff;
     --sh-hero-text-muted: rgba(255, 255, 255, 0.9);
 
-    /* ========================================
-       FOOTER
-       ======================================== */
+    /* Footer */
     --sh-footer-bg: #0f172a;
-    --sh-footer-text: #e2e8f0;
+    --sh-footer-text: #cbd5e1;
 }
 
 /* ========================================
-   STARTER HERO - Centered Style
+   HERO - Gradient with Animated Mesh
    ======================================== */
 [data-theme="starter"] .sh-hero--starter {
     background: var(--sh-hero-bg);
+    position: relative;
     text-align: center;
     padding-block: var(--sh-space-20);
+    overflow: hidden;
+}
+
+/* Animated gradient orbs */
+[data-theme="starter"] .sh-hero--starter::before {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.4) 0%, transparent 70%);
+    top: -200px;
+    right: -200px;
+    animation: starter-float 20s ease-in-out infinite;
+}
+
+[data-theme="starter"] .sh-hero--starter::after {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.3) 0%, transparent 70%);
+    bottom: -150px;
+    left: -100px;
+    animation: starter-float 15s ease-in-out infinite reverse;
+}
+
+@keyframes starter-float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -30px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
 }
 
 [data-theme="starter"] .sh-hero--starter .sh-hero__content {
-    max-width: 800px;
+    max-width: 900px;
     margin-inline: auto;
     padding-inline: var(--sh-space-4);
+    position: relative;
+    z-index: 10;
 }
 
 [data-theme="starter"] .sh-hero--starter .sh-hero__logo {
     margin-inline: auto;
     margin-bottom: var(--sh-space-8);
     filter: brightness(0) invert(1);
+    height: 100px;
+}
+
+[data-theme="starter"] .sh-hero--starter .sh-hero__title {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    text-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="starter"] .sh-hero--starter .sh-hero__tagline {
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
     margin-inline: auto;
+    opacity: 0.95;
+    font-weight: 400;
 }
 
 [data-theme="starter"] .sh-hero--starter .sh-hero__cta {
     justify-content: center;
+    margin-top: var(--sh-space-10);
 }
 
-/* Starter Button Override for Hero */
+/* Hero Buttons */
 [data-theme="starter"] .sh-hero--starter .sh-btn--primary {
     background: white;
     color: var(--sh-primary);
     border-color: white;
+    font-weight: 700;
+    padding: var(--sh-space-4) var(--sh-space-10);
+    font-size: 1.1rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 [data-theme="starter"] .sh-hero--starter .sh-btn--primary:hover {
     background: var(--sh-primary-light);
     border-color: var(--sh-primary-light);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
 }
 
 [data-theme="starter"] .sh-hero--starter .sh-btn--outline {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
     color: white;
-    border-color: white;
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 [data-theme="starter"] .sh-hero--starter .sh-btn--outline:hover {
     background: white;
     color: var(--sh-primary);
+    border-color: white;
 }
 
-/* Trust Indicators */
+/* Trust Bar */
 [data-theme="starter"] .sh-trust-bar {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    align-items: center;
-    gap: var(--sh-space-6);
-    margin-top: var(--sh-space-10);
-    padding-top: var(--sh-space-6);
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    gap: var(--sh-space-8);
+    margin-top: var(--sh-space-12);
+    padding-top: var(--sh-space-8);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 [data-theme="starter"] .sh-trust-item {
@@ -128,39 +174,114 @@
     gap: var(--sh-space-2);
     color: rgba(255, 255, 255, 0.9);
     font-size: var(--sh-font-size-sm);
+    font-weight: 500;
 }
 
 [data-theme="starter"] .sh-trust-item svg {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     color: #fbbf24;
 }
 
 /* ========================================
-   STARTER CARDS
+   SECTIONS
+   ======================================== */
+[data-theme="starter"] .sh-section {
+    background: linear-gradient(180deg, var(--sh-bg-base) 0%, var(--sh-bg-muted) 100%);
+}
+
+[data-theme="starter"] .sh-section--alt {
+    background: linear-gradient(180deg, var(--sh-bg-muted) 0%, #f1f5f9 100%);
+}
+
+[data-theme="starter"] .sh-section__title {
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--sh-text-primary) 0%, #334155 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ========================================
+   CARDS - Elevated with Subtle Gradient Border
    ======================================== */
 [data-theme="starter"] .sh-card {
-    box-shadow: var(--sh-shadow-sm);
+    background: white;
+    border: 1px solid transparent;
+    background-image: linear-gradient(white, white), linear-gradient(135deg, #e2e8f0, #f1f5f9);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    box-shadow: var(--sh-shadow-base);
 }
 
 [data-theme="starter"] .sh-card:hover {
-    box-shadow: var(--sh-shadow-xl);
+    box-shadow: var(--sh-shadow-xl), var(--sh-shadow-glow);
+    transform: translateY(-8px);
 }
 
 /* ========================================
-   STARTER PROCESS STEPS
+   REVIEW CARDS
+   ======================================== */
+[data-theme="starter"] .sh-review-card {
+    background: white;
+    border: 1px solid var(--sh-border-color);
+    box-shadow: var(--sh-shadow-sm);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="starter"] .sh-review-card:hover {
+    box-shadow: var(--sh-shadow-lg);
+    transform: translateY(-6px);
+    border-color: var(--sh-primary-light);
+}
+
+/* ========================================
+   GOOGLE RATING
+   ======================================== */
+[data-theme="starter"] .sh-google-rating {
+    background: white;
+    border: 1px solid var(--sh-border-color);
+    box-shadow: var(--sh-shadow-lg);
+    padding: var(--sh-space-5) var(--sh-space-8);
+    border-radius: var(--sh-radius-2xl);
+}
+
+/* ========================================
+   BUTTONS (Global)
+   ======================================== */
+[data-theme="starter"] .sh-btn--primary {
+    background: linear-gradient(135deg, var(--sh-primary) 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 15px rgba(var(--sh-primary-rgb), 0.35);
+}
+
+[data-theme="starter"] .sh-btn--primary:hover {
+    box-shadow: 0 8px 25px rgba(var(--sh-primary-rgb), 0.45);
+    transform: translateY(-3px);
+}
+
+/* ========================================
+   PROCESS STEPS
    ======================================== */
 [data-theme="starter"] .sh-process-step__icon {
-    background: var(--sh-primary-light);
+    background: linear-gradient(135deg, var(--sh-primary-light) 0%, #bfdbfe 100%);
     color: var(--sh-primary);
+    box-shadow: var(--sh-shadow-base);
+    transition: all 0.3s ease;
+}
+
+[data-theme="starter"] .sh-process-step:hover .sh-process-step__icon {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: var(--sh-shadow-lg);
 }
 
 /* ========================================
-   STARTER NAVIGATION
+   NAVIGATION
    ======================================== */
 [data-theme="starter"] .sh-nav {
-    background: white;
-    box-shadow: var(--sh-shadow-sm);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 [data-theme="starter"] .sh-nav--scrolled {
@@ -168,43 +289,55 @@
 }
 
 /* ========================================
-   STARTER FORM ELEMENTS
+   SERVICE CARDS
+   ======================================== */
+[data-theme="starter"] .sh-service-card {
+    background: white;
+    border: 1px solid var(--sh-border-color);
+    box-shadow: var(--sh-shadow-sm);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="starter"] .sh-service-card:hover {
+    border-color: var(--sh-primary);
+    box-shadow: var(--sh-shadow-xl), 0 0 0 4px rgba(var(--sh-primary-rgb), 0.1);
+    transform: translateY(-8px);
+}
+
+[data-theme="starter"] .sh-service-card__price {
+    background: linear-gradient(135deg, var(--sh-primary) 0%, var(--sh-secondary) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ========================================
+   FORM ELEMENTS
    ======================================== */
 [data-theme="starter"] input,
 [data-theme="starter"] textarea,
 [data-theme="starter"] select {
-    border-color: var(--sh-border-color);
-    border-radius: var(--sh-radius-lg);
-    transition: border-color var(--sh-transition-fast), box-shadow var(--sh-transition-fast);
+    border: 2px solid var(--sh-border-color);
+    border-radius: var(--sh-radius-xl);
+    transition: all 0.2s ease;
 }
 
 [data-theme="starter"] input:focus,
 [data-theme="starter"] textarea:focus,
 [data-theme="starter"] select:focus {
     border-color: var(--sh-primary);
-    box-shadow: 0 0 0 3px var(--sh-primary-light);
+    box-shadow: 0 0 0 4px rgba(var(--sh-primary-rgb), 0.15);
     outline: none;
 }
 
 /* ========================================
-   STARTER ANIMATIONS
+   ANIMATIONS
    ======================================== */
-@keyframes starter-fade-in-up {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+@keyframes starter-fade-up {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-[data-theme="starter"] .animate-fade-in-up {
-    animation: starter-fade-in-up 0.6s ease forwards;
+[data-theme="starter"] [data-aos="fade-up"] {
+    animation: starter-fade-up 0.6s ease forwards;
 }
-
-[data-theme="starter"] .animate-delay-1 { animation-delay: 0.1s; }
-[data-theme="starter"] .animate-delay-2 { animation-delay: 0.2s; }
-[data-theme="starter"] .animate-delay-3 { animation-delay: 0.3s; }
-[data-theme="starter"] .animate-delay-4 { animation-delay: 0.4s; }

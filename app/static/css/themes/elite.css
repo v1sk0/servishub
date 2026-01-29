@@ -1,98 +1,101 @@
 /**
  * ServisHub Theme: ELITE
  *
- * Karakteristike:
- * - Luksuzna, ekskluzivna, dark mode
- * - Zlatna + tamna paleta (#f59e0b na #0f172a)
- * - Cinematic hero, zlatni akcenti
- * - Elegantne tranzicije
- * - Font: Playfair Display headings, Inter body
+ * DARK LUXURY EXPERIENCE
+ * Cinematic dark mode, golden accents, premium feel
+ * Inspired by luxury brands and Awwwards dark mode collections
  */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 [data-theme="elite"] {
     /* ========================================
-       COLORS
+       COLORS - Luxurious Gold on Dark
        ======================================== */
     --sh-primary: #f59e0b;
     --sh-primary-hover: #d97706;
     --sh-primary-light: #fef3c7;
-    --sh-secondary: #92400e;
+    --sh-primary-rgb: 245, 158, 11;
+    --sh-secondary: #eab308;
     --sh-accent: #fbbf24;
+    --sh-gold-gradient: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
 
-    /* Background - Dark */
-    --sh-bg-base: #0f172a;
-    --sh-bg-muted: #1e293b;
-    --sh-bg-card: #1e293b;
+    /* Background - Deep dark with subtle warmth */
+    --sh-bg-base: #0c0a09;
+    --sh-bg-muted: #1c1917;
+    --sh-bg-card: #1c1917;
+    --sh-bg-elevated: #292524;
 
-    /* Text - Light for dark bg */
-    --sh-text-primary: #f8fafc;
-    --sh-text-secondary: #cbd5e1;
-    --sh-text-muted: #64748b;
+    /* Text - Cream and gold tones */
+    --sh-text-primary: #fafaf9;
+    --sh-text-secondary: #d6d3d1;
+    --sh-text-muted: #a8a29e;
 
     /* Borders */
-    --sh-border-color: #334155;
+    --sh-border-color: #292524;
+    --sh-border-gold: rgba(245, 158, 11, 0.3);
 
-    /* Shadows - Subtle on dark */
-    --sh-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-    --sh-shadow-base: 0 8px 24px rgba(0, 0, 0, 0.4);
-    --sh-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
-    --sh-shadow-xl: 0 24px 60px rgba(0, 0, 0, 0.6);
+    /* Shadows - Warm dark shadows */
+    --sh-shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
+    --sh-shadow-base: 0 8px 30px rgba(0, 0, 0, 0.4);
+    --sh-shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.5);
+    --sh-shadow-xl: 0 30px 70px rgba(0, 0, 0, 0.6);
+    --sh-shadow-gold: 0 0 60px rgba(245, 158, 11, 0.2);
+    --sh-shadow-gold-intense: 0 0 100px rgba(245, 158, 11, 0.4);
 
-    /* Gold Glow */
-    --sh-gold-glow: 0 0 30px rgba(245, 158, 11, 0.3);
-    --sh-gold-glow-strong: 0 0 60px rgba(245, 158, 11, 0.5);
-
-    /* ========================================
-       TYPOGRAPHY
-       ======================================== */
+    /* Typography */
     --sh-font-heading: 'Playfair Display', Georgia, serif;
     --sh-font-body: 'Inter', system-ui, sans-serif;
 
-    /* ========================================
-       HERO
-       ======================================== */
-    --sh-hero-bg: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-    --sh-hero-text: #f8fafc;
-    --sh-hero-text-muted: #cbd5e1;
+    /* Hero */
+    --sh-hero-bg: linear-gradient(180deg, #0c0a09 0%, #1c1917 50%, #0c0a09 100%);
+    --sh-hero-text: #fafaf9;
+    --sh-hero-text-muted: #d6d3d1;
 
-    /* ========================================
-       FOOTER
-       ======================================== */
-    --sh-footer-bg: #020617;
-    --sh-footer-text: #94a3b8;
+    /* Footer */
+    --sh-footer-bg: #0a0908;
+    --sh-footer-text: #a8a29e;
 }
 
 /* ========================================
-   ELITE HERO - Cinematic Style
+   HERO - Cinematic Dark Luxury
    ======================================== */
 [data-theme="elite"] .sh-hero--elite {
     background: var(--sh-hero-bg);
     position: relative;
-    overflow: hidden;
+    min-height: 100vh;
     text-align: center;
-    min-height: 80vh;
+    overflow: hidden;
 }
 
-/* Radial gold glow overlay */
+/* Radial gold glow - atmospheric */
 [data-theme="elite"] .sh-hero--elite::before {
     content: '';
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 150%;
-    height: 150%;
-    background: radial-gradient(ellipse at center, rgba(251, 191, 36, 0.08) 0%, transparent 50%);
-    pointer-events: none;
+    width: 200%;
+    height: 200%;
+    background:
+        radial-gradient(ellipse 40% 30% at 50% 40%, rgba(251, 191, 36, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 30% 20% at 30% 30%, rgba(245, 158, 11, 0.05) 0%, transparent 50%),
+        radial-gradient(ellipse 25% 25% at 70% 60%, rgba(217, 119, 6, 0.04) 0%, transparent 50%);
+    animation: elite-glow 10s ease-in-out infinite alternate;
 }
 
-/* Subtle particle effect overlay */
+@keyframes elite-glow {
+    0% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+/* Subtle noise texture */
 [data-theme="elite"] .sh-hero--elite::after {
     content: '';
     position: absolute;
     inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.02;
     pointer-events: none;
 }
 
@@ -100,60 +103,254 @@
     max-width: 900px;
     margin-inline: auto;
     padding-inline: var(--sh-space-4);
-    padding-block: var(--sh-space-20);
+    padding-block: var(--sh-space-24);
+    position: relative;
+    z-index: 10;
 }
 
 [data-theme="elite"] .sh-hero--elite .sh-hero__logo {
     margin-inline: auto;
-    margin-bottom: var(--sh-space-8);
-    filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.3));
+    margin-bottom: var(--sh-space-10);
+    height: 100px;
+    filter: drop-shadow(0 0 30px rgba(251, 191, 36, 0.3));
 }
 
 /* Gold text gradient */
 [data-theme="elite"] .sh-gold-text {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+    background: var(--sh-gold-gradient);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 10px rgba(251, 191, 36, 0.3));
 }
 
-/* Elite badge */
-[data-theme="elite"] .sh-badge--gold {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-    color: #0f172a;
-    box-shadow: var(--sh-gold-glow);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-size: var(--sh-font-size-xs);
+[data-theme="elite"] .sh-hero--elite .sh-hero__title {
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
 }
 
 /* Decorative divider */
 [data-theme="elite"] .sh-hero__divider {
-    width: 80px;
+    width: 120px;
     height: 2px;
-    background: linear-gradient(90deg, transparent, var(--sh-primary), transparent);
-    margin: var(--sh-space-6) auto;
+    background: var(--sh-gold-gradient);
+    margin: var(--sh-space-8) auto;
+    position: relative;
+}
+
+[data-theme="elite"] .sh-hero__divider::before,
+[data-theme="elite"] .sh-hero__divider::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: var(--sh-primary);
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+[data-theme="elite"] .sh-hero__divider::before {
+    left: -4px;
+}
+
+[data-theme="elite"] .sh-hero__divider::after {
+    right: -4px;
+}
+
+[data-theme="elite"] .sh-hero--elite .sh-hero__tagline {
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+    font-family: var(--sh-font-body);
+    font-weight: 400;
+    color: var(--sh-text-secondary);
+    max-width: 600px;
+    margin-inline: auto;
+    line-height: 1.7;
 }
 
 [data-theme="elite"] .sh-hero--elite .sh-hero__cta {
     justify-content: center;
+    margin-top: var(--sh-space-12);
+}
+
+/* Elite Badge */
+[data-theme="elite"] .sh-badge--gold {
+    background: var(--sh-gold-gradient);
+    color: #0c0a09;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 0.75rem;
+    padding: var(--sh-space-2) var(--sh-space-5);
+    box-shadow: var(--sh-shadow-gold);
+}
+
+/* Hero Buttons */
+[data-theme="elite"] .sh-hero--elite .sh-btn--primary {
+    background: var(--sh-gold-gradient);
+    color: #0c0a09;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: var(--sh-space-5) var(--sh-space-12);
+    font-size: 1rem;
+    border: none;
+    box-shadow: var(--sh-shadow-gold);
+    position: relative;
+    overflow: hidden;
+}
+
+[data-theme="elite"] .sh-hero--elite .sh-btn--primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+[data-theme="elite"] .sh-hero--elite .sh-btn--primary:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--sh-shadow-gold-intense);
+}
+
+[data-theme="elite"] .sh-hero--elite .sh-btn--primary:hover::before {
+    opacity: 1;
+}
+
+[data-theme="elite"] .sh-hero--elite .sh-btn--outline {
+    background: transparent;
+    color: var(--sh-primary);
+    border: 2px solid var(--sh-primary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+[data-theme="elite"] .sh-hero--elite .sh-btn--outline:hover {
+    background: var(--sh-primary);
+    color: #0c0a09;
+    box-shadow: var(--sh-shadow-gold);
 }
 
 /* ========================================
-   ELITE BUTTONS
+   SECTIONS
+   ======================================== */
+[data-theme="elite"] .sh-section {
+    background: var(--sh-bg-base);
+    position: relative;
+}
+
+[data-theme="elite"] .sh-section--alt {
+    background: var(--sh-bg-muted);
+}
+
+[data-theme="elite"] .sh-section__header::after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 2px;
+    background: var(--sh-gold-gradient);
+    margin-top: var(--sh-space-6);
+}
+
+[data-theme="elite"] .sh-section__header.text-center::after {
+    margin-inline: auto;
+}
+
+[data-theme="elite"] .sh-section__title {
+    font-family: var(--sh-font-heading);
+    font-weight: 600;
+    color: var(--sh-text-primary);
+    letter-spacing: -0.01em;
+}
+
+[data-theme="elite"] .sh-section__subtitle {
+    color: var(--sh-text-secondary);
+}
+
+/* ========================================
+   CARDS
+   ======================================== */
+[data-theme="elite"] .sh-card {
+    background: var(--sh-bg-card);
+    border: 1px solid var(--sh-border-color);
+    box-shadow: var(--sh-shadow-base);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="elite"] .sh-card:hover {
+    border-color: var(--sh-border-gold);
+    box-shadow: var(--sh-shadow-lg), var(--sh-shadow-gold);
+    transform: translateY(-8px);
+}
+
+/* ========================================
+   REVIEW CARDS
+   ======================================== */
+[data-theme="elite"] .sh-review-card {
+    background: var(--sh-bg-card);
+    border: 1px solid var(--sh-border-color);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="elite"] .sh-review-card:hover {
+    border-color: var(--sh-border-gold);
+    box-shadow: var(--sh-shadow-lg), 0 0 30px rgba(245, 158, 11, 0.1);
+}
+
+[data-theme="elite"] .sh-review-card__author {
+    color: var(--sh-text-primary);
+}
+
+[data-theme="elite"] .sh-review-card__text {
+    color: var(--sh-text-secondary);
+}
+
+[data-theme="elite"] .sh-review-card__date {
+    color: var(--sh-text-muted);
+}
+
+[data-theme="elite"] .sh-review-card__avatar--placeholder {
+    background: var(--sh-gold-gradient);
+    color: #0c0a09;
+}
+
+/* ========================================
+   GOOGLE RATING
+   ======================================== */
+[data-theme="elite"] .sh-google-rating {
+    background: var(--sh-bg-card);
+    border: 1px solid var(--sh-border-color);
+    box-shadow: var(--sh-shadow-lg);
+}
+
+[data-theme="elite"] .sh-google-rating__value {
+    color: var(--sh-text-primary);
+    font-family: var(--sh-font-heading);
+}
+
+[data-theme="elite"] .sh-google-rating__count {
+    color: var(--sh-text-muted);
+}
+
+/* ========================================
+   BUTTONS (Global)
    ======================================== */
 [data-theme="elite"] .sh-btn--primary {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-    color: #0f172a;
+    background: var(--sh-gold-gradient);
+    color: #0c0a09;
     border: none;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    box-shadow: var(--sh-gold-glow);
+    box-shadow: var(--sh-shadow-gold);
 }
 
 [data-theme="elite"] .sh-btn--primary:hover {
-    box-shadow: var(--sh-gold-glow-strong);
+    box-shadow: var(--sh-shadow-gold-intense);
     transform: translateY(-3px);
 }
 
@@ -165,73 +362,72 @@
 
 [data-theme="elite"] .sh-btn--outline:hover {
     background: var(--sh-primary);
-    color: #0f172a;
-    box-shadow: var(--sh-gold-glow);
+    color: #0c0a09;
+    box-shadow: var(--sh-shadow-gold);
 }
 
 /* ========================================
-   ELITE CARDS
+   SERVICE CARDS
    ======================================== */
-[data-theme="elite"] .sh-card {
+[data-theme="elite"] .sh-service-card {
     background: var(--sh-bg-card);
     border: 1px solid var(--sh-border-color);
-    box-shadow: var(--sh-shadow-base);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-[data-theme="elite"] .sh-card:hover {
+[data-theme="elite"] .sh-service-card:hover {
     border-color: var(--sh-primary);
-    box-shadow: var(--sh-gold-glow), var(--sh-shadow-lg);
+    box-shadow: var(--sh-shadow-lg), var(--sh-shadow-gold);
+    transform: translateY(-8px);
 }
 
-/* ========================================
-   ELITE SECTION STYLING
-   ======================================== */
-[data-theme="elite"] .sh-section {
-    background: var(--sh-bg-base);
-}
-
-[data-theme="elite"] .sh-section--alt {
-    background: var(--sh-bg-muted);
-}
-
-[data-theme="elite"] .sh-section__title {
+[data-theme="elite"] .sh-service-card__name {
     color: var(--sh-text-primary);
+    font-family: var(--sh-font-heading);
 }
 
-/* Elegant section headers */
-[data-theme="elite"] .sh-section__header::after {
-    content: '';
-    display: block;
-    width: 60px;
-    height: 2px;
-    background: linear-gradient(90deg, var(--sh-primary), transparent);
-    margin-top: var(--sh-space-4);
+[data-theme="elite"] .sh-service-card__desc {
+    color: var(--sh-text-secondary);
 }
 
-[data-theme="elite"] .sh-section__header.text-center::after {
-    margin-inline: auto;
-    background: linear-gradient(90deg, transparent, var(--sh-primary), transparent);
+[data-theme="elite"] .sh-service-card__price {
+    background: var(--sh-gold-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
 }
 
 /* ========================================
-   ELITE PROCESS STEPS
+   PROCESS STEPS
    ======================================== */
 [data-theme="elite"] .sh-process-step__icon {
-    background: var(--sh-bg-muted);
+    background: var(--sh-bg-elevated);
     border: 1px solid var(--sh-border-color);
     color: var(--sh-primary);
+    transition: all 0.4s ease;
 }
 
 [data-theme="elite"] .sh-process-step:hover .sh-process-step__icon {
     border-color: var(--sh-primary);
-    box-shadow: var(--sh-gold-glow);
+    box-shadow: var(--sh-shadow-gold);
+    transform: scale(1.1);
+}
+
+[data-theme="elite"] .sh-process-step__title {
+    color: var(--sh-text-primary);
+    font-family: var(--sh-font-heading);
+}
+
+[data-theme="elite"] .sh-process-step__desc {
+    color: var(--sh-text-secondary);
 }
 
 /* ========================================
-   ELITE NAVIGATION
+   NAVIGATION
    ======================================== */
 [data-theme="elite"] .sh-nav {
-    background: rgba(15, 23, 42, 0.95);
+    background: rgba(12, 10, 9, 0.95);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--sh-border-color);
@@ -246,60 +442,7 @@
 }
 
 /* ========================================
-   ELITE SERVICE CARDS
-   ======================================== */
-[data-theme="elite"] .sh-service-card {
-    background: var(--sh-bg-card);
-    border: 1px solid var(--sh-border-color);
-}
-
-[data-theme="elite"] .sh-service-card:hover {
-    border-color: var(--sh-primary);
-    box-shadow: var(--sh-gold-glow);
-}
-
-[data-theme="elite"] .sh-service-card__name {
-    color: var(--sh-text-primary);
-}
-
-[data-theme="elite"] .sh-service-card__desc {
-    color: var(--sh-text-secondary);
-}
-
-[data-theme="elite"] .sh-service-card__price {
-    color: var(--sh-primary);
-}
-
-/* ========================================
-   ELITE REVIEW CARDS
-   ======================================== */
-[data-theme="elite"] .sh-review-card {
-    background: var(--sh-bg-card);
-    border: 1px solid var(--sh-border-color);
-}
-
-[data-theme="elite"] .sh-review-card__author {
-    color: var(--sh-text-primary);
-}
-
-[data-theme="elite"] .sh-review-card__text {
-    color: var(--sh-text-secondary);
-}
-
-/* ========================================
-   ELITE GOOGLE RATING
-   ======================================== */
-[data-theme="elite"] .sh-google-rating {
-    background: var(--sh-bg-card);
-    border: 1px solid var(--sh-border-color);
-}
-
-[data-theme="elite"] .sh-google-rating__value {
-    color: var(--sh-text-primary);
-}
-
-/* ========================================
-   ELITE FOOTER
+   FOOTER
    ======================================== */
 [data-theme="elite"] .sh-footer {
     background: var(--sh-footer-bg);
@@ -311,10 +454,10 @@
 }
 
 /* ========================================
-   ELITE STICKY CTA
+   STICKY CTA
    ======================================== */
 [data-theme="elite"] .sh-sticky-cta {
-    background: rgba(15, 23, 42, 0.98);
+    background: rgba(12, 10, 9, 0.98);
     border-top: 1px solid var(--sh-border-color);
 }
 
@@ -323,56 +466,15 @@
 }
 
 /* ========================================
-   ELITE ANIMATIONS
+   FORM ELEMENTS
    ======================================== */
-@keyframes elite-gold-pulse {
-    0%, 100% {
-        box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
-    }
-    50% {
-        box-shadow: 0 0 40px rgba(251, 191, 36, 0.4);
-    }
-}
-
-[data-theme="elite"] .sh-gold-pulse {
-    animation: elite-gold-pulse 3s ease-in-out infinite;
-}
-
-@keyframes elite-border-glow {
-    0%, 100% {
-        border-color: var(--sh-border-color);
-    }
-    50% {
-        border-color: var(--sh-primary);
-    }
-}
-
-[data-theme="elite"] .sh-border-glow {
-    animation: elite-border-glow 4s ease-in-out infinite;
-}
-
-/* Luxury star animation */
-@keyframes elite-star-shine {
-    0%, 100% {
-        filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.8));
-    }
-    50% {
-        filter: drop-shadow(0 0 8px rgba(251, 191, 36, 1));
-    }
-}
-
-[data-theme="elite"] .sh-star--filled {
-    fill: #fbbf24;
-    animation: elite-star-shine 2s ease-in-out infinite;
-}
-
-/* Form styling for dark mode */
 [data-theme="elite"] input,
 [data-theme="elite"] textarea,
 [data-theme="elite"] select {
-    background: var(--sh-bg-muted);
+    background: var(--sh-bg-elevated);
     border: 1px solid var(--sh-border-color);
     color: var(--sh-text-primary);
+    border-radius: var(--sh-radius-lg);
 }
 
 [data-theme="elite"] input::placeholder,
@@ -384,11 +486,65 @@
 [data-theme="elite"] textarea:focus,
 [data-theme="elite"] select:focus {
     border-color: var(--sh-primary);
-    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
     outline: none;
 }
 
-/* Label styling */
 [data-theme="elite"] label {
     color: var(--sh-text-secondary);
+}
+
+/* ========================================
+   STAR RATING
+   ======================================== */
+[data-theme="elite"] .sh-star--filled {
+    fill: var(--sh-primary);
+    filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.4));
+    animation: elite-star-pulse 3s ease-in-out infinite;
+}
+
+@keyframes elite-star-pulse {
+    0%, 100% { filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.4)); }
+    50% { filter: drop-shadow(0 2px 10px rgba(245, 158, 11, 0.8)); }
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+@keyframes elite-border-glow {
+    0%, 100% { border-color: var(--sh-border-color); }
+    50% { border-color: var(--sh-border-gold); }
+}
+
+[data-theme="elite"] .sh-border-glow {
+    animation: elite-border-glow 4s ease-in-out infinite;
+}
+
+@keyframes elite-gold-shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+
+[data-theme="elite"] .sh-gold-shimmer {
+    background: linear-gradient(90deg,
+        var(--sh-primary) 0%,
+        #fef3c7 25%,
+        var(--sh-primary) 50%,
+        #fef3c7 75%,
+        var(--sh-primary) 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: elite-gold-shimmer 4s linear infinite;
+}
+
+/* Luxury floating effect */
+@keyframes elite-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+[data-theme="elite"] .sh-float {
+    animation: elite-float 6s ease-in-out infinite;
 }
