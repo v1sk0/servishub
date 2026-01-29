@@ -1,6 +1,6 @@
 """Add Google integration tables and theme field
 
-Revision ID: a1b2c3d4e5f6
+Revision ID: g00gl3_int3gr
 Revises: z7a8b9c0d1e2
 Create Date: 2026-01-29 23:58:00.000000
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'a1b2c3d4e5f6'
+revision = 'g00gl3_int3gr'
 down_revision = 'v317_dual_currency'
 branch_labels = None
 depends_on = None
