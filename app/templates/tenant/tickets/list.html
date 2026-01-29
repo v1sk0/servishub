@@ -1712,161 +1712,801 @@
         </div>
     </div>
 
-    <!-- Collect Modal (POS Integrated) - Modern Design -->
-    <div x-show="showCollectModal" x-cloak class="modal-overlay" @click.self="showCollectModal = false" style="backdrop-filter: blur(4px);">
-        <div class="modal-content" style="max-width: 420px; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
-            <!-- Header with subtle gradient -->
-            <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 20px 24px; position: relative;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                        <svg style="width: 22px; height: 22px; color: #22c55e;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+    <!-- Collect Modal (POS Integrated) - Premium Glassmorphism Design -->
+    <div x-show="showCollectModal" x-cloak class="collect-modal-overlay" @click.self="showCollectModal = false">
+        <div class="collect-modal-container">
+            <!-- Header with gradient accent -->
+            <div class="collect-modal-header">
+                <div class="collect-modal-header-content">
+                    <div class="collect-modal-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                         </svg>
                     </div>
                     <div>
-                        <h3 style="color: white; font-size: 16px; font-weight: 600; margin: 0;">Naplata i preuzimanje</h3>
-                        <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin: 2px 0 0 0;" x-text="'Nalog #' + collectTicketData?.ticket_number_formatted"></p>
+                        <h3 class="collect-modal-title">Naplata i preuzimanje</h3>
+                        <p class="collect-modal-subtitle" x-text="'Nalog #' + collectTicketData?.ticket_number_formatted"></p>
                     </div>
                 </div>
-                <button @click="showCollectModal = false" style="position: absolute; right: 16px; top: 16px; width: 32px; height: 32px; border-radius: 8px; border: none; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
-                    <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                <button class="collect-modal-close" @click="showCollectModal = false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
 
             <!-- Body -->
-            <div style="padding: 20px 24px; background: #fff;">
-                <!-- Device & Customer info - compact card -->
-                <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div>
-                            <p style="font-size: 15px; font-weight: 600; color: #1e293b; margin: 0;" x-text="(collectTicketData?.brand || '') + ' ' + (collectTicketData?.model || '')"></p>
-                            <p style="font-size: 13px; color: #64748b; margin: 4px 0 0 0;" x-text="collectTicketData?.customer_name"></p>
-                        </div>
-                        <span style="background: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">Spremno</span>
+            <div class="collect-modal-body">
+                <!-- Device & Customer info card -->
+                <div class="collect-info-card">
+                    <div class="collect-info-main">
+                        <p class="collect-info-device" x-text="(collectTicketData?.brand || '') + ' ' + (collectTicketData?.model || '')"></p>
+                        <p class="collect-info-customer" x-text="collectTicketData?.customer_name"></p>
                     </div>
+                    <span class="collect-status-badge">Spremno</span>
                 </div>
 
                 <!-- Currency conversion (if EUR) -->
-                <div x-show="collectCurrency && collectCurrency !== 'RSD'" style="background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; border: 1px solid #fde047;">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                        <svg style="width: 16px; height: 16px; color: #ca8a04;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                <div x-show="collectCurrency && collectCurrency !== 'RSD'" class="collect-currency-card">
+                    <div class="collect-currency-header">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                         </svg>
-                        <span style="font-size: 13px; font-weight: 600; color: #854d0e;">Konverzija valute</span>
+                        <span>Konverzija valute</span>
                     </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                        <span style="font-size: 13px; color: #78716c;">Originalno:</span>
-                        <span style="font-family: 'SF Mono', monospace; font-weight: 600; color: #1e293b;" x-text="collectOriginalPrice + ' ' + collectCurrency"></span>
+                    <div class="collect-currency-row">
+                        <span class="collect-currency-label">Originalno:</span>
+                        <span class="collect-currency-value" x-text="collectOriginalPrice + ' ' + collectCurrency"></span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 13px; color: #78716c;">Kurs:</span>
-                        <input type="number" x-model.number="collectExchangeRate" @input="collectPrice = Math.round(collectOriginalPrice * collectExchangeRate)"
-                               step="0.01" min="1" style="width: 70px; padding: 6px 10px; border: 1px solid #fde047; border-radius: 6px; font-size: 13px; background: white;">
-                        <span style="font-size: 13px; color: #78716c; flex: 1;">→</span>
-                        <input type="number" x-model.number="collectPrice" @input="if(collectOriginalPrice > 0) collectExchangeRate = (collectPrice / collectOriginalPrice).toFixed(2)"
-                               step="100" min="0" style="width: 100px; padding: 6px 10px; border: 1px solid #fde047; border-radius: 6px; font-size: 13px; font-weight: 600; background: white;">
-                        <span style="font-size: 13px; color: #78716c;">RSD</span>
+                    <div class="collect-currency-inputs">
+                        <span class="collect-currency-label">Kurs:</span>
+                        <input type="number" x-model.number="collectExchangeRate"
+                               @input="collectPrice = Math.round(collectOriginalPrice * collectExchangeRate)"
+                               step="0.01" min="1" class="collect-input-small">
+                        <span class="collect-currency-arrow">→</span>
+                        <input type="number" x-model.number="collectPrice"
+                               @input="if(collectOriginalPrice > 0) collectExchangeRate = (collectPrice / collectOriginalPrice).toFixed(2)"
+                               step="100" min="0" class="collect-input-medium">
+                        <span class="collect-currency-label">RSD</span>
                     </div>
                 </div>
 
                 <!-- Price input (RSD only) -->
-                <div x-show="!collectCurrency || collectCurrency === 'RSD'" style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 8px;">Iznos za naplatu</label>
-                    <div style="position: relative;">
-                        <input type="number" x-model.number="collectPrice" placeholder="0" min="0"
-                               style="width: 100%; padding: 12px 60px 12px 16px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 18px; font-weight: 600; color: #1e293b; transition: border-color 0.2s;"
-                               onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
-                        <span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 500; color: #94a3b8;">RSD</span>
+                <div x-show="!collectCurrency || collectCurrency === 'RSD'" class="collect-field">
+                    <label class="collect-label">Iznos za naplatu</label>
+                    <div class="collect-input-wrapper">
+                        <input type="number" x-model.number="collectPrice" placeholder="0" min="0" class="collect-input-price">
+                        <span class="collect-input-suffix">RSD</span>
                     </div>
                 </div>
 
                 <!-- Owner collect -->
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 8px;">Preuzima uređaj</label>
-                    <input type="text" x-model="collectOwner" :placeholder="collectTicketData?.customer_name"
-                           style="width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; color: #1e293b; transition: border-color 0.2s;"
-                           onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
+                <div class="collect-field">
+                    <label class="collect-label">Preuzima uređaj</label>
+                    <input type="text" x-model="collectOwner" :placeholder="collectTicketData?.customer_name" class="collect-input">
                 </div>
 
-                <!-- Payment method selection - pill style -->
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 10px;">Način plaćanja</label>
-                    <div style="display: flex; gap: 8px; background: #f1f5f9; padding: 4px; border-radius: 12px;">
+                <!-- Payment method selection -->
+                <div class="collect-field">
+                    <label class="collect-label">Način plaćanja</label>
+                    <div class="collect-payment-grid">
                         <button type="button" @click="collectPaymentMethod = 'CASH'"
-                                :style="collectPaymentMethod === 'CASH' ? 'background: white; color: #059669; box-shadow: 0 2px 8px rgba(0,0,0,0.08);' : 'background: transparent; color: #64748b;'"
-                                style="flex: 1; padding: 10px 8px; border-radius: 8px; border: none; font-weight: 500; font-size: 13px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                            <svg style="width: 20px; height: 20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                :class="{'active': collectPaymentMethod === 'CASH'}"
+                                class="collect-payment-btn collect-payment-cash">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                             </svg>
-                            Gotovina
+                            <span>Gotovina</span>
                         </button>
                         <button type="button" @click="collectPaymentMethod = 'CARD'"
-                                :style="collectPaymentMethod === 'CARD' ? 'background: white; color: #2563eb; box-shadow: 0 2px 8px rgba(0,0,0,0.08);' : 'background: transparent; color: #64748b;'"
-                                style="flex: 1; padding: 10px 8px; border-radius: 8px; border: none; font-weight: 500; font-size: 13px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                            <svg style="width: 20px; height: 20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                :class="{'active': collectPaymentMethod === 'CARD'}"
+                                class="collect-payment-btn collect-payment-card">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                             </svg>
-                            Kartica
+                            <span>Kartica</span>
                         </button>
                         <button type="button" @click="collectPaymentMethod = 'TRANSFER'"
-                                :style="collectPaymentMethod === 'TRANSFER' ? 'background: white; color: #7c3aed; box-shadow: 0 2px 8px rgba(0,0,0,0.08);' : 'background: transparent; color: #64748b;'"
-                                style="flex: 1; padding: 10px 8px; border-radius: 8px; border: none; font-weight: 500; font-size: 13px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                            <svg style="width: 20px; height: 20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
+                                :class="{'active': collectPaymentMethod === 'TRANSFER'}"
+                                class="collect-payment-btn collect-payment-transfer">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
                             </svg>
-                            Prenos
+                            <span>Prenos</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Cash received (for cash payments) - sleek design -->
-                <div x-show="collectPaymentMethod === 'CASH'" x-transition style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; border: 1px solid #86efac;">
-                    <label style="display: block; font-size: 13px; font-weight: 500; color: #166534; margin-bottom: 8px;">Primljeni iznos</label>
-                    <input type="number" x-model.number="collectCashReceived" :placeholder="collectPrice"
-                           style="width: 100%; padding: 10px 14px; border: 2px solid #86efac; border-radius: 8px; font-size: 16px; font-weight: 600; background: white; color: #166534;"
-                           onfocus="this.style.borderColor='#22c55e'" onblur="this.style.borderColor='#86efac'">
-                    <div x-show="collectCashReceived > 0" style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 13px; color: #166534;">Kusur:</span>
-                        <span :style="(collectCashReceived - collectPrice) >= 0 ? 'color: #166534;' : 'color: #dc2626;'"
-                              style="font-size: 18px; font-weight: 700;"
+                <!-- Cash received (for cash payments) -->
+                <div x-show="collectPaymentMethod === 'CASH'" x-transition class="collect-cash-card">
+                    <label class="collect-cash-label">Primljeni iznos</label>
+                    <input type="number" x-model.number="collectCashReceived" :placeholder="collectPrice" class="collect-cash-input">
+                    <div x-show="collectCashReceived > 0" class="collect-cash-change">
+                        <span>Kusur:</span>
+                        <span :class="(collectCashReceived - collectPrice) >= 0 ? 'positive' : 'negative'"
                               x-text="(collectCashReceived - collectPrice).toLocaleString('sr-RS') + ' RSD'"></span>
                     </div>
                 </div>
 
-                <!-- Total display - premium look -->
-                <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 12px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.7);">UKUPNO ZA NAPLATU</span>
-                    <span style="font-size: 24px; font-weight: 700; color: #22c55e;" x-text="Number(collectPrice).toLocaleString('sr-RS') + ' RSD'"></span>
+                <!-- Total display -->
+                <div class="collect-total-card">
+                    <span class="collect-total-label">UKUPNO ZA NAPLATU</span>
+                    <span class="collect-total-amount" x-text="Number(collectPrice).toLocaleString('sr-RS') + ' RSD'"></span>
                 </div>
             </div>
 
-            <!-- Footer - clean buttons -->
-            <div style="padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 12px;">
-                <button @click="showCollectModal = false"
-                        style="flex: 1; padding: 12px 20px; border: 2px solid #e2e8f0; border-radius: 10px; background: white; color: #64748b; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s;"
-                        onmouseover="this.style.borderColor='#cbd5e1'; this.style.color='#475569'" onmouseout="this.style.borderColor='#e2e8f0'; this.style.color='#64748b'">
-                    Otkaži
-                </button>
-                <button @click="confirmCollect()" :disabled="!collectPaymentMethod || collectPrice <= 0 || collecting"
-                        style="flex: 1.5; padding: 12px 20px; border: none; border-radius: 10px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;"
-                        :style="(!collectPaymentMethod || collectPrice <= 0 || collecting) ? 'opacity: 0.5; cursor: not-allowed;' : ''"
-                        onmouseover="if(!this.disabled) this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
-                    <svg x-show="!collecting" style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            <!-- Footer -->
+            <div class="collect-modal-footer">
+                <button class="collect-btn-cancel" @click="showCollectModal = false">Otkaži</button>
+                <button class="collect-btn-confirm" @click="confirmCollect()"
+                        :disabled="!collectPaymentMethod || collectPrice <= 0 || collecting"
+                        :class="{'disabled': !collectPaymentMethod || collectPrice <= 0 || collecting}">
+                    <svg x-show="!collecting" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                     </svg>
-                    <svg x-show="collecting" style="width: 18px; height: 18px; animation: spin 1s linear infinite;" fill="none" viewBox="0 0 24 24">
-                        <circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path style="opacity: 0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    <svg x-show="collecting" class="animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                     </svg>
                     <span x-text="collecting ? 'Obrada...' : 'Potvrdi naplatu'"></span>
                 </button>
             </div>
         </div>
     </div>
+
     <style>
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        /* ========================================
+           COLLECT MODAL - Premium Glassmorphism
+           ======================================== */
+
+        /* Overlay with blur */
+        .collect-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            animation: collectOverlayIn 0.2s ease-out;
+        }
+
+        @keyframes collectOverlayIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Modal container - Glassmorphism */
+        .collect-modal-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                0 20px 50px -10px rgba(0, 0, 0, 0.25),
+                0 0 100px -20px rgba(124, 58, 237, 0.15);
+            overflow: hidden;
+            animation: collectModalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes collectModalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* Header */
+        .collect-modal-header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .collect-modal-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .collect-modal-header-content {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .collect-modal-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .collect-modal-icon svg {
+            width: 24px;
+            height: 24px;
+            color: white;
+        }
+
+        .collect-modal-title {
+            color: white;
+            font-size: 17px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .collect-modal-subtitle {
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 13px;
+            margin: 3px 0 0 0;
+        }
+
+        .collect-modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            position: relative;
+            z-index: 1;
+        }
+
+        .collect-modal-close:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+        }
+
+        .collect-modal-close svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Body */
+        .collect-modal-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        /* Info card */
+        .collect-info-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .collect-info-device {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .collect-info-customer {
+            font-size: 13px;
+            color: #64748b;
+            margin: 4px 0 0 0;
+        }
+
+        .collect-status-badge {
+            background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
+            color: #6d28d9;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Currency card */
+        .collect-currency-card {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #fbbf24;
+            border-radius: 14px;
+            padding: 16px 18px;
+        }
+
+        .collect-currency-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .collect-currency-header svg {
+            width: 18px;
+            height: 18px;
+            color: #b45309;
+        }
+
+        .collect-currency-header span {
+            font-size: 13px;
+            font-weight: 600;
+            color: #92400e;
+        }
+
+        .collect-currency-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .collect-currency-label {
+            font-size: 13px;
+            color: #78716c;
+        }
+
+        .collect-currency-value {
+            font-family: 'SF Mono', 'Monaco', monospace;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .collect-currency-inputs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .collect-currency-arrow {
+            color: #a3a3a3;
+            font-size: 14px;
+        }
+
+        .collect-input-small {
+            width: 70px;
+            padding: 8px 10px;
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            font-size: 13px;
+            background: white;
+            color: #1e293b;
+            text-align: center;
+        }
+
+        .collect-input-medium {
+            width: 100px;
+            padding: 8px 10px;
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            background: white;
+            color: #1e293b;
+            text-align: center;
+        }
+
+        /* Form fields */
+        .collect-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .collect-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .collect-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #1e293b;
+            background: #fafafa;
+            transition: all 0.2s;
+        }
+
+        .collect-input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+        }
+
+        .collect-input-wrapper {
+            position: relative;
+        }
+
+        .collect-input-price {
+            width: 100%;
+            padding: 14px 60px 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            background: #fafafa;
+            transition: all 0.2s;
+        }
+
+        .collect-input-price:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+        }
+
+        .collect-input-suffix {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            font-weight: 500;
+            color: #94a3b8;
+        }
+
+        /* Payment method grid */
+        .collect-payment-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .collect-payment-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 8px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: #fafafa;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .collect-payment-btn svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .collect-payment-btn:hover {
+            border-color: #cbd5e1;
+            background: white;
+        }
+
+        .collect-payment-cash.active {
+            border-color: #22c55e;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            color: #16a34a;
+        }
+
+        .collect-payment-card.active {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            color: #2563eb;
+        }
+
+        .collect-payment-transfer.active {
+            border-color: #8b5cf6;
+            background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+            color: #7c3aed;
+        }
+
+        /* Cash card */
+        .collect-cash-card {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 1px solid #86efac;
+            border-radius: 14px;
+            padding: 16px 18px;
+        }
+
+        .collect-cash-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #166534;
+            margin-bottom: 10px;
+        }
+
+        .collect-cash-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #86efac;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            background: white;
+            color: #166534;
+            transition: all 0.2s;
+        }
+
+        .collect-cash-input:focus {
+            outline: none;
+            border-color: #22c55e;
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15);
+        }
+
+        .collect-cash-change {
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #166534;
+        }
+
+        .collect-cash-change span:last-child {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .collect-cash-change .positive { color: #16a34a; }
+        .collect-cash-change .negative { color: #dc2626; }
+
+        /* Total card */
+        .collect-total-card {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            border-radius: 14px;
+            padding: 18px 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .collect-total-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .collect-total-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+            letter-spacing: 0.5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .collect-total-amount {
+            font-size: 26px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Footer */
+        .collect-modal-footer {
+            padding: 18px 24px;
+            background: linear-gradient(to top, #f8fafc, rgba(248, 250, 252, 0.9));
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 12px;
+        }
+
+        .collect-btn-cancel {
+            flex: 1;
+            padding: 14px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: white;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .collect-btn-cancel:hover {
+            border-color: #cbd5e1;
+            color: #475569;
+            background: #f8fafc;
+        }
+
+        .collect-btn-confirm {
+            flex: 1.5;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        }
+
+        .collect-btn-confirm:hover:not(.disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+        }
+
+        .collect-btn-confirm.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .collect-btn-confirm svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .animate-spin {
+            animation: collectSpin 1s linear infinite;
+        }
+
+        @keyframes collectSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* ========================================
+           DARK THEME SUPPORT (Glass Theme)
+           ======================================== */
+        .glass-theme .collect-modal-overlay {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .glass-theme .collect-modal-container {
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                0 20px 50px -10px rgba(0, 0, 0, 0.5),
+                0 0 100px -20px rgba(139, 92, 246, 0.2);
+        }
+
+        .glass-theme .collect-info-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-theme .collect-info-device { color: #f1f5f9; }
+        .glass-theme .collect-info-customer { color: #94a3b8; }
+
+        .glass-theme .collect-status-badge {
+            background: rgba(139, 92, 246, 0.2);
+            color: #c4b5fd;
+        }
+
+        .glass-theme .collect-label { color: #94a3b8; }
+
+        .glass-theme .collect-input,
+        .glass-theme .collect-input-price {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #f1f5f9;
+        }
+
+        .glass-theme .collect-input:focus,
+        .glass-theme .collect-input-price:focus {
+            border-color: #8b5cf6;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
+        }
+
+        .glass-theme .collect-input-suffix { color: #64748b; }
+
+        .glass-theme .collect-payment-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+        }
+
+        .glass-theme .collect-payment-btn:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-theme .collect-payment-cash.active {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: #22c55e;
+            color: #4ade80;
+        }
+
+        .glass-theme .collect-payment-card.active {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: #3b82f6;
+            color: #60a5fa;
+        }
+
+        .glass-theme .collect-payment-transfer.active {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: #8b5cf6;
+            color: #a78bfa;
+        }
+
+        .glass-theme .collect-cash-card {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .glass-theme .collect-cash-label { color: #4ade80; }
+
+        .glass-theme .collect-cash-input {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: #4ade80;
+        }
+
+        .glass-theme .collect-cash-change { color: #4ade80; }
+        .glass-theme .collect-cash-change .positive { color: #4ade80; }
+        .glass-theme .collect-cash-change .negative { color: #f87171; }
+
+        .glass-theme .collect-currency-card {
+            background: rgba(251, 191, 36, 0.1);
+            border-color: rgba(251, 191, 36, 0.3);
+        }
+
+        .glass-theme .collect-currency-header svg { color: #fbbf24; }
+        .glass-theme .collect-currency-header span { color: #fcd34d; }
+        .glass-theme .collect-currency-label { color: #a3a3a3; }
+        .glass-theme .collect-currency-value { color: #f1f5f9; }
+
+        .glass-theme .collect-input-small,
+        .glass-theme .collect-input-medium {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(251, 191, 36, 0.3);
+            color: #f1f5f9;
+        }
+
+        .glass-theme .collect-modal-footer {
+            background: rgba(15, 23, 42, 0.5);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-theme .collect-btn-cancel {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+        }
+
+        .glass-theme .collect-btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #f1f5f9;
+        }
     </style>
 
     <!-- Reject Modal -->
