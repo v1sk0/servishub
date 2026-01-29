@@ -123,66 +123,44 @@ class TestingConfig(Config):
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(seconds=5)
 
 
+def _get_production_cors_origins() -> list:
+    """
+    Vrati CORS origins za produkciju.
+    Nikad ne vraća wildcard.
+    """
+    origins = os.getenv('CORS_ORIGINS', '')
+    if not origins or origins.strip() == '*':
+        # Default production whitelist
+        return [
+            'https://servishub.rs',
+            'https://www.servishub.rs',
+            'https://app.servishub.rs',
+        ]
+    return [o.strip() for o in origins.split(',') if o.strip()]
+
+
 class ProductionConfig(Config):
     """
     Produkciona konfiguracija - stroga bezbednosna podesavanja.
 
     SECURITY: Ova klasa forsira stroge security postavke.
-    App nece startovati sa slabim secrets u produkciji.
+    Validacija secrets se vrši u validate_production_config() funkciji
+    koja se poziva pri startu aplikacije.
     """
     DEBUG = False
 
     # SECURITY_STRICT je UVEK True u produkciji
     SECURITY_STRICT = True
 
-    # U produkciji SECRET_KEY MORA biti postavljen
-    @property
-    def SECRET_KEY(self):
-        key = os.getenv('SECRET_KEY')
-        if not key:
-            raise ValueError(
-                "CRITICAL: SECRET_KEY environment variable must be set in production!\n"
-                "Generate with: python -c \"import secrets; print(secrets.token_hex(32))\""
-            )
-        if len(key) < 32:
-            raise ValueError("SECRET_KEY must be at least 32 characters")
-        # Proveri da nije insecure default
-        for insecure in Config.INSECURE_SECRETS:
-            if insecure.lower() in key.lower():
-                raise ValueError(f"CRITICAL: SECRET_KEY contains insecure default value!")
-        return key
-
-    @property
-    def JWT_SECRET_KEY(self):
-        key = os.getenv('JWT_SECRET_KEY')
-        if not key:
-            raise ValueError(
-                "CRITICAL: JWT_SECRET_KEY environment variable must be set in production!\n"
-                "Generate with: python -c \"import secrets; print(secrets.token_hex(32))\""
-            )
-        if len(key) < 32:
-            raise ValueError("JWT_SECRET_KEY must be at least 32 characters")
-        # Proveri da nije insecure default
-        for insecure in Config.INSECURE_SECRETS:
-            if insecure.lower() in key.lower():
-                raise ValueError(f"CRITICAL: JWT_SECRET_KEY contains insecure default value!")
-        return key
+    # U produkciji koristi env varijable (validacija u validate_production_config)
+    SECRET_KEY = os.getenv('SECRET_KEY', '')
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', '')
 
     # Session Cookie Security - HTTPS only u produkciji
     SESSION_COOKIE_SECURE = True  # Cookie se šalje samo preko HTTPS
 
     # CORS - Nikad wildcard u produkciji
-    @property
-    def CORS_ORIGINS(self):
-        origins = os.getenv('CORS_ORIGINS', '')
-        if not origins or origins.strip() == '*':
-            # Default production whitelist
-            return [
-                'https://servishub.rs',
-                'https://www.servishub.rs',
-                'https://app.servishub.rs',
-            ]
-        return [o.strip() for o in origins.split(',') if o.strip()]
+    CORS_ORIGINS = _get_production_cors_origins()
 
     # Stroza engine podesavanja za produkciju
     SQLALCHEMY_ENGINE_OPTIONS = {
@@ -191,6 +169,46 @@ class ProductionConfig(Config):
         'pool_size': 10,
         'max_overflow': 20,
     }
+
+
+def validate_production_config(app):
+    """
+    Validira production konfiguraciju pri startu aplikacije.
+    Poziva se iz create_app() kada je FLASK_ENV=production.
+
+    Raises:
+        ValueError: Ako secrets nisu postavljeni ili su nebezbedni
+    """
+    if app.config.get('ENV') != 'production' and os.getenv('FLASK_ENV') != 'production':
+        return  # Preskoci validaciju ako nismo u produkciji
+
+    insecure_defaults = Config.INSECURE_SECRETS
+
+    # Validiraj SECRET_KEY
+    secret_key = app.config.get('SECRET_KEY', '')
+    if not secret_key:
+        raise ValueError(
+            "CRITICAL: SECRET_KEY environment variable must be set in production!\n"
+            "Generate with: python -c \"import secrets; print(secrets.token_hex(32))\""
+        )
+    if len(secret_key) < 32:
+        raise ValueError("SECRET_KEY must be at least 32 characters")
+    for insecure in insecure_defaults:
+        if insecure.lower() in secret_key.lower():
+            raise ValueError("CRITICAL: SECRET_KEY contains insecure default value!")
+
+    # Validiraj JWT_SECRET_KEY
+    jwt_key = app.config.get('JWT_SECRET_KEY', '')
+    if not jwt_key:
+        raise ValueError(
+            "CRITICAL: JWT_SECRET_KEY environment variable must be set in production!\n"
+            "Generate with: python -c \"import secrets; print(secrets.token_hex(32))\""
+        )
+    if len(jwt_key) < 32:
+        raise ValueError("JWT_SECRET_KEY must be at least 32 characters")
+    for insecure in insecure_defaults:
+        if insecure.lower() in jwt_key.lower():
+            raise ValueError("CRITICAL: JWT_SECRET_KEY contains insecure default value!")
 
 
 # Mapiranje imena okruzenja na config klase

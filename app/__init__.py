@@ -9,7 +9,7 @@ import os
 import click
 from flask import Flask, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
-from .config import get_config
+from .config import get_config, validate_production_config
 from .extensions import db, migrate, cors
 
 
@@ -30,6 +30,9 @@ def create_app(config_class=None):
     if config_class is None:
         config_class = get_config()
     app.config.from_object(config_class)
+
+    # SECURITY: Validiraj production konfiguraciju
+    validate_production_config(app)
 
     # =========================================================================
     # ProxyFix Middleware - za ispravno citanje X-Forwarded-* headera
