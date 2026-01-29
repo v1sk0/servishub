@@ -20,7 +20,7 @@ def landing():
     """
     # Proveri da li je ovo zahtev za javnu stranicu tenanta
     if g.get('is_public_site') and g.get('public_tenant') and g.get('public_profile'):
-        from app.models import ServiceItem
+        from app.models import ServiceItem, TenantGoogleIntegration, TenantGoogleReview
 
         tenant = g.public_tenant
         profile = g.public_profile
@@ -43,12 +43,26 @@ def landing():
                 services_by_category[cat] = []
             services_by_category[cat].append(service)
 
+        # Dohvati Google integraciju i recenzije
+        google_integration = TenantGoogleIntegration.query.filter_by(
+            tenant_id=tenant.id
+        ).first()
+
+        google_reviews = []
+        if google_integration and google_integration.google_place_id:
+            google_reviews = TenantGoogleReview.query.filter_by(
+                tenant_id=tenant.id,
+                is_visible=True
+            ).order_by(TenantGoogleReview.review_time.desc()).limit(6).all()
+
         return render_template(
             'tenant_public/home.html',
             tenant=tenant,
             profile=profile,
             services=services,
-            services_by_category=services_by_category
+            services_by_category=services_by_category,
+            google_integration=google_integration,
+            google_reviews=google_reviews
         )
 
     # Inače prikaži glavni ServisHub landing

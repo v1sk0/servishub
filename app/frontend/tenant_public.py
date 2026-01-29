@@ -15,7 +15,7 @@ Security:
 """
 
 from flask import Blueprint, render_template, g, abort, jsonify
-from app.models import ServiceItem
+from app.models import ServiceItem, TenantGoogleIntegration, TenantGoogleReview
 from app.utils.security import rate_limit, get_client_ip
 
 
@@ -146,4 +146,41 @@ def api_services():
     return jsonify({
         'services': [s.to_dict() for s in services],
         'disclaimer': profile.price_disclaimer
+    })
+
+
+@bp.route('/api/reviews')
+@require_public_site
+@rate_limit(limit=60, window=60)
+def api_reviews():
+    """
+    JSON lista Google recenzija.
+
+    Returns:
+        Google rating info and list of visible reviews.
+    """
+    tenant = g.public_tenant
+
+    integration = TenantGoogleIntegration.query.filter_by(
+        tenant_id=tenant.id
+    ).first()
+
+    if not integration or not integration.google_place_id:
+        return jsonify({
+            'has_reviews': False,
+            'rating': None,
+            'total_reviews': 0,
+            'reviews': []
+        })
+
+    reviews = TenantGoogleReview.query.filter_by(
+        tenant_id=tenant.id,
+        is_visible=True
+    ).order_by(TenantGoogleReview.review_time.desc()).limit(10).all()
+
+    return jsonify({
+        'has_reviews': True,
+        'rating': float(integration.google_rating) if integration.google_rating else None,
+        'total_reviews': integration.total_reviews or 0,
+        'reviews': [r.to_dict() for r in reviews]
     })

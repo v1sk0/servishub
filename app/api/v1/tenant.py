@@ -1,7 +1,8 @@
 """
 Tenant Profile and Settings API
 """
-from flask import Blueprint, request, g
+import os
+from flask import Blueprint, request, g, redirect, url_for, current_app
 from sqlalchemy.orm.attributes import flag_modified
 from app.extensions import db
 from app.models import Tenant, ServiceLocation, TenantUser, ServiceRepresentative, TenantPublicProfile, PlatformSettings
@@ -1599,3 +1600,257 @@ def get_features():
         'credits_enabled': is_feature_enabled('credits_enabled', g.tenant_id),
         'b2c_marketplace_enabled': is_feature_enabled('b2c_marketplace_enabled', g.tenant_id),
     }
+
+
+# ============== Google Business Integration ==============
+
+@bp.route('/google/status', methods=['GET'])
+@jwt_required
+def google_integration_status():
+    """
+    Vraća status Google Business integracije za tenant.
+    """
+    from app.models import TenantGoogleIntegration
+    from app.services.google_integration_service import google_service
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    integration = TenantGoogleIntegration.query.filter_by(tenant_id=tenant.id).first()
+
+    return {
+        'is_configured': google_service.is_configured,
+        'is_connected': integration is not None and integration.google_place_id is not None,
+        'integration': integration.to_dict() if integration else None,
+    }
+
+
+@bp.route('/google/connect', methods=['GET'])
+@jwt_required
+def google_connect_url():
+    """
+    Vraća URL za povezivanje Google Business naloga.
+    """
+    from app.services.google_integration_service import google_service
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    if not google_service.is_configured:
+        return {'error': 'Google integration not configured on server'}, 503
+
+    # Build callback URL
+    callback_url = url_for('v1_tenant.google_callback', _external=True)
+
+    try:
+        auth_url = google_service.get_authorization_url(tenant.id, callback_url)
+        return {'auth_url': auth_url}
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+
+@bp.route('/google/callback', methods=['GET'])
+def google_callback():
+    """
+    OAuth callback - završava povezivanje Google naloga.
+
+    Ova ruta se poziva nakon što korisnik odobri pristup na Google-u.
+    Redirect na frontend settings stranu sa statusom.
+    """
+    from app.services.google_integration_service import google_service
+
+    code = request.args.get('code')
+    state = request.args.get('state')  # tenant_id
+    error = request.args.get('error')
+
+    # Frontend URL za redirect
+    frontend_base = os.environ.get('FRONTEND_URL', 'https://app.servishub.rs')
+
+    if error:
+        return redirect(f"{frontend_base}/settings?google_error={error}")
+
+    if not code or not state:
+        return redirect(f"{frontend_base}/settings?google_error=missing_params")
+
+    try:
+        tenant_id = int(state)
+        callback_url = url_for('v1_tenant.google_callback', _external=True)
+
+        # Exchange code for tokens
+        google_service.connect_tenant(tenant_id, code, callback_url)
+
+        return redirect(f"{frontend_base}/settings?google_connected=true")
+    except Exception as e:
+        current_app.logger.error(f"Google OAuth callback failed: {e}")
+        return redirect(f"{frontend_base}/settings?google_error=auth_failed")
+
+
+@bp.route('/google/place', methods=['POST'])
+@jwt_required
+def set_google_place():
+    """
+    Postavlja Google Place ID za tenant.
+
+    Body:
+        place_id: Google Place ID
+        OR
+        search_query: Naziv biznisa za pretragu
+    """
+    from app.models import TenantGoogleIntegration
+    from app.services.google_integration_service import google_service
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    data = request.json or {}
+    place_id = data.get('place_id')
+    search_query = data.get('search_query')
+
+    if not place_id and not search_query:
+        return {'error': 'place_id or search_query required'}, 400
+
+    try:
+        if not place_id:
+            # Search for place
+            place = google_service.search_place_by_name(
+                search_query,
+                tenant.adresa_sedista
+            )
+            if not place:
+                return {'error': 'Place not found', 'query': search_query}, 404
+            place_id = place.get('id')
+
+        # Set place ID and sync reviews
+        integration = google_service.set_place_id(tenant.id, place_id)
+
+        return {
+            'message': 'Google Place connected',
+            'integration': integration.to_dict()
+        }
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+
+@bp.route('/google/search', methods=['GET'])
+@jwt_required
+def search_google_place():
+    """
+    Pretražuje Google Places po nazivu.
+    """
+    from app.services.google_integration_service import google_service
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    query = request.args.get('q', tenant.name)
+
+    try:
+        place = google_service.search_place_by_name(query, tenant.adresa_sedista)
+        if place:
+            return {
+                'found': True,
+                'place': {
+                    'id': place.get('id'),
+                    'name': place.get('displayName', {}).get('text'),
+                    'address': place.get('formattedAddress'),
+                    'rating': place.get('rating'),
+                    'reviews_count': place.get('userRatingCount'),
+                }
+            }
+        return {'found': False}
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+
+@bp.route('/google/sync', methods=['POST'])
+@jwt_required
+def sync_google_reviews():
+    """
+    Ručno pokreće sinhronizaciju Google recenzija.
+    """
+    from app.services.google_integration_service import google_service
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    try:
+        success = google_service.sync_reviews(tenant.id)
+        if success:
+            return {'message': 'Reviews synced successfully'}
+        return {'error': 'Sync failed'}, 500
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+
+@bp.route('/google/reviews', methods=['GET'])
+@jwt_required
+def get_google_reviews():
+    """
+    Vraća Google recenzije za tenant.
+    """
+    from app.models import TenantGoogleIntegration, TenantGoogleReview
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    integration = TenantGoogleIntegration.query.filter_by(tenant_id=tenant.id).first()
+    if not integration:
+        return {'reviews': [], 'integration': None}
+
+    reviews = TenantGoogleReview.query.filter_by(
+        tenant_id=tenant.id
+    ).order_by(TenantGoogleReview.review_time.desc()).all()
+
+    return {
+        'integration': integration.to_dict(),
+        'reviews': [r.to_dict() for r in reviews]
+    }
+
+
+@bp.route('/google/reviews/<int:review_id>/visibility', methods=['PUT'])
+@jwt_required
+def toggle_review_visibility(review_id):
+    """
+    Menja vidljivost recenzije na javnoj stranici.
+    """
+    from app.models import TenantGoogleReview
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    review = TenantGoogleReview.query.filter_by(
+        id=review_id,
+        tenant_id=tenant.id
+    ).first()
+
+    if not review:
+        return {'error': 'Review not found'}, 404
+
+    data = request.json or {}
+    review.is_visible = data.get('is_visible', not review.is_visible)
+    db.session.commit()
+
+    return {'review': review.to_dict()}
+
+
+@bp.route('/google/disconnect', methods=['DELETE'])
+@jwt_required
+def disconnect_google():
+    """
+    Prekida vezu sa Google Business nalogom.
+    """
+    from app.services.google_integration_service import google_service
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    google_service.disconnect_tenant(tenant.id)
+    return {'message': 'Google integration disconnected'}
