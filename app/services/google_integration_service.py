@@ -157,6 +157,7 @@ class GoogleIntegrationService:
         logger.info(f"Request URL: {url}")
         logger.info(f"API Key (first 10 chars): {self.places_api_key[:10]}...")
 
+        # Try with Serbian region first
         response = requests.post(url, headers=headers, json={
             'textQuery': query,
             'languageCode': 'sr',
@@ -173,7 +174,18 @@ class GoogleIntegrationService:
         data = response.json()
         places = data.get('places', [])
 
-        logger.info(f"Found {len(places)} places")
+        # If no results, try without region restriction
+        if not places:
+            logger.info(f"No results with region restriction, trying global search")
+            response = requests.post(url, headers=headers, json={
+                'textQuery': query,
+            })
+            if response.status_code == 200:
+                data = response.json()
+                places = data.get('places', [])
+                logger.info(f"Global search found {len(places)} places")
+
+        logger.info(f"Found {len(places)} places total")
         if places:
             logger.info(f"First place: {places[0]}")
         return places
