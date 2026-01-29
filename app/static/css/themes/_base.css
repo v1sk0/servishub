@@ -1,0 +1,547 @@
+/**
+ * ServisHub Theme System - Base Variables
+ *
+ * Zajednicke CSS varijable za sve teme.
+ * Svaka tema override-uje ove varijable kroz data-theme atribut.
+ */
+
+:root {
+    /* ========================================
+       LAYOUT & SPACING
+       ======================================== */
+    --sh-container-max: 1280px;
+    --sh-section-padding: 5rem;
+    --sh-section-padding-mobile: 3rem;
+
+    /* Spacing scale (based on 4px) */
+    --sh-space-1: 0.25rem;
+    --sh-space-2: 0.5rem;
+    --sh-space-3: 0.75rem;
+    --sh-space-4: 1rem;
+    --sh-space-5: 1.25rem;
+    --sh-space-6: 1.5rem;
+    --sh-space-8: 2rem;
+    --sh-space-10: 2.5rem;
+    --sh-space-12: 3rem;
+    --sh-space-16: 4rem;
+    --sh-space-20: 5rem;
+    --sh-space-24: 6rem;
+
+    /* ========================================
+       TRANSITIONS
+       ======================================== */
+    --sh-transition-fast: 150ms ease;
+    --sh-transition-base: 300ms ease;
+    --sh-transition-slow: 500ms ease;
+    --sh-transition-bounce: 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    /* ========================================
+       TYPOGRAPHY
+       ======================================== */
+    --sh-font-size-xs: 0.75rem;
+    --sh-font-size-sm: 0.875rem;
+    --sh-font-size-base: 1rem;
+    --sh-font-size-lg: 1.125rem;
+    --sh-font-size-xl: 1.25rem;
+    --sh-font-size-2xl: 1.5rem;
+    --sh-font-size-3xl: 1.875rem;
+    --sh-font-size-4xl: 2.25rem;
+    --sh-font-size-5xl: 3rem;
+    --sh-font-size-6xl: 3.75rem;
+    --sh-font-size-7xl: 4.5rem;
+
+    --sh-line-height-tight: 1.25;
+    --sh-line-height-normal: 1.5;
+    --sh-line-height-relaxed: 1.75;
+
+    /* ========================================
+       BORDERS
+       ======================================== */
+    --sh-radius-sm: 0.25rem;
+    --sh-radius-base: 0.5rem;
+    --sh-radius-lg: 0.75rem;
+    --sh-radius-xl: 1rem;
+    --sh-radius-2xl: 1.5rem;
+    --sh-radius-full: 9999px;
+}
+
+/* ========================================
+   THEME COMPONENT CLASSES
+   ======================================== */
+
+/* Container */
+.sh-container {
+    max-width: var(--sh-container-max);
+    margin-inline: auto;
+    padding-inline: var(--sh-space-4);
+}
+
+@media (min-width: 640px) {
+    .sh-container {
+        padding-inline: var(--sh-space-6);
+    }
+}
+
+@media (min-width: 1024px) {
+    .sh-container {
+        padding-inline: var(--sh-space-8);
+    }
+}
+
+/* Section */
+.sh-section {
+    padding-block: var(--sh-section-padding-mobile);
+    background: var(--sh-bg-base);
+}
+
+@media (min-width: 768px) {
+    .sh-section {
+        padding-block: var(--sh-section-padding);
+    }
+}
+
+.sh-section--alt {
+    background: var(--sh-bg-muted);
+}
+
+/* Section Header */
+.sh-section__header {
+    margin-bottom: var(--sh-space-12);
+}
+
+.sh-section__title {
+    font-family: var(--sh-font-heading);
+    font-size: var(--sh-font-size-3xl);
+    font-weight: 700;
+    color: var(--sh-text-primary);
+    margin-bottom: var(--sh-space-4);
+}
+
+@media (min-width: 768px) {
+    .sh-section__title {
+        font-size: var(--sh-font-size-4xl);
+    }
+}
+
+.sh-section__subtitle {
+    font-size: var(--sh-font-size-lg);
+    color: var(--sh-text-secondary);
+    max-width: 600px;
+}
+
+.sh-section__header.text-center .sh-section__subtitle {
+    margin-inline: auto;
+}
+
+/* Cards */
+.sh-card {
+    background: var(--sh-bg-card);
+    border-radius: var(--sh-radius-xl);
+    border: 1px solid var(--sh-border-color);
+    padding: var(--sh-space-6);
+    transition: transform var(--sh-transition-base), box-shadow var(--sh-transition-base);
+}
+
+.sh-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--sh-shadow-lg);
+}
+
+/* Buttons */
+.sh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sh-space-2);
+    padding: var(--sh-space-3) var(--sh-space-6);
+    font-family: var(--sh-font-body);
+    font-size: var(--sh-font-size-base);
+    font-weight: 600;
+    border-radius: var(--sh-radius-lg);
+    transition: all var(--sh-transition-base);
+    cursor: pointer;
+    text-decoration: none;
+    border: 2px solid transparent;
+}
+
+.sh-btn--primary {
+    background: var(--sh-primary);
+    color: white;
+    border-color: var(--sh-primary);
+}
+
+.sh-btn--primary:hover {
+    background: var(--sh-primary-hover);
+    border-color: var(--sh-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -10px var(--sh-primary);
+}
+
+.sh-btn--outline {
+    background: transparent;
+    color: var(--sh-primary);
+    border-color: var(--sh-primary);
+}
+
+.sh-btn--outline:hover {
+    background: var(--sh-primary);
+    color: white;
+}
+
+.sh-btn--lg {
+    padding: var(--sh-space-4) var(--sh-space-8);
+    font-size: var(--sh-font-size-lg);
+}
+
+.sh-btn--sm {
+    padding: var(--sh-space-2) var(--sh-space-4);
+    font-size: var(--sh-font-size-sm);
+}
+
+/* Hero Base */
+.sh-hero {
+    position: relative;
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+}
+
+.sh-hero__content {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+}
+
+.sh-hero__logo {
+    height: 80px;
+    width: auto;
+    object-fit: contain;
+}
+
+.sh-hero__title {
+    font-family: var(--sh-font-heading);
+    font-size: var(--sh-font-size-4xl);
+    font-weight: 700;
+    color: var(--sh-hero-text);
+    line-height: var(--sh-line-height-tight);
+    margin-bottom: var(--sh-space-4);
+}
+
+@media (min-width: 768px) {
+    .sh-hero__title {
+        font-size: var(--sh-font-size-5xl);
+    }
+}
+
+@media (min-width: 1024px) {
+    .sh-hero__title {
+        font-size: var(--sh-font-size-6xl);
+    }
+}
+
+.sh-hero__tagline {
+    font-size: var(--sh-font-size-xl);
+    color: var(--sh-hero-text-muted);
+    margin-bottom: var(--sh-space-8);
+    max-width: 600px;
+}
+
+.sh-hero__cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sh-space-4);
+}
+
+/* Badge */
+.sh-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sh-space-2);
+    padding: var(--sh-space-2) var(--sh-space-4);
+    font-size: var(--sh-font-size-sm);
+    font-weight: 600;
+    border-radius: var(--sh-radius-full);
+    background: var(--sh-primary);
+    color: white;
+}
+
+/* Star Rating */
+.sh-star {
+    width: 20px;
+    height: 20px;
+    fill: var(--sh-border-color);
+}
+
+.sh-star--filled {
+    fill: #fbbf24;
+}
+
+.sh-star--small {
+    width: 16px;
+    height: 16px;
+}
+
+/* Review Cards */
+.sh-review-card {
+    background: var(--sh-bg-card);
+    border-radius: var(--sh-radius-xl);
+    padding: var(--sh-space-6);
+    border: 1px solid var(--sh-border-color);
+}
+
+.sh-review-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--sh-space-3);
+    margin-bottom: var(--sh-space-4);
+}
+
+.sh-review-card__avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--sh-radius-full);
+    object-fit: cover;
+}
+
+.sh-review-card__avatar--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sh-primary);
+    color: white;
+    font-weight: 700;
+}
+
+.sh-review-card__author {
+    font-weight: 600;
+    color: var(--sh-text-primary);
+    margin-bottom: var(--sh-space-1);
+}
+
+.sh-review-card__text {
+    color: var(--sh-text-secondary);
+    line-height: var(--sh-line-height-relaxed);
+    margin-bottom: var(--sh-space-3);
+}
+
+.sh-review-card__date {
+    font-size: var(--sh-font-size-sm);
+    color: var(--sh-text-muted);
+}
+
+/* Reviews Grid */
+.sh-reviews-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sh-space-6);
+}
+
+@media (min-width: 768px) {
+    .sh-reviews-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .sh-reviews-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Google Rating Badge */
+.sh-google-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sh-space-4);
+    padding: var(--sh-space-4) var(--sh-space-6);
+    background: var(--sh-bg-card);
+    border-radius: var(--sh-radius-xl);
+    border: 1px solid var(--sh-border-color);
+    box-shadow: var(--sh-shadow-base);
+}
+
+.sh-google-rating__logo {
+    height: 24px;
+    width: auto;
+}
+
+.sh-google-rating__value {
+    font-size: var(--sh-font-size-2xl);
+    font-weight: 700;
+    color: var(--sh-text-primary);
+}
+
+.sh-google-rating__count {
+    font-size: var(--sh-font-size-sm);
+    color: var(--sh-text-muted);
+}
+
+/* Sticky CTA */
+.sh-sticky-cta {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: var(--sh-bg-card);
+    border-top: 1px solid var(--sh-border-color);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    padding: var(--sh-space-3) var(--sh-space-4);
+}
+
+.sh-sticky-cta__content {
+    max-width: var(--sh-container-max);
+    margin-inline: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sh-space-4);
+}
+
+.sh-sticky-cta__text {
+    font-weight: 500;
+    color: var(--sh-text-primary);
+    display: none;
+}
+
+@media (min-width: 640px) {
+    .sh-sticky-cta__text {
+        display: block;
+    }
+}
+
+/* Process Steps */
+.sh-process-steps {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sh-space-8);
+}
+
+@media (min-width: 768px) {
+    .sh-process-steps {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.sh-process-step {
+    text-align: center;
+}
+
+.sh-process-step__icon {
+    width: 80px;
+    height: 80px;
+    margin-inline: auto;
+    margin-bottom: var(--sh-space-4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    background: var(--sh-bg-muted);
+    border-radius: var(--sh-radius-full);
+}
+
+.sh-process-step__title {
+    font-family: var(--sh-font-heading);
+    font-size: var(--sh-font-size-xl);
+    font-weight: 600;
+    color: var(--sh-text-primary);
+    margin-bottom: var(--sh-space-2);
+}
+
+.sh-process-step__desc {
+    color: var(--sh-text-secondary);
+}
+
+/* Services Grid */
+.sh-services-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sh-space-6);
+}
+
+@media (min-width: 640px) {
+    .sh-services-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .sh-services-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Service Card */
+.sh-service-card {
+    background: var(--sh-bg-card);
+    border-radius: var(--sh-radius-xl);
+    padding: var(--sh-space-6);
+    border: 1px solid var(--sh-border-color);
+    transition: all var(--sh-transition-base);
+}
+
+.sh-service-card:hover {
+    border-color: var(--sh-primary);
+    box-shadow: var(--sh-shadow-lg);
+}
+
+.sh-service-card__name {
+    font-family: var(--sh-font-heading);
+    font-size: var(--sh-font-size-lg);
+    font-weight: 600;
+    color: var(--sh-text-primary);
+    margin-bottom: var(--sh-space-2);
+}
+
+.sh-service-card__desc {
+    font-size: var(--sh-font-size-sm);
+    color: var(--sh-text-secondary);
+    margin-bottom: var(--sh-space-4);
+}
+
+.sh-service-card__price {
+    font-size: var(--sh-font-size-xl);
+    font-weight: 700;
+    color: var(--sh-primary);
+}
+
+.sh-service-card__price-note {
+    font-size: var(--sh-font-size-sm);
+    font-weight: 400;
+    color: var(--sh-text-muted);
+}
+
+/* Footer */
+.sh-footer {
+    background: var(--sh-footer-bg);
+    color: var(--sh-footer-text);
+    padding-block: var(--sh-space-16);
+}
+
+.sh-footer a {
+    color: var(--sh-footer-text);
+    text-decoration: none;
+    transition: color var(--sh-transition-fast);
+}
+
+.sh-footer a:hover {
+    color: var(--sh-primary);
+}
+
+/* Utility Classes */
+.text-center {
+    text-align: center;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-right {
+    text-align: right;
+}
+
+[x-cloak] {
+    display: none !important;
+}

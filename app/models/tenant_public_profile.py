@@ -167,6 +167,15 @@ class TenantPublicProfile(db.Model):
     hero_style = db.Column(db.String(20), default='centered')  # 'centered', 'split', 'minimal'
 
     # ============================================
+    # TEMA SAJTA
+    # ============================================
+    # Tri predefinisane teme sa različitim stilovima:
+    # - starter: Čista, profesionalna, plava paleta (default)
+    # - premium: Moderna, glassmorphism efekti, ljubičasta paleta
+    # - elite: Luksuzna, dark mode, zlatni akcenti
+    theme = db.Column(db.String(20), default='starter')
+
+    # ============================================
     # TIMESTAMPS
     # ============================================
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -269,6 +278,7 @@ class TenantPublicProfile(db.Model):
                 'title': self.tracking_widget_title,
             },
             'hero_style': self.hero_style,
+            'theme': self.theme or 'starter',
         }
 
         if include_private:
@@ -360,4 +370,5 @@ class TenantPublicProfile(db.Model):
                 'title': self.tracking_widget_title or 'Pratite status popravke',
             },
             'hero_style': self.hero_style or 'centered',
+            'theme': self.theme or 'starter',
         }

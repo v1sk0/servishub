@@ -1,0 +1,210 @@
+/**
+ * ServisHub Theme: STARTER
+ *
+ * Karakteristike:
+ * - Cista, profesionalna, trust-focused
+ * - Plava paleta (#3b82f6 primary)
+ * - Beli background, puno white space
+ * - Centered hero, jednostavne animacije
+ * - Font: Inter
+ */
+
+[data-theme="starter"] {
+    /* ========================================
+       COLORS
+       ======================================== */
+    --sh-primary: #3b82f6;
+    --sh-primary-hover: #2563eb;
+    --sh-primary-light: #dbeafe;
+    --sh-secondary: #1e40af;
+    --sh-accent: #60a5fa;
+
+    /* Background */
+    --sh-bg-base: #ffffff;
+    --sh-bg-muted: #f8fafc;
+    --sh-bg-card: #ffffff;
+
+    /* Text */
+    --sh-text-primary: #0f172a;
+    --sh-text-secondary: #475569;
+    --sh-text-muted: #94a3b8;
+
+    /* Borders */
+    --sh-border-color: #e2e8f0;
+
+    /* Shadows */
+    --sh-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --sh-shadow-base: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --sh-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --sh-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+    /* ========================================
+       TYPOGRAPHY
+       ======================================== */
+    --sh-font-heading: 'Inter', system-ui, -apple-system, sans-serif;
+    --sh-font-body: 'Inter', system-ui, -apple-system, sans-serif;
+
+    /* ========================================
+       HERO
+       ======================================== */
+    --sh-hero-bg: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    --sh-hero-text: #ffffff;
+    --sh-hero-text-muted: rgba(255, 255, 255, 0.9);
+
+    /* ========================================
+       FOOTER
+       ======================================== */
+    --sh-footer-bg: #0f172a;
+    --sh-footer-text: #e2e8f0;
+}
+
+/* ========================================
+   STARTER HERO - Centered Style
+   ======================================== */
+[data-theme="starter"] .sh-hero--starter {
+    background: var(--sh-hero-bg);
+    text-align: center;
+    padding-block: var(--sh-space-20);
+}
+
+[data-theme="starter"] .sh-hero--starter .sh-hero__content {
+    max-width: 800px;
+    margin-inline: auto;
+    padding-inline: var(--sh-space-4);
+}
+
+[data-theme="starter"] .sh-hero--starter .sh-hero__logo {
+    margin-inline: auto;
+    margin-bottom: var(--sh-space-8);
+    filter: brightness(0) invert(1);
+}
+
+[data-theme="starter"] .sh-hero--starter .sh-hero__tagline {
+    margin-inline: auto;
+}
+
+[data-theme="starter"] .sh-hero--starter .sh-hero__cta {
+    justify-content: center;
+}
+
+/* Starter Button Override for Hero */
+[data-theme="starter"] .sh-hero--starter .sh-btn--primary {
+    background: white;
+    color: var(--sh-primary);
+    border-color: white;
+}
+
+[data-theme="starter"] .sh-hero--starter .sh-btn--primary:hover {
+    background: var(--sh-primary-light);
+    border-color: var(--sh-primary-light);
+}
+
+[data-theme="starter"] .sh-hero--starter .sh-btn--outline {
+    background: transparent;
+    color: white;
+    border-color: white;
+}
+
+[data-theme="starter"] .sh-hero--starter .sh-btn--outline:hover {
+    background: white;
+    color: var(--sh-primary);
+}
+
+/* Trust Indicators */
+[data-theme="starter"] .sh-trust-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: var(--sh-space-6);
+    margin-top: var(--sh-space-10);
+    padding-top: var(--sh-space-6);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="starter"] .sh-trust-item {
+    display: flex;
+    align-items: center;
+    gap: var(--sh-space-2);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: var(--sh-font-size-sm);
+}
+
+[data-theme="starter"] .sh-trust-item svg {
+    width: 20px;
+    height: 20px;
+    color: #fbbf24;
+}
+
+/* ========================================
+   STARTER CARDS
+   ======================================== */
+[data-theme="starter"] .sh-card {
+    box-shadow: var(--sh-shadow-sm);
+}
+
+[data-theme="starter"] .sh-card:hover {
+    box-shadow: var(--sh-shadow-xl);
+}
+
+/* ========================================
+   STARTER PROCESS STEPS
+   ======================================== */
+[data-theme="starter"] .sh-process-step__icon {
+    background: var(--sh-primary-light);
+    color: var(--sh-primary);
+}
+
+/* ========================================
+   STARTER NAVIGATION
+   ======================================== */
+[data-theme="starter"] .sh-nav {
+    background: white;
+    box-shadow: var(--sh-shadow-sm);
+}
+
+[data-theme="starter"] .sh-nav--scrolled {
+    box-shadow: var(--sh-shadow-base);
+}
+
+/* ========================================
+   STARTER FORM ELEMENTS
+   ======================================== */
+[data-theme="starter"] input,
+[data-theme="starter"] textarea,
+[data-theme="starter"] select {
+    border-color: var(--sh-border-color);
+    border-radius: var(--sh-radius-lg);
+    transition: border-color var(--sh-transition-fast), box-shadow var(--sh-transition-fast);
+}
+
+[data-theme="starter"] input:focus,
+[data-theme="starter"] textarea:focus,
+[data-theme="starter"] select:focus {
+    border-color: var(--sh-primary);
+    box-shadow: 0 0 0 3px var(--sh-primary-light);
+    outline: none;
+}
+
+/* ========================================
+   STARTER ANIMATIONS
+   ======================================== */
+@keyframes starter-fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+[data-theme="starter"] .animate-fade-in-up {
+    animation: starter-fade-in-up 0.6s ease forwards;
+}
+
+[data-theme="starter"] .animate-delay-1 { animation-delay: 0.1s; }
+[data-theme="starter"] .animate-delay-2 { animation-delay: 0.2s; }
+[data-theme="starter"] .animate-delay-3 { animation-delay: 0.3s; }
+[data-theme="starter"] .animate-delay-4 { animation-delay: 0.4s; }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="sr">
+<html lang="sr" data-theme="{{ profile.theme or 'starter' }}">
 <head>
     <meta charset="UTF-8">
     <!-- Reset dark theme class from tenant app -->
@@ -21,6 +21,35 @@
     {% if profile.logo_url %}
     <link rel="icon" type="image/png" href="{{ profile.logo_url }}">
     {% endif %}
+
+    <!-- Google Fonts based on theme -->
+    {% set current_theme = profile.theme or 'starter' %}
+    {% if current_theme == 'premium' %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'Cabinet Grotesk';
+            src: url('https://fonts.cdnfonts.com/s/91271/CabinetGrotesk-Bold.woff') format('woff');
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+        }
+    </style>
+    {% elif current_theme == 'elite' %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {% else %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {% endif %}
+
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes/_base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes/' + current_theme + '.css') }}">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -78,6 +107,38 @@
     </style>
 
     {% block head %}{% endblock %}
+
+    <!-- Structured Data - LocalBusiness Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "@id": "{{ request.url_root }}#business",
+        "name": "{{ profile.display_name or tenant.name }}",
+        "description": "{{ profile.meta_description or profile.tagline or '' }}",
+        {% if profile.logo_url %}"image": "{{ profile.logo_url }}",{% endif %}
+        "url": "{{ request.url_root }}",
+        {% if profile.phone or tenant.telefon %}"telephone": "{{ profile.phone or tenant.telefon }}",{% endif %}
+        {% if profile.email or tenant.email %}"email": "{{ profile.email or tenant.email }}",{% endif %}
+        {% if profile.address or tenant.adresa_sedista %}
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "{{ profile.address or tenant.adresa_sedista }}",
+            "addressLocality": "{{ profile.city or tenant.grad }}",
+            {% if profile.postal_code or tenant.postanski_broj %}"postalCode": "{{ profile.postal_code or tenant.postanski_broj }}",{% endif %}
+            "addressCountry": "RS"
+        },
+        {% endif %}
+        {% if google_integration and google_integration.google_rating %}
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "{{ google_integration.google_rating }}",
+            "reviewCount": "{{ google_integration.total_reviews }}"
+        },
+        {% endif %}
+        "priceRange": "$$"
+    }
+    </script>
 </head>
 <body class="bg-gray-50 scroll-smooth" x-data="{ mobileMenuOpen: false }">
     <!-- Navigation -->
@@ -283,6 +344,34 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
         </svg>
     </a>
+    {% endif %}
+
+    <!-- Sticky CTA (visible after scroll) -->
+    {% set sticky_phone = profile.phone or tenant.telefon %}
+    {% if sticky_phone %}
+    <div
+        x-data="{ visible: false }"
+        x-init="window.addEventListener('scroll', () => visible = window.scrollY > 500)"
+        x-show="visible"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-y-4"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 translate-y-4"
+        class="sh-sticky-cta hidden md:block"
+        x-cloak
+    >
+        <div class="sh-sticky-cta__content">
+            <span class="sh-sticky-cta__text">Potrebna Vam je pomoc? Kontaktirajte nas!</span>
+            <a href="tel:{{ sticky_phone }}" class="sh-btn sh-btn--primary sh-btn--sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+                Pozovite odmah
+            </a>
+        </div>
+    </div>
     {% endif %}
 
     <!-- AOS Initialization -->

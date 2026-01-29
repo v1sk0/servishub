@@ -57,6 +57,7 @@ from .bank_import import (
     BankStatementImport, BankTransaction,
     ImportStatus, BankCode, MatchStatus, TransactionType
 )
+from .tenant_google_integration import TenantGoogleIntegration, TenantGoogleReview
 
 __all__ = [
     # Tenant modeli
@@ -205,4 +206,7 @@ __all__ = [
     'BankCode',
     'MatchStatus',
     'TransactionType',
+    # Google Integration (Public Site)
+    'TenantGoogleIntegration',
+    'TenantGoogleReview',
 ]

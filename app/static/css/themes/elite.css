@@ -1,0 +1,394 @@
+/**
+ * ServisHub Theme: ELITE
+ *
+ * Karakteristike:
+ * - Luksuzna, ekskluzivna, dark mode
+ * - Zlatna + tamna paleta (#f59e0b na #0f172a)
+ * - Cinematic hero, zlatni akcenti
+ * - Elegantne tranzicije
+ * - Font: Playfair Display headings, Inter body
+ */
+
+[data-theme="elite"] {
+    /* ========================================
+       COLORS
+       ======================================== */
+    --sh-primary: #f59e0b;
+    --sh-primary-hover: #d97706;
+    --sh-primary-light: #fef3c7;
+    --sh-secondary: #92400e;
+    --sh-accent: #fbbf24;
+
+    /* Background - Dark */
+    --sh-bg-base: #0f172a;
+    --sh-bg-muted: #1e293b;
+    --sh-bg-card: #1e293b;
+
+    /* Text - Light for dark bg */
+    --sh-text-primary: #f8fafc;
+    --sh-text-secondary: #cbd5e1;
+    --sh-text-muted: #64748b;
+
+    /* Borders */
+    --sh-border-color: #334155;
+
+    /* Shadows - Subtle on dark */
+    --sh-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --sh-shadow-base: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --sh-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+    --sh-shadow-xl: 0 24px 60px rgba(0, 0, 0, 0.6);
+
+    /* Gold Glow */
+    --sh-gold-glow: 0 0 30px rgba(245, 158, 11, 0.3);
+    --sh-gold-glow-strong: 0 0 60px rgba(245, 158, 11, 0.5);
+
+    /* ========================================
+       TYPOGRAPHY
+       ======================================== */
+    --sh-font-heading: 'Playfair Display', Georgia, serif;
+    --sh-font-body: 'Inter', system-ui, sans-serif;
+
+    /* ========================================
+       HERO
+       ======================================== */
+    --sh-hero-bg: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    --sh-hero-text: #f8fafc;
+    --sh-hero-text-muted: #cbd5e1;
+
+    /* ========================================
+       FOOTER
+       ======================================== */
+    --sh-footer-bg: #020617;
+    --sh-footer-text: #94a3b8;
+}
+
+/* ========================================
+   ELITE HERO - Cinematic Style
+   ======================================== */
+[data-theme="elite"] .sh-hero--elite {
+    background: var(--sh-hero-bg);
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    min-height: 80vh;
+}
+
+/* Radial gold glow overlay */
+[data-theme="elite"] .sh-hero--elite::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150%;
+    height: 150%;
+    background: radial-gradient(ellipse at center, rgba(251, 191, 36, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+/* Subtle particle effect overlay */
+[data-theme="elite"] .sh-hero--elite::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+}
+
+[data-theme="elite"] .sh-hero--elite .sh-hero__content {
+    max-width: 900px;
+    margin-inline: auto;
+    padding-inline: var(--sh-space-4);
+    padding-block: var(--sh-space-20);
+}
+
+[data-theme="elite"] .sh-hero--elite .sh-hero__logo {
+    margin-inline: auto;
+    margin-bottom: var(--sh-space-8);
+    filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.3));
+}
+
+/* Gold text gradient */
+[data-theme="elite"] .sh-gold-text {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Elite badge */
+[data-theme="elite"] .sh-badge--gold {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #0f172a;
+    box-shadow: var(--sh-gold-glow);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: var(--sh-font-size-xs);
+}
+
+/* Decorative divider */
+[data-theme="elite"] .sh-hero__divider {
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--sh-primary), transparent);
+    margin: var(--sh-space-6) auto;
+}
+
+[data-theme="elite"] .sh-hero--elite .sh-hero__cta {
+    justify-content: center;
+}
+
+/* ========================================
+   ELITE BUTTONS
+   ======================================== */
+[data-theme="elite"] .sh-btn--primary {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #0f172a;
+    border: none;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: var(--sh-gold-glow);
+}
+
+[data-theme="elite"] .sh-btn--primary:hover {
+    box-shadow: var(--sh-gold-glow-strong);
+    transform: translateY(-3px);
+}
+
+[data-theme="elite"] .sh-btn--outline {
+    background: transparent;
+    color: var(--sh-primary);
+    border: 2px solid var(--sh-primary);
+}
+
+[data-theme="elite"] .sh-btn--outline:hover {
+    background: var(--sh-primary);
+    color: #0f172a;
+    box-shadow: var(--sh-gold-glow);
+}
+
+/* ========================================
+   ELITE CARDS
+   ======================================== */
+[data-theme="elite"] .sh-card {
+    background: var(--sh-bg-card);
+    border: 1px solid var(--sh-border-color);
+    box-shadow: var(--sh-shadow-base);
+}
+
+[data-theme="elite"] .sh-card:hover {
+    border-color: var(--sh-primary);
+    box-shadow: var(--sh-gold-glow), var(--sh-shadow-lg);
+}
+
+/* ========================================
+   ELITE SECTION STYLING
+   ======================================== */
+[data-theme="elite"] .sh-section {
+    background: var(--sh-bg-base);
+}
+
+[data-theme="elite"] .sh-section--alt {
+    background: var(--sh-bg-muted);
+}
+
+[data-theme="elite"] .sh-section__title {
+    color: var(--sh-text-primary);
+}
+
+/* Elegant section headers */
+[data-theme="elite"] .sh-section__header::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--sh-primary), transparent);
+    margin-top: var(--sh-space-4);
+}
+
+[data-theme="elite"] .sh-section__header.text-center::after {
+    margin-inline: auto;
+    background: linear-gradient(90deg, transparent, var(--sh-primary), transparent);
+}
+
+/* ========================================
+   ELITE PROCESS STEPS
+   ======================================== */
+[data-theme="elite"] .sh-process-step__icon {
+    background: var(--sh-bg-muted);
+    border: 1px solid var(--sh-border-color);
+    color: var(--sh-primary);
+}
+
+[data-theme="elite"] .sh-process-step:hover .sh-process-step__icon {
+    border-color: var(--sh-primary);
+    box-shadow: var(--sh-gold-glow);
+}
+
+/* ========================================
+   ELITE NAVIGATION
+   ======================================== */
+[data-theme="elite"] .sh-nav {
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--sh-border-color);
+}
+
+[data-theme="elite"] .sh-nav a {
+    color: var(--sh-text-secondary);
+}
+
+[data-theme="elite"] .sh-nav a:hover {
+    color: var(--sh-primary);
+}
+
+/* ========================================
+   ELITE SERVICE CARDS
+   ======================================== */
+[data-theme="elite"] .sh-service-card {
+    background: var(--sh-bg-card);
+    border: 1px solid var(--sh-border-color);
+}
+
+[data-theme="elite"] .sh-service-card:hover {
+    border-color: var(--sh-primary);
+    box-shadow: var(--sh-gold-glow);
+}
+
+[data-theme="elite"] .sh-service-card__name {
+    color: var(--sh-text-primary);
+}
+
+[data-theme="elite"] .sh-service-card__desc {
+    color: var(--sh-text-secondary);
+}
+
+[data-theme="elite"] .sh-service-card__price {
+    color: var(--sh-primary);
+}
+
+/* ========================================
+   ELITE REVIEW CARDS
+   ======================================== */
+[data-theme="elite"] .sh-review-card {
+    background: var(--sh-bg-card);
+    border: 1px solid var(--sh-border-color);
+}
+
+[data-theme="elite"] .sh-review-card__author {
+    color: var(--sh-text-primary);
+}
+
+[data-theme="elite"] .sh-review-card__text {
+    color: var(--sh-text-secondary);
+}
+
+/* ========================================
+   ELITE GOOGLE RATING
+   ======================================== */
+[data-theme="elite"] .sh-google-rating {
+    background: var(--sh-bg-card);
+    border: 1px solid var(--sh-border-color);
+}
+
+[data-theme="elite"] .sh-google-rating__value {
+    color: var(--sh-text-primary);
+}
+
+/* ========================================
+   ELITE FOOTER
+   ======================================== */
+[data-theme="elite"] .sh-footer {
+    background: var(--sh-footer-bg);
+    border-top: 1px solid var(--sh-border-color);
+}
+
+[data-theme="elite"] .sh-footer a:hover {
+    color: var(--sh-primary);
+}
+
+/* ========================================
+   ELITE STICKY CTA
+   ======================================== */
+[data-theme="elite"] .sh-sticky-cta {
+    background: rgba(15, 23, 42, 0.98);
+    border-top: 1px solid var(--sh-border-color);
+}
+
+[data-theme="elite"] .sh-sticky-cta__text {
+    color: var(--sh-text-primary);
+}
+
+/* ========================================
+   ELITE ANIMATIONS
+   ======================================== */
+@keyframes elite-gold-pulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(251, 191, 36, 0.4);
+    }
+}
+
+[data-theme="elite"] .sh-gold-pulse {
+    animation: elite-gold-pulse 3s ease-in-out infinite;
+}
+
+@keyframes elite-border-glow {
+    0%, 100% {
+        border-color: var(--sh-border-color);
+    }
+    50% {
+        border-color: var(--sh-primary);
+    }
+}
+
+[data-theme="elite"] .sh-border-glow {
+    animation: elite-border-glow 4s ease-in-out infinite;
+}
+
+/* Luxury star animation */
+@keyframes elite-star-shine {
+    0%, 100% {
+        filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.8));
+    }
+    50% {
+        filter: drop-shadow(0 0 8px rgba(251, 191, 36, 1));
+    }
+}
+
+[data-theme="elite"] .sh-star--filled {
+    fill: #fbbf24;
+    animation: elite-star-shine 2s ease-in-out infinite;
+}
+
+/* Form styling for dark mode */
+[data-theme="elite"] input,
+[data-theme="elite"] textarea,
+[data-theme="elite"] select {
+    background: var(--sh-bg-muted);
+    border: 1px solid var(--sh-border-color);
+    color: var(--sh-text-primary);
+}
+
+[data-theme="elite"] input::placeholder,
+[data-theme="elite"] textarea::placeholder {
+    color: var(--sh-text-muted);
+}
+
+[data-theme="elite"] input:focus,
+[data-theme="elite"] textarea:focus,
+[data-theme="elite"] select:focus {
+    border-color: var(--sh-primary);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+    outline: none;
+}
+
+/* Label styling */
+[data-theme="elite"] label {
+    color: var(--sh-text-secondary);
+}
