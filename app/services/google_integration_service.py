@@ -154,12 +154,17 @@ class GoogleIntegrationService:
         }
 
         logger.info(f"Searching Google Places for: {query}")
+        logger.info(f"Request URL: {url}")
+        logger.info(f"API Key (first 10 chars): {self.places_api_key[:10]}...")
 
         response = requests.post(url, headers=headers, json={
             'textQuery': query,
             'languageCode': 'sr',
             'regionCode': 'RS',
         })
+
+        logger.info(f"Response status: {response.status_code}")
+        logger.info(f"Response body: {response.text[:500] if response.text else 'empty'}")
 
         if response.status_code != 200:
             logger.error(f"Place search failed: {response.status_code} - {response.text}")
@@ -169,6 +174,8 @@ class GoogleIntegrationService:
         places = data.get('places', [])
 
         logger.info(f"Found {len(places)} places")
+        if places:
+            logger.info(f"First place: {places[0]}")
         return places
 
     def get_place_details(self, place_id: str) -> Optional[Dict]:
