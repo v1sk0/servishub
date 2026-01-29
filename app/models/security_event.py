@@ -29,14 +29,24 @@ class SecurityEventType(enum.Enum):
     OAUTH_FAILED = 'oauth_failed'
     OAUTH_CSRF_INVALID = 'oauth_csrf_invalid'
     OAUTH_PKCE_INVALID = 'oauth_pkce_invalid'
+    OAUTH_STATE_INVALID = 'oauth_state_invalid'      # State verification failed
+    OAUTH_REDIS_FALLBACK = 'oauth_redis_fallback'    # Fallback to session used
 
     # Token events
     TOKEN_REFRESH = 'token_refresh'
     TOKEN_INVALID = 'token_invalid'
     TOKEN_EXPIRED = 'token_expired'
 
+    # Token Blacklist events (Redis-based)
+    TOKEN_BLACKLISTED = 'token_blacklisted'                    # Token added to blacklist
+    TOKEN_BLACKLIST_ALL_USER = 'token_blacklist_all_user'      # All user tokens invalidated
+    TOKEN_REJECTED_BLACKLISTED = 'token_rejected_blacklisted'  # Blacklisted token rejected
+    TOKEN_BLACKLIST_REDIS_FAIL = 'token_blacklist_redis_fail'  # Redis unavailable for blacklist
+
     # Rate limiting
     RATE_LIMIT_EXCEEDED = 'rate_limit_exceeded'
+    RATE_LIMIT_BLOCKED = 'rate_limit_blocked'        # IP blocked after limit
+    RATE_LIMIT_UNBLOCKED = 'rate_limit_unblocked'    # IP unblocked (TTL expired or manual)
 
     # 2FA events
     TWO_FA_SETUP = '2fa_setup'
@@ -45,6 +55,12 @@ class SecurityEventType(enum.Enum):
     TWO_FA_VERIFIED = '2fa_verified'
     TWO_FA_FAILED = '2fa_failed'
     TWO_FA_BACKUP_USED = '2fa_backup_used'
+    TWO_FA_LOCKOUT_TRIGGERED = '2fa_lockout_triggered'  # Account/IP locked after failures
+    TWO_FA_LOCKOUT_EXPIRED = '2fa_lockout_expired'      # Lockout period ended
+    TWO_FA_MANUAL_UNLOCK = '2fa_manual_unlock'          # Admin manually unlocked
+
+    # Password events
+    PASSWORD_CHANGED = 'password_changed'              # Password change with token invalidation
 
     # Suspicious activity
     SUSPICIOUS_IP = 'suspicious_ip'
@@ -54,6 +70,11 @@ class SecurityEventType(enum.Enum):
     ADMIN_LOGIN_SUCCESS = 'admin_login_success'
     ADMIN_LOGIN_FAILED = 'admin_login_failed'
     ADMIN_ACTION = 'admin_action'
+
+    # Redis/Infrastructure events (FAIL-CLOSED monitoring)
+    REDIS_UNAVAILABLE = 'redis_unavailable'              # Redis connection failed
+    FAIL_CLOSED_TRIGGERED = 'fail_closed_triggered'      # Request denied due to fail-closed
+    SECURITY_CONFIG_INVALID = 'security_config_invalid'  # Invalid security configuration
 
     # Networking events (T2T)
     INVITE_CREATED = 'invite_created'

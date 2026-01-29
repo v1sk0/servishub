@@ -2,10 +2,32 @@
 ## ServisHub Admin Panel
 
 **Datum:** 2026-01-29
-**Verzija:** 1.2
+**Verzija:** 1.3
 **Autor:** Security Audit
-**Status:** Draft - Red-team review COMPLETED
-**Last Updated:** 2026-01-29 - All red-team findings addressed
+**Status:** IN PROGRESS - Phase 1 implementing
+**Last Updated:** 2026-01-29 - OAuth Redis state COMPLETED
+
+---
+
+## 📊 Implementation Status
+
+| Component | Status | Files Changed |
+|-----------|--------|---------------|
+| **Token Blacklist (Redis)** | ✅ DONE | `token_blacklist_service.py`, `auth.py` |
+| **OAuth State (Redis)** | ✅ DONE | `oauth_state_service.py`, `auth.py` |
+| **Security Event Types** | ✅ DONE | `security_event.py` |
+| **FAIL-CLOSED Policy** | ✅ DONE | `oauth_state_service.py`, `config.py` |
+| **Redis Rate Limiter** | ⏳ PENDING | `security_service.py` |
+| **2FA Multi-Layer Protection** | ⏳ PENDING | `admin.py`, `auth.py` |
+| **TOTP Window Reduction** | ⏳ PENDING | `admin.py` |
+| **Password Change Token Invalidation** | ⏳ PENDING | `auth_service.py` |
+
+### Completed Today (2026-01-29):
+- ✅ OAuth State Redis Service with FAIL-CLOSED in production
+- ✅ New SecurityEventType enum values for OAuth, Token, 2FA, Redis events
+- ✅ Updated `/google` endpoint to use Redis OAuth state
+- ✅ Updated `/google/callback` to verify state from Redis
+- ✅ Security event logging for all OAuth operations
 
 ---
 

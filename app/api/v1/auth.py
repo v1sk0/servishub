@@ -20,6 +20,7 @@ from ..schemas.auth import (
 from ..middleware.auth import jwt_required, tenant_required
 from ...services.auth_service import auth_service, AuthError
 from ...services.security_service import rate_limit, RateLimits, SecurityEventLogger
+from ...models.security_event import SecurityEventType
 from ...models import ServiceLocation, UserRole, Tenant, TenantUser
 from ...models.tenant import LocationStatus
 from ...extensions import db
@@ -611,8 +612,13 @@ def google_login():
     Redirektuje korisnika na Google OAuth consent screen.
     Nakon odobrenja, Google vraca korisnika na /google/callback.
 
+    SECURITY: OAuth state se cuva u Redis-u za konzistentnost
+    na multi-dyno Heroku okruzenju. Session se koristi kao fallback
+    samo u development mode-u (SECURITY_STRICT=False).
+
     Returns:
-        302: Redirect na Google OAuth
+        200: JSON sa auth_url za redirect
+        500: Configuration error ili Redis unavailable (FAIL-CLOSED)
     """
     import os
     import secrets
@@ -620,6 +626,7 @@ def google_login():
     import base64
     from urllib.parse import urlencode
     from flask import session
+    from ...services.oauth_state_service import oauth_state, OAuthStateError
 
     client_id = os.environ.get('GOOGLE_CLIENT_ID')
     redirect_uri = os.environ.get('GOOGLE_REDIRECT_URI',
@@ -631,14 +638,9 @@ def google_login():
             'message': 'Google OAuth nije konfigurisan'
         }), 500
 
-    # Generiši CSRF state token i sačuvaj u sesiju
-    state = secrets.token_urlsafe(32)
-    session['oauth_state'] = state
-
     # PKCE (Proof Key for Code Exchange) - zaštita od presretanja authorization code-a
     # Generiši code_verifier (43-128 karaktera, URL-safe)
     code_verifier = secrets.token_urlsafe(64)  # 64 bajta = 86 karaktera nakon encoding-a
-    session['oauth_code_verifier'] = code_verifier
 
     # Kreiraj code_challenge = BASE64URL(SHA256(code_verifier))
     code_challenge_bytes = hashlib.sha256(code_verifier.encode('ascii')).digest()
@@ -646,9 +648,43 @@ def google_login():
 
     # Nonce za dodatnu zaštitu od replay napada (OpenID Connect)
     nonce = secrets.token_urlsafe(32)
+
+    try:
+        # Generiši state i sačuvaj u Redis (primary) sa code_verifier i nonce
+        state = oauth_state.generate_and_store_state(code_verifier, nonce)
+
+        # Log OAuth started
+        SecurityEventLogger.log_event(
+            SecurityEventType.OAUTH_STARTED.value,
+            details={
+                'provider': 'google',
+                'state_prefix': state[:8],
+                'storage': 'redis'
+            },
+            level='info'
+        )
+    except OAuthStateError as e:
+        # FAIL-CLOSED: Redis unavailable in production
+        SecurityEventLogger.log_event(
+            SecurityEventType.OAUTH_FAILED.value,
+            details={
+                'provider': 'google',
+                'reason': 'redis_unavailable',
+                'fail_mode': 'closed'
+            },
+            level='error'
+        )
+        return jsonify({
+            'error': 'Service Unavailable',
+            'message': 'OAuth servis privremeno nedostupan. Pokušajte ponovo.'
+        }), 503
+
+    # Backup u session (koristi se samo ako Redis fallback u dev mode)
+    session['oauth_state'] = state
+    session['oauth_code_verifier'] = code_verifier
     session['oauth_nonce'] = nonce
 
-    # Označi sesiju kao modifikovanu i trajnu da se cookie sigurno sačuva
+    # Označi sesiju kao modifikovanu i trajnu
     session.modified = True
     session.permanent = True
 
@@ -660,7 +696,7 @@ def google_login():
         'scope': 'openid email profile',
         'access_type': 'offline',
         'prompt': 'select_account',
-        'state': state,  # CSRF zaštita
+        'state': state,  # CSRF zaštita (stored in Redis)
         'code_challenge': code_challenge,  # PKCE
         'code_challenge_method': 'S256',  # SHA256 metod
         'nonce': nonce  # Replay protection
@@ -743,9 +779,13 @@ def google_callback():
     - Ako korisnik postoji: loguje ga
     - Ako ne postoji: redirektuje na registraciju sa pre-popunjenim podacima
 
+    SECURITY: State se verifikuje iz Redis-a (primary) sa session fallback
+    samo u development mode-u. U produkciji (SECURITY_STRICT=True),
+    session fallback je ONEMOGUCEN (FAIL-CLOSED).
+
     Query params:
         - code: Authorization code od Google-a
-        - state: CSRF state token (mora da se poklapa sa sesijom)
+        - state: CSRF state token (mora da se poklapa sa Redis-om)
         - error: Greska (ako je korisnik odbio)
 
     Returns:
@@ -754,31 +794,78 @@ def google_callback():
     import os
     import requests as http_requests
     from flask import redirect, session
+    from ...services.oauth_state_service import oauth_state
 
     # Proveri greske
     error = request.args.get('error')
     if error:
+        SecurityEventLogger.log_event(
+            SecurityEventType.OAUTH_FAILED.value,
+            details={
+                'provider': 'google',
+                'reason': 'user_denied',
+                'error': error
+            },
+            level='warning'
+        )
         return redirect(f'/login?error=google_denied')
 
     code = request.args.get('code')
     if not code:
+        SecurityEventLogger.log_event(
+            SecurityEventType.OAUTH_FAILED.value,
+            details={
+                'provider': 'google',
+                'reason': 'no_code'
+            },
+            level='warning'
+        )
         return redirect(f'/login?error=no_code')
 
-    # CSRF zaštita: Verifikuj state parametar
+    # Verifikuj state iz Redis-a (primary) ili session-a (fallback u dev mode)
     state = request.args.get('state')
-    stored_state = session.pop('oauth_state', None)  # Ukloni iz sesije nakon korišćenja
 
-    if not state or not stored_state or state != stored_state:
+    # Session data za fallback (samo u dev mode)
+    session_state = session.pop('oauth_state', None)
+    session_code_verifier = session.pop('oauth_code_verifier', None)
+    session_nonce = session.pop('oauth_nonce', None)
+
+    # Verifikuj state i preuzmi PKCE podatke
+    is_valid, code_verifier, stored_nonce = oauth_state.verify_state(
+        received_state=state,
+        session_state=session_state,
+        session_code_verifier=session_code_verifier,
+        session_nonce=session_nonce
+    )
+
+    if not is_valid:
+        # Log failed OAuth state verification
+        SecurityEventLogger.log_event(
+            SecurityEventType.OAUTH_STATE_INVALID.value,
+            details={
+                'provider': 'google',
+                'state_prefix': state[:8] if state else 'none',
+                'reason': 'state_verification_failed'
+            },
+            level='warning'
+        )
         return redirect(f'/login?error=csrf_invalid')
 
-    # PKCE: Preuzmi code_verifier iz sesije
-    code_verifier = session.pop('oauth_code_verifier', None)
+    # Ako code_verifier nije iz Redis-a, uzmi iz session fallback (dev mode only)
+    if not code_verifier:
+        code_verifier = session_code_verifier
+
     if not code_verifier:
         # Ako nema code_verifier, neko pokušava replay napad
+        SecurityEventLogger.log_event(
+            SecurityEventType.OAUTH_PKCE_INVALID.value,
+            details={
+                'provider': 'google',
+                'reason': 'no_code_verifier'
+            },
+            level='warning'
+        )
         return redirect(f'/login?error=pkce_invalid')
-
-    # Preuzmi i nonce (za kasniju verifikaciju ako je potrebna)
-    stored_nonce = session.pop('oauth_nonce', None)
 
     client_id = os.environ.get('GOOGLE_CLIENT_ID')
     client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
