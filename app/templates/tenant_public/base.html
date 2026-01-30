@@ -12,12 +12,13 @@
     <!-- Open Graph -->
     <meta property="og:title" content="{{ profile.meta_title or profile.display_name or tenant.name }}">
     <meta property="og:description" content="{{ profile.meta_description or profile.tagline or '' }}">
-    <meta property="og:image" content="{{ profile.cover_image_url or profile.logo_url or '' }}">
+    <meta property="og:image" content="{{ profile.cover_image_url or profile.logo_url or tenant.logo_url or '' }}">
     <meta property="og:type" content="website">
 
     <!-- Favicon -->
-    {% if profile.logo_url %}
-    <link rel="icon" type="image/png" href="{{ profile.logo_url }}">
+    {% set favicon_logo = profile.logo_url or tenant.logo_url %}
+    {% if favicon_logo %}
+    <link rel="icon" type="image/png" href="{{ favicon_logo }}">
     {% endif %}
 
     <!-- Google Fonts - Inter -->
@@ -44,7 +45,7 @@
         "@id": "{{ request.url_root }}#business",
         "name": "{{ profile.display_name or tenant.name }}",
         "description": "{{ profile.meta_description or profile.tagline or '' }}",
-        {% if profile.logo_url %}"image": "{{ profile.logo_url }}",{% endif %}
+        {% if profile.logo_url or tenant.logo_url %}"image": "{{ profile.logo_url or tenant.logo_url }}",{% endif %}
         "url": "{{ request.url_root }}",
         {% if profile.phone or tenant.telefon %}"telephone": "{{ profile.phone or tenant.telefon }}",{% endif %}
         {% if profile.email or tenant.email %}"email": "{{ profile.email or tenant.email }}",{% endif %}
@@ -98,8 +99,9 @@
         <div class="mg-nav__container">
             <!-- Logo -->
             <a href="/" class="mg-nav__logo">
-                {% if profile.logo_url %}
-                <img src="{{ profile.logo_url }}" alt="{{ profile.display_name or tenant.name }}">
+                {% set site_logo = profile.logo_url or tenant.logo_url %}
+                {% if site_logo %}
+                <img src="{{ site_logo }}" alt="{{ profile.display_name or tenant.name }}">
                 {% endif %}
                 <span class="mg-nav__logo-text">{{ profile.display_name or tenant.name }}</span>
             </a>
@@ -167,8 +169,9 @@
             <!-- Brand -->
             <div class="mg-footer__brand">
                 <div class="mg-footer__logo">
-                    {% if profile.logo_url %}
-                    <img src="{{ profile.logo_url }}" alt="{{ profile.display_name or tenant.name }}">
+                    {% set footer_logo = profile.logo_url or tenant.logo_url %}
+                    {% if footer_logo %}
+                    <img src="{{ footer_logo }}" alt="{{ profile.display_name or tenant.name }}">
                     {% endif %}
                     <span class="mg-footer__logo-text">{{ profile.display_name or tenant.name }}</span>
                 </div>
