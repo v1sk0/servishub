@@ -1166,6 +1166,202 @@
 }
 
 /* ========================================
+   ANIMATIONS
+   ======================================== */
+.mg-fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.mg-fade-in-delay-1 { animation-delay: 0.1s; }
+.mg-fade-in-delay-2 { animation-delay: 0.2s; }
+.mg-fade-in-delay-3 { animation-delay: 0.3s; }
+.mg-fade-in-delay-4 { animation-delay: 0.4s; }
+.mg-fade-in-delay-5 { animation-delay: 0.5s; }
+.mg-fade-in-delay-6 { animation-delay: 0.6s; }
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========================================
+   MOBILE MENU
+   ======================================== */
+.mg-mobile-menu {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    background: rgba(248, 250, 252, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: var(--mg-space-24) var(--mg-space-6);
+}
+
+.mg-mobile-menu.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--mg-space-6);
+}
+
+.mg-mobile-menu__link {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--mg-text-primary);
+    text-decoration: none;
+}
+
+.mg-hamburger {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    cursor: pointer;
+    padding: var(--mg-space-2);
+}
+
+@media (min-width: 768px) {
+    .mg-hamburger {
+        display: none;
+    }
+}
+
+.mg-hamburger__line {
+    width: 24px;
+    height: 2px;
+    background: var(--mg-text-primary);
+    transition: var(--mg-transition-base);
+}
+
+/* ========================================
+   UTILITIES
+   ======================================== */
+.mg-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 var(--mg-space-6);
+}
+
+.mg-text-center {
+    text-align: center;
+}
+
+.mg-mt-8 { margin-top: var(--mg-space-8); }
+.mg-mt-12 { margin-top: var(--mg-space-12); }
+.mg-mb-4 { margin-bottom: var(--mg-space-4); }
+.mg-mb-8 { margin-bottom: var(--mg-space-8); }
+
+/* ========================================
+   FLOATING BUTTONS
+   ======================================== */
+.mg-floating-btn {
+    position: fixed;
+    bottom: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    z-index: 9999;
+}
+
+.mg-floating-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.3);
+}
+
+.mg-floating-btn--whatsapp {
+    right: 24px;
+    background: #25D366;
+}
+
+.mg-floating-btn--whatsapp:hover {
+    background: #1da851;
+}
+
+.mg-floating-btn--phone {
+    left: 24px;
+    background: linear-gradient(135deg, var(--mg-gradient-1), var(--mg-gradient-2));
+}
+
+@media (min-width: 768px) {
+    .mg-floating-btn--phone {
+        display: none;
+    }
+}
+
+/* ========================================
+   DIRECTIONS BUTTON
+   ======================================== */
+.mg-directions-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.mg-directions-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+.mg-directions-btn:hover::before {
+    left: 100%;
+}
+
+.mg-directions-btn svg {
+    animation: pulseIcon 2s ease-in-out infinite;
+}
+
+@keyframes pulseIcon {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 768px) {
+    .mg-hero {
+        min-height: auto;
+        padding-top: calc(var(--mg-space-16) + 80px);
+        padding-bottom: var(--mg-space-16);
+    }
+
+    .mg-trust-bar {
+        flex-direction: column;
+        gap: var(--mg-space-3);
+    }
+
+    .mg-services-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ========================================
    RESPONSIVE ADJUSTMENTS
    ======================================== */
 @media (max-width: 640px) {
