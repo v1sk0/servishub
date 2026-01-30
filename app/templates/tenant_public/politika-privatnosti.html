@@ -1,0 +1,162 @@
+{% extends "tenant_public/base.html" %}
+
+{% block title %}Politika privatnosti - {{ profile.display_name or tenant.name }}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-gradient text-white py-12 sm:py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-3xl sm:text-4xl font-bold mb-4">Politika privatnosti</h1>
+        <p class="text-lg text-white/90 max-w-2xl mx-auto">Vaša privatnost nam je važna</p>
+    </div>
+</section>
+
+<!-- Content -->
+<section class="py-12 sm:py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mg-card" style="padding: var(--mg-space-8);">
+
+            <!-- Uvod -->
+            <div class="mb-10">
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--mg-text-primary); margin-bottom: var(--mg-space-4);">Uvod</h2>
+                <p style="color: var(--mg-text-secondary); line-height: 1.8;">
+                    Poštujemo vašu privatnost i posvećeni smo zaštiti vaših ličnih podataka u skladu sa važećim zakonima
+                    Republike Srbije o zaštiti podataka o ličnosti i najboljim praksama u oblasti internet poslovanja.
+                    Ova politika privatnosti opisuje kako prikupljamo, koristimo i štitimo vaše podatke.
+                </p>
+            </div>
+
+            <!-- Prikupljanje podataka -->
+            <div class="mb-10">
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--mg-text-primary); margin-bottom: var(--mg-space-4);">Prikupljanje podataka</h2>
+                <p style="color: var(--mg-text-secondary); line-height: 1.8; margin-bottom: var(--mg-space-4);">
+                    Prikupljamo samo podatke koji su neophodni za pružanje naših usluga. Ovi podaci uključuju:
+                </p>
+                <ul style="color: var(--mg-text-secondary); line-height: 1.8; padding-left: var(--mg-space-6); list-style-type: disc;">
+                    <li>Ime i prezime</li>
+                    <li>Kontakt telefon</li>
+                    <li>Email adresa</li>
+                    <li>Podaci o uređaju (model, IMEI, opis problema)</li>
+                    <li>Adresa (ukoliko je potrebna dostava)</li>
+                </ul>
+                <p style="color: var(--mg-text-secondary); line-height: 1.8; margin-top: var(--mg-space-4);">
+                    Svi podaci se prikupljaju <strong>isključivo uz vašu saglasnost</strong> prilikom kreiranja servisnog naloga
+                    ili kontaktiranja našeg servisa.
+                </p>
+            </div>
+
+            <!-- Upotreba podataka -->
+            <div class="mb-10">
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--mg-text-primary); margin-bottom: var(--mg-space-4);">Upotreba podataka</h2>
+                <p style="color: var(--mg-text-secondary); line-height: 1.8; margin-bottom: var(--mg-space-4);">
+                    Prikupljene podatke koristimo isključivo za:
+                </p>
+                <ul style="color: var(--mg-text-secondary); line-height: 1.8; padding-left: var(--mg-space-6); list-style-type: disc;">
+                    <li>Kreiranje i praćenje servisnih naloga</li>
+                    <li>Komunikaciju vezanu za status popravke</li>
+                    <li>Obaveštavanje o završetku servisa</li>
+                    <li>Slanje računa i garantnih listova</li>
+                    <li>Poboljšanje kvaliteta naših usluga</li>
+                </ul>
+                <p style="color: var(--mg-text-secondary); line-height: 1.8; margin-top: var(--mg-space-4);">
+                    <strong>Vaši podaci se ne prosleđuju trećim licima</strong> bez vašeg eksplicitnog pristanka,
+                    osim u slučajevima kada to zakon izričito zahteva.
+                </p>
+            </div>
+
+            <!-- Čuvanje podataka -->
+            <div class="mb-10">
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--mg-text-primary); margin-bottom: var(--mg-space-4);">Čuvanje podataka</h2>
+                <p style="color: var(--mg-text-secondary); line-height: 1.8;">
+                    Vaši podaci se čuvaju u našem sistemu tokom trajanja poslovnog odnosa i u skladu sa zakonskim obavezama
+                    (npr. za potrebe garancije). Nakon isteka zakonskih rokova, podaci se trajno brišu ili anonimizuju.
+                    <strong>Vaši lični podaci na uređaju (slike, poruke, kontakti) se ne pregledaju, ne kopiraju i ne brišu</strong>
+                    tokom servisiranja, osim ako vi to izričito ne zatražite.
+                </p>
+            </div>
+
+            <!-- Kolačići -->
+            <div class="mb-10">
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--mg-text-primary); margin-bottom: var(--mg-space-4);">Kolačići (Cookies)</h2>
+                <p style="color: var(--mg-text-secondary); line-height: 1.8;">
+                    Naš sajt koristi kolačiće za poboljšanje korisničkog iskustva i funkcionalnosti sajta.
+                    Kolačići su male tekstualne datoteke koje se čuvaju na vašem uređaju. Možete podesiti
+                    vaš pregledač da odbija kolačiće, ali to može uticati na funkcionalnost sajta.
+                </p>
+            </div>
+
+            <!-- Bezbednost -->
+            <div class="mb-10">
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--mg-text-primary); margin-bottom: var(--mg-space-4);">Bezbednost podataka</h2>
+                <p style="color: var(--mg-text-secondary); line-height: 1.8;">
+                    Primenjujemo tehničke i organizacione mere zaštite kako bismo osigurali bezbednost vaših podataka.
+                    To uključuje enkripciju podataka, siguran pristup sistemima i redovne sigurnosne provere.
+                    Pristup vašim podacima imaju samo ovlašćeni zaposleni kojima su ti podaci neophodni za obavljanje posla.
+                </p>
+            </div>
+
+            <!-- Prava korisnika -->
+            <div class="mb-10">
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--mg-text-primary); margin-bottom: var(--mg-space-4);">Vaša prava</h2>
+                <p style="color: var(--mg-text-secondary); line-height: 1.8; margin-bottom: var(--mg-space-4);">
+                    U skladu sa Zakonom o zaštiti podataka o ličnosti, imate pravo da:
+                </p>
+                <ul style="color: var(--mg-text-secondary); line-height: 1.8; padding-left: var(--mg-space-6); list-style-type: disc;">
+                    <li>Zatražite uvid u vaše lične podatke koje čuvamo</li>
+                    <li>Zatražite ispravku netačnih podataka</li>
+                    <li>Zatražite brisanje vaših podataka (pravo na zaborav)</li>
+                    <li>Ograničite obradu vaših podataka</li>
+                    <li>Povučete saglasnost za obradu podataka</li>
+                </ul>
+                <p style="color: var(--mg-text-secondary); line-height: 1.8; margin-top: var(--mg-space-4);">
+                    Za ostvarivanje bilo kog od ovih prava, kontaktirajte nas putem podataka navedenih ispod.
+                </p>
+            </div>
+
+            <!-- Izmene politike -->
+            <div class="mb-10">
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--mg-text-primary); margin-bottom: var(--mg-space-4);">Izmene politike privatnosti</h2>
+                <p style="color: var(--mg-text-secondary); line-height: 1.8;">
+                    Zadržavamo pravo da povremeno ažuriramo ovu politiku privatnosti. Sve izmene će biti objavljene
+                    na ovoj stranici. Preporučujemo da povremeno proveravate ovu stranicu kako biste bili informisani
+                    o eventualnim promenama.
+                </p>
+            </div>
+
+            <!-- Kontakt -->
+            <div>
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--mg-text-primary); margin-bottom: var(--mg-space-4);">Kontakt</h2>
+                <p style="color: var(--mg-text-secondary); line-height: 1.8; margin-bottom: var(--mg-space-4);">
+                    Za sva pitanja u vezi sa ovom politikom privatnosti ili obradom vaših podataka, možete nas kontaktirati:
+                </p>
+                <div style="background: var(--mg-glass-bg); border: 1px solid var(--mg-glass-border); border-radius: var(--mg-radius-lg); padding: var(--mg-space-6);">
+                    {% set privacy_email = profile.email or tenant.email %}
+                    {% set privacy_phone = profile.phone or tenant.telefon %}
+                    {% set privacy_address = profile.address or tenant.adresa_sedista %}
+                    {% set privacy_city = profile.city or tenant.grad %}
+
+                    <p style="color: var(--mg-text-primary); font-weight: 600; margin-bottom: var(--mg-space-2);">
+                        {{ profile.display_name or tenant.name }}
+                    </p>
+                    {% if privacy_address %}
+                    <p style="color: var(--mg-text-secondary);">
+                        {{ privacy_address }}{% if privacy_city %}, {{ privacy_city }}{% endif %}
+                    </p>
+                    {% endif %}
+                    {% if privacy_email %}
+                    <p style="margin-top: var(--mg-space-2);">
+                        <a href="mailto:{{ privacy_email }}" style="color: var(--mg-gradient-1);">{{ privacy_email }}</a>
+                    </p>
+                    {% endif %}
+                    {% if privacy_phone %}
+                    <p style="margin-top: var(--mg-space-2);">
+                        <a href="tel:{{ privacy_phone }}" style="color: var(--mg-gradient-1);">{{ privacy_phone }}</a>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock %}

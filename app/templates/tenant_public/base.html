@@ -108,7 +108,7 @@
 
             <!-- Desktop Navigation -->
             <div class="mg-nav__links">
-                <a href="/" class="mg-nav__link">Pocetna</a>
+                <a href="/" class="mg-nav__link">Početna</a>
                 {% if profile.show_prices %}
                 <a href="/cenovnik" class="mg-nav__link">Cenovnik</a>
                 {% endif %}
@@ -142,7 +142,7 @@
 
     <!-- Mobile Menu -->
     <div class="mg-mobile-menu" :class="{ 'active': mobileMenuOpen }" x-show="mobileMenuOpen" x-cloak>
-        <a href="/" class="mg-mobile-menu__link" @click="mobileMenuOpen = false">Pocetna</a>
+        <a href="/" class="mg-mobile-menu__link" @click="mobileMenuOpen = false">Početna</a>
         {% if profile.show_prices %}
         <a href="/cenovnik" class="mg-mobile-menu__link" @click="mobileMenuOpen = false">Cenovnik</a>
         {% endif %}
@@ -184,7 +184,7 @@
             <div>
                 <h4 class="mg-footer__title">Navigacija</h4>
                 <ul class="mg-footer__links">
-                    <li class="mg-footer__link"><a href="/">Pocetna</a></li>
+                    <li class="mg-footer__link"><a href="/">Početna</a></li>
                     {% if profile.show_prices %}
                     <li class="mg-footer__link"><a href="/cenovnik">Cenovnik</a></li>
                     {% endif %}
@@ -192,6 +192,7 @@
                     <li class="mg-footer__link"><a href="/o-nama">O nama</a></li>
                     {% endif %}
                     <li class="mg-footer__link"><a href="/kontakt">Kontakt</a></li>
+                    <li class="mg-footer__link"><a href="/politika-privatnosti">Politika privatnosti</a></li>
                 </ul>
             </div>
 
@@ -240,7 +241,7 @@
 
         <!-- Bottom -->
         <div class="mg-footer__bottom mg-container">
-            <p class="mg-footer__copyright">&copy; {{ now().year if now is defined else '2026' }} {{ profile.display_name or tenant.name }}. Sva prava zadrzana.</p>
+            <p class="mg-footer__copyright">&copy; {{ now().year if now is defined else '2026' }} {{ profile.display_name or tenant.name }}. Sva prava zadržana.</p>
             <div class="mg-footer__social">
                 {% if profile.facebook_url %}
                 <a href="{{ profile.facebook_url }}" target="_blank" aria-label="Facebook">
@@ -263,6 +264,15 @@
                 </svg>
                 Powered by ServisHub
             </a>
+        </div>
+
+        <!-- Legal Notice -->
+        <div class="mg-container mg-text-center" style="margin-top: var(--mg-space-6); padding-top: var(--mg-space-6); border-top: 1px solid var(--mg-glass-border);">
+            <p style="color: var(--mg-text-muted); font-size: 0.75rem; line-height: 1.6; max-width: 800px; margin: 0 auto;">
+                Svi tekstovi i sadržaji na ovom sajtu su vlasništvo <strong>{{ profile.display_name or tenant.name }}</strong> i zaštićeni su autorskim pravima.
+                Zabranjeno je svako kopiranje bez dozvole. Za sadržaj ovog sajta isključivo je odgovoran njegov vlasnik.
+                <a href="/politika-privatnosti" style="color: var(--mg-gradient-1);">Politika privatnosti</a>
+            </p>
         </div>
     </footer>
 

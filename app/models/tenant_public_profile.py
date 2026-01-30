@@ -159,7 +159,7 @@ class TenantPublicProfile(db.Model):
     # STATUS TRACKING WIDGET
     # ============================================
     show_tracking_widget = db.Column(db.Boolean, default=True)
-    tracking_widget_title = db.Column(db.String(200), default='Pratite status Vase popravke')
+    tracking_widget_title = db.Column(db.String(200), default='Pratite status Vaše popravke')
 
     # ============================================
     # HERO STIL
@@ -405,7 +405,7 @@ class TenantPublicProfile(db.Model):
             },
             'tracking': {
                 'show_widget': self.show_tracking_widget,
-                'title': self.tracking_widget_title or 'Pratite status Vase popravke',
+                'title': self.tracking_widget_title or 'Pratite status Vaše popravke',
             },
             'hero_style': self.hero_style or 'centered',
             'theme': self.theme or 'starter',

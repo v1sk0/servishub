@@ -101,6 +101,20 @@ def o_nama():
     )
 
 
+@bp.route('/politika-privatnosti')
+@require_public_site
+def politika_privatnosti():
+    """Politika privatnosti stranica."""
+    tenant = g.public_tenant
+    profile = g.public_profile
+
+    return render_template(
+        'tenant_public/politika-privatnosti.html',
+        tenant=tenant,
+        profile=profile
+    )
+
+
 # ============== API Endpoints (Public, No Auth) ==============
 # Rate limited to prevent abuse
 
