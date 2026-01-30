@@ -36,6 +36,16 @@ with app.app_context():
         profile.theme = 'premium'
         print(f"Theme set to: premium")
 
+        # Set flash categories - only phones, no computers
+        profile.flash_service_categories = {
+            'telefoni': True,
+            'racunari': False,
+            'konzole': False,
+            'trotineti': False,
+            'ostalo': False
+        }
+        print(f"Flash categories: samo telefoni (racunari OFF)")
+
     # Check if Google integration exists
     google = TenantGoogleIntegration.query.filter_by(tenant_id=tenant.id).first()
 
