@@ -227,7 +227,12 @@
                     <li class="mg-footer__link"><a href="mailto:{{ footer_email }}">{{ footer_email }}</a></li>
                     {% endif %}
                     {% if profile.working_hours %}
-                    <li class="mg-footer__link"><span style="color: var(--mg-text-secondary);">{{ profile.working_hours }}</span></li>
+                    <li class="mg-footer__link">
+                        <span style="color: var(--mg-text-secondary);">
+                            {% if profile.working_hours.mon %}Pon-Pet: {{ profile.working_hours.mon }}{% endif %}
+                            {% if profile.working_hours.sat %}, Sub: {{ profile.working_hours.sat }}{% endif %}
+                        </span>
+                    </li>
                     {% endif %}
                 </ul>
             </div>

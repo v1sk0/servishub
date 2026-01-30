@@ -29,6 +29,9 @@ class TenantGoogleIntegration(db.Model):
     google_rating = db.Column(db.Numeric(2, 1))  # npr. 4.8
     total_reviews = db.Column(db.Integer, default=0)
 
+    # Google Photos - JSON array of photo URLs
+    google_photos = db.Column(db.JSON, default=list)  # [{url, width, height}]
+
     # OAuth tokeni (enkriptovani u produkciji)
     access_token = db.Column(db.Text)
     refresh_token = db.Column(db.Text)
@@ -58,6 +61,7 @@ class TenantGoogleIntegration(db.Model):
             'google_place_id': self.google_place_id,
             'google_rating': float(self.google_rating) if self.google_rating else None,
             'total_reviews': self.total_reviews,
+            'google_photos': self.google_photos or [],
             'last_sync_at': self.last_sync_at.isoformat() if self.last_sync_at else None,
             'has_valid_token': self.has_valid_token,
         }

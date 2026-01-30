@@ -732,6 +732,118 @@
 }
 
 /* ========================================
+   GOOGLE PHOTOS GALLERY
+   ======================================== */
+.mg-gallery-section {
+    background: var(--mg-surface-raised);
+}
+
+.mg-gallery {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 200px);
+    gap: var(--mg-space-4);
+}
+
+.mg-gallery__item {
+    position: relative;
+    border-radius: var(--mg-radius-xl);
+    overflow: hidden;
+    background: var(--mg-glass-bg);
+    border: 1px solid var(--mg-glass-border);
+}
+
+.mg-gallery__item--featured {
+    grid-column: span 2;
+    grid-row: span 2;
+}
+
+.mg-gallery__image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.mg-gallery__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease, filter 0.3s ease;
+}
+
+.mg-gallery__item:hover .mg-gallery__image {
+    transform: scale(1.1);
+    filter: brightness(0.8);
+}
+
+.mg-gallery__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mg-gallery__item:hover .mg-gallery__overlay {
+    opacity: 1;
+}
+
+.mg-gallery__zoom {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--mg-gradient-1);
+    transform: scale(0);
+    transition: transform 0.3s ease;
+}
+
+.mg-gallery__item:hover .mg-gallery__zoom {
+    transform: scale(1);
+}
+
+/* Gallery Responsive */
+@media (max-width: 1024px) {
+    .mg-gallery {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: auto;
+    }
+
+    .mg-gallery__item--featured {
+        grid-column: span 2;
+        grid-row: span 1;
+        height: 280px;
+    }
+
+    .mg-gallery__item:not(.mg-gallery__item--featured) {
+        height: 180px;
+    }
+}
+
+@media (max-width: 640px) {
+    .mg-gallery {
+        grid-template-columns: 1fr;
+        gap: var(--mg-space-3);
+    }
+
+    .mg-gallery__item--featured {
+        grid-column: span 1;
+        height: 240px;
+    }
+
+    .mg-gallery__item:not(.mg-gallery__item--featured) {
+        height: 200px;
+    }
+}
+
+/* ========================================
    GOOGLE REVIEWS
    ======================================== */
 .mg-reviews {
@@ -880,6 +992,40 @@
 
 .mg-tracking__input::placeholder {
     color: var(--mg-text-muted);
+}
+
+/* ========================================
+   WORKING HOURS
+   ======================================== */
+.mg-working-hours {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+}
+
+.mg-working-hours__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--mg-glass-border);
+}
+
+.mg-working-hours__row:last-child {
+    border-bottom: none;
+}
+
+.mg-working-hours__day {
+    font-size: 0.8125rem;
+    color: var(--mg-text-muted);
+    font-weight: 500;
+}
+
+.mg-working-hours__time {
+    font-size: 0.8125rem;
+    color: var(--mg-text-secondary);
+    font-weight: 600;
 }
 
 /* ========================================

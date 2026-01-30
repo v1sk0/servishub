@@ -227,7 +227,7 @@ class GoogleIntegrationService:
         params = {
             'place_id': place_id,
             'key': self.places_api_key,
-            'fields': 'place_id,name,formatted_address,rating,user_ratings_total,reviews',
+            'fields': 'place_id,name,formatted_address,rating,user_ratings_total,reviews,photos',
             'language': 'sr',
             'reviews_sort': 'newest',
         }
@@ -254,7 +254,20 @@ class GoogleIntegrationService:
             'rating': result.get('rating'),
             'userRatingCount': result.get('user_ratings_total'),
             'reviews': [],
+            'photos': [],
         }
+
+        # Normalize photos - generate URLs from photo references
+        for photo in result.get('photos', [])[:8]:  # Max 8 photos
+            photo_ref = photo.get('photo_reference')
+            if photo_ref:
+                photo_url = f"{self.PLACES_API_BASE}/photo?maxwidth=800&photo_reference={photo_ref}&key={self.places_api_key}"
+                normalized['photos'].append({
+                    'url': photo_url,
+                    'width': photo.get('width'),
+                    'height': photo.get('height'),
+                    'attributions': photo.get('html_attributions', []),
+                })
 
         # Normalize reviews
         for review in result.get('reviews', []):
@@ -371,6 +384,12 @@ class GoogleIntegrationService:
             integration.total_reviews = place_data.get('userRatingCount', 0)
             integration.last_sync_at = datetime.utcnow()
             integration.sync_error = None
+
+            # Update photos
+            photos = place_data.get('photos', [])
+            if photos:
+                integration.google_photos = photos[:8]  # Max 8 photos
+                logger.info(f"Saved {len(photos[:8])} photos for tenant {tenant_id}")
 
             # Process reviews
             reviews = place_data.get('reviews', [])
