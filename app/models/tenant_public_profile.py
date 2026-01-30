@@ -314,7 +314,7 @@ class TenantPublicProfile(db.Model):
                 'title': self.tracking_widget_title,
             },
             'hero_style': self.hero_style,
-            'theme': self.theme or 'starter',
+            'theme': self.theme or 'premium',
             'trust_badges': {
                 'show': self.show_trust_badges,
                 'warranty_days': self.warranty_days or 90,
@@ -432,7 +432,7 @@ class TenantPublicProfile(db.Model):
                 'title': self.tracking_widget_title or 'Pratite status Vaše popravke',
             },
             'hero_style': self.hero_style or 'centered',
-            'theme': self.theme or 'starter',
+            'theme': self.theme or 'premium',
             'trust_badges': {
                 'show': self.show_trust_badges if self.show_trust_badges is not None else True,
                 'warranty_days': self.warranty_days or 90,
