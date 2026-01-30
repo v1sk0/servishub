@@ -1001,7 +1001,9 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    text-align: left;
+    text-align: center;
+    max-width: 200px;
+    margin: 0 auto;
 }
 
 .mg-working-hours__row {
@@ -1247,6 +1249,50 @@
 .mg-mt-12 { margin-top: var(--mg-space-12); }
 .mg-mb-4 { margin-bottom: var(--mg-space-4); }
 .mg-mb-8 { margin-bottom: var(--mg-space-8); }
+
+/* ========================================
+   FLOATING BUTTONS
+   ======================================== */
+.mg-floating-btn {
+    position: fixed;
+    bottom: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    z-index: 9999;
+}
+
+.mg-floating-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.4);
+}
+
+.mg-floating-btn--whatsapp {
+    right: 24px;
+    background: #25D366;
+}
+
+.mg-floating-btn--whatsapp:hover {
+    background: #1da851;
+}
+
+.mg-floating-btn--phone {
+    left: 24px;
+    background: linear-gradient(135deg, var(--mg-gradient-1), var(--mg-gradient-2));
+}
+
+@media (min-width: 768px) {
+    .mg-floating-btn--phone {
+        display: none;
+    }
+}
 
 /* ========================================
    RESPONSIVE
