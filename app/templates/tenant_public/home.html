@@ -108,11 +108,11 @@
 <section class="mg-section">
     <div class="mg-section__container">
         <div class="mg-tracking">
-            <h2 class="mg-tracking__title">{{ profile.tracking_widget_title or 'Pratite status popravke' }}</h2>
+            <h2 class="mg-tracking__title">{{ profile.tracking_widget_title or 'Pratite status Vase popravke' }}</h2>
             <p class="mg-tracking__subtitle">Unesite broj naloga i poslednja 4 broja Vaseg telefona</p>
             <form class="mg-tracking__form" x-data="{ token: '', phone: '' }" @submit.prevent="if(token.trim() && phone.trim().length >= 4) window.location.href = '/track/' + encodeURIComponent(token.trim()) + '?tenant_id={{ tenant.id }}&phone=' + encodeURIComponent(phone.trim())">
-                <input type="text" x-model="token" class="mg-tracking__input" placeholder="Broj naloga" required style="flex: 1;">
-                <input type="text" x-model="phone" class="mg-tracking__input" placeholder="Posl. 4 cifre" maxlength="4" required style="width: 120px;">
+                <input type="text" x-model="token" class="mg-tracking__input" placeholder="Broj naloga" required>
+                <input type="text" x-model="phone" class="mg-tracking__input mg-tracking__input--short" placeholder="Posl. 4 cifre" maxlength="4" required>
                 <button type="submit" class="mg-btn mg-btn--primary">Proveri</button>
             </form>
         </div>

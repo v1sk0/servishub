@@ -1054,14 +1054,14 @@
     background: var(--mg-glass-bg);
     border: 1px solid var(--mg-glass-border);
     border-radius: var(--mg-radius-2xl);
-    padding: var(--mg-space-8);
-    max-width: 500px;
+    padding: var(--mg-space-8) var(--mg-space-10);
+    max-width: 680px;
     margin: 0 auto;
     text-align: center;
 }
 
 .mg-tracking__title {
-    font-size: 1.25rem;
+    font-size: 1.375rem;
     font-weight: 700;
     color: var(--mg-text-primary);
     margin-bottom: var(--mg-space-2);
@@ -1069,17 +1069,20 @@
 
 .mg-tracking__subtitle {
     color: var(--mg-text-secondary);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     margin-bottom: var(--mg-space-6);
 }
 
 .mg-tracking__form {
     display: flex;
     gap: var(--mg-space-3);
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .mg-tracking__input {
     flex: 1;
+    min-width: 160px;
     padding: var(--mg-space-3) var(--mg-space-4);
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--mg-glass-border);
@@ -1090,6 +1093,12 @@
     transition: var(--mg-transition-fast);
 }
 
+.mg-tracking__input--short {
+    flex: 0 0 auto;
+    width: 140px;
+    min-width: auto;
+}
+
 .mg-tracking__input:focus {
     border-color: var(--mg-gradient-1);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
@@ -1097,6 +1106,22 @@
 
 .mg-tracking__input::placeholder {
     color: var(--mg-text-muted);
+}
+
+@media (max-width: 640px) {
+    .mg-tracking {
+        padding: var(--mg-space-6);
+    }
+
+    .mg-tracking__form {
+        flex-direction: column;
+    }
+
+    .mg-tracking__input,
+    .mg-tracking__input--short {
+        width: 100%;
+        min-width: auto;
+    }
 }
 
 /* ========================================

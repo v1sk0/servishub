@@ -98,12 +98,12 @@ def _get_csp_policy() -> str:
         # img-src: Slike
         # data: - data URLs (base64 slike)
         # blob: - blob URLs (uploads)
-        # Cloudinary za LK slike, Google Maps tiles
-        "img-src": "'self' data: blob: https://res.cloudinary.com https://*.googleusercontent.com https://maps.gstatic.com https://maps.googleapis.com https://*.ggpht.com https://*.google.com",
+        # Cloudinary za LK slike, Google Maps tiles, Places API photos
+        "img-src": "'self' data: blob: https://res.cloudinary.com https://*.googleusercontent.com https://maps.gstatic.com https://maps.googleapis.com https://places.googleapis.com https://*.ggpht.com https://*.google.com",
 
         # connect-src: AJAX/Fetch zahtevi
-        # Nas API, Google OAuth, Cloudinary upload, Google Maps
-        "connect-src": "'self' https://oauth2.googleapis.com https://api.cloudinary.com https://www.googleapis.com https://maps.googleapis.com",
+        # Nas API, Google OAuth, Cloudinary upload, Google Maps, Places API
+        "connect-src": "'self' https://oauth2.googleapis.com https://api.cloudinary.com https://www.googleapis.com https://maps.googleapis.com https://places.googleapis.com",
 
         # frame-src: iframe izvori
         # Google reCAPTCHA i OAuth popups
