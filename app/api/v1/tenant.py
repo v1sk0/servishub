@@ -1345,6 +1345,97 @@ def update_public_profile():
     }
 
 
+@bp.route('/public-profile/logo', methods=['POST'])
+@jwt_required
+def upload_public_profile_logo():
+    """
+    Upload logo za javnu stranicu tenanta.
+
+    Expects multipart/form-data with 'logo' file field.
+    Only OWNER and ADMIN can upload logo.
+
+    Returns:
+        - 200: { url: "cloudinary_url", message: "Logo uploaded" }
+        - 400: Validation error
+        - 403: Permission denied
+        - 500: Upload error
+    """
+    from app.utils.cloudinary_upload import upload_image
+
+    user = TenantUser.query.get(g.user_id)
+    if not user or user.role.value not in ['OWNER', 'ADMIN']:
+        return {'error': 'Admin access required'}, 403
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    profile = TenantPublicProfile.query.filter_by(tenant_id=tenant.id).first()
+    if not profile:
+        # Kreiraj profil ako ne postoji
+        profile = TenantPublicProfile(tenant_id=tenant.id)
+        db.session.add(profile)
+
+    # Check if file is in request
+    if 'logo' not in request.files:
+        return {'error': 'Fajl nije prosleđen'}, 400
+
+    file = request.files['logo']
+
+    # Upload to Cloudinary with custom subfolder for public site logos
+    result = upload_image(file, tenant.id, 'public_site', 'logo')
+
+    if not result['success']:
+        return {'error': result['error']}, 400
+
+    # Save URL to public profile
+    profile.logo_url = result['url']
+    profile.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    return {
+        'message': 'Logo za javnu stranicu uspešno uploadovan',
+        'url': result['url'],
+        'width': result.get('width'),
+        'height': result.get('height')
+    }
+
+
+@bp.route('/public-profile/logo', methods=['DELETE'])
+@jwt_required
+def delete_public_profile_logo():
+    """
+    Briše logo javne stranice (vraća na korišćenje loga firme).
+
+    Only OWNER and ADMIN can delete logo.
+    """
+    user = TenantUser.query.get(g.user_id)
+    if not user or user.role.value not in ['OWNER', 'ADMIN']:
+        return {'error': 'Admin access required'}, 403
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    profile = TenantPublicProfile.query.filter_by(tenant_id=tenant.id).first()
+    if not profile:
+        return {'error': 'Public profile not found'}, 404
+
+    if not profile.logo_url:
+        return {'message': 'Logo nije postavljen', 'using_company_logo': True}
+
+    # Clear the logo URL to use company logo as fallback
+    profile.logo_url = None
+    profile.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    return {
+        'message': 'Logo javne stranice obrisan. Koristićete logo firme.',
+        'using_company_logo': True,
+        'company_logo_url': tenant.logo_url
+    }
+
+
 @bp.route('/public-profile/custom-domain', methods=['POST'])
 @jwt_required
 def setup_custom_domain():
