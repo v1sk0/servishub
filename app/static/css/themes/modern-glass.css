@@ -1295,6 +1295,47 @@
 }
 
 /* ========================================
+   DIRECTIONS BUTTON
+   ======================================== */
+.mg-directions-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.mg-directions-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+.mg-directions-btn:hover::before {
+    left: 100%;
+}
+
+.mg-directions-btn svg {
+    animation: pulseIcon 2s ease-in-out infinite;
+}
+
+@keyframes pulseIcon {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* ========================================
    RESPONSIVE
    ======================================== */
 @media (max-width: 768px) {
