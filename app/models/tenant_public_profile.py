@@ -192,10 +192,10 @@ class TenantPublicProfile(db.Model):
     # TEMA SAJTA
     # ============================================
     # Tri predefinisane teme sa različitim stilovima:
-    # - starter: Čista, profesionalna, plava paleta (default)
-    # - premium: Moderna, glassmorphism efekti, ljubičasta paleta
-    # - elite: Luksuzna, dark mode, zlatni akcenti
-    theme = db.Column(db.String(20), default='starter')
+    # - starter: Čista, profesionalna, svetla paleta
+    # - premium: Dark glassmorphism, beli glow tekst, ljubičasti akcenti (default)
+    # - elite: Luksuzna, zlatni akcenti
+    theme = db.Column(db.String(20), default='premium')
 
     # ============================================
     # FLASH SERVICES - Animirani prikaz usluga
