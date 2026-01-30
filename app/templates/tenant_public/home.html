@@ -61,9 +61,19 @@
                 {% endif %}
             </div>
 
+            <!-- Flash Services - Scramble Animation -->
+            {% if flash_words and flash_words|length > 0 %}
+            <div class="mg-scramble-section-inline mg-fade-in mg-fade-in-delay-5">
+                <p class="mg-scramble-label">Naše usluge</p>
+                <div class="mg-scramble-container">
+                    <div class="mg-scramble-text" id="scrambleText"></div>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Trust Bar -->
             {% if profile.show_trust_badges != false %}
-            <div class="mg-trust-bar mg-fade-in mg-fade-in-delay-5">
+            <div class="mg-trust-bar mg-fade-in mg-fade-in-delay-6">
                 <div class="mg-trust-item">
                     <div class="mg-trust-item__icon">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,16 +114,7 @@
 </section>
 
 {% if flash_words and flash_words|length > 0 %}
-<!-- Scramble Text Animation - Service Highlights -->
-<section class="mg-scramble-section">
-    <div class="mg-section__container">
-        <p class="mg-scramble-label">Naše usluge</p>
-        <div class="mg-scramble-container">
-            <div class="mg-scramble-text" id="scrambleText"></div>
-        </div>
-    </div>
-</section>
-
+<!-- Scramble Text Script -->
 <script>
 // TextScramble Class - Modern scramble reveal animation
 class TextScramble {

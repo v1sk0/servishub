@@ -1176,6 +1176,26 @@
     position: relative;
 }
 
+/* Inline version for hero section - above trust bar */
+.mg-scramble-section-inline {
+    text-align: center;
+    margin: var(--mg-space-8) 0;
+    padding: var(--mg-space-4) 0;
+}
+
+.mg-scramble-section-inline .mg-scramble-label {
+    margin-bottom: var(--mg-space-2);
+    font-size: 0.75rem;
+}
+
+.mg-scramble-section-inline .mg-scramble-container {
+    min-height: 50px;
+}
+
+.mg-scramble-section-inline .mg-scramble-text {
+    font-size: clamp(1.2rem, 4vw, 2.5rem);
+}
+
 .mg-scramble-label {
     color: var(--mg-text-muted);
     margin-bottom: var(--mg-space-4);
