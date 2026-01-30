@@ -116,6 +116,7 @@
                 <a href="/o-nama" class="mg-nav__link">O nama</a>
                 {% endif %}
                 <a href="/kontakt" class="mg-nav__link">Kontakt</a>
+                <a href="/politika-privatnosti" class="mg-nav__link">Privatnost</a>
             </div>
 
             <!-- CTA -->
@@ -150,6 +151,7 @@
         <a href="/o-nama" class="mg-mobile-menu__link" @click="mobileMenuOpen = false">O nama</a>
         {% endif %}
         <a href="/kontakt" class="mg-mobile-menu__link" @click="mobileMenuOpen = false">Kontakt</a>
+        <a href="/politika-privatnosti" class="mg-mobile-menu__link" @click="mobileMenuOpen = false">Privatnost</a>
         {% set mobile_phone = profile.phone or tenant.telefon %}
         {% if mobile_phone %}
         <a href="tel:{{ mobile_phone }}" class="mg-btn mg-btn--primary mg-btn--lg" @click="mobileMenuOpen = false">
