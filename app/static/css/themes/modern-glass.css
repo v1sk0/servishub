@@ -1171,8 +1171,9 @@
 .mg-scramble-section {
     padding: var(--mg-space-16) 0;
     text-align: center;
-    background: linear-gradient(180deg, transparent, rgba(99, 102, 241, 0.02), transparent);
+    background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
     overflow: hidden;
+    position: relative;
 }
 
 .mg-scramble-label {
@@ -1186,30 +1187,60 @@
 
 .mg-scramble-container {
     position: relative;
-    min-height: 60px;
+    min-height: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .mg-scramble-text {
-    font-size: clamp(1.5rem, 5vw, 3.5rem);
+    font-size: clamp(1.6rem, 5vw, 3.5rem);
     font-weight: 800;
-    background: linear-gradient(135deg, var(--mg-gradient-1), var(--mg-gradient-2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #ffffff;
+    -webkit-text-fill-color: #ffffff;
     min-height: 1.2em;
     display: inline-block;
     text-align: center;
     line-height: 1.2;
+    text-shadow:
+        0 0 10px rgba(255, 255, 255, 0.5),
+        0 0 20px rgba(99, 102, 241, 0.5),
+        0 0 40px rgba(99, 102, 241, 0.3),
+        0 0 80px rgba(168, 85, 247, 0.2);
+    animation: textGlow 3s ease-in-out infinite alternate;
+    letter-spacing: 0.02em;
+}
+
+@keyframes textGlow {
+    0% {
+        text-shadow:
+            0 0 10px rgba(255, 255, 255, 0.5),
+            0 0 20px rgba(99, 102, 241, 0.5),
+            0 0 40px rgba(99, 102, 241, 0.3),
+            0 0 80px rgba(168, 85, 247, 0.2);
+    }
+    100% {
+        text-shadow:
+            0 0 15px rgba(255, 255, 255, 0.7),
+            0 0 30px rgba(99, 102, 241, 0.7),
+            0 0 60px rgba(99, 102, 241, 0.5),
+            0 0 100px rgba(168, 85, 247, 0.4);
+    }
 }
 
 .mg-scramble-text .scramble-char {
-    color: var(--mg-gradient-1);
-    -webkit-text-fill-color: var(--mg-gradient-1);
-    opacity: 0.6;
+    color: rgba(99, 102, 241, 0.9);
+    -webkit-text-fill-color: rgba(99, 102, 241, 0.9);
     display: inline-block;
+    text-shadow:
+        0 0 10px rgba(99, 102, 241, 0.8),
+        0 0 20px rgba(99, 102, 241, 0.5);
+    animation: charFlicker 0.1s ease-in-out infinite;
+}
+
+@keyframes charFlicker {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
 }
 
 /* Responsive */
@@ -1219,7 +1250,14 @@
     }
 
     .mg-scramble-container {
-        min-height: 50px;
+        min-height: 55px;
+    }
+
+    .mg-scramble-text {
+        text-shadow:
+            0 0 8px rgba(255, 255, 255, 0.5),
+            0 0 15px rgba(99, 102, 241, 0.4),
+            0 0 30px rgba(99, 102, 241, 0.2);
     }
 }
 
