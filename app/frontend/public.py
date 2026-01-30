@@ -50,9 +50,10 @@ def landing():
 
         google_reviews = []
         if google_integration and google_integration.google_place_id:
-            google_reviews = TenantGoogleReview.query.filter_by(
-                tenant_id=tenant.id,
-                is_visible=True
+            google_reviews = TenantGoogleReview.query.filter(
+                TenantGoogleReview.tenant_id == tenant.id,
+                TenantGoogleReview.is_visible == True,
+                TenantGoogleReview.rating >= 4  # Samo 4+ zvezdice
             ).order_by(TenantGoogleReview.review_time.desc()).limit(6).all()
 
         return render_template(
