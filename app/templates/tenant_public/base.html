@@ -194,8 +194,10 @@
             <div>
                 <h4 class="mg-footer__title">Usluge</h4>
                 <ul class="mg-footer__links">
-                    {% for category in services_by_category.keys()|list[:4] %}
+                    {% for category in services_by_category.keys() %}
+                    {% if loop.index <= 4 %}
                     <li class="mg-footer__link"><a href="/cenovnik#{{ category|lower|replace(' ', '-') }}">{{ category }}</a></li>
+                    {% endif %}
                     {% endfor %}
                 </ul>
             </div>
