@@ -29,14 +29,10 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Theme CSS - Dynamic loading based on tenant profile -->
-    {% set theme_map = {
-        'premium': 'modern-glass.css',
-        'starter': 'starter.css',
-        'elite': 'elite.css'
-    } %}
-    {% set current_theme = profile.theme if profile.theme in theme_map else 'premium' %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes/' + theme_map[current_theme]) }}">
+    <!-- Theme CSS -->
+    <!-- TODO: starter.css i elite.css trebaju biti prilagodjene za mg- klase -->
+    <!-- Za sada sve teme koriste modern-glass.css -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes/modern-glass.css') }}">
 
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
