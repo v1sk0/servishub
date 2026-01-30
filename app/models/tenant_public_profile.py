@@ -167,6 +167,28 @@ class TenantPublicProfile(db.Model):
     hero_style = db.Column(db.String(20), default='centered')  # 'centered', 'split', 'minimal'
 
     # ============================================
+    # TRUST BADGES
+    # ============================================
+    warranty_days = db.Column(db.Integer, default=90)  # Za trust badge
+    show_trust_badges = db.Column(db.Boolean, default=True)
+    fast_service_text = db.Column(db.String(50), default='1-3 sata')  # Npr: "1-3h", "Isti dan"
+
+    # ============================================
+    # KURIR SEKCIJA
+    # ============================================
+    show_courier_section = db.Column(db.Boolean, default=False)
+    courier_price = db.Column(db.Integer)  # Cena u RSD
+    courier_title = db.Column(db.String(100), default='Ne možete doći? Šaljemo kurira!')
+    courier_description = db.Column(db.String(300), default='Besplatno preuzimanje i dostava na Vašu adresu.')
+
+    # ============================================
+    # POPULARNI SERVISI
+    # ============================================
+    show_popular_services = db.Column(db.Boolean, default=True)
+    popular_services_title = db.Column(db.String(100), default='Najpopularnije usluge')
+    popular_services_limit = db.Column(db.Integer, default=6)
+
+    # ============================================
     # TEMA SAJTA
     # ============================================
     # Tri predefinisane teme sa različitim stilovima:
@@ -279,6 +301,22 @@ class TenantPublicProfile(db.Model):
             },
             'hero_style': self.hero_style,
             'theme': self.theme or 'starter',
+            'trust_badges': {
+                'show': self.show_trust_badges,
+                'warranty_days': self.warranty_days or 90,
+                'fast_service_text': self.fast_service_text or '1-3 sata',
+            },
+            'courier': {
+                'show_section': self.show_courier_section,
+                'price': self.courier_price,
+                'title': self.courier_title,
+                'description': self.courier_description,
+            },
+            'popular_services': {
+                'show': self.show_popular_services,
+                'title': self.popular_services_title,
+                'limit': self.popular_services_limit or 6,
+            },
         }
 
         if include_private:
@@ -371,4 +409,20 @@ class TenantPublicProfile(db.Model):
             },
             'hero_style': self.hero_style or 'centered',
             'theme': self.theme or 'starter',
+            'trust_badges': {
+                'show': self.show_trust_badges if self.show_trust_badges is not None else True,
+                'warranty_days': self.warranty_days or 90,
+                'fast_service_text': self.fast_service_text or '1-3 sata',
+            },
+            'courier': {
+                'show_section': self.show_courier_section,
+                'price': self.courier_price,
+                'title': self.courier_title or 'Ne možete doći? Šaljemo kurira!',
+                'description': self.courier_description or 'Besplatno preuzimanje i dostava na Vašu adresu.',
+            },
+            'popular_services': {
+                'show': self.show_popular_services if self.show_popular_services is not None else True,
+                'title': self.popular_services_title or 'Najpopularnije usluge',
+                'limit': self.popular_services_limit or 6,
+            },
         }

@@ -545,3 +545,80 @@
 [x-cloak] {
     display: none !important;
 }
+
+/* ========================================
+   TRUST BADGES
+   ======================================== */
+.sh-trust-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--sh-space-4);
+    margin-top: var(--sh-space-10);
+}
+
+.sh-trust-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--sh-space-2);
+    padding: var(--sh-space-3) var(--sh-space-5);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--sh-radius-xl);
+    font-size: var(--sh-font-size-sm);
+}
+
+.sh-trust-badge__icon {
+    font-size: 1.5rem;
+}
+
+.sh-trust-badge__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.sh-trust-badge__text strong {
+    font-weight: 700;
+    font-size: var(--sh-font-size-base);
+}
+
+.sh-trust-badge__text span {
+    font-size: var(--sh-font-size-xs);
+    opacity: 0.8;
+}
+
+/* Elite theme trust badges */
+.sh-trust-badges--elite {
+    gap: var(--sh-space-6);
+    padding-top: var(--sh-space-8);
+    border-top: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.sh-trust-badges--elite .sh-trust-badge {
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    color: #fafaf9;
+}
+
+.sh-trust-badges--elite .sh-trust-badge__text strong {
+    color: #fbbf24;
+}
+
+/* Premium theme trust badges */
+.sh-trust-badges--premium {
+    gap: var(--sh-space-3);
+}
+
+.sh-trust-badge--glass {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: var(--sh-space-2) var(--sh-space-4);
+    font-size: var(--sh-font-size-sm);
+}
+
+.sh-trust-badge--glass strong {
+    font-weight: 700;
+}

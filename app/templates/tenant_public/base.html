@@ -108,11 +108,11 @@
 
     {% block head %}{% endblock %}
 
-    <!-- Structured Data - LocalBusiness Schema -->
+    <!-- Structured Data - LocalBusiness Schema (Enhanced) -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
-        "@type": "LocalBusiness",
+        "@type": ["LocalBusiness", "ProfessionalService"],
         "@id": "{{ request.url_root }}#business",
         "name": "{{ profile.display_name or tenant.name }}",
         "description": "{{ profile.meta_description or profile.tagline or '' }}",
@@ -129,14 +129,57 @@
             "addressCountry": "RS"
         },
         {% endif %}
+        {% if profile.working_hours %}
+        "openingHoursSpecification": [
+            {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+                "opens": "{{ profile.working_hours.split('-')[0]|trim if '-' in profile.working_hours else '09:00' }}",
+                "closes": "{{ profile.working_hours.split('-')[1]|trim if '-' in profile.working_hours else '20:00' }}"
+            }
+        ],
+        {% endif %}
+        "areaServed": {
+            "@type": "Country",
+            "name": "Srbija"
+        },
+        {% if profile.facebook_url or profile.instagram_url %}
+        "sameAs": [
+            {% if profile.facebook_url %}"{{ profile.facebook_url }}"{% if profile.instagram_url %},{% endif %}{% endif %}
+            {% if profile.instagram_url %}"{{ profile.instagram_url }}"{% endif %}
+        ],
+        {% endif %}
         {% if google_integration and google_integration.google_rating %}
         "aggregateRating": {
             "@type": "AggregateRating",
             "ratingValue": "{{ google_integration.google_rating }}",
-            "reviewCount": "{{ google_integration.total_reviews }}"
+            "reviewCount": "{{ google_integration.total_reviews }}",
+            "bestRating": "5",
+            "worstRating": "1"
         },
         {% endif %}
-        "priceRange": "$$"
+        {% if services %}
+        "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Usluge servisa",
+            "itemListElement": [
+                {% for service in services[:5] %}
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "{{ service.name }}",
+                        "description": "{{ service.description|default('', true)|truncate(150) }}"
+                    }
+                    {% if service.price_from %},"price": "{{ service.price_from }}",
+                    "priceCurrency": "RSD"{% endif %}
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ]
+        },
+        {% endif %}
+        "priceRange": "$$",
+        "paymentAccepted": "Cash, Credit Card"
     }
     </script>
 </head>
