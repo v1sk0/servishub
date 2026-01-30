@@ -11,14 +11,22 @@
 <section class="mg-hero">
     <div class="mg-hero__container">
         <div class="mg-hero__content">
+            <!-- Hero Logo - Large & Centered -->
+            {% set hero_logo = profile.logo_url or tenant.logo_url %}
+            {% if hero_logo %}
+            <div class="mg-hero__logo-wrapper mg-fade-in">
+                <img src="{{ hero_logo }}" alt="{{ profile.display_name or tenant.name }}" class="mg-hero__logo">
+            </div>
+            {% endif %}
+
             <!-- Badge -->
-            <div class="mg-hero__badge mg-fade-in">
+            <div class="mg-hero__badge mg-fade-in mg-fade-in-delay-1">
                 <span class="mg-hero__badge-dot"></span>
                 Profesionalni servis
             </div>
 
             <!-- Title with gradient -->
-            <h1 class="mg-hero__title mg-fade-in mg-fade-in-delay-1">
+            <h1 class="mg-hero__title mg-fade-in mg-fade-in-delay-2">
                 {% if profile.headline %}
                 {{ profile.headline }}
                 {% else %}
@@ -28,16 +36,16 @@
 
             <!-- Subtitle -->
             {% if profile.tagline %}
-            <p class="mg-hero__subtitle mg-fade-in mg-fade-in-delay-2">{{ profile.tagline }}</p>
+            <p class="mg-hero__subtitle mg-fade-in mg-fade-in-delay-3">{{ profile.tagline }}</p>
             {% else %}
-            <p class="mg-hero__subtitle mg-fade-in mg-fade-in-delay-2">
+            <p class="mg-hero__subtitle mg-fade-in mg-fade-in-delay-3">
                 Strucni tim sa visegodisjim iskustvom. Garancija na sve popravke.
                 Vasa satisfakcija nam je prioritet.
             </p>
             {% endif %}
 
             <!-- CTA Buttons -->
-            <div class="mg-hero__cta mg-fade-in mg-fade-in-delay-3">
+            <div class="mg-hero__cta mg-fade-in mg-fade-in-delay-4">
                 {% if hero_phone %}
                 <a href="tel:{{ hero_phone }}" class="mg-btn mg-btn--primary mg-btn--lg">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +63,7 @@
 
             <!-- Trust Bar -->
             {% if profile.show_trust_badges != false %}
-            <div class="mg-trust-bar mg-fade-in mg-fade-in-delay-4">
+            <div class="mg-trust-bar mg-fade-in mg-fade-in-delay-5">
                 <div class="mg-trust-item">
                     <div class="mg-trust-item__icon">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

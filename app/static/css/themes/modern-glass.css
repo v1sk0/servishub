@@ -319,6 +319,44 @@
     margin: 0 auto;
 }
 
+/* Hero Logo - Large & Centered */
+.mg-hero__logo-wrapper {
+    margin-bottom: var(--mg-space-10);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.mg-hero__logo {
+    width: auto;
+    height: auto;
+    max-width: 280px;
+    max-height: 200px;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 30px rgba(99, 102, 241, 0.3));
+    animation: logoGlow 3s ease-in-out infinite;
+}
+
+@keyframes logoGlow {
+    0%, 100% {
+        filter: drop-shadow(0 8px 30px rgba(99, 102, 241, 0.3));
+    }
+    50% {
+        filter: drop-shadow(0 12px 40px rgba(168, 85, 247, 0.4));
+    }
+}
+
+@media (min-width: 768px) {
+    .mg-hero__logo {
+        max-width: 350px;
+        max-height: 250px;
+    }
+
+    .mg-hero__logo-wrapper {
+        margin-bottom: var(--mg-space-12);
+    }
+}
+
 .mg-hero__badge {
     display: inline-flex;
     align-items: center;
@@ -986,6 +1024,8 @@
 .mg-fade-in-delay-2 { animation-delay: 0.2s; }
 .mg-fade-in-delay-3 { animation-delay: 0.3s; }
 .mg-fade-in-delay-4 { animation-delay: 0.4s; }
+.mg-fade-in-delay-5 { animation-delay: 0.5s; }
+.mg-fade-in-delay-6 { animation-delay: 0.6s; }
 
 @keyframes fadeInUp {
     to {
