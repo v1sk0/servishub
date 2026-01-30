@@ -1,84 +1,26 @@
 """
-Script to update Viper tenant's Google integration and theme
+Script to connect Viper tenant to their Google Business Profile.
+Simulates the same flow as settings UI: search -> select -> sync.
+
 Run on Heroku: heroku run python scripts/update_viper_google.py
 """
-from datetime import datetime, timedelta
+from datetime import datetime
 from app import create_app
 from app.models import Tenant, TenantPublicProfile, TenantGoogleIntegration, TenantGoogleReview
 from app.extensions import db
+from app.services.google_integration_service import GoogleIntegrationService
 
 app = create_app()
 
-# Demo recenzije - kao da su sync-ovane sa Google-a
-DEMO_REVIEWS = [
-    {
-        'author_name': 'Marko Petrović',
-        'rating': 5,
-        'text': 'Odlična usluga! Zamenili su ekran na mom iPhone-u za samo sat vremena. Sve radi perfektno, cena fer. Preporučujem!',
-        'days_ago': 3
-    },
-    {
-        'author_name': 'Ana Jovanović',
-        'rating': 5,
-        'text': 'Profesionalan pristup i brza usluga. Telefon mi je pao u vodu, mislila sam da je gotov, ali su uspeli da izvade sve podatke. Hvala!',
-        'days_ago': 7
-    },
-    {
-        'author_name': 'Nikola Đorđević',
-        'rating': 5,
-        'text': 'Treći put dolazim ovde i uvek sam zadovoljan. Zamena baterije na Samsung-u završena za 30 minuta. Top servis!',
-        'days_ago': 12
-    },
-    {
-        'author_name': 'Jelena Milosavljević',
-        'rating': 4,
-        'text': 'Dobra usluga, telefon popravljen kako treba. Jedino što je trebalo malo duže nego što su rekli, ali sve u svemu zadovoljna sam.',
-        'days_ago': 18
-    },
-    {
-        'author_name': 'Stefan Nikolić',
-        'rating': 5,
-        'text': 'Konačno servis koji zna šta radi! Popravili su mi matičnu ploču koju su drugi odbili. Svaka čast momcima!',
-        'days_ago': 25
-    },
-    {
-        'author_name': 'Milica Stanković',
-        'rating': 5,
-        'text': 'Zamena ekrana na Xiaomi telefonu - brzo, kvalitetno i povoljno. Garancija na popravku je super stvar. Preporuka!',
-        'days_ago': 30
-    },
-    {
-        'author_name': 'Dušan Ilić',
-        'rating': 5,
-        'text': 'Sjajan servis! Otključali su mi telefon koji sam zaboravio šifru. Ljubazno osoblje i profesionalna usluga.',
-        'days_ago': 35
-    },
-    {
-        'author_name': 'Ivana Pavlović',
-        'rating': 4,
-        'text': 'Zadovoljna sam popravkom. Konektor za punjenje je zamenjen i telefon se sada puni normalno. Hvala!',
-        'days_ago': 42
-    },
-    {
-        'author_name': 'Aleksandar Todorović',
-        'rating': 5,
-        'text': 'Već godinama nosim telefone ovde na popravku. Pouzdan servis sa fer cenama. Preporučujem svima!',
-        'days_ago': 50
-    },
-    {
-        'author_name': 'Maja Kostić',
-        'rating': 5,
-        'text': 'Zamenili su mi kameru na telefonu. Slike su sada kristalno jasne kao na novom. Super servis!',
-        'days_ago': 60
-    },
-]
-
 with app.app_context():
-    # Find Viper tenant by name
+    # ============ STEP 1: Find Viper Tenant ============
+    print("=" * 50)
+    print("VIPER MOBILE - Google Business Integration")
+    print("=" * 50)
+
     tenant = Tenant.query.filter(Tenant.name.ilike('%viper%')).first()
 
     if not tenant:
-        # Try to find by profile subdomain
         profile = TenantPublicProfile.query.filter(
             TenantPublicProfile.subdomain.ilike('%viper%')
         ).first()
@@ -86,22 +28,18 @@ with app.app_context():
             tenant = Tenant.query.get(profile.tenant_id)
 
     if not tenant:
-        print("Viper tenant not found!")
-        print("\nAll tenants:")
+        print("\n❌ Viper tenant not found!")
+        print("\nSvi tenanti:")
         for t in Tenant.query.all():
             print(f"  {t.id}: {t.name}")
         exit(1)
 
-    print(f"Found tenant: {tenant.name} (ID: {tenant.id})")
+    print(f"\n✅ Tenant: {tenant.name} (ID: {tenant.id})")
 
-    # Get or create public profile
+    # ============ STEP 2: Update Profile Settings ============
     profile = TenantPublicProfile.query.filter_by(tenant_id=tenant.id).first()
     if profile:
-        # Activate premium theme
         profile.theme = 'premium'
-        print(f"Theme set to: premium")
-
-        # Set flash categories - only phones, no computers
         profile.flash_service_categories = {
             'telefoni': True,
             'racunari': False,
@@ -109,58 +47,128 @@ with app.app_context():
             'trotineti': False,
             'ostalo': False
         }
-        print(f"Flash categories: samo telefoni (racunari OFF)")
+        print(f"✅ Tema: premium")
+        print(f"✅ Flash kategorije: samo telefoni")
 
-    # Check if Google integration exists
-    google = TenantGoogleIntegration.query.filter_by(tenant_id=tenant.id).first()
+    # ============ STEP 3: Google Places Search ============
+    print("\n" + "=" * 50)
+    print("STEP 1: Pretraga Google Places (kao u settings UI)")
+    print("=" * 50)
 
-    if not google:
-        print("Creating new Google integration...")
-        google = TenantGoogleIntegration(tenant_id=tenant.id)
-        db.session.add(google)
+    service = GoogleIntegrationService()
 
-    # Update Google data - pravi Place ID za Viper Mobile Novi Beograd
-    # Place ID se može naći na: https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder
-    google.google_place_id = "ChIJnZ5qx5V6WkcRaFhCLCsH1f0"  # Viper Mobile placeholder
-    google.google_rating = 4.8
-    google.total_reviews = 608
-    google.last_sync_at = datetime.utcnow()
+    if not service.places_api_key:
+        print("\n⚠️  GOOGLE_PLACES_API_KEY nije konfigurisan!")
+        print("   Dodajte ga u Heroku config vars.")
+        db.session.commit()
+        exit(1)
 
-    db.session.flush()  # Da dobijemo google.id
+    try:
+        # Search like settings UI would
+        search_query = "Viper Mobile doo"
+        print(f"\n🔍 Pretražujem: '{search_query}'...")
 
-    print(f"Updated Google integration:")
-    print(f"  Place ID: {google.google_place_id}")
-    print(f"  Rating: {google.google_rating}")
-    print(f"  Reviews: {google.total_reviews}")
-
-    # Delete existing reviews for this tenant (fresh sync simulation)
-    existing_reviews = TenantGoogleReview.query.filter_by(tenant_id=tenant.id).all()
-    if existing_reviews:
-        print(f"\nDeleting {len(existing_reviews)} existing reviews...")
-        for r in existing_reviews:
-            db.session.delete(r)
-
-    # Add demo reviews
-    print(f"\nAdding {len(DEMO_REVIEWS)} demo reviews...")
-    for i, review_data in enumerate(DEMO_REVIEWS):
-        review = TenantGoogleReview(
-            integration_id=google.id,
-            tenant_id=tenant.id,
-            google_review_id=f"viper_demo_review_{i+1}_{tenant.id}",
-            author_name=review_data['author_name'],
-            rating=review_data['rating'],
-            text=review_data['text'],
-            language='sr',
-            review_time=datetime.utcnow() - timedelta(days=review_data['days_ago']),
-            is_visible=True
+        places = service.search_place_by_name(
+            search_query,
+            "Bulevar Arsenija Čarnojevića 91, Novi Beograd"
         )
-        db.session.add(review)
-        print(f"  + {review_data['author_name']} ({review_data['rating']}★)")
 
-    db.session.commit()
+        if not places:
+            print("❌ Nema rezultata pretrage.")
+            db.session.commit()
+            exit(1)
 
-    print(f"\n✅ Done! Viper tenant updated with:")
-    print(f"   - Premium theme")
-    print(f"   - Flash categories: samo telefoni")
-    print(f"   - Google rating: {google.google_rating} ({google.total_reviews} reviews)")
-    print(f"   - {len(DEMO_REVIEWS)} demo reviews for carousel")
+        print(f"\n📋 Pronađeno {len(places)} rezultata:\n")
+        for i, place in enumerate(places[:5]):
+            name = place.get('displayName', {}).get('text', 'N/A')
+            address = place.get('formattedAddress', 'N/A')
+            rating = place.get('rating', 'N/A')
+            reviews = place.get('userRatingCount', 0)
+            place_id = place.get('id', 'N/A')
+            print(f"  [{i+1}] {name}")
+            print(f"      📍 {address}")
+            print(f"      ⭐ {rating} ({reviews} recenzija)")
+            print(f"      🆔 {place_id}\n")
+
+        # ============ STEP 4: Select Place (Auto-select first) ============
+        print("=" * 50)
+        print("STEP 2: Selekcija biznisa (prvi rezultat)")
+        print("=" * 50)
+
+        selected = places[0]
+        place_id = selected.get('id')
+        place_name = selected.get('displayName', {}).get('text', 'Unknown')
+
+        print(f"\n✅ Izabrano: {place_name}")
+        print(f"   Place ID: {place_id}")
+
+        # ============ STEP 5: Connect & Sync (same as settings UI) ============
+        print("\n" + "=" * 50)
+        print("STEP 3: Povezivanje i sync (kao settings UI)")
+        print("=" * 50)
+
+        print("\n📥 Pozivam set_place_id() i sync_reviews()...")
+
+        # This is exactly what settings UI does
+        integration = service.set_place_id(tenant.id, place_id)
+
+        if not integration:
+            print("❌ Greška pri povezivanju.")
+            db.session.commit()
+            exit(1)
+
+        # ============ STEP 6: Show Results ============
+        print("\n" + "=" * 50)
+        print("REZULTATI INTEGRACIJE")
+        print("=" * 50)
+
+        # Refresh from DB
+        integration = TenantGoogleIntegration.query.filter_by(tenant_id=tenant.id).first()
+
+        print(f"\n✅ Google Business povezan!")
+        print(f"   📍 Place ID: {integration.google_place_id}")
+        print(f"   ⭐ Rating: {integration.google_rating}")
+        print(f"   📊 Ukupno recenzija: {integration.total_reviews}")
+        print(f"   🕐 Poslednji sync: {integration.last_sync_at}")
+
+        photos = integration.google_photos or []
+        print(f"   📷 Slike u galeriji: {len(photos)}")
+
+        if photos:
+            print("\n   Galerija slika:")
+            for i, photo in enumerate(photos[:3]):
+                print(f"      [{i+1}] {photo.get('url', 'N/A')[:80]}...")
+
+        # Show reviews
+        reviews = TenantGoogleReview.query.filter_by(
+            tenant_id=tenant.id,
+            is_visible=True
+        ).order_by(TenantGoogleReview.review_time.desc()).all()
+
+        print(f"\n   📝 Sačuvane recenzije: {len(reviews)}")
+
+        if reviews:
+            print("\n   Poslednje recenzije:")
+            for r in reviews[:5]:
+                text_preview = r.text[:50] + "..." if r.text and len(r.text) > 50 else (r.text or "")
+                print(f"      • {r.author_name}: {r.rating}★")
+                if text_preview:
+                    print(f"        \"{text_preview}\"")
+
+        db.session.commit()
+
+        print("\n" + "=" * 50)
+        print("✅ ZAVRŠENO!")
+        print("=" * 50)
+        print(f"\nViper Mobile je sada povezan sa Google Business.")
+        print(f"Javna stranica će prikazivati:")
+        print(f"  - Google rating badge (4.8 ★)")
+        print(f"  - Carousel sa recenzijama ({len(reviews)} recenzija)")
+        print(f"  - Galeriju slika ({len(photos)} slika)")
+        print(f"  - Flash usluge (samo telefoni)")
+
+    except Exception as e:
+        import traceback
+        print(f"\n❌ Greška: {e}")
+        traceback.print_exc()
+        db.session.rollback()
