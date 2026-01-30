@@ -9,6 +9,7 @@ from app.models import Tenant, ServiceLocation, TenantUser, ServiceRepresentativ
 from app.api.middleware.auth import jwt_required
 from app.services.billing_tasks import get_next_invoice_number
 from app.services.ips_service import IPSService
+from app.middleware.public_site import invalidate_public_site_cache
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
@@ -1338,6 +1339,9 @@ def update_public_profile():
 
     profile.updated_at = datetime.utcnow()
     db.session.commit()
+
+    # Invalidate public site cache so theme changes take effect immediately
+    invalidate_public_site_cache(tenant_id=g.tenant_id)
 
     return {
         'message': 'Public profile updated',
