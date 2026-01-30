@@ -1,8 +1,10 @@
 """
 Google Business Profile Integration Service
 
-Handles OAuth 2.0 flow and Places API interactions for
-fetching reviews and ratings from Google Business Profile.
+Handles OAuth 2.0 flow and Places API (New) interactions for
+fetching reviews, photos and ratings from Google Business Profile.
+
+Uses the new Places API (v1) which provides better photo support.
 """
 
 import os
@@ -21,14 +23,14 @@ logger = logging.getLogger(__name__)
 
 
 class GoogleIntegrationService:
-    """Service for Google Business Profile integration."""
+    """Service for Google Business Profile integration using Places API (New)."""
 
     # OAuth endpoints
     OAUTH_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
     OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token"
 
-    # Places API endpoints (Legacy API - more widely enabled)
-    PLACES_API_BASE = "https://maps.googleapis.com/maps/api/place"
+    # Places API (New) endpoints
+    PLACES_API_BASE = "https://places.googleapis.com/v1"
 
     # Required OAuth scopes
     SCOPES = [
@@ -46,6 +48,16 @@ class GoogleIntegrationService:
     def is_configured(self) -> bool:
         """Check if Google integration is properly configured."""
         return all([self.client_id, self.client_secret, self.places_api_key])
+
+    def _get_api_headers(self, field_mask: str = None) -> Dict[str, str]:
+        """Get headers for Places API (New) requests."""
+        headers = {
+            'X-Goog-Api-Key': self.places_api_key,
+            'Content-Type': 'application/json',
+        }
+        if field_mask:
+            headers['X-Goog-FieldMask'] = field_mask
+        return headers
 
     def get_authorization_url(self, tenant_id: int, redirect_uri: str) -> str:
         """
@@ -129,7 +141,7 @@ class GoogleIntegrationService:
 
     def search_place_by_name(self, business_name: str, address: str = None) -> List[Dict]:
         """
-        Search for businesses on Google Places by name.
+        Search for businesses on Google Places by name using Places API (New).
 
         Args:
             business_name: Name of the business
@@ -145,64 +157,57 @@ class GoogleIntegrationService:
         if address:
             query = f"{business_name} {address}"
 
-        # Use Legacy Places API Text Search
-        url = f"{self.PLACES_API_BASE}/textsearch/json"
+        url = f"{self.PLACES_API_BASE}/places:searchText"
 
-        logger.info(f"Searching Google Places for: {query}")
-        logger.info(f"Request URL: {url}")
+        logger.info(f"Searching Google Places (New) for: {query}")
 
-        # Try with Serbian region first
-        params = {
-            'query': query,
-            'key': self.places_api_key,
-            'language': 'sr',
-            'region': 'rs',
+        # Field mask for search results
+        field_mask = "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount"
+
+        headers = self._get_api_headers(field_mask)
+
+        # Request body for Places API (New)
+        body = {
+            'textQuery': query,
+            'languageCode': 'sr',
+            'regionCode': 'RS',
         }
 
-        response = requests.get(url, params=params)
+        response = requests.post(url, headers=headers, json=body)
 
         logger.info(f"Response status: {response.status_code}")
         logger.info(f"Response body: {response.text[:500] if response.text else 'empty'}")
 
         if response.status_code != 200:
             logger.error(f"Place search failed: {response.status_code} - {response.text}")
-            raise Exception(f"Google API error: {response.status_code}")
-
-        data = response.json()
-
-        # Check for API errors
-        if data.get('status') not in ['OK', 'ZERO_RESULTS']:
-            error_msg = data.get('error_message', data.get('status', 'Unknown error'))
-            logger.error(f"Place search API error: {error_msg}")
+            error_data = response.json() if response.text else {}
+            error_msg = error_data.get('error', {}).get('message', f'HTTP {response.status_code}')
             raise Exception(f"Google API error: {error_msg}")
 
-        results = data.get('results', [])
+        data = response.json()
+        results = data.get('places', [])
 
         # If no results, try without region restriction
         if not results:
-            logger.info(f"No results with region restriction, trying global search")
-            params_global = {
-                'query': query,
-                'key': self.places_api_key,
-            }
-            response = requests.get(url, params=params_global)
+            logger.info("No results with region restriction, trying global search")
+            body_global = {'textQuery': query}
+            response = requests.post(url, headers=headers, json=body_global)
             if response.status_code == 200:
                 data = response.json()
-                if data.get('status') == 'OK':
-                    results = data.get('results', [])
-                    logger.info(f"Global search found {len(results)} places")
+                results = data.get('places', [])
+                logger.info(f"Global search found {len(results)} places")
 
         logger.info(f"Found {len(results)} places total")
 
-        # Normalize to match expected format
+        # Normalize results
         places = []
         for r in results:
             places.append({
-                'id': r.get('place_id'),
-                'displayName': {'text': r.get('name', '')},
-                'formattedAddress': r.get('formatted_address', ''),
+                'id': r.get('id'),
+                'displayName': r.get('displayName', {}),
+                'formattedAddress': r.get('formattedAddress', ''),
                 'rating': r.get('rating'),
-                'userRatingCount': r.get('user_ratings_total'),
+                'userRatingCount': r.get('userRatingCount'),
             })
 
         if places:
@@ -211,82 +216,100 @@ class GoogleIntegrationService:
 
     def get_place_details(self, place_id: str) -> Optional[Dict]:
         """
-        Get detailed information about a place including rating and reviews.
+        Get detailed information about a place including rating, reviews and photos.
+        Uses Places API (New) for better photo support.
 
         Args:
             place_id: Google Place ID
 
         Returns:
-            Place details dict (normalized format)
+            Place details dict with photos, reviews, rating
         """
         if not self.places_api_key:
             raise ValueError("GOOGLE_PLACES_API_KEY not configured")
 
-        # Use Legacy Places API Place Details
-        url = f"{self.PLACES_API_BASE}/details/json"
-        params = {
-            'place_id': place_id,
-            'key': self.places_api_key,
-            'fields': 'place_id,name,formatted_address,rating,user_ratings_total,reviews,photos',
-            'language': 'sr',
-            'reviews_sort': 'newest',
-        }
+        url = f"{self.PLACES_API_BASE}/places/{place_id}"
 
-        response = requests.get(url, params=params)
+        # Field mask for detailed info including photos
+        field_mask = "id,displayName,formattedAddress,rating,userRatingCount,reviews,photos"
+
+        headers = self._get_api_headers(field_mask)
+
+        # Add language parameter
+        params = {'languageCode': 'sr'}
+
+        logger.info(f"Getting place details for: {place_id}")
+
+        response = requests.get(url, headers=headers, params=params)
 
         if response.status_code != 200:
             logger.error(f"Place details failed: {response.text}")
             return None
 
-        data = response.json()
+        result = response.json()
 
-        if data.get('status') != 'OK':
-            logger.error(f"Place details API error: {data.get('error_message', data.get('status'))}")
-            return None
+        logger.info(f"Place details response: {str(result)[:500]}")
 
-        result = data.get('result', {})
-
-        # Normalize to match expected format
+        # Normalize to common format
         normalized = {
-            'id': result.get('place_id'),
-            'displayName': {'text': result.get('name', '')},
-            'formattedAddress': result.get('formatted_address', ''),
+            'id': result.get('id'),
+            'displayName': result.get('displayName', {}),
+            'formattedAddress': result.get('formattedAddress', ''),
             'rating': result.get('rating'),
-            'userRatingCount': result.get('user_ratings_total'),
+            'userRatingCount': result.get('userRatingCount'),
             'reviews': [],
             'photos': [],
         }
 
-        # Normalize photos - generate URLs from photo references
+        # Process photos - New API returns photo names that we can use to get URLs
         for photo in result.get('photos', [])[:8]:  # Max 8 photos
-            photo_ref = photo.get('photo_reference')
-            if photo_ref:
-                photo_url = f"{self.PLACES_API_BASE}/photo?maxwidth=800&photo_reference={photo_ref}&key={self.places_api_key}"
+            photo_name = photo.get('name')  # e.g., "places/xxx/photos/yyy"
+            if photo_name:
+                # Build the photo URL using Places API (New) media endpoint
+                photo_url = f"{self.PLACES_API_BASE}/{photo_name}/media?key={self.places_api_key}&maxHeightPx=800&maxWidthPx=1200"
                 normalized['photos'].append({
                     'url': photo_url,
-                    'width': photo.get('width'),
-                    'height': photo.get('height'),
-                    'attributions': photo.get('html_attributions', []),
+                    'name': photo_name,
+                    'width': photo.get('widthPx'),
+                    'height': photo.get('heightPx'),
+                    'attributions': photo.get('authorAttributions', []),
                 })
+                logger.info(f"Added photo: {photo_name}")
 
-        # Normalize reviews
+        # Process reviews
         for review in result.get('reviews', []):
             normalized['reviews'].append({
-                'name': f"reviews/{review.get('time', '')}",  # Create unique ID from timestamp
+                'name': review.get('name', ''),
                 'authorAttribution': {
-                    'displayName': review.get('author_name', 'Anonymous'),
-                    'photoUri': review.get('profile_photo_url'),
+                    'displayName': review.get('authorAttribution', {}).get('displayName', 'Anonymous'),
+                    'photoUri': review.get('authorAttribution', {}).get('photoUri'),
                 },
                 'rating': review.get('rating'),
                 'text': {
-                    'text': review.get('text', ''),
-                    'languageCode': review.get('language'),
+                    'text': review.get('text', {}).get('text', '') if isinstance(review.get('text'), dict) else review.get('text', ''),
+                    'languageCode': review.get('text', {}).get('languageCode') if isinstance(review.get('text'), dict) else None,
                 },
-                'publishTime': datetime.utcfromtimestamp(review.get('time', 0)).isoformat() + 'Z' if review.get('time') else None,
-                'relativeTimeDescription': review.get('relative_time_description'),
+                'publishTime': review.get('publishTime'),
+                'relativePublishTimeDescription': review.get('relativePublishTimeDescription'),
             })
 
+        logger.info(f"Normalized {len(normalized['photos'])} photos and {len(normalized['reviews'])} reviews")
+
         return normalized
+
+    def get_photo_url(self, photo_name: str, max_width: int = 800, max_height: int = 600) -> str:
+        """
+        Get a direct URL for a photo from Places API (New).
+
+        Args:
+            photo_name: The photo resource name from the API (e.g., "places/xxx/photos/yyy")
+            max_width: Maximum width in pixels
+            max_height: Maximum height in pixels
+
+        Returns:
+            Direct URL to the photo
+        """
+        return f"{self.PLACES_API_BASE}/{photo_name}/media?key={self.places_api_key}&maxWidthPx={max_width}&maxHeightPx={max_height}"
 
     def connect_tenant(self, tenant_id: int, code: str, redirect_uri: str) -> TenantGoogleIntegration:
         """
@@ -356,7 +379,7 @@ class GoogleIntegrationService:
 
     def sync_reviews(self, tenant_id: int) -> bool:
         """
-        Sync reviews from Google for a tenant.
+        Sync reviews and photos from Google for a tenant.
 
         Args:
             tenant_id: ID of the tenant to sync
@@ -371,7 +394,7 @@ class GoogleIntegrationService:
             return False
 
         try:
-            # Get place details with reviews
+            # Get place details with reviews and photos
             place_data = self.get_place_details(integration.google_place_id)
 
             if not place_data:
@@ -385,7 +408,7 @@ class GoogleIntegrationService:
             integration.last_sync_at = datetime.utcnow()
             integration.sync_error = None
 
-            # Update photos
+            # Update photos from new API
             photos = place_data.get('photos', [])
             if photos:
                 integration.google_photos = photos[:8]  # Max 8 photos
@@ -399,7 +422,7 @@ class GoogleIntegrationService:
 
             db.session.commit()
 
-            logger.info(f"Synced {len(reviews)} reviews for tenant {tenant_id}")
+            logger.info(f"Synced {len(reviews)} reviews and {len(photos)} photos for tenant {tenant_id}")
             return True
 
         except Exception as e:
