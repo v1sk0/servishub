@@ -732,25 +732,33 @@
 }
 
 /* ========================================
-   GOOGLE PHOTOS GALLERY
+   GOOGLE PHOTOS GALLERY - Premium Masonry
    ======================================== */
 .mg-gallery-section {
-    background: var(--mg-surface-raised);
+    background: linear-gradient(180deg, transparent, rgba(99, 102, 241, 0.02), transparent);
 }
 
 .mg-gallery {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(2, 200px);
+    grid-template-rows: repeat(2, 220px);
     gap: var(--mg-space-4);
 }
 
 .mg-gallery__item {
     position: relative;
-    border-radius: var(--mg-radius-xl);
+    border-radius: var(--mg-radius-2xl);
     overflow: hidden;
-    background: var(--mg-glass-bg);
-    border: 1px solid var(--mg-glass-border);
+    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mg-gallery__item:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.4), 0 0 80px rgba(99, 102, 241, 0.15);
+    transform: translateY(-8px);
+    z-index: 10;
 }
 
 .mg-gallery__item--featured {
@@ -769,23 +777,30 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s ease, filter 0.3s ease;
+    transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), filter 0.4s ease;
 }
 
 .mg-gallery__item:hover .mg-gallery__image {
-    transform: scale(1.1);
-    filter: brightness(0.8);
+    transform: scale(1.15);
+    filter: brightness(0.7) saturate(1.2);
 }
 
 .mg-gallery__overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        transparent 50%,
+        rgba(0,0,0,0.6) 100%
+    );
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
+    padding: var(--mg-space-6);
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.4s ease;
 }
 
 .mg-gallery__item:hover .mg-gallery__overlay {
@@ -793,20 +808,42 @@
 }
 
 .mg-gallery__zoom {
-    width: 56px;
-    height: 56px;
-    background: rgba(255, 255, 255, 0.95);
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--mg-gradient-1), var(--mg-gradient-2));
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--mg-gradient-1);
-    transform: scale(0);
-    transition: transform 0.3s ease;
+    color: white;
+    margin-bottom: var(--mg-space-4);
+    transform: scale(0) translateY(20px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
 }
 
 .mg-gallery__item:hover .mg-gallery__zoom {
-    transform: scale(1);
+    transform: scale(1) translateY(0);
+}
+
+.mg-gallery__zoom svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Gallery number badge */
+.mg-gallery__item::after {
+    content: '';
+    position: absolute;
+    top: var(--mg-space-3);
+    right: var(--mg-space-3);
+    width: 32px;
+    height: 32px;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(10px);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 /* Gallery Responsive */
@@ -814,32 +851,43 @@
     .mg-gallery {
         grid-template-columns: repeat(2, 1fr);
         grid-template-rows: auto;
+        gap: var(--mg-space-3);
     }
 
     .mg-gallery__item--featured {
         grid-column: span 2;
         grid-row: span 1;
-        height: 280px;
+        height: 300px;
     }
 
     .mg-gallery__item:not(.mg-gallery__item--featured) {
-        height: 180px;
+        height: 200px;
     }
 }
 
 @media (max-width: 640px) {
     .mg-gallery {
-        grid-template-columns: 1fr;
-        gap: var(--mg-space-3);
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--mg-space-2);
     }
 
     .mg-gallery__item--featured {
-        grid-column: span 1;
-        height: 240px;
+        grid-column: span 2;
+        height: 220px;
     }
 
     .mg-gallery__item:not(.mg-gallery__item--featured) {
-        height: 200px;
+        height: 160px;
+    }
+
+    .mg-gallery__zoom {
+        width: 48px;
+        height: 48px;
+    }
+
+    .mg-gallery__zoom svg {
+        width: 20px;
+        height: 20px;
     }
 }
 
@@ -1010,8 +1058,149 @@
 }
 
 /* ========================================
-   RATING BADGE
+   RATING SECTION - Premium Google Card
    ======================================== */
+.mg-rating-section {
+    padding: var(--mg-space-8) 0;
+}
+
+.mg-rating-card {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-space-6);
+    padding: var(--mg-space-6) var(--mg-space-8);
+    background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: var(--mg-radius-2xl);
+    max-width: 500px;
+    margin: 0 auto;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.mg-rating-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(251,191,36,0.1), rgba(245,158,11,0.05));
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.mg-rating-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(251,191,36,0.4);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 60px rgba(251,191,36,0.15);
+}
+
+.mg-rating-card:hover::before {
+    opacity: 1;
+}
+
+.mg-rating-card__google {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.mg-rating-card__score-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--mg-space-1);
+    position: relative;
+    z-index: 1;
+}
+
+.mg-rating-card__score {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+}
+
+.mg-rating-card__stars {
+    display: flex;
+    gap: 3px;
+}
+
+.mg-star {
+    width: 18px;
+    height: 18px;
+    color: #fbbf24;
+}
+
+.mg-star--empty {
+    opacity: 0.3;
+}
+
+.mg-rating-card__info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 var(--mg-space-4);
+    border-left: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+    z-index: 1;
+}
+
+.mg-rating-card__count {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--mg-text-primary);
+    line-height: 1;
+}
+
+.mg-rating-card__label {
+    font-size: 0.75rem;
+    color: var(--mg-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.mg-rating-card__cta {
+    margin-left: auto;
+    color: var(--mg-text-muted);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.mg-rating-card:hover .mg-rating-card__cta {
+    color: #fbbf24;
+    transform: translateX(4px);
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+    .mg-rating-card {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: var(--mg-space-4);
+        padding: var(--mg-space-5);
+    }
+
+    .mg-rating-card__info {
+        border-left: none;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        padding: var(--mg-space-3) 0 0 0;
+        width: 100%;
+        flex-direction: row;
+        justify-content: center;
+        gap: var(--mg-space-2);
+    }
+
+    .mg-rating-card__cta {
+        display: none;
+    }
+}
+
+/* Legacy support */
 .mg-rating-badge {
     display: inline-flex;
     align-items: center;
