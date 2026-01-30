@@ -3,29 +3,43 @@
 {% block title %}{{ profile.display_name or tenant.name }} - Servis mobilnih telefona{% endblock %}
 
 {% block content %}
-{% set current_theme = profile.theme or 'starter' %}
 {% set hero_phone = profile.phone or tenant.telefon %}
 {% set warranty_days = profile.warranty_days or 90 %}
 {% set fast_service = profile.fast_service_text or '1-3 sata' %}
 
-<!-- Hero Section - Theme Specific -->
-{% if current_theme == 'elite' %}
-<!-- ELITE HERO - Cinematic Dark with Gold -->
-<section class="sh-hero sh-hero--elite">
-    <div class="sh-container">
-        <div class="sh-hero__content" data-aos="fade-up">
-            <span class="sh-badge sh-badge--gold mb-6">Premium Servis</span>
-            {% if profile.logo_url %}
-            <img src="{{ profile.logo_url }}" alt="{{ profile.display_name or tenant.name }}" class="sh-hero__logo mb-6 mx-auto">
-            {% endif %}
-            <h1 class="sh-hero__title sh-gold-text">{{ profile.display_name or tenant.name }}</h1>
-            <div class="sh-hero__divider"></div>
+<!-- Hero Section -->
+<section class="mg-hero">
+    <div class="mg-hero__container">
+        <div class="mg-hero__content">
+            <!-- Badge -->
+            <div class="mg-hero__badge mg-fade-in">
+                <span class="mg-hero__badge-dot"></span>
+                Profesionalni servis
+            </div>
+
+            <!-- Title with gradient -->
+            <h1 class="mg-hero__title mg-fade-in mg-fade-in-delay-1">
+                {% if profile.headline %}
+                {{ profile.headline }}
+                {% else %}
+                Brza i pouzdana <span class="mg-hero__title-gradient">popravka telefona</span>
+                {% endif %}
+            </h1>
+
+            <!-- Subtitle -->
             {% if profile.tagline %}
-            <p class="sh-hero__tagline mx-auto">{{ profile.tagline }}</p>
+            <p class="mg-hero__subtitle mg-fade-in mg-fade-in-delay-2">{{ profile.tagline }}</p>
+            {% else %}
+            <p class="mg-hero__subtitle mg-fade-in mg-fade-in-delay-2">
+                Strucni tim sa visegodisjim iskustvom. Garancija na sve popravke.
+                Vasa satisfakcija nam je prioritet.
+            </p>
             {% endif %}
-            <div class="sh-hero__cta">
+
+            <!-- CTA Buttons -->
+            <div class="mg-hero__cta mg-fade-in mg-fade-in-delay-3">
                 {% if hero_phone %}
-                <a href="tel:{{ hero_phone }}" class="sh-btn sh-btn--primary sh-btn--lg">
+                <a href="tel:{{ hero_phone }}" class="mg-btn mg-btn--primary mg-btn--lg">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                     </svg>
@@ -33,255 +47,156 @@
                 </a>
                 {% endif %}
                 {% if profile.show_prices %}
-                <a href="/cenovnik" class="sh-btn sh-btn--outline sh-btn--lg">Pogledajte cenovnik</a>
+                <a href="/cenovnik" class="mg-btn mg-btn--secondary mg-btn--lg">
+                    Pogledajte cenovnik
+                </a>
                 {% endif %}
             </div>
-            <!-- Trust Badges - Elite Style -->
-            {% if profile.show_trust_badges != false %}
-            <div class="sh-trust-badges sh-trust-badges--elite">
-                <div class="sh-trust-badge">
-                    <div class="sh-trust-badge__icon">🛡️</div>
-                    <div class="sh-trust-badge__text">
-                        <strong>{{ warranty_days }} DANA</strong>
-                        <span>GARANCIJE</span>
-                    </div>
-                </div>
-                <div class="sh-trust-badge">
-                    <div class="sh-trust-badge__icon">🔒</div>
-                    <div class="sh-trust-badge__text">
-                        <strong>BEZBEDNI</strong>
-                        <span>PODACI</span>
-                    </div>
-                </div>
-                <div class="sh-trust-badge">
-                    <div class="sh-trust-badge__icon">⚡</div>
-                    <div class="sh-trust-badge__text">
-                        <strong>SERVIS</strong>
-                        <span>{{ fast_service }}</span>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</section>
 
-{% elif current_theme == 'premium' %}
-<!-- PREMIUM HERO - Split Layout with Glassmorphism -->
-<section class="sh-hero sh-hero--premium">
-    <div class="sh-container">
-        <div class="sh-hero__grid">
-            <div class="sh-hero__content" data-aos="fade-right">
-                {% if profile.logo_url %}
-                <img src="{{ profile.logo_url }}" alt="{{ profile.display_name or tenant.name }}" class="sh-hero__logo mb-6 brightness-0 invert">
-                {% endif %}
-                <h1 class="sh-hero__title">{{ profile.display_name or tenant.name }}</h1>
-                {% if profile.tagline %}
-                <p class="sh-hero__tagline">{{ profile.tagline }}</p>
-                {% endif %}
-                <div class="sh-hero__cta">
-                    {% if hero_phone %}
-                    <a href="tel:{{ hero_phone }}" class="sh-btn sh-btn--primary sh-btn--lg">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+            <!-- Trust Bar -->
+            {% if profile.show_trust_badges != false %}
+            <div class="mg-trust-bar mg-fade-in mg-fade-in-delay-4">
+                <div class="mg-trust-item">
+                    <div class="mg-trust-item__icon">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                         </svg>
-                        Pozovite odmah
-                    </a>
-                    {% endif %}
-                    {% if profile.show_prices %}
-                    <a href="/cenovnik" class="sh-btn sh-btn--glass sh-btn--lg">Pogledajte cenovnik</a>
-                    {% endif %}
-                </div>
-                <!-- Trust Badges - Premium Glass Style -->
-                {% if profile.show_trust_badges != false %}
-                <div class="sh-trust-badges sh-trust-badges--premium">
-                    <div class="sh-trust-badge sh-trust-badge--glass">
-                        <span class="sh-trust-badge__icon">🛡️</span>
-                        <span><strong>{{ warranty_days }}</strong> dana garancije</span>
                     </div>
-                    <div class="sh-trust-badge sh-trust-badge--glass">
-                        <span class="sh-trust-badge__icon">⚡</span>
-                        <span>Servis <strong>{{ fast_service }}</strong></span>
-                    </div>
-                    <div class="sh-trust-badge sh-trust-badge--glass">
-                        <span class="sh-trust-badge__icon">🔒</span>
-                        <span>Bezbedni podaci</span>
+                    <div class="mg-trust-item__text">
+                        <span class="mg-trust-item__label">Garancija</span>
+                        <span class="mg-trust-item__value">{{ warranty_days }} dana</span>
                     </div>
                 </div>
-                {% endif %}
-            </div>
-            <div class="sh-hero__visual hidden lg:flex justify-center" data-aos="fade-left">
-                <div class="sh-glass-card sh-glass-card--animated p-8 max-w-sm">
-                    <div class="text-center text-white">
-                        <div class="text-5xl mb-4">📱</div>
-                        <h3 class="text-xl font-bold mb-2">Profesionalni servis</h3>
-                        <p class="text-white/80 text-sm">Popravka svih vrsta mobilnih uredjaja</p>
+                <div class="mg-trust-item">
+                    <div class="mg-trust-item__icon">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <div class="mg-trust-item__text">
+                        <span class="mg-trust-item__label">Brz servis</span>
+                        <span class="mg-trust-item__value">{{ fast_service }}</span>
+                    </div>
+                </div>
+                <div class="mg-trust-item">
+                    <div class="mg-trust-item__icon">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <div class="mg-trust-item__text">
+                        <span class="mg-trust-item__label">Bezbednost</span>
+                        <span class="mg-trust-item__value">Vasi podaci</span>
                     </div>
                 </div>
             </div>
+            {% endif %}
         </div>
     </div>
 </section>
 
-{% else %}
-<!-- STARTER HERO - Centered, Clean, Professional -->
-<section class="sh-hero sh-hero--starter">
-    {% if profile.cover_image_url %}
-    <div class="absolute inset-0">
-        <img src="{{ profile.cover_image_url }}" alt="Cover" class="w-full h-full object-cover opacity-20">
-    </div>
-    {% endif %}
-    <div class="sh-container">
-        <div class="sh-hero__content" data-aos="fade-up">
-            {% if profile.logo_url %}
-            <img src="{{ profile.logo_url }}" alt="{{ profile.display_name or tenant.name }}" class="sh-hero__logo mb-8 mx-auto">
-            {% endif %}
-            <h1 class="sh-hero__title">{{ profile.display_name or tenant.name }}</h1>
-            {% if profile.tagline %}
-            <p class="sh-hero__tagline mx-auto">{{ profile.tagline }}</p>
-            {% endif %}
-            <div class="sh-hero__cta">
-                {% if hero_phone %}
-                <a href="tel:{{ hero_phone }}" class="sh-btn sh-btn--primary sh-btn--lg">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                    </svg>
-                    Pozovite odmah
-                </a>
-                {% endif %}
-                {% if profile.show_prices %}
-                <a href="/cenovnik" class="sh-btn sh-btn--outline sh-btn--lg">Pogledajte cenovnik</a>
-                {% endif %}
-            </div>
-            <!-- Trust Badges - Starter Style -->
-            {% if profile.show_trust_badges != false %}
-            <div class="sh-trust-bar">
-                <div class="sh-trust-item">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                    <span>{{ warranty_days }} dana garancije</span>
-                </div>
-                <div class="sh-trust-item">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
-                    <span>Servis {{ fast_service }}</span>
-                </div>
-                <div class="sh-trust-item">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
-                    <span>Bezbedni podaci</span>
-                </div>
-            </div>
-            {% endif %}
+{% if profile.show_tracking_widget %}
+<!-- Status Tracking -->
+<section class="mg-section">
+    <div class="mg-section__container">
+        <div class="mg-tracking">
+            <h2 class="mg-tracking__title">{{ profile.tracking_widget_title or 'Pratite status popravke' }}</h2>
+            <p class="mg-tracking__subtitle">Unesite broj naloga i poslednja 4 broja Vaseg telefona</p>
+            <form class="mg-tracking__form" x-data="{ token: '', phone: '' }" @submit.prevent="if(token.trim() && phone.trim().length >= 4) window.location.href = '/track/' + encodeURIComponent(token.trim()) + '?tenant_id={{ tenant.id }}&phone=' + encodeURIComponent(phone.trim())">
+                <input type="text" x-model="token" class="mg-tracking__input" placeholder="Broj naloga" required style="flex: 1;">
+                <input type="text" x-model="phone" class="mg-tracking__input" placeholder="Posl. 4 cifre" maxlength="4" required style="width: 120px;">
+                <button type="submit" class="mg-btn mg-btn--primary">Proveri</button>
+            </form>
         </div>
     </div>
 </section>
 {% endif %}
 
-{% if profile.show_tracking_widget %}
-<!-- Status Tracking Widget -->
-<section class="py-10 bg-primary/5">
-    <div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{{ profile.tracking_widget_title or 'Pratite status popravke' }}</h2>
-        <p class="text-gray-600 mb-6">Unesite broj naloga i poslednja 4 broja Vašeg telefona</p>
-        <form @submit.prevent="if(token.trim() && phone.trim().length >= 4) window.location.href = '/track/' + encodeURIComponent(token.trim()) + '?tenant_id={{ tenant.id }}&phone=' + encodeURIComponent(phone.trim())" class="flex flex-col sm:flex-row gap-3 justify-center items-center" x-data="{ token: '', phone: '' }">
-            <input
-                type="text"
-                x-model="token"
-                placeholder="Broj naloga (npr. 3)"
-                class="w-full sm:w-40 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-center"
-                required
-            >
-            <input
-                type="text"
-                x-model="phone"
-                placeholder="Posl. 4 cifre tel."
-                maxlength="4"
-                pattern="[0-9]{4}"
-                class="w-full sm:w-36 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-center"
-                required
-            >
-            <button
-                type="submit"
-                class="w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:opacity-90 transition-opacity inline-flex items-center justify-center"
-            >
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-                Proveri
-            </button>
-        </form>
-        <p class="text-xs text-gray-500 mt-3">Broj telefona koji ste ostavili prilikom prijema uređaja</p>
+{% if google_integration and google_integration.google_rating %}
+<!-- Google Rating Badge -->
+<section class="mg-section" style="padding-top: 0;">
+    <div class="mg-section__container mg-text-center">
+        <div class="mg-rating-badge" style="display: inline-flex;">
+            <span class="mg-rating-badge__score">{{ google_integration.google_rating }}</span>
+            <div class="mg-rating-badge__info">
+                <div class="mg-rating-badge__stars">
+                    {% for i in range(5) %}
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    {% endfor %}
+                </div>
+                <span class="mg-rating-badge__count">{{ google_integration.total_reviews }} recenzija na Google</span>
+            </div>
+        </div>
     </div>
 </section>
 {% endif %}
 
 {% if profile.show_courier_section %}
-<!-- Courier Service Section -->
-<section class="py-12 bg-gradient-to-r from-primary/5 to-primary/10">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white rounded-2xl shadow-lg p-8 md:p-10 flex flex-col md:flex-row items-center gap-8">
-            <div class="flex-shrink-0">
-                <div class="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center">
-                    <svg class="w-12 h-12 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                    </svg>
-                </div>
+<!-- Courier Section -->
+<section class="mg-section">
+    <div class="mg-section__container">
+        <div class="mg-courier">
+            <div class="mg-courier__icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                </svg>
             </div>
-            <div class="flex-1 text-center md:text-left">
-                <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ profile.courier_title or 'Ne možete doći? Šaljemo kurira!' }}</h3>
-                <p class="text-gray-600 mb-4">{{ profile.courier_description or 'Besplatno preuzimanje i dostava na Vašu adresu.' }}</p>
+            <div class="mg-courier__content">
+                <h3 class="mg-courier__title">{{ profile.courier_title or 'Ne mozete doci? Saljemo kurira!' }}</h3>
+                <p class="mg-courier__description">{{ profile.courier_description or 'Besplatno preuzimanje i dostava na Vasu adresu.' }}</p>
                 {% if profile.courier_price %}
-                <p class="text-lg font-semibold text-primary">Cena dostave: {{ profile.courier_price }} RSD</p>
+                <p class="mg-courier__price">Cena dostave: {{ profile.courier_price }} RSD</p>
                 {% endif %}
             </div>
-            <div class="flex-shrink-0">
-                {% if hero_phone %}
-                <a href="tel:{{ hero_phone }}" class="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-primary/25">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                    </svg>
-                    Zakažite kurira
-                </a>
-                {% endif %}
-            </div>
+            {% if hero_phone %}
+            <a href="tel:{{ hero_phone }}" class="mg-btn mg-btn--primary mg-btn--lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+                Zakazite kurira
+            </a>
+            {% endif %}
         </div>
     </div>
 </section>
 {% endif %}
 
 {% if profile.show_popular_services != false and services_by_category %}
-<!-- Popular Services Grid -->
-<section class="py-16 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">{{ profile.popular_services_title or 'Najpopularnije usluge' }}</h2>
-            <p class="text-gray-600">Brza popravka uz garanciju kvaliteta</p>
+<!-- Popular Services -->
+<section class="mg-section">
+    <div class="mg-section__container">
+        <div class="mg-section__header">
+            <span class="mg-section__badge">Usluge</span>
+            <h2 class="mg-section__title">{{ profile.popular_services_title or 'Najpopularnije usluge' }}</h2>
+            <p class="mg-section__subtitle">Profesionalna popravka uz garanciju kvaliteta</p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="mg-services-grid">
             {% set popular_limit = profile.popular_services_limit or 6 %}
             {% set shown_count = namespace(value=0) %}
             {% for category, category_services in services_by_category.items() %}
                 {% for service in category_services %}
                     {% if shown_count.value < popular_limit %}
-                    <div class="group bg-gray-50 hover:bg-white rounded-xl p-6 border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all duration-300">
-                        <div class="flex items-start justify-between mb-4">
-                            <div>
-                                <span class="text-xs font-medium text-primary/70 uppercase tracking-wide">{{ category }}</span>
-                                <h3 class="text-lg font-semibold text-gray-900 mt-1 group-hover:text-primary transition-colors">{{ service.name }}</h3>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-2xl font-bold text-primary">{{ service.price|int }}</span>
-                                <span class="text-sm text-gray-500 block">{{ service.currency }}</span>
+                    <div class="mg-service-card">
+                        <span class="mg-service-card__category">{{ category }}</span>
+                        <div class="mg-service-card__header">
+                            <h3 class="mg-service-card__name">{{ service.name }}</h3>
+                            <div class="mg-service-card__price">
+                                <span class="mg-service-card__price-value">{{ service.price|int }}</span>
+                                <span class="mg-service-card__price-currency">{{ service.currency }}</span>
                             </div>
                         </div>
                         {% if service.description %}
-                        <p class="text-gray-600 text-sm mb-4">{{ service.description|truncate(80) }}</p>
+                        <p class="mg-service-card__description">{{ service.description|truncate(100) }}</p>
                         {% endif %}
                         {% if hero_phone %}
-                        <a href="tel:{{ hero_phone }}" class="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                        <a href="tel:{{ hero_phone }}" class="mg-service-card__cta">
+                            Zakazite
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                             </svg>
-                            Zakažite
                         </a>
                         {% endif %}
                     </div>
@@ -292,10 +207,10 @@
         </div>
 
         {% if profile.show_prices %}
-        <div class="text-center mt-10">
-            <a href="/cenovnik" class="inline-flex items-center px-8 py-3 border-2 border-primary text-primary rounded-lg font-semibold hover:bg-primary hover:text-white transition-all">
+        <div class="mg-text-center mg-mt-12">
+            <a href="/cenovnik" class="mg-btn mg-btn--secondary mg-btn--lg">
                 Pogledajte kompletan cenovnik
-                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                 </svg>
             </a>
@@ -305,146 +220,41 @@
 </section>
 {% endif %}
 
-{% if profile.show_process_section and profile.process_steps and profile.process_steps|length > 0 %}
-<!-- Process Steps Section -->
-<section class="py-16 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-12">{{ profile.process_title or 'Kako funkcionise' }}</h2>
+{% if google_reviews and google_reviews|length > 0 %}
+<!-- Google Reviews -->
+<section class="mg-section">
+    <div class="mg-section__container">
+        <div class="mg-section__header">
+            <span class="mg-section__badge">Recenzije</span>
+            <h2 class="mg-section__title">Sta kazu nasi klijenti</h2>
+            <p class="mg-section__subtitle">Vase zadovoljstvo je nasa najbolja preporuka</p>
+        </div>
 
-        <!-- Desktop: Horizontal stepper -->
-        <div class="hidden md:block">
-            <div class="flex items-start justify-between relative">
-                <!-- Connecting line -->
-                <div class="absolute top-8 left-0 right-0 h-0.5 bg-gray-200" style="margin-left: 10%; margin-right: 10%;"></div>
-
-                {% for step in profile.process_steps %}
-                <div class="relative flex flex-col items-center text-center flex-1 px-4">
-                    <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 relative z-10 border-4 border-white">
-                        <span class="text-2xl">{{ step.icon or '📋' }}</span>
+        <div class="mg-reviews">
+            {% for review in google_reviews[:6] %}
+            <div class="mg-review-card">
+                <div class="mg-review-card__header">
+                    {% if review.author_photo_url %}
+                    <img src="{{ review.author_photo_url }}" alt="{{ review.author_name }}" class="mg-review-card__avatar" style="object-fit: cover;">
+                    {% else %}
+                    <div class="mg-review-card__avatar">{{ review.author_name[0]|upper if review.author_name else 'A' }}</div>
+                    {% endif %}
+                    <div>
+                        <div class="mg-review-card__author">{{ review.author_name }}</div>
+                        {% if review.review_time %}
+                        <div class="mg-review-card__date">{{ review.review_time.strftime('%d.%m.%Y') if review.review_time else '' }}</div>
+                        {% endif %}
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ step.title }}</h3>
-                    <p class="text-gray-600 text-sm">{{ step.description }}</p>
                 </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Mobile: Vertical timeline -->
-        <div class="md:hidden space-y-8">
-            {% for step in profile.process_steps %}
-            <div class="flex items-start space-x-4">
-                <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span class="text-xl">{{ step.icon or '📋' }}</span>
+                <div class="mg-review-card__stars">
+                    {% for i in range(review.rating or 5) %}
+                    <svg class="w-4 h-4 mg-review-card__star" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    {% endfor %}
                 </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ step.title }}</h3>
-                    <p class="text-gray-600 text-sm">{{ step.description }}</p>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
-
-{% if profile.show_brands_section and profile.supported_brands and profile.supported_brands|length > 0 %}
-<!-- Supported Brands Section -->
-<section class="py-16 bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-12">Brendovi koje servisiramo</h2>
-        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-6">
-            {% for brand in profile.supported_brands %}
-            <div class="bg-white rounded-xl p-4 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow">
-                {% if brand == 'apple' %}
-                <div class="text-center">
-                    <svg class="w-10 h-10 mx-auto text-gray-700" viewBox="0 0 24 24" fill="currentColor"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
-                    <span class="text-xs text-gray-600 mt-1 block">Apple</span>
-                </div>
-                {% elif brand == 'samsung' %}
-                <div class="text-center">
-                    <svg class="w-10 h-10 mx-auto text-gray-700" viewBox="0 0 24 24" fill="currentColor"><path d="M5.009 9.5c-.326 0-.606.064-.793.165-.25.137-.347.316-.347.549 0 .193.078.35.257.462.188.116.404.175.733.235l.742.13c.818.14 1.279.329 1.647.6.46.339.69.79.69 1.41 0 .56-.23 1.04-.67 1.39-.48.38-1.15.56-2.01.56-.94 0-1.67-.2-2.17-.6-.46-.36-.71-.88-.76-1.52h1.32c.05.33.2.58.45.75.28.19.68.28 1.18.28.4 0 .72-.07.95-.2.29-.16.44-.38.44-.66 0-.24-.11-.42-.35-.55-.2-.11-.51-.2-.97-.27l-.87-.14c-.66-.1-1.15-.29-1.47-.5-.4-.26-.61-.66-.61-1.21 0-.52.21-.97.62-1.33.45-.4 1.07-.6 1.89-.6.83 0 1.49.19 1.95.54.43.33.67.8.72 1.35h-1.29c-.05-.27-.18-.48-.4-.62-.24-.15-.55-.23-.97-.23zm4.89 4.59l-.9-4.99h1.35l.58 4.14.65-4.14h1.27l.63 4.14.59-4.14h1.32l-.9 5h-1.39l-.63-3.75-.64 3.75H9.9zm6.51-4.99h1.32v4.99h-1.32V9.1zm3.59 0h1.32v4.99h-1.32V9.1zm3.03 0v4.99H24V9.1h-1z"/></svg>
-                    <span class="text-xs text-gray-600 mt-1 block">Samsung</span>
-                </div>
-                {% elif brand == 'xiaomi' %}
-                <div class="text-center">
-                    <svg class="w-10 h-10 mx-auto text-gray-700" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 17.785H6.106V6.215h11.788v11.57z"/></svg>
-                    <span class="text-xs text-gray-600 mt-1 block">Xiaomi</span>
-                </div>
-                {% elif brand == 'huawei' %}
-                <div class="text-center">
-                    <svg class="w-10 h-10 mx-auto text-gray-700" viewBox="0 0 24 24" fill="currentColor"><path d="M3.67 6.14c-.13 0-.23.1-.23.23v11.26c0 .13.1.23.23.23h16.66c.13 0 .23-.1.23-.23V6.37c0-.13-.1-.23-.23-.23H3.67zm8.33 9.71c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
-                    <span class="text-xs text-gray-600 mt-1 block">Huawei</span>
-                </div>
-                {% elif brand == 'lenovo' %}
-                <div class="text-center">
-                    <span class="text-2xl">💻</span>
-                    <span class="text-xs text-gray-600 mt-1 block">Lenovo</span>
-                </div>
-                {% elif brand == 'hp' %}
-                <div class="text-center">
-                    <span class="text-2xl">🖥️</span>
-                    <span class="text-xs text-gray-600 mt-1 block">HP</span>
-                </div>
-                {% elif brand == 'dell' %}
-                <div class="text-center">
-                    <span class="text-2xl">💻</span>
-                    <span class="text-xs text-gray-600 mt-1 block">Dell</span>
-                </div>
-                {% elif brand == 'asus' %}
-                <div class="text-center">
-                    <span class="text-2xl">🖥️</span>
-                    <span class="text-xs text-gray-600 mt-1 block">Asus</span>
-                </div>
-                {% elif brand == 'acer' %}
-                <div class="text-center">
-                    <span class="text-2xl">💻</span>
-                    <span class="text-xs text-gray-600 mt-1 block">Acer</span>
-                </div>
-                {% elif brand == 'google' %}
-                <div class="text-center">
-                    <svg class="w-10 h-10 mx-auto text-gray-700" viewBox="0 0 24 24" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg>
-                    <span class="text-xs text-gray-600 mt-1 block">Google</span>
-                </div>
-                {% elif brand == 'oneplus' %}
-                <div class="text-center">
-                    <span class="text-2xl">📱</span>
-                    <span class="text-xs text-gray-600 mt-1 block">OnePlus</span>
-                </div>
-                {% elif brand == 'motorola' %}
-                <div class="text-center">
-                    <span class="text-2xl">📱</span>
-                    <span class="text-xs text-gray-600 mt-1 block">Motorola</span>
-                </div>
-                {% elif brand == 'oppo' %}
-                <div class="text-center">
-                    <span class="text-2xl">📱</span>
-                    <span class="text-xs text-gray-600 mt-1 block">Oppo</span>
-                </div>
-                {% elif brand == 'vivo' %}
-                <div class="text-center">
-                    <span class="text-2xl">📱</span>
-                    <span class="text-xs text-gray-600 mt-1 block">Vivo</span>
-                </div>
-                {% elif brand == 'realme' %}
-                <div class="text-center">
-                    <span class="text-2xl">📱</span>
-                    <span class="text-xs text-gray-600 mt-1 block">Realme</span>
-                </div>
-                {% elif brand == 'msi' %}
-                <div class="text-center">
-                    <span class="text-2xl">🎮</span>
-                    <span class="text-xs text-gray-600 mt-1 block">MSI</span>
-                </div>
-                {% elif brand == 'microsoft' %}
-                <div class="text-center">
-                    <svg class="w-10 h-10 mx-auto text-gray-700" viewBox="0 0 24 24" fill="currentColor"><path d="M0 0h11.377v11.372H0zm12.623 0H24v11.372H12.623zM0 12.623h11.377V24H0zm12.623 0H24V24H12.623z"/></svg>
-                    <span class="text-xs text-gray-600 mt-1 block">Microsoft</span>
-                </div>
-                {% else %}
-                <div class="text-center">
-                    <span class="text-2xl">📱</span>
-                    <span class="text-xs text-gray-600 mt-1 block capitalize">{{ brand }}</span>
-                </div>
+                {% if review.text %}
+                <p class="mg-review-card__text">{{ review.text|truncate(200) }}</p>
                 {% endif %}
             </div>
             {% endfor %}
@@ -453,192 +263,45 @@
 </section>
 {% endif %}
 
-{% if profile.description %}
-<!-- About Section -->
-<section class="py-16 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="max-w-3xl mx-auto text-center">
-            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">O nama</h2>
-            <p class="text-gray-600 text-lg leading-relaxed">{{ profile.description }}</p>
+{% if profile.show_process_section and profile.process_steps and profile.process_steps|length > 0 %}
+<!-- Process Steps -->
+<section class="mg-section">
+    <div class="mg-section__container">
+        <div class="mg-section__header">
+            <span class="mg-section__badge">Proces</span>
+            <h2 class="mg-section__title">{{ profile.process_title or 'Kako funkcionise' }}</h2>
+        </div>
+
+        <div class="mg-services-grid" style="max-width: 1000px; margin: 0 auto;">
+            {% for step in profile.process_steps %}
+            <div class="mg-card" style="text-align: center;">
+                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--mg-gradient-1), var(--mg-gradient-2)); border-radius: var(--mg-radius-xl); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--mg-space-4); font-size: 1.5rem; font-weight: 800; color: white;">{{ loop.index }}</div>
+                <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--mg-text-primary); margin-bottom: var(--mg-space-2);">{{ step.title }}</h3>
+                <p style="color: var(--mg-text-secondary); font-size: 0.875rem;">{{ step.description }}</p>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </section>
 {% endif %}
 
 {% if profile.why_us_items and profile.why_us_items|length > 0 %}
-<!-- Why Us Section -->
-<section class="py-16 bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-12">{{ profile.why_us_title or 'Zasto mi?' }}</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Why Us -->
+<section class="mg-section">
+    <div class="mg-section__container">
+        <div class="mg-section__header">
+            <span class="mg-section__badge">Prednosti</span>
+            <h2 class="mg-section__title">{{ profile.why_us_title or 'Zasto mi?' }}</h2>
+        </div>
+
+        <div class="mg-services-grid">
             {% for item in profile.why_us_items %}
-            <div class="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="mg-card">
                 {% if item.icon %}
-                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                    <span class="text-2xl">{{ item.icon }}</span>
-                </div>
+                <div style="font-size: 2rem; margin-bottom: var(--mg-space-4);">{{ item.icon }}</div>
                 {% endif %}
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ item.title }}</h3>
-                <p class="text-gray-600">{{ item.text }}</p>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
-
-{% if google_integration and google_integration.google_rating and google_reviews %}
-<!-- Google Reviews Section -->
-<section class="sh-section sh-section--alt">
-    <div class="sh-container">
-        <div class="sh-section__header text-center">
-            <h2 class="sh-section__title">Sta kazu nasi klijenti</h2>
-            <p class="sh-section__subtitle mx-auto">Recenzije sa Google-a</p>
-
-            <!-- Google Rating Badge -->
-            <div class="sh-google-rating mt-6 inline-flex">
-                <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" alt="Google" class="sh-google-rating__logo h-6">
-                <div class="flex items-center gap-2">
-                    <span class="sh-google-rating__value">{{ google_integration.google_rating }}</span>
-                    <div class="flex">
-                        {% set rating = google_integration.google_rating|float %}
-                        {% for i in range(5) %}
-                            {% if i < rating|int %}
-                            <svg class="sh-star sh-star--filled sh-star--small" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                            </svg>
-                            {% elif i < rating %}
-                            <svg class="sh-star sh-star--filled sh-star--small" viewBox="0 0 20 20" fill="currentColor" style="opacity: 0.5;">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                            </svg>
-                            {% else %}
-                            <svg class="sh-star sh-star--small" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                            </svg>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
-                <span class="sh-google-rating__count">({{ google_integration.total_reviews }} recenzija)</span>
-            </div>
-        </div>
-
-        <!-- Reviews Grid -->
-        <div class="sh-reviews-grid">
-            {% for review in google_reviews %}
-            <div class="sh-review-card" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
-                <div class="sh-review-card__header">
-                    {% if review.author_photo_url %}
-                    <img src="{{ review.author_photo_url }}" alt="{{ review.author_name }}" class="sh-review-card__avatar">
-                    {% else %}
-                    <div class="sh-review-card__avatar sh-review-card__avatar--placeholder">
-                        {{ review.author_initials }}
-                    </div>
-                    {% endif %}
-                    <div>
-                        <div class="sh-review-card__author">{{ review.author_name }}</div>
-                        <div class="flex">
-                            {% for i in range(review.rating or 5) %}
-                            <svg class="sh-star sh-star--filled sh-star--small" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                            </svg>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                {% if review.text %}
-                <p class="sh-review-card__text">{{ review.text|truncate(200) }}</p>
-                {% endif %}
-                <div class="sh-review-card__date">{{ review.relative_time }}</div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
-
-{% if profile.show_prices and services_by_category %}
-<!-- Services Preview Section -->
-<section class="py-16 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">Nase usluge</h2>
-            <p class="text-gray-600 max-w-2xl mx-auto">Pogledajte kompletnu ponudu usluga i cena</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for category, category_services in services_by_category.items() %}
-            <div class="bg-gray-50 rounded-xl p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <span class="w-2 h-2 bg-primary rounded-full mr-2"></span>
-                    {{ category }}
-                </h3>
-                <ul class="space-y-3">
-                    {% for service in category_services[:5] %}
-                    <li class="flex justify-between items-center">
-                        <span class="text-gray-700">{{ service.name }}</span>
-                        <span class="font-semibold text-gray-900">
-                            {% if service.price_note %}{{ service.price_note }} {% endif %}{{ service.price|int }} {{ service.currency }}
-                        </span>
-                    </li>
-                    {% endfor %}
-                    {% if category_services|length > 5 %}
-                    <li class="text-primary text-sm font-medium">+ jos {{ category_services|length - 5 }} usluga</li>
-                    {% endif %}
-                </ul>
-            </div>
-            {% endfor %}
-        </div>
-
-        <div class="text-center mt-8">
-            <a href="/cenovnik" class="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:opacity-90 transition-opacity">
-                Pogledajte kompletan cenovnik
-                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                </svg>
-            </a>
-        </div>
-
-        {% if profile.price_disclaimer %}
-        <p class="text-center text-gray-500 text-sm mt-6">{{ profile.price_disclaimer }}</p>
-        {% endif %}
-    </div>
-</section>
-{% endif %}
-
-{% if profile.testimonials and profile.testimonials|length > 0 %}
-<!-- Testimonials Section -->
-<section class="py-16 bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-12">Sta kazu nasi klijenti</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {% for testimonial in profile.testimonials %}
-            <div class="bg-white rounded-xl p-6 shadow-sm">
-                <div class="flex items-center mb-4">
-                    {% for i in range(testimonial.rating or 5) %}
-                    <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                    </svg>
-                    {% endfor %}
-                </div>
-                <p class="text-gray-600 mb-4">"{{ testimonial.text }}"</p>
-                <p class="font-semibold text-gray-900">{{ testimonial.name }}</p>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
-
-{% if profile.gallery_images and profile.gallery_images|length > 0 %}
-<!-- Gallery Section -->
-<section class="py-16 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-12">Galerija</h2>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {% for image in profile.gallery_images %}
-            <div class="aspect-square rounded-lg overflow-hidden">
-                <img src="{{ image }}" alt="Gallery image" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                <h3 style="font-size: 1.125rem; font-weight: 600; color: var(--mg-text-primary); margin-bottom: var(--mg-space-2);">{{ item.title }}</h3>
+                <p style="color: var(--mg-text-secondary); font-size: 0.875rem;">{{ item.text }}</p>
             </div>
             {% endfor %}
         </div>
@@ -647,22 +310,25 @@
 {% endif %}
 
 {% if profile.faq_items and profile.faq_items|length > 0 %}
-<!-- FAQ Section -->
-<section class="py-16 bg-white" x-data="{ openFaq: null }">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-12">{{ profile.faq_title or 'Cesto postavljana pitanja' }}</h2>
+<!-- FAQ -->
+<section class="mg-section" x-data="{ openFaq: null }">
+    <div class="mg-section__container" style="max-width: 800px;">
+        <div class="mg-section__header">
+            <span class="mg-section__badge">FAQ</span>
+            <h2 class="mg-section__title">{{ profile.faq_title or 'Cesto postavljana pitanja' }}</h2>
+        </div>
 
-        <div class="space-y-4">
+        <div style="display: flex; flex-direction: column; gap: var(--mg-space-4);">
             {% for faq in profile.faq_items %}
-            <div class="bg-gray-50 rounded-xl overflow-hidden">
+            <div class="mg-card" style="padding: 0; overflow: hidden;">
                 <button
                     @click="openFaq = openFaq === {{ loop.index }} ? null : {{ loop.index }}"
-                    class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-100 transition-colors"
+                    style="width: 100%; padding: var(--mg-space-6); display: flex; justify-content: space-between; align-items: center; background: transparent; border: none; cursor: pointer; text-align: left;"
                 >
-                    <span class="font-semibold text-gray-900">{{ faq.question }}</span>
+                    <span style="font-weight: 600; color: var(--mg-text-primary);">{{ faq.question }}</span>
                     <svg
-                        class="w-5 h-5 text-gray-500 transition-transform duration-200"
-                        :class="{ 'rotate-180': openFaq === {{ loop.index }} }"
+                        style="width: 20px; height: 20px; color: var(--mg-text-muted); transition: transform 0.2s;"
+                        :style="{ transform: openFaq === {{ loop.index }} ? 'rotate(180deg)' : '' }"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -672,16 +338,11 @@
                 </button>
                 <div
                     x-show="openFaq === {{ loop.index }}"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 -translate-y-2"
-                    x-transition:enter-end="opacity-100 translate-y-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-y-0"
-                    x-transition:leave-end="opacity-0 -translate-y-2"
-                    class="px-6 pb-4"
+                    x-transition
+                    style="padding: 0 var(--mg-space-6) var(--mg-space-6);"
                     x-cloak
                 >
-                    <p class="text-gray-600">{{ faq.answer }}</p>
+                    <p style="color: var(--mg-text-secondary);">{{ faq.answer }}</p>
                 </div>
             </div>
             {% endfor %}
@@ -691,115 +352,108 @@
 {% endif %}
 
 <!-- Contact Section -->
-<section class="py-16 bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <!-- Contact Info -->
-            <div>
-                <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Kontaktirajte nas</h2>
-                <p class="text-gray-600 mb-8">Imate pitanja? Slobodno nas kontaktirajte putem telefona ili nas posetite.</p>
+<section class="mg-section">
+    <div class="mg-section__container">
+        <div class="mg-section__header">
+            <span class="mg-section__badge">Kontakt</span>
+            <h2 class="mg-section__title">Kontaktirajte nas</h2>
+            <p class="mg-section__subtitle">Imate pitanja? Slobodno nas kontaktirajte</p>
+        </div>
 
-                {# Izracunaj kontakt podatke sa fallback na tenant podatke #}
-                {% set contact_address = profile.address or tenant.adresa_sedista %}
-                {% set contact_city = profile.city or tenant.grad %}
-                {% set contact_postal = profile.postal_code or tenant.postanski_broj %}
-                {% set contact_phone = profile.phone or tenant.telefon %}
-                {% set contact_email = profile.email or tenant.email %}
+        {% set contact_address = profile.address or tenant.adresa_sedista %}
+        {% set contact_city = profile.city or tenant.grad %}
+        {% set contact_phone = profile.phone or tenant.telefon %}
+        {% set contact_email = profile.email or tenant.email %}
 
-                <div class="space-y-6">
-                    {% if contact_address or contact_city %}
-                    <div class="flex items-start space-x-4">
-                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="font-semibold text-gray-900">Adresa</h3>
-                            <p class="text-gray-600">
-                                {{ contact_address }}{% if contact_city %}, {{ contact_city }}{% endif %}{% if contact_postal %} {{ contact_postal }}{% endif %}
-                            </p>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    {% if contact_phone %}
-                    <div class="flex items-start space-x-4">
-                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="font-semibold text-gray-900">Telefon</h3>
-                            <a href="tel:{{ contact_phone }}" class="text-primary hover:underline">{{ contact_phone }}</a>
-                            {% if profile.phone_secondary %}
-                            <br><a href="tel:{{ profile.phone_secondary }}" class="text-primary hover:underline">{{ profile.phone_secondary }}</a>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    {% if contact_email %}
-                    <div class="flex items-start space-x-4">
-                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="font-semibold text-gray-900">Email</h3>
-                            <a href="mailto:{{ contact_email }}" class="text-primary hover:underline">{{ contact_email }}</a>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    {% if profile.working_hours %}
-                    <div class="flex items-start space-x-4">
-                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="font-semibold text-gray-900">Radno vreme</h3>
-                            <div class="text-gray-600 text-sm space-y-1">
-                                {% if profile.working_hours.mon %}<p>Pon: {{ profile.working_hours.mon }}</p>{% endif %}
-                                {% if profile.working_hours.tue %}<p>Uto: {{ profile.working_hours.tue }}</p>{% endif %}
-                                {% if profile.working_hours.wed %}<p>Sre: {{ profile.working_hours.wed }}</p>{% endif %}
-                                {% if profile.working_hours.thu %}<p>Cet: {{ profile.working_hours.thu }}</p>{% endif %}
-                                {% if profile.working_hours.fri %}<p>Pet: {{ profile.working_hours.fri }}</p>{% endif %}
-                                {% if profile.working_hours.sat %}<p>Sub: {{ profile.working_hours.sat }}</p>{% endif %}
-                                {% if profile.working_hours.sun %}<p>Ned: {{ profile.working_hours.sun }}</p>{% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--mg-space-6); max-width: 900px; margin: 0 auto;">
+            {% if contact_address %}
+            <div class="mg-card" style="text-align: center;">
+                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--mg-gradient-1), var(--mg-gradient-2)); border-radius: var(--mg-radius-lg); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--mg-space-4);">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
                 </div>
+                <h3 style="font-weight: 600; color: var(--mg-text-primary); margin-bottom: var(--mg-space-2);">Adresa</h3>
+                <p style="color: var(--mg-text-secondary); font-size: 0.875rem;">{{ contact_address }}{% if contact_city %}, {{ contact_city }}{% endif %}</p>
             </div>
+            {% endif %}
 
-            <!-- Map -->
-            {% if profile.maps_embed_url %}
-            <div class="h-80 lg:h-auto rounded-xl overflow-hidden">
-                <iframe
-                    src="{{ profile.maps_embed_url }}"
-                    width="100%"
-                    height="100%"
-                    style="border:0; min-height: 320px;"
-                    allowfullscreen=""
-                    loading="lazy"
-                    referrerpolicy="no-referrer-when-downgrade">
-                </iframe>
+            {% if contact_phone %}
+            <div class="mg-card" style="text-align: center;">
+                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--mg-gradient-1), var(--mg-gradient-2)); border-radius: var(--mg-radius-lg); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--mg-space-4);">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                    </svg>
+                </div>
+                <h3 style="font-weight: 600; color: var(--mg-text-primary); margin-bottom: var(--mg-space-2);">Telefon</h3>
+                <a href="tel:{{ contact_phone }}" style="color: var(--mg-gradient-1); font-size: 0.875rem;">{{ contact_phone }}</a>
             </div>
-            {% elif profile.maps_url %}
-            <div class="h-80 lg:h-auto rounded-xl overflow-hidden bg-gray-200 flex items-center justify-center">
-                <a href="{{ profile.maps_url }}" target="_blank" class="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:opacity-90 transition-opacity">
-                    Otvori u Google Maps
-                </a>
+            {% endif %}
+
+            {% if contact_email %}
+            <div class="mg-card" style="text-align: center;">
+                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--mg-gradient-1), var(--mg-gradient-2)); border-radius: var(--mg-radius-lg); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--mg-space-4);">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <h3 style="font-weight: 600; color: var(--mg-text-primary); margin-bottom: var(--mg-space-2);">Email</h3>
+                <a href="mailto:{{ contact_email }}" style="color: var(--mg-gradient-1); font-size: 0.875rem;">{{ contact_email }}</a>
             </div>
+            {% endif %}
+
+            {% if profile.working_hours %}
+            <div class="mg-card" style="text-align: center;">
+                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--mg-gradient-1), var(--mg-gradient-2)); border-radius: var(--mg-radius-lg); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--mg-space-4);">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h3 style="font-weight: 600; color: var(--mg-text-primary); margin-bottom: var(--mg-space-2);">Radno vreme</h3>
+                <p style="color: var(--mg-text-secondary); font-size: 0.875rem;">{{ profile.working_hours }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Map -->
+        {% if profile.maps_embed_url %}
+        <div style="margin-top: var(--mg-space-12); border-radius: var(--mg-radius-2xl); overflow: hidden; border: 1px solid var(--mg-glass-border);">
+            <iframe
+                src="{{ profile.maps_embed_url }}"
+                width="100%"
+                height="400"
+                style="border: 0;"
+                allowfullscreen=""
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="mg-section">
+    <div class="mg-section__container">
+        <div class="mg-card mg-card--glow mg-text-center" style="padding: var(--mg-space-12);">
+            <h2 style="font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: 700; color: var(--mg-text-primary); margin-bottom: var(--mg-space-4);">
+                Imate problem sa telefonom?
+            </h2>
+            <p style="color: var(--mg-text-secondary); margin-bottom: var(--mg-space-8); max-width: 500px; margin-left: auto; margin-right: auto;">
+                Kontaktirajte nas danas i dobijte besplatnu procenu popravke.
+                Brz odziv, fer cene, kvalitetna usluga.
+            </p>
+            {% if hero_phone %}
+            <a href="tel:{{ hero_phone }}" class="mg-btn mg-btn--primary mg-btn--lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+                {{ hero_phone }}
+            </a>
             {% endif %}
         </div>
     </div>
 </section>
+
 {% endblock %}
