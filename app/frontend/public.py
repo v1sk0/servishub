@@ -21,6 +21,7 @@ def landing():
     # Proveri da li je ovo zahtev za javnu stranicu tenanta
     if g.get('is_public_site') and g.get('public_tenant') and g.get('public_profile'):
         from app.models import ServiceItem, TenantGoogleIntegration, TenantGoogleReview
+        from app.constants.flash_services import get_flash_words
 
         tenant = g.public_tenant
         profile = g.public_profile
@@ -56,6 +57,12 @@ def landing():
                 TenantGoogleReview.rating >= 4  # Samo 4+ zvezdice
             ).order_by(TenantGoogleReview.review_time.desc()).limit(6).all()
 
+        # Dohvati flash words za scramble animaciju
+        flash_words = []
+        show_flash = profile.show_flash_services if profile.show_flash_services is not None else True
+        if show_flash:
+            flash_words = get_flash_words(profile.flash_service_categories)
+
         return render_template(
             'tenant_public/home.html',
             tenant=tenant,
@@ -63,7 +70,8 @@ def landing():
             services=services,
             services_by_category=services_by_category,
             google_integration=google_integration,
-            google_reviews=google_reviews
+            google_reviews=google_reviews,
+            flash_words=flash_words
         )
 
     # Inače prikaži glavni ServisHub landing

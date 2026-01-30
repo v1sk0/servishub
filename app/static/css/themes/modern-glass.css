@@ -1166,6 +1166,64 @@
 }
 
 /* ========================================
+   SCRAMBLE TEXT ANIMATION
+   ======================================== */
+.mg-scramble-section {
+    padding: var(--mg-space-16) 0;
+    text-align: center;
+    background: linear-gradient(180deg, transparent, rgba(99, 102, 241, 0.02), transparent);
+    overflow: hidden;
+}
+
+.mg-scramble-label {
+    color: var(--mg-text-muted);
+    margin-bottom: var(--mg-space-4);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-weight: 500;
+}
+
+.mg-scramble-container {
+    position: relative;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mg-scramble-text {
+    font-size: clamp(1.5rem, 5vw, 3.5rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--mg-gradient-1), var(--mg-gradient-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    min-height: 1.2em;
+    display: inline-block;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.mg-scramble-text .scramble-char {
+    color: var(--mg-gradient-1);
+    -webkit-text-fill-color: var(--mg-gradient-1);
+    opacity: 0.6;
+    display: inline-block;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .mg-scramble-section {
+        padding: var(--mg-space-10) 0;
+    }
+
+    .mg-scramble-container {
+        min-height: 50px;
+    }
+}
+
+/* ========================================
    FOOTER
    ======================================== */
 .mg-footer {

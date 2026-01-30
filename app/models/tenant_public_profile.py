@@ -198,6 +198,20 @@ class TenantPublicProfile(db.Model):
     theme = db.Column(db.String(20), default='starter')
 
     # ============================================
+    # FLASH SERVICES - Animirani prikaz usluga
+    # ============================================
+    # Scramble Reveal animacija koja rotira kroz usluge
+    # Kategorije: telefoni, racunari, konzole, trotineti, ostalo
+    show_flash_services = db.Column(db.Boolean, default=True)
+    flash_service_categories = db.Column(db.JSON, default=lambda: {
+        'telefoni': True,
+        'racunari': True,
+        'konzole': False,
+        'trotineti': False,
+        'ostalo': False
+    })
+
+    # ============================================
     # TIMESTAMPS
     # ============================================
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -317,6 +331,16 @@ class TenantPublicProfile(db.Model):
                 'title': self.popular_services_title,
                 'limit': self.popular_services_limit or 6,
             },
+            'flash_services': {
+                'show': self.show_flash_services if self.show_flash_services is not None else True,
+                'categories': self.flash_service_categories or {
+                    'telefoni': True,
+                    'racunari': True,
+                    'konzole': False,
+                    'trotineti': False,
+                    'ostalo': False
+                },
+            },
         }
 
         if include_private:
@@ -424,5 +448,15 @@ class TenantPublicProfile(db.Model):
                 'show': self.show_popular_services if self.show_popular_services is not None else True,
                 'title': self.popular_services_title or 'Najpopularnije usluge',
                 'limit': self.popular_services_limit or 6,
+            },
+            'flash_services': {
+                'show': self.show_flash_services if self.show_flash_services is not None else True,
+                'categories': self.flash_service_categories or {
+                    'telefoni': True,
+                    'racunari': True,
+                    'konzole': False,
+                    'trotineti': False,
+                    'ostalo': False
+                },
             },
         }
