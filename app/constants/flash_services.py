@@ -68,31 +68,34 @@ DEFAULT_FLASH_CATEGORIES = {
 }
 
 
+# Redosled kategorija za prikaz (telefoni prvi, pa računari, pa ostalo)
+CATEGORY_ORDER = ['telefoni', 'racunari', 'konzole', 'trotineti', 'ostalo']
+
+
 def get_flash_words(categories: dict = None) -> list:
     """
     Vraća listu reči za flash animaciju na osnovu uključenih kategorija.
+
+    Redosled: telefoni → računari → konzole → trotineti → ostalo → prednosti
 
     Args:
         categories: Dict sa boolean vrednostima za svaku kategoriju.
                    Ako je None, koriste se default vrednosti.
 
     Returns:
-        Lista reči (prednosti + usluge iz uključenih kategorija)
+        Lista reči (usluge po redosledu kategorija + prednosti na kraju)
     """
-    import random
-
     if categories is None:
         categories = DEFAULT_FLASH_CATEGORIES
 
-    # Počni sa prednostima
-    words = list(FLASH_BENEFITS)
+    words = []
 
-    # Dodaj usluge iz uključenih kategorija
-    for cat, enabled in categories.items():
-        if enabled and cat in FLASH_SERVICES:
+    # Dodaj usluge po definisanom redosledu kategorija
+    for cat in CATEGORY_ORDER:
+        if categories.get(cat, False) and cat in FLASH_SERVICES:
             words.extend(FLASH_SERVICES[cat])
 
-    # Promešaj redosled
-    random.shuffle(words)
+    # Prednosti na kraju
+    words.extend(FLASH_BENEFITS)
 
     return words
