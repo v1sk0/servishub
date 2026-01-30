@@ -275,45 +275,111 @@
 </section>
 {% endif %}
 
-{% if google_reviews and google_reviews|length > 0 %}
-<!-- Google Reviews -->
-<section class="mg-section">
+{% set good_reviews = google_reviews|selectattr('rating', 'ge', 4)|list %}
+{% if good_reviews and good_reviews|length > 0 %}
+<!-- Google Reviews Carousel -->
+<section class="mg-section mg-reviews-section">
     <div class="mg-section__container">
         <div class="mg-section__header">
             <span class="mg-section__badge">Recenzije</span>
             <h2 class="mg-section__title">Sta kazu nasi klijenti</h2>
             <p class="mg-section__subtitle">Vase zadovoljstvo je nasa najbolja preporuka</p>
-        </div>
 
-        <div class="mg-reviews">
-            {% for review in google_reviews[:6] %}
-            <div class="mg-review-card">
-                <div class="mg-review-card__header">
-                    {% if review.author_photo_url %}
-                    <img src="{{ review.author_photo_url }}" alt="{{ review.author_name }}" class="mg-review-card__avatar" style="object-fit: cover;">
-                    {% else %}
-                    <div class="mg-review-card__avatar">{{ review.author_name[0]|upper if review.author_name else 'A' }}</div>
-                    {% endif %}
-                    <div>
-                        <div class="mg-review-card__author">{{ review.author_name }}</div>
-                        {% if review.review_time %}
-                        <div class="mg-review-card__date">{{ review.review_time.strftime('%d.%m.%Y') if review.review_time else '' }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="mg-review-card__stars">
-                    {% for i in range(review.rating or 5) %}
-                    <svg class="w-4 h-4 mg-review-card__star" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            {% if google_integration and google_integration.google_rating %}
+            <div class="mg-reviews-summary">
+                <div class="mg-reviews-summary__stars">
+                    {% for i in range(5) %}
+                    <svg class="w-6 h-6" fill="{{ 'currentColor' if i < (google_integration.google_rating|int) else 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
                     </svg>
                     {% endfor %}
                 </div>
-                {% if review.text %}
-                <p class="mg-review-card__text">{{ review.text|truncate(200) }}</p>
-                {% endif %}
+                <span class="mg-reviews-summary__rating">{{ google_integration.google_rating }}</span>
+                <span class="mg-reviews-summary__count">({{ google_integration.total_reviews }} recenzija)</span>
             </div>
-            {% endfor %}
+            {% endif %}
         </div>
+
+        <!-- Reviews Carousel -->
+        <div class="mg-reviews-carousel">
+            <div class="mg-reviews-carousel__track">
+                <!-- First set of reviews (4-5 stars only) -->
+                {% for review in good_reviews[:15] %}
+                <div class="mg-review-card">
+                    <div class="mg-review-card__header">
+                        {% if review.author_photo_url %}
+                        <img src="{{ review.author_photo_url }}" alt="{{ review.author_name }}" class="mg-review-card__avatar">
+                        {% else %}
+                        <div class="mg-review-card__avatar mg-review-card__avatar--initials">{{ review.author_name[0]|upper if review.author_name else 'A' }}</div>
+                        {% endif %}
+                        <div>
+                            <div class="mg-review-card__author">{{ review.author_name }}</div>
+                            {% if review.relative_time %}
+                            <div class="mg-review-card__date">{{ review.relative_time }}</div>
+                            {% elif review.review_time %}
+                            <div class="mg-review-card__date">{{ review.review_time.strftime('%d.%m.%Y') if review.review_time else '' }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mg-review-card__stars">
+                        {% for i in range(review.rating or 5) %}
+                        <svg class="mg-review-card__star" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                        {% endfor %}
+                    </div>
+                    {% if review.text %}
+                    <p class="mg-review-card__text">{{ review.text|truncate(180) }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <!-- Duplicate reviews for seamless loop -->
+                {% for review in good_reviews[:15] %}
+                <div class="mg-review-card" aria-hidden="true">
+                    <div class="mg-review-card__header">
+                        {% if review.author_photo_url %}
+                        <img src="{{ review.author_photo_url }}" alt="{{ review.author_name }}" class="mg-review-card__avatar">
+                        {% else %}
+                        <div class="mg-review-card__avatar mg-review-card__avatar--initials">{{ review.author_name[0]|upper if review.author_name else 'A' }}</div>
+                        {% endif %}
+                        <div>
+                            <div class="mg-review-card__author">{{ review.author_name }}</div>
+                            {% if review.relative_time %}
+                            <div class="mg-review-card__date">{{ review.relative_time }}</div>
+                            {% elif review.review_time %}
+                            <div class="mg-review-card__date">{{ review.review_time.strftime('%d.%m.%Y') if review.review_time else '' }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mg-review-card__stars">
+                        {% for i in range(review.rating or 5) %}
+                        <svg class="mg-review-card__star" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                        {% endfor %}
+                    </div>
+                    {% if review.text %}
+                    <p class="mg-review-card__text">{{ review.text|truncate(180) }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if google_integration and google_integration.google_place_id %}
+        <div class="mg-text-center mg-mt-8">
+            <a href="https://www.google.com/maps/place/?q=place_id:{{ google_integration.google_place_id }}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="mg-btn mg-btn--secondary">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                </svg>
+                Pogledajte sve recenzije na Google
+            </a>
+        </div>
+        {% endif %}
     </div>
 </section>
 {% endif %}

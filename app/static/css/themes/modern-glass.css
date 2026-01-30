@@ -844,19 +844,94 @@
 }
 
 /* ========================================
-   GOOGLE REVIEWS
+   GOOGLE REVIEWS CAROUSEL
    ======================================== */
-.mg-reviews {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: var(--mg-space-6);
+.mg-reviews-section {
+    overflow: hidden;
 }
 
+/* Reviews Summary */
+.mg-reviews-summary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--mg-space-3);
+    margin-top: var(--mg-space-4);
+}
+
+.mg-reviews-summary__stars {
+    display: flex;
+    gap: 2px;
+    color: var(--mg-accent-amber);
+}
+
+.mg-reviews-summary__stars svg {
+    width: 24px;
+    height: 24px;
+}
+
+.mg-reviews-summary__rating {
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--mg-accent-amber), #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.mg-reviews-summary__count {
+    font-size: 0.875rem;
+    color: var(--mg-text-muted);
+}
+
+/* Carousel Container */
+.mg-reviews-carousel {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    margin-top: var(--mg-space-8);
+    padding: var(--mg-space-4) 0;
+    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+}
+
+/* Carousel Track - Infinite Scroll Animation */
+.mg-reviews-carousel__track {
+    display: flex;
+    gap: var(--mg-space-6);
+    animation: reviewsScroll 60s linear infinite;
+    width: max-content;
+}
+
+.mg-reviews-carousel:hover .mg-reviews-carousel__track {
+    animation-play-state: paused;
+}
+
+@keyframes reviewsScroll {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* Review Card */
 .mg-review-card {
+    flex-shrink: 0;
+    width: 320px;
     background: var(--mg-glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--mg-glass-border);
     border-radius: var(--mg-radius-xl);
     padding: var(--mg-space-6);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.mg-review-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
 .mg-review-card__header {
@@ -870,17 +945,24 @@
     width: 48px;
     height: 48px;
     border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.mg-review-card__avatar--initials {
     background: linear-gradient(135deg, var(--mg-gradient-1), var(--mg-gradient-2));
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
+    font-size: 1.125rem;
     color: white;
 }
 
 .mg-review-card__author {
     font-weight: 600;
     color: var(--mg-text-primary);
+    font-size: 0.9375rem;
 }
 
 .mg-review-card__date {
@@ -895,6 +977,8 @@
 }
 
 .mg-review-card__star {
+    width: 16px;
+    height: 16px;
     color: var(--mg-accent-amber);
 }
 
@@ -902,6 +986,27 @@
     color: var(--mg-text-secondary);
     font-size: 0.875rem;
     line-height: 1.7;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Reviews Carousel Responsive */
+@media (max-width: 768px) {
+    .mg-review-card {
+        width: 280px;
+        padding: var(--mg-space-5);
+    }
+
+    .mg-reviews-carousel__track {
+        gap: var(--mg-space-4);
+        animation-duration: 45s;
+    }
+
+    .mg-reviews-summary {
+        flex-wrap: wrap;
+    }
 }
 
 /* ========================================
