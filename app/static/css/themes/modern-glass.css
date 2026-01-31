@@ -1492,7 +1492,7 @@
 }
 
 [data-theme="premium"] .mg-scramble-section-inline .mg-scramble-text {
-    font-size: clamp(2.5rem, 12vw, 7rem);
+    font-size: clamp(1.25rem, 6vw, 3.5rem);
     font-weight: 800;
     letter-spacing: -0.03em;
     line-height: 1;
@@ -1515,13 +1515,13 @@
 
 @media (min-width: 768px) {
     [data-theme="premium"] .mg-scramble-section-inline .mg-scramble-text {
-        font-size: clamp(4rem, 14vw, 9rem);
+        font-size: clamp(2rem, 7vw, 4.5rem);
     }
 }
 
 @media (min-width: 1024px) {
     [data-theme="premium"] .mg-scramble-section-inline .mg-scramble-text {
-        font-size: clamp(5rem, 16vw, 12rem);
+        font-size: clamp(2.5rem, 8vw, 6rem);
     }
 }
 
