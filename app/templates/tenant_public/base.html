@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="sr">
+<html lang="sr" data-theme="{{ theme or 'starter' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -37,8 +37,8 @@
         'elite': 'elite.css'
     } %}
     {% set theme_file = theme_map.get(theme, 'modern-glass.css') %}
-    <!-- Cache-bust: v477 -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes/' ~ theme_file) }}?v=477">
+    <!-- Cache-bust: v478 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes/' ~ theme_file) }}?v=478">
 
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
