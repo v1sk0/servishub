@@ -1,8 +1,8 @@
 """
 Email servis - slanje verifikacionih emailova za registraciju.
 
-Koristi SendGrid API za slanje emailova.
-Dokumentacija: https://docs.sendgrid.com/api-reference/mail-send/mail-send
+Koristi Brevo (ex Sendinblue) API za slanje emailova.
+Dokumentacija: https://developers.brevo.com/reference/sendtransacemail
 
 Funkcionalnosti:
 - Slanje verifikacionog emaila sa linkom
@@ -32,15 +32,15 @@ class EmailService:
     """
     Servis za slanje email poruka i verifikaciju.
 
-    Koristi SendGrid API sa environment varijablama:
-    - SENDGRID_API_KEY: API kljuc za SendGrid
-    - SENDGRID_FROM_EMAIL: Email adresa posaljioca
-    - SENDGRID_FROM_NAME: Ime posaljioca (default: ServisHub)
+    Koristi Brevo API sa environment varijablama:
+    - BREVO_API_KEY: API kljuc za Brevo
+    - BREVO_FROM_EMAIL: Email adresa posaljioca
+    - BREVO_FROM_NAME: Ime posaljioca (default: ServisHub)
     - FRONTEND_URL: URL fronted aplikacije za linkove
     """
 
-    # SendGrid API endpoint
-    API_URL = "https://api.sendgrid.com/v3/mail/send"
+    # Brevo API endpoint
+    API_URL = "https://api.brevo.com/v3/smtp/email"
 
     # Konfiguracija
     MAX_ATTEMPTS = 5
@@ -48,9 +48,9 @@ class EmailService:
 
     def __init__(self):
         """Inicijalizacija Email servisa."""
-        self.api_key = os.environ.get('SENDGRID_API_KEY')
-        self.from_email = os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@servishub.rs')
-        self.from_name = os.environ.get('SENDGRID_FROM_NAME', 'ServisHub')
+        self.api_key = os.environ.get('BREVO_API_KEY')
+        self.from_email = os.environ.get('BREVO_FROM_EMAIL', 'noreply@servishub.rs')
+        self.from_name = os.environ.get('BREVO_FROM_NAME', 'ServisHub')
         self.frontend_url = os.environ.get('FRONTEND_URL', 'https://app.servishub.rs')
 
     def _build_verification_url(self, token: str) -> str:
@@ -208,29 +208,17 @@ Ovaj email je automatski generisan, molimo ne odgovarajte na njega.
         html_content = self._build_verification_email_html(verification_url)
         text_content = self._build_verification_email_text(verification_url)
 
-        # Posalji email preko SendGrid API
+        # Posalji email preko Brevo API
         try:
             payload = {
-                "personalizations": [
-                    {
-                        "to": [{"email": email}],
-                        "subject": "ServisHub - Potvrdite vasu email adresu"
-                    }
-                ],
-                "from": {
-                    "email": self.from_email,
-                    "name": self.from_name
+                "sender": {
+                    "name": self.from_name,
+                    "email": self.from_email
                 },
-                "content": [
-                    {
-                        "type": "text/plain",
-                        "value": text_content
-                    },
-                    {
-                        "type": "text/html",
-                        "value": html_content
-                    }
-                ]
+                "to": [{"email": email}],
+                "subject": "ServisHub - Potvrdite vasu email adresu",
+                "htmlContent": html_content,
+                "textContent": text_content
             }
 
             # SECURITY: Ne loguj verification URL - sadrzi token!
@@ -240,16 +228,17 @@ Ovaj email je automatski generisan, molimo ne odgovarajte na njega.
                 self.API_URL,
                 json=payload,
                 headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json"
+                    "api-key": self.api_key,
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
                 },
                 timeout=10
             )
 
-            print(f"[EMAIL] SendGrid response status: {response.status_code}")
-            print(f"[EMAIL] SendGrid response body: {response.text}")
+            print(f"[EMAIL] Brevo response status: {response.status_code}")
+            print(f"[EMAIL] Brevo response body: {response.text}")
 
-            # SendGrid vraca 202 Accepted za uspesno slanje
+            # Brevo vraca 201 Created za uspesno slanje
             if response.status_code in [200, 201, 202]:
                 print(f"[EMAIL] Successfully sent to {email}")
                 return True, "Verifikacioni email uspesno poslat", None
@@ -258,8 +247,8 @@ Ovaj email je automatski generisan, molimo ne odgovarajte na njega.
                 try:
                     error_data = response.json()
                     print(f"[EMAIL] Error data: {error_data}")
-                    if 'errors' in error_data:
-                        error_msg = error_data['errors'][0].get('message', error_msg)
+                    if 'message' in error_data:
+                        error_msg = error_data['message']
                 except:
                     pass
                 print(f"[EMAIL] Failed to send: {error_msg}")
@@ -450,28 +439,23 @@ Ovaj email je automatski generisan, molimo ne odgovarajte na njega.
 
         try:
             payload = {
-                "personalizations": [
-                    {
-                        "to": [{"email": to_email}],
-                        "subject": subject
-                    }
-                ],
-                "from": {
-                    "email": self.from_email,
-                    "name": self.from_name
+                "sender": {
+                    "name": self.from_name,
+                    "email": self.from_email
                 },
-                "content": [
-                    {"type": "text/plain", "value": text_content},
-                    {"type": "text/html", "value": html_content}
-                ]
+                "to": [{"email": to_email}],
+                "subject": subject,
+                "htmlContent": html_content,
+                "textContent": text_content
             }
 
             response = requests.post(
                 self.API_URL,
                 json=payload,
                 headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json"
+                    "api-key": self.api_key,
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
                 },
                 timeout=10
             )

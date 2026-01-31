@@ -28,11 +28,11 @@ class NotificationService:
     """
     Centralizovan servis za slanje notifikacija administratorima.
 
-    Koristi SendGrid za email. SMS priprema za budućnost.
+    Koristi Brevo (ex Sendinblue) za email. SMS priprema za budućnost.
     """
 
-    # SendGrid API endpoint
-    API_URL = "https://api.sendgrid.com/v3/mail/send"
+    # Brevo API endpoint
+    API_URL = "https://api.brevo.com/v3/smtp/email"
 
     # Retry config
     MAX_RETRIES = 3
@@ -40,9 +40,9 @@ class NotificationService:
 
     def __init__(self):
         """Inicijalizacija servisa."""
-        self.api_key = os.environ.get('SENDGRID_API_KEY')
-        self.from_email = os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@servishub.rs')
-        self.from_name = os.environ.get('SENDGRID_FROM_NAME', 'ServisHub')
+        self.api_key = os.environ.get('BREVO_API_KEY')
+        self.from_email = os.environ.get('BREVO_FROM_EMAIL', 'noreply@servishub.rs')
+        self.from_name = os.environ.get('BREVO_FROM_NAME', 'ServisHub')
         self.frontend_url = os.environ.get('FRONTEND_URL', 'https://app.servishub.rs')
 
     # =========================================================================
@@ -139,29 +139,25 @@ class NotificationService:
         last_error = None
         for attempt in range(self.MAX_RETRIES):
             try:
+                # Brevo API payload format
                 payload = {
-                    "personalizations": [
-                        {
-                            "to": [{"email": email} for email in to_emails],
-                            "subject": subject
-                        }
-                    ],
-                    "from": {
-                        "email": self.from_email,
-                        "name": self.from_name
+                    "sender": {
+                        "name": self.from_name,
+                        "email": self.from_email
                     },
-                    "content": [
-                        {"type": "text/plain", "value": text_content},
-                        {"type": "text/html", "value": html_content}
-                    ]
+                    "to": [{"email": email} for email in to_emails],
+                    "subject": subject,
+                    "htmlContent": html_content,
+                    "textContent": text_content
                 }
 
                 response = requests.post(
                     self.API_URL,
                     json=payload,
                     headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json"
+                        "api-key": self.api_key,
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
                     },
                     timeout=10
                 )
@@ -169,7 +165,7 @@ class NotificationService:
                 if response.status_code in [200, 201, 202]:
                     return True, None
                 else:
-                    last_error = f"SendGrid returned {response.status_code}: {response.text[:200]}"
+                    last_error = f"Brevo returned {response.status_code}: {response.text[:200]}"
 
             except Exception as e:
                 last_error = str(e)
