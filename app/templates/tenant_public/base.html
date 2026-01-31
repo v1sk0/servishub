@@ -1,5 +1,6 @@
+{% set current_theme = profile.theme or 'premium' %}
 <!DOCTYPE html>
-<html lang="sr" data-theme="{{ theme or 'starter' }}">
+<html lang="sr" data-theme="{{ current_theme }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,15 +31,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Theme CSS - Dynamic loading based on profile.theme -->
-    {% set theme = profile.theme or 'premium' %}
     {% set theme_map = {
         'premium': 'modern-glass.css',
         'starter': 'starter.css',
         'elite': 'elite.css'
     } %}
-    {% set theme_file = theme_map.get(theme, 'modern-glass.css') %}
-    <!-- Cache-bust: v478 -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes/' ~ theme_file) }}?v=478">
+    {% set theme_file = theme_map.get(current_theme, 'modern-glass.css') %}
+    <!-- Cache-bust: v479 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes/' ~ theme_file) }}?v=479">
 
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
