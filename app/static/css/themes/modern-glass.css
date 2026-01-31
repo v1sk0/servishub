@@ -1471,6 +1471,61 @@
 }
 
 /* ========================================
+   PREMIUM THEME - Giant Scramble Text
+   Full width, edge to edge
+   ======================================== */
+[data-theme="premium"] .mg-scramble-section-inline {
+    margin: var(--mg-space-4) 0;
+    padding: 0;
+    width: 100%;
+}
+
+[data-theme="premium"] .mg-scramble-section-inline .mg-scramble-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    margin-bottom: var(--mg-space-1);
+    opacity: 0.7;
+}
+
+[data-theme="premium"] .mg-scramble-section-inline .mg-scramble-container {
+    min-height: auto;
+}
+
+[data-theme="premium"] .mg-scramble-section-inline .mg-scramble-text {
+    font-size: clamp(2.5rem, 12vw, 7rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    white-space: nowrap;
+    background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 50%, #c7d2fe 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 4px 30px rgba(99, 102, 241, 0.5));
+}
+
+[data-theme="premium"] .mg-scramble-text .scramble-char {
+    background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 20px rgba(129, 140, 248, 0.8));
+}
+
+@media (min-width: 768px) {
+    [data-theme="premium"] .mg-scramble-section-inline .mg-scramble-text {
+        font-size: clamp(4rem, 14vw, 9rem);
+    }
+}
+
+@media (min-width: 1024px) {
+    [data-theme="premium"] .mg-scramble-section-inline .mg-scramble-text {
+        font-size: clamp(5rem, 16vw, 12rem);
+    }
+}
+
+/* ========================================
    FOOTER
    ======================================== */
 .mg-footer {
