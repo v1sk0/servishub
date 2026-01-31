@@ -17,7 +17,8 @@ from ..schemas.auth import AdminLoginRequest, RefreshTokenRequest
 from ..middleware.auth import jwt_required, admin_required
 from ...services.auth_service import auth_service, AuthError
 from ...services.security_service import SecurityEventLogger, SecurityEventType, rate_limit, RateLimits
-from ...models import AuditLog, AuditAction, PlatformAdmin
+from ...services.notification_service import notification_service
+from ...models import AuditLog, AuditAction, PlatformAdmin, SecurityEvent
 from ...extensions import db
 
 # Blueprint za admin auth
@@ -109,6 +110,25 @@ def admin_login():
 
     except AuthError as e:
         SecurityEventLogger.log_admin_login(0, data.email, success=False)
+
+        # Notify admins about failed login attempts
+        try:
+            # Count recent failed attempts for this email
+            from datetime import datetime, timedelta
+            one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+            failed_count = SecurityEvent.query.filter(
+                SecurityEvent.event_type == SecurityEventType.ADMIN_LOGIN_FAILED,
+                SecurityEvent.email == data.email,
+                SecurityEvent.created_at >= one_hour_ago
+            ).count()
+
+            ip = request.remote_addr
+            notification_service.notify_failed_login(data.email, ip, failed_count)
+        except Exception as notify_error:
+            # Don't let notification errors affect login flow
+            import logging
+            logging.warning(f"Failed to send login notification: {notify_error}")
+
         return jsonify({
             'error': 'Login Error',
             'message': e.message
@@ -471,6 +491,13 @@ def disable_2fa():
         user_id=admin.id,
         email=admin.email
     )
+
+    # Notify about 2FA disabled
+    try:
+        notification_service.notify_2fa_disabled(admin.email, admin.full_name or admin.email)
+    except Exception as notify_error:
+        import logging
+        logging.warning(f"Failed to send 2FA notification: {notify_error}")
 
     AuditLog.log(
         entity_type='platform_admin',

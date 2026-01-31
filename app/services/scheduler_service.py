@@ -158,9 +158,47 @@ def init_scheduler(app):
         replace_existing=True
     )
 
+    # =========================================================================
+    # JOB 5: Dnevni notification summary - svaki dan u 07:00 UTC (08:00 CET)
+    # =========================================================================
+    @run_with_context
+    def notification_daily_summary_job():
+        from .notification_service import notification_service
+        app.logger.info("[SCHEDULER] Starting notification_daily_summary_job...")
+
+        success = notification_service.send_daily_summary()
+        app.logger.info(f"[SCHEDULER] notification_daily_summary: sent={success}")
+
+    scheduler.add_job(
+        func=notification_daily_summary_job,
+        trigger=CronTrigger(hour=7, minute=0),  # 07:00 UTC = 08:00 CET
+        id='notification_daily_summary',
+        name='Dnevni notification izvestaj',
+        replace_existing=True
+    )
+
+    # =========================================================================
+    # JOB 6: Nedeljni notification report - ponedeljkom u 07:00 UTC (08:00 CET)
+    # =========================================================================
+    @run_with_context
+    def notification_weekly_report_job():
+        from .notification_service import notification_service
+        app.logger.info("[SCHEDULER] Starting notification_weekly_report_job...")
+
+        success = notification_service.send_weekly_report()
+        app.logger.info(f"[SCHEDULER] notification_weekly_report: sent={success}")
+
+    scheduler.add_job(
+        func=notification_weekly_report_job,
+        trigger=CronTrigger(day_of_week='mon', hour=7, minute=0),  # Ponedeljak 07:00 UTC
+        id='notification_weekly_report',
+        name='Nedeljni notification izvestaj',
+        replace_existing=True
+    )
+
     # Pokreni scheduler
     scheduler.start()
-    app.logger.info("[SCHEDULER] Started with 4 jobs: billing_daily, generate_invoices, send_reminders, pos_daily_close")
+    app.logger.info("[SCHEDULER] Started with 6 jobs: billing_daily, generate_invoices, send_reminders, pos_daily_close, notification_daily_summary, notification_weekly_report")
 
     # Zaustavi scheduler kada se app ugasi
     atexit.register(lambda: scheduler.shutdown(wait=False))

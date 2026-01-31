@@ -171,6 +171,15 @@ def admin_packages():
     return render_template('admin/packages/index.html')
 
 
+# ============== Notifications ==============
+
+@bp.route('/admin/notifications')
+@admin_frontend_required
+def admin_notifications():
+    """Notification podesavanja i log."""
+    return render_template('admin/settings/notifications.html')
+
+
 # ============== Settings ==============
 
 @bp.route('/admin/settings')

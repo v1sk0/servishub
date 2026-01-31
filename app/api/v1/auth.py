@@ -20,6 +20,7 @@ from ..schemas.auth import (
 from ..middleware.auth import jwt_required, tenant_required
 from ...services.auth_service import auth_service, AuthError
 from ...services.security_service import rate_limit, RateLimits, SecurityEventLogger
+from ...services.notification_service import notification_service
 from ...models.security_event import SecurityEventType
 from ...models import ServiceLocation, UserRole, Tenant, TenantUser
 from ...models.tenant import LocationStatus
@@ -153,6 +154,13 @@ def register():
             email=user.email,
             company_name=tenant.name
         )
+
+        # Notify admins about new tenant
+        try:
+            notification_service.notify_new_tenant(tenant.name, tenant.id, tenant.email)
+        except Exception as e:
+            import logging
+            logging.warning(f"Failed to send new tenant notification: {e}")
 
         return jsonify({
             'message': 'Registracija uspesna! Imate 7 dana DEMO perioda.',

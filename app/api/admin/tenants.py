@@ -12,6 +12,7 @@ from sqlalchemy import func, and_
 from app.extensions import db
 from app.models import Tenant, User, ServiceTicket, SubscriptionPayment
 from app.services.billing_tasks import get_next_invoice_number
+from app.services.notification_service import notification_service
 from app.models.representative import ServiceRepresentative, RepresentativeStatus
 from app.models.admin_activity import AdminActivityLog, AdminActionType
 from app.api.middleware.auth import platform_admin_required
@@ -323,6 +324,13 @@ def suspend_tenant(tenant_id):
     )
 
     db.session.commit()
+
+    # Notify admins about suspension
+    try:
+        notification_service.notify_suspension(tenant.name, tenant.id, reason)
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to send suspension notification: {e}")
 
     return jsonify({
         'message': f'Tenant "{tenant.name}" je suspendovan.',
