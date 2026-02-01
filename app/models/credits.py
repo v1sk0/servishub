@@ -150,7 +150,12 @@ class CreditTransaction(db.Model):
         index=True
     )
 
-    transaction_type = db.Column(db.Enum(CreditTransactionType), nullable=False, index=True)
+    # values_callable tells SQLAlchemy to use enum VALUES not NAMES
+    transaction_type = db.Column(
+        db.Enum(CreditTransactionType, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        index=True
+    )
 
     # Iznos: pozitivan = dodavanje kredita, negativan = oduzimanje
     amount = db.Column(db.Numeric(10, 2), nullable=False)
