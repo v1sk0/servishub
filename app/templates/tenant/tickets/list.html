@@ -1495,7 +1495,12 @@
                         <label class="form-label">PIB firme</label>
                         <input type="text" class="form-input" x-model="newTicket.customer_pib" placeholder="9 cifara" maxlength="15">
                     </div>
-                    <div class="form-group"></div>
+                    <div class="form-group flex items-center" style="padding-top: 1.5rem;">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" x-model="newTicket.sms_opt_out" class="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500">
+                            <span class="text-sm text-gray-600">Klijent NE želi SMS</span>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Section: Podaci o uredaju -->
@@ -3464,6 +3469,7 @@ function ticketsPage() {
             customer_email: '',
             customer_company_name: '',
             customer_pib: '',
+            sms_opt_out: false,
             device_type: 'phone',
             brand: '',
             model: '',
@@ -4197,6 +4203,7 @@ function ticketsPage() {
                 customer_email: '',
                 customer_company_name: '',
                 customer_pib: '',
+                sms_opt_out: false,
                 device_type: 'phone',
                 brand: '',
                 model: '',
