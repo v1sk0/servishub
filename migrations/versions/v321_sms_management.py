@@ -1,7 +1,7 @@
 """SMS Management - tenant SMS limits and usage tracking
 
 Revision ID: v321_sms_management
-Revises: v320_notification_system
+Revises: v320_notification
 Create Date: 2026-02-01
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'v321_sms_management'
-down_revision = 'v320_notification_system'
+down_revision = 'v320_notification'
 branch_labels = None
 depends_on = None
 
