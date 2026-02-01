@@ -33,6 +33,7 @@ class CreditTransactionType(enum.Enum):
     REFUND = 'REFUND'
     CHARGEBACK = 'CHARGEBACK'
     ADMIN = 'ADMIN'
+    SMS_NOTIFICATION = 'SMS_NOTIFICATION'  # Naplata SMS notifikacija
 
 
 class DiscountType(enum.Enum):
@@ -62,7 +63,12 @@ class CreditBalance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     # Polimorfni vlasnik
-    owner_type = db.Column(db.Enum(OwnerType), nullable=False, index=True)
+    # values_callable tells SQLAlchemy to use enum VALUES ('tenant') not NAMES ('TENANT')
+    owner_type = db.Column(
+        db.Enum(OwnerType, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        index=True
+    )
     tenant_id = db.Column(
         db.Integer,
         db.ForeignKey('tenant.id', ondelete='CASCADE'),
