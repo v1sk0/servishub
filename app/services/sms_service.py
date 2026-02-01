@@ -1,14 +1,14 @@
 """
-SMS servis - slanje OTP kodova za verifikaciju telefona.
+SMS servis - slanje SMS poruka kupcima i OTP verifikacija.
 
-Koristi SMS.to API za slanje SMS poruka.
-Dokumentacija: https://sms.to/docs
+Koristi D7 Networks API za slanje SMS poruka.
+Dokumentacija: https://d7networks.com/docs/
 
 Funkcionalnosti:
-- Generisanje 6-cifrenog OTP koda
-- Slanje SMS-a sa OTP kodom
-- Verifikacija OTP koda
-- Rate limiting (max 3 pokusaja na 24h po broju)
+- Slanje SMS kada je servisni nalog spreman (READY)
+- Slanje podsjetnika za preuzimanje (10, 30 dana)
+- OTP verifikacija telefona
+- Rate limiting
 """
 
 import os
@@ -34,13 +34,13 @@ class SMSService:
     """
     Servis za slanje SMS poruka i OTP verifikaciju.
 
-    Koristi SMS.to API sa environment varijablama:
-    - SMS_API_KEY: API kljuc za SMS.to
-    - SMS_SENDER_ID: ID posaljioca (default: ServisHub)
+    Koristi D7 Networks API sa environment varijablama:
+    - D7_API_TOKEN: API token za D7 Networks
+    - D7_SENDER_ID: ID posaljioca (default: ServisHub, max 11 karaktera)
     """
 
-    # SMS.to API endpoint
-    API_URL = "https://api.sms.to/sms/send"
+    # D7 Networks API endpoint
+    API_URL = "https://api.d7networks.com/messages/v1/send"
 
     # OTP konfiguracija
     OTP_LENGTH = 6
@@ -50,8 +50,8 @@ class SMSService:
 
     def __init__(self):
         """Inicijalizacija SMS servisa."""
-        self.api_key = os.environ.get('SMS_API_KEY')
-        self.sender_id = os.environ.get('SMS_SENDER_ID', 'ServisHub')
+        self.api_token = os.environ.get('D7_API_TOKEN')
+        self.sender_id = os.environ.get('D7_SENDER_ID', 'ServisHub')
 
     def _generate_otp(self) -> str:
         """
@@ -127,35 +127,73 @@ class SMSService:
         message = f'Vas ServisHub kod za verifikaciju: {otp_code}\nKod vazi {self.OTP_EXPIRY_MINUTES} minuta.'
 
         # U development modu, samo loguj (ne salji stvarno)
-        if not self.api_key or os.environ.get('FLASK_ENV') == 'development':
+        if not self.api_token or os.environ.get('FLASK_ENV') == 'development':
             print(f"[DEV] SMS to {formatted_phone}: {message}")
             print(f"[DEV] OTP kod: {otp_code}")
             return True, otp_code  # Vrati kod u dev modu za testiranje
 
-        # Posalji SMS preko SMS.to API
+        # Posalji SMS preko D7 Networks API
+        success, error = self._send_via_d7(formatted_phone, message)
+        if success:
+            return True, "SMS uspesno poslat"
+        else:
+            raise SMSError(f"SMS slanje nije uspelo: {error}", 500)
+
+    def _send_via_d7(self, phone: str, message: str) -> Tuple[bool, Optional[str]]:
+        """
+        Šalje SMS preko D7 Networks API.
+
+        Args:
+            phone: Broj telefona u formatu +381...
+            message: Tekst poruke
+
+        Returns:
+            Tuple (success, error_message)
+        """
         try:
+            # Ukloni + za D7 format
+            phone_number = phone.lstrip('+')
+
+            payload = {
+                "messages": [
+                    {
+                        "channel": "sms",
+                        "recipients": [phone_number],
+                        "content": message,
+                        "msg_type": "text",
+                        "data_coding": "text"
+                    }
+                ],
+                "message_globals": {
+                    "originator": self.sender_id
+                }
+            }
+
+            headers = {
+                "Authorization": f"Bearer {self.api_token}",
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+
+            print(f"[SMS] Sending to {phone_number}: {message[:50]}...")
+
             response = requests.post(
                 self.API_URL,
-                json={
-                    'to': formatted_phone,
-                    'message': message,
-                    'sender_id': self.sender_id
-                },
-                headers={
-                    'Authorization': f'Bearer {self.api_key}',
-                    'Content-Type': 'application/json'
-                },
-                timeout=10
+                json=payload,
+                headers=headers,
+                timeout=15
             )
 
-            if response.status_code == 200:
-                return True, "SMS uspesno poslat"
+            print(f"[SMS] D7 response status: {response.status_code}")
+            print(f"[SMS] D7 response: {response.text[:200]}")
+
+            if response.status_code in [200, 201, 202]:
+                return True, None
             else:
-                error_msg = response.json().get('message', 'Nepoznata greska')
-                raise SMSError(f"SMS slanje nije uspelo: {error_msg}", 500)
+                return False, f"D7 returned {response.status_code}: {response.text[:200]}"
 
         except requests.RequestException as e:
-            raise SMSError(f"Greska pri slanju SMS-a: {str(e)}", 500)
+            return False, str(e)
 
     def verify_otp(self, user: TenantUser, code: str) -> Tuple[bool, str]:
         """
@@ -207,6 +245,134 @@ class SMSService:
             return False, int(self.RESEND_COOLDOWN_SECONDS - elapsed)
 
         return True, 0
+
+
+    # =========================================================================
+    # TICKET NOTIFICATIONS
+    # =========================================================================
+
+    def send_ticket_ready_sms(self, ticket) -> Tuple[bool, Optional[str]]:
+        """
+        Šalje SMS kada je servisni nalog spreman za preuzimanje.
+
+        Args:
+            ticket: ServiceTicket objekat
+
+        Returns:
+            Tuple (success, error_message)
+        """
+        if not ticket.customer_phone:
+            return False, "Kupac nema broj telefona"
+
+        if ticket.sms_notification_completed:
+            return False, "SMS već poslat za ovaj nalog"
+
+        # Dohvati ime servisa (tenant)
+        tenant_name = ticket.tenant.name if ticket.tenant else "Servis"
+
+        message = (
+            f"{tenant_name}: Vas uredjaj {ticket.brand} {ticket.model} "
+            f"je spreman za preuzimanje. "
+            f"Nalog: SRV-{ticket.ticket_number:04d}"
+        )
+
+        # Skrati poruku na 160 karaktera
+        if len(message) > 160:
+            message = message[:157] + "..."
+
+        # Formatiraj broj
+        formatted_phone = self._format_phone(ticket.customer_phone)
+
+        # Dev mode
+        if not self.api_token or os.environ.get('FLASK_ENV') == 'development':
+            print(f"[DEV SMS READY] To: {formatted_phone}")
+            print(f"[DEV SMS READY] Message: {message}")
+            ticket.sms_notification_completed = True
+            db.session.commit()
+            return True, None
+
+        # Posalji
+        success, error = self._send_via_d7(formatted_phone, message)
+
+        if success:
+            # Oznaci da je SMS poslat
+            ticket.sms_notification_completed = True
+            # Logiraj notifikaciju
+            self._log_ticket_notification(ticket, 'SMS_READY', message)
+            db.session.commit()
+
+        return success, error
+
+    def send_pickup_reminder_sms(self, ticket, days: int) -> Tuple[bool, Optional[str]]:
+        """
+        Šalje podsetnik za preuzimanje uređaja.
+
+        Args:
+            ticket: ServiceTicket objekat
+            days: Broj dana od kada je nalog spreman (10 ili 30)
+
+        Returns:
+            Tuple (success, error_message)
+        """
+        if not ticket.customer_phone:
+            return False, "Kupac nema broj telefona"
+
+        # Proveri da li je reminder vec poslat
+        if days == 10 and ticket.sms_notification_10_days:
+            return False, "10-dnevni reminder već poslat"
+        if days == 30 and ticket.sms_notification_30_days:
+            return False, "30-dnevni reminder već poslat"
+
+        tenant_name = ticket.tenant.name if ticket.tenant else "Servis"
+
+        message = (
+            f"{tenant_name}: Podsetnik - Vas uredjaj {ticket.brand} {ticket.model} "
+            f"ceka preuzimanje vec {days} dana. "
+            f"Nalog: SRV-{ticket.ticket_number:04d}"
+        )
+
+        if len(message) > 160:
+            message = message[:157] + "..."
+
+        formatted_phone = self._format_phone(ticket.customer_phone)
+
+        # Dev mode
+        if not self.api_token or os.environ.get('FLASK_ENV') == 'development':
+            print(f"[DEV SMS REMINDER {days}] To: {formatted_phone}")
+            print(f"[DEV SMS REMINDER {days}] Message: {message}")
+            if days == 10:
+                ticket.sms_notification_10_days = True
+            elif days == 30:
+                ticket.sms_notification_30_days = True
+            db.session.commit()
+            return True, None
+
+        success, error = self._send_via_d7(formatted_phone, message)
+
+        if success:
+            if days == 10:
+                ticket.sms_notification_10_days = True
+            elif days == 30:
+                ticket.sms_notification_30_days = True
+            self._log_ticket_notification(ticket, f'SMS_REMINDER_{days}', message)
+            db.session.commit()
+
+        return success, error
+
+    def _log_ticket_notification(self, ticket, notification_type: str, message: str):
+        """Loguje SMS notifikaciju u ticket notification log."""
+        from ..models.ticket import TicketNotificationLog
+
+        try:
+            log = TicketNotificationLog(
+                ticket_id=ticket.id,
+                notification_type='SMS',
+                comment=f"[{notification_type}] {message[:100]}",
+                contact_successful=True
+            )
+            db.session.add(log)
+        except Exception as e:
+            print(f"[SMS LOG ERROR] {e}")
 
 
 # Singleton instanca servisa

@@ -19,6 +19,7 @@ from ...models import (
     SparePart, SparePartUsage, SparePartLog, StockActionType
 )
 from ...services.pos_service import POSService
+from ...services.sms_service import sms_service
 from ...models.feature_flag import is_feature_enabled
 from datetime import timezone as tz
 import json
@@ -408,11 +409,44 @@ def update_ticket_status(ticket_id):
             ticket.final_price = data.get('final_price')
         if data.get('currency'):
             ticket.currency = data.get('currency')
-    # Za READY status, postavi ready_at timestamp
+    # Za READY status, postavi ready_at timestamp i posalji SMS
     elif new_status_enum == TicketStatus.READY and ticket.status != TicketStatus.READY:
         from datetime import datetime
         ticket.ready_at = datetime.utcnow()
         ticket.status = new_status_enum
+
+        # Posalji SMS obavestenje kupcu ako ima broj telefona
+        if ticket.customer_phone and not ticket.sms_notification_completed:
+            try:
+                success, error = sms_service.send_ticket_ready_sms(ticket)
+                if success:
+                    ticket.sms_notification_completed = True
+                    # Log uspesno slanje
+                    TicketNotificationLog.log(
+                        ticket_id=ticket.id,
+                        notification_type='SMS_READY',
+                        recipient=ticket.customer_phone,
+                        status='sent',
+                        message=f'Uredjaj spreman za preuzimanje - nalog #{ticket.ticket_number}'
+                    )
+                else:
+                    # Log neuspesno slanje
+                    TicketNotificationLog.log(
+                        ticket_id=ticket.id,
+                        notification_type='SMS_READY',
+                        recipient=ticket.customer_phone,
+                        status='failed',
+                        message=f'Greska pri slanju SMS: {error}'
+                    )
+            except Exception as e:
+                # Ne prekidaj flow ako SMS ne uspe
+                TicketNotificationLog.log(
+                    ticket_id=ticket.id,
+                    notification_type='SMS_READY',
+                    recipient=ticket.customer_phone,
+                    status='failed',
+                    message=f'Exception: {str(e)}'
+                )
     else:
         ticket.status = new_status_enum
 
@@ -776,6 +810,12 @@ def collect_ticket(ticket_id):
         - currency: Valuta (opciono, default RSD)
         - payment_method: Nacin placanja (CASH, CARD, TRANSFER)
         - owner_collect: Ime osobe koja preuzima (opciono)
+        - parts: Lista delova unetih pri naplati (opciono)
+            - name: Naziv dela
+            - supplier: Dobavljac
+            - purchase_price: Nabavna cena u RSD
+            - original_price: Originalna cena
+            - original_currency: Originalna valuta (RSD ili EUR)
 
     Returns:
         200: Nalog preuzet i naplacen
@@ -817,22 +857,94 @@ def collect_ticket(ticket_id):
         delta = datetime.utcnow() - ticket.created_at
         ticket.complete_duration = int(delta.total_seconds())
 
+    # Obrada delova unetih pri naplati
+    parts_added = []
+    if 'parts' in data and data['parts']:
+        for part_data in data['parts']:
+            part_name = part_data.get('name', '').strip()
+            if not part_name:
+                continue
+
+            supplier = part_data.get('supplier', '').strip()
+            purchase_price = part_data.get('purchase_price', 0)  # Uvek u RSD
+            original_price = part_data.get('original_price', purchase_price)
+            original_currency = part_data.get('original_currency', 'RSD')
+
+            # Kreiraj SparePart kao ad-hoc unos (quantity=0, vec utroseno)
+            spare_part = SparePart(
+                tenant_id=tenant.id,
+                location_id=ticket.location_id,
+                brand=ticket.brand,
+                model=ticket.model,
+                part_name=part_name,
+                description=f'Uneto pri naplati naloga #{ticket.ticket_number_formatted}. Dobavljac: {supplier}' if supplier else f'Uneto pri naplati naloga #{ticket.ticket_number_formatted}',
+                quantity=0,  # Vec utroseno
+                purchase_price=purchase_price,
+                selling_price=purchase_price,  # Za interne naloge
+                currency='RSD',  # Uvek RSD u bazi
+                is_active=True
+            )
+            db.session.add(spare_part)
+            db.session.flush()  # Dobijamo ID
+
+            # Kreiraj SparePartUsage za ovaj nalog
+            usage = SparePartUsage(
+                tenant_id=tenant.id,
+                service_ticket_id=ticket.id,
+                spare_part_id=spare_part.id,
+                quantity_used=1,
+                unit_price=purchase_price,
+                currency='RSD',
+                added_by_id=user.id
+            )
+            db.session.add(usage)
+
+            # Audit log za deo
+            part_log = SparePartLog(
+                tenant_id=tenant.id,
+                spare_part_id=spare_part.id,
+                action_type=StockActionType.USE_TICKET,
+                quantity_before=0,
+                quantity_after=0,
+                quantity_change=0,
+                description=f'Utroseno na nalogu {ticket.ticket_number_formatted} (uneto pri naplati)',
+                reference_type='ticket',
+                reference_id=ticket.id,
+                user_id=user.id
+            )
+            db.session.add(part_log)
+
+            parts_added.append({
+                'name': part_name,
+                'supplier': supplier,
+                'price': float(purchase_price),
+                'original_price': float(original_price),
+                'original_currency': original_currency
+            })
+
+    # Flush da bi parts_cost property bio azuran pre kreiranja racuna
+    db.session.flush()
+
     # Oznaci kao naplaceno i zatvori
     payment_method = data.get('payment_method', 'CASH')
     ticket.mark_as_paid(payment_method)
     ticket.close_ticket()
 
     # Audit log
+    audit_changes = {
+        'is_paid': {'old': False, 'new': True},
+        'status': {'old': ticket.status.value, 'new': 'DELIVERED'},
+        'owner_collect': ticket.owner_collect,
+        'payment_method': payment_method
+    }
+    if parts_added:
+        audit_changes['parts_added'] = parts_added
+
     AuditLog.log(
         entity_type='ticket',
         entity_id=ticket.id,
         action=AuditAction.UPDATE,
-        changes={
-            'is_paid': {'old': False, 'new': True},
-            'status': {'old': ticket.status.value, 'new': 'DELIVERED'},
-            'owner_collect': ticket.owner_collect,
-            'payment_method': payment_method
-        },
+        changes=audit_changes,
         tenant_id=tenant.id,
         user=user
     )
@@ -851,6 +963,8 @@ def collect_ticket(ticket_id):
                 'receipt_id': receipt.id,
                 'receipt_number': receipt.receipt_number,
                 'total_amount': float(receipt.total_amount or 0),
+                'parts_cost': float(ticket.parts_cost or 0),
+                'profit': float((ticket.final_price or 0) - (ticket.parts_cost or 0)),
             }
         except Exception as e:
             # Ne blokiraj preuzimanje ako POS zakaže
@@ -865,6 +979,8 @@ def collect_ticket(ticket_id):
     }
     if receipt_data:
         result['receipt'] = receipt_data
+    if parts_added:
+        result['parts_added'] = parts_added
 
     return jsonify(result), 200
 
