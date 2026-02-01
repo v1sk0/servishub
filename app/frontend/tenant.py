@@ -258,6 +258,12 @@ def finance_pos():
     return render_template('tenant/finance/pos.html')
 
 
+@bp.route('/finance/sms')
+def finance_sms():
+    """SMS evidencija - pregled poslatih SMS poruka i troškova."""
+    return render_template('tenant/finance/sms.html')
+
+
 # ============== Credits / Krediti ==============
 
 @bp.route('/credits')

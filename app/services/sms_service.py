@@ -325,22 +325,46 @@ class SMSService:
         """
         Šalje SMS kada je servisni nalog spreman za preuzimanje.
 
+        Flow sa naplatom:
+        1. Proveri da li tenant ima SMS uključen
+        2. Proveri da li ima dovoljno kredita
+        3. Naplati kredit
+        4. Pošalji SMS
+        5. Ako ne uspe - refund kredit
+
         Args:
             ticket: ServiceTicket objekat
 
         Returns:
             Tuple (success, error_message)
         """
+        from .sms_billing_service import sms_billing_service, SMS_COST_CREDITS
+
         if not ticket.customer_phone:
             return False, "Kupac nema broj telefona"
 
         if ticket.sms_notification_completed:
             return False, "SMS već poslat za ovaj nalog"
 
-        # Proveri limit tenanta
+        # Proveri limit tenanta (admin override)
         can_send, reason = self.check_tenant_limit(ticket.tenant_id)
         if not can_send:
             return False, reason
+
+        # Proveri da li tenant ima SMS uključen i kredit
+        billing_ok, billing_reason = sms_billing_service.can_send_sms(ticket.tenant_id)
+        if not billing_ok:
+            # Logiraj kao neuspešno bez naplate
+            self._log_sms_usage(
+                tenant_id=ticket.tenant_id,
+                sms_type='TICKET_READY',
+                recipient=ticket.customer_phone,
+                status='failed',
+                reference_type='ticket',
+                reference_id=ticket.id,
+                error_message=billing_reason
+            )
+            return False, billing_reason
 
         # Dohvati ime servisa (tenant)
         tenant_name = ticket.tenant.name if ticket.tenant else "Servis"
@@ -358,12 +382,32 @@ class SMSService:
         # Formatiraj broj
         formatted_phone = self._format_phone(ticket.customer_phone)
 
-        # Dev mode
+        # Naplati kredit PRIJE slanja
+        charge_success, transaction_id, charge_msg = sms_billing_service.charge_for_sms(
+            tenant_id=ticket.tenant_id,
+            sms_type='TICKET_READY',
+            reference_id=ticket.id,
+            description=f"SMS nalog spreman - SRV-{ticket.ticket_number:04d}"
+        )
+
+        if not charge_success:
+            self._log_sms_usage(
+                tenant_id=ticket.tenant_id,
+                sms_type='TICKET_READY',
+                recipient=formatted_phone,
+                status='failed',
+                reference_type='ticket',
+                reference_id=ticket.id,
+                error_message=charge_msg
+            )
+            return False, charge_msg
+
+        # Dev mode - ne šalje stvarno ali naplaćuje
         if not self.api_token or os.environ.get('FLASK_ENV') == 'development':
             print(f"[DEV SMS READY] To: {formatted_phone}")
             print(f"[DEV SMS READY] Message: {message}")
+            print(f"[DEV SMS READY] Charged: {SMS_COST_CREDITS} credits")
             ticket.sms_notification_completed = True
-            # Logiraj i u dev modu
             self._log_sms_usage(
                 tenant_id=ticket.tenant_id,
                 sms_type='TICKET_READY',
@@ -375,32 +419,47 @@ class SMSService:
             db.session.commit()
             return True, None
 
-        # Posalji
+        # Pošalji SMS
         success, error = self._send_via_d7(formatted_phone, message)
 
-        # Logiraj potrošnju
-        self._log_sms_usage(
-            tenant_id=ticket.tenant_id,
-            sms_type='TICKET_READY',
-            recipient=formatted_phone,
-            status='sent' if success else 'failed',
-            reference_type='ticket',
-            reference_id=ticket.id,
-            error_message=error if not success else None
-        )
-
         if success:
-            # Oznaci da je SMS poslat
+            # Uspešno poslato
             ticket.sms_notification_completed = True
-            # Logiraj notifikaciju
+            self._log_sms_usage(
+                tenant_id=ticket.tenant_id,
+                sms_type='TICKET_READY',
+                recipient=formatted_phone,
+                status='sent',
+                reference_type='ticket',
+                reference_id=ticket.id
+            )
             self._log_ticket_notification(ticket, 'SMS_READY', message)
             db.session.commit()
+        else:
+            # Neuspešno - REFUND kredit
+            sms_billing_service.refund_sms(transaction_id, f"SMS slanje neuspešno: {error}")
+            self._log_sms_usage(
+                tenant_id=ticket.tenant_id,
+                sms_type='TICKET_READY',
+                recipient=formatted_phone,
+                status='failed',
+                reference_type='ticket',
+                reference_id=ticket.id,
+                error_message=error
+            )
 
         return success, error
 
     def send_pickup_reminder_sms(self, ticket, days: int) -> Tuple[bool, Optional[str]]:
         """
         Šalje podsetnik za preuzimanje uređaja.
+
+        Flow sa naplatom:
+        1. Proveri da li tenant ima SMS uključen
+        2. Proveri da li ima dovoljno kredita
+        3. Naplati kredit
+        4. Pošalji SMS
+        5. Ako ne uspe - refund kredit
 
         Args:
             ticket: ServiceTicket objekat
@@ -409,6 +468,8 @@ class SMSService:
         Returns:
             Tuple (success, error_message)
         """
+        from .sms_billing_service import sms_billing_service, SMS_COST_CREDITS
+
         if not ticket.customer_phone:
             return False, "Kupac nema broj telefona"
 
@@ -418,10 +479,27 @@ class SMSService:
         if days == 30 and ticket.sms_notification_30_days:
             return False, "30-dnevni reminder već poslat"
 
-        # Proveri limit tenanta
+        sms_type = f'PICKUP_REMINDER_{days}'
+        formatted_phone = self._format_phone(ticket.customer_phone)
+
+        # Proveri limit tenanta (admin override)
         can_send, reason = self.check_tenant_limit(ticket.tenant_id)
         if not can_send:
             return False, reason
+
+        # Proveri da li tenant ima SMS uključen i kredit
+        billing_ok, billing_reason = sms_billing_service.can_send_sms(ticket.tenant_id)
+        if not billing_ok:
+            self._log_sms_usage(
+                tenant_id=ticket.tenant_id,
+                sms_type=sms_type,
+                recipient=formatted_phone,
+                status='failed',
+                reference_type='ticket',
+                reference_id=ticket.id,
+                error_message=billing_reason
+            )
+            return False, billing_reason
 
         tenant_name = ticket.tenant.name if ticket.tenant else "Servis"
 
@@ -434,18 +512,35 @@ class SMSService:
         if len(message) > 160:
             message = message[:157] + "..."
 
-        formatted_phone = self._format_phone(ticket.customer_phone)
-        sms_type = f'PICKUP_REMINDER_{days}'
+        # Naplati kredit PRIJE slanja
+        charge_success, transaction_id, charge_msg = sms_billing_service.charge_for_sms(
+            tenant_id=ticket.tenant_id,
+            sms_type=sms_type,
+            reference_id=ticket.id,
+            description=f"SMS podsetnik {days} dana - SRV-{ticket.ticket_number:04d}"
+        )
 
-        # Dev mode
+        if not charge_success:
+            self._log_sms_usage(
+                tenant_id=ticket.tenant_id,
+                sms_type=sms_type,
+                recipient=formatted_phone,
+                status='failed',
+                reference_type='ticket',
+                reference_id=ticket.id,
+                error_message=charge_msg
+            )
+            return False, charge_msg
+
+        # Dev mode - ne šalje stvarno ali naplaćuje
         if not self.api_token or os.environ.get('FLASK_ENV') == 'development':
             print(f"[DEV SMS REMINDER {days}] To: {formatted_phone}")
             print(f"[DEV SMS REMINDER {days}] Message: {message}")
+            print(f"[DEV SMS REMINDER {days}] Charged: {SMS_COST_CREDITS} credits")
             if days == 10:
                 ticket.sms_notification_10_days = True
             elif days == 30:
                 ticket.sms_notification_30_days = True
-            # Logiraj i u dev modu
             self._log_sms_usage(
                 tenant_id=ticket.tenant_id,
                 sms_type=sms_type,
@@ -457,26 +552,37 @@ class SMSService:
             db.session.commit()
             return True, None
 
+        # Pošalji SMS
         success, error = self._send_via_d7(formatted_phone, message)
 
-        # Logiraj potrošnju
-        self._log_sms_usage(
-            tenant_id=ticket.tenant_id,
-            sms_type=sms_type,
-            recipient=formatted_phone,
-            status='sent' if success else 'failed',
-            reference_type='ticket',
-            reference_id=ticket.id,
-            error_message=error if not success else None
-        )
-
         if success:
+            # Uspešno poslato
             if days == 10:
                 ticket.sms_notification_10_days = True
             elif days == 30:
                 ticket.sms_notification_30_days = True
+            self._log_sms_usage(
+                tenant_id=ticket.tenant_id,
+                sms_type=sms_type,
+                recipient=formatted_phone,
+                status='sent',
+                reference_type='ticket',
+                reference_id=ticket.id
+            )
             self._log_ticket_notification(ticket, f'SMS_REMINDER_{days}', message)
             db.session.commit()
+        else:
+            # Neuspešno - REFUND kredit
+            sms_billing_service.refund_sms(transaction_id, f"SMS slanje neuspešno: {error}")
+            self._log_sms_usage(
+                tenant_id=ticket.tenant_id,
+                sms_type=sms_type,
+                recipient=formatted_phone,
+                status='failed',
+                reference_type='ticket',
+                reference_id=ticket.id,
+                error_message=error
+            )
 
         return success, error
 

@@ -24,6 +24,9 @@ class PlatformSettings(db.Model):
     location_price = db.Column(db.Numeric(10, 2), default=Decimal('1800.00'))  # Dodatna lokacija RSD/mesec
     currency = db.Column(db.String(3), default='RSD')  # Valuta cenovnika
 
+    # SMS Cenovnik
+    sms_price_credits = db.Column(db.Numeric(10, 4), default=Decimal('0.20'))  # Cena SMS u kreditima
+
     # Trial i pretplate
     trial_days = db.Column(db.Integer, default=90)  # DEPRECATED: koristi promo_months
     demo_days = db.Column(db.Integer, default=7)  # Trajanje demo perioda
@@ -108,6 +111,8 @@ class PlatformSettings(db.Model):
             'base_price', 'location_price', 'currency',
             'trial_days', 'demo_days', 'grace_period_days', 'promo_months',
             'default_commission',
+            # SMS Pricing
+            'sms_price_credits',
             # Company data (includes social for landing page)
             'company_name', 'company_address', 'company_city',
             'company_postal_code', 'company_country', 'company_pib',
@@ -123,7 +128,7 @@ class PlatformSettings(db.Model):
         for field in allowed_fields:
             if field in data and data[field] is not None:
                 # Konvertuj u Decimal za numericka polja
-                if field in ['base_price', 'location_price', 'default_commission']:
+                if field in ['base_price', 'location_price', 'default_commission', 'sms_price_credits']:
                     setattr(settings, field, Decimal(str(data[field])))
                 else:
                     setattr(settings, field, data[field])
@@ -149,6 +154,8 @@ class PlatformSettings(db.Model):
             'demo_days': self.demo_days or 7,
             'grace_period_days': self.grace_period_days or 7,
             'default_commission': float(self.default_commission) if self.default_commission else 5.0,
+            # SMS pricing
+            'sms_price_credits': float(self.sms_price_credits) if self.sms_price_credits else 0.20,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             # Company data
             'company': self.get_company_data()

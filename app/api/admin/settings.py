@@ -124,7 +124,8 @@ def get_packages():
         'currency': settings.currency or 'RSD',
         'trial_days': settings.trial_days or 60,  # Default 60 dana trial
         'grace_period_days': settings.grace_period_days or 7,
-        'default_commission': float(settings.default_commission) if settings.default_commission else 5.0
+        'default_commission': float(settings.default_commission) if settings.default_commission else 5.0,
+        'sms_price_credits': float(settings.sms_price_credits) if settings.sms_price_credits else 0.20
     }), 200
 
 
@@ -136,6 +137,7 @@ class UpdatePackagesRequest(BaseModel):
     trial_days: Optional[int] = None
     grace_period_days: Optional[int] = None
     default_commission: Optional[float] = None
+    sms_price_credits: Optional[float] = None  # Cena SMS-a u kreditima
     # Notification options
     notify_tenants: Optional[bool] = True  # Da li obavesti tenante o promeni
     change_reason: Optional[str] = None    # Razlog promene
@@ -174,13 +176,15 @@ def update_packages():
 
     # Dohvati stare vrednosti
     old_settings = PlatformSettings.get_settings()
+    old_sms_price = float(old_settings.sms_price_credits) if old_settings.sms_price_credits else 0.20
     old_values = {
         'base_price': float(old_settings.base_price) if old_settings.base_price else None,
         'location_price': float(old_settings.location_price) if old_settings.location_price else None,
         'currency': old_settings.currency,
         'trial_days': old_settings.trial_days,
         'grace_period_days': old_settings.grace_period_days,
-        'default_commission': float(old_settings.default_commission) if old_settings.default_commission else None
+        'default_commission': float(old_settings.default_commission) if old_settings.default_commission else None,
+        'sms_price_credits': old_sms_price
     }
 
     # Primeni promene
@@ -194,14 +198,21 @@ def update_packages():
     new_settings = PlatformSettings.update_settings(update_data, admin_id=admin.id)
 
     # Dohvati nove vrednosti
+    new_sms_price = float(new_settings.sms_price_credits) if new_settings.sms_price_credits else 0.20
     new_values = {
         'base_price': float(new_settings.base_price) if new_settings.base_price else None,
         'location_price': float(new_settings.location_price) if new_settings.location_price else None,
         'currency': new_settings.currency,
         'trial_days': new_settings.trial_days,
         'grace_period_days': new_settings.grace_period_days,
-        'default_commission': float(new_settings.default_commission) if new_settings.default_commission else None
+        'default_commission': float(new_settings.default_commission) if new_settings.default_commission else None,
+        'sms_price_credits': new_sms_price
     }
+
+    # Proveri da li se SMS cena promenila - ako jeste, šalji email
+    sms_price_changed = old_sms_price != new_sms_price
+    if sms_price_changed and data.notify_tenants:
+        _notify_tenants_sms_price_change(old_sms_price, new_sms_price)
 
     # Proveri da li ima stvarnih promena
     has_changes = old_values != new_values
@@ -372,3 +383,119 @@ def update_company():
         'message': 'Podaci o firmi uspesno azurirani',
         'company': new_company
     }), 200
+
+
+# =============================================================================
+# SMS PRICE NOTIFICATION HELPER
+# =============================================================================
+
+def _notify_tenants_sms_price_change(old_price: float, new_price: float):
+    """
+    Šalje email obaveštenje svim tenantima koji imaju SMS aktiviran
+    o promeni cene SMS-a.
+
+    Args:
+        old_price: Stara cena u kreditima
+        new_price: Nova cena u kreditima
+    """
+    from ...models import Tenant
+    from ...services.email_service import EmailService
+
+    try:
+        # Dohvati sve tenante koji imaju SMS aktiviran
+        tenants = Tenant.query.filter(
+            Tenant.sms_notifications_enabled == True,
+            Tenant.email.isnot(None)
+        ).all()
+
+        if not tenants:
+            return
+
+        email_service = EmailService()
+
+        # Pripremi email sadržaj
+        subject = "ServisHub - Promena cene SMS notifikacija"
+
+        direction = "povećana" if new_price > old_price else "smanjena"
+
+        for tenant in tenants:
+            html_content = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 30px; text-align: center;">
+                    <h1 style="color: white; margin: 0;">ServisHub</h1>
+                </div>
+
+                <div style="padding: 30px; background: #f9fafb;">
+                    <h2 style="color: #1f2937; margin-top: 0;">Obaveštenje o promeni cene SMS-a</h2>
+
+                    <p style="color: #4b5563;">Poštovani <strong>{tenant.name}</strong>,</p>
+
+                    <p style="color: #4b5563;">
+                        Obaveštavamo Vas da je cena SMS notifikacija {direction} sa
+                        <strong>{old_price:.2f}</strong> na <strong>{new_price:.2f}</strong> kredita po poruci.
+                    </p>
+
+                    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                        <table style="width: 100%;">
+                            <tr>
+                                <td style="color: #6b7280; padding: 5px 0;">Stara cena:</td>
+                                <td style="color: #1f2937; font-weight: bold; text-align: right;">{old_price:.2f} kredita</td>
+                            </tr>
+                            <tr>
+                                <td style="color: #6b7280; padding: 5px 0;">Nova cena:</td>
+                                <td style="color: #3b82f6; font-weight: bold; text-align: right;">{new_price:.2f} kredita</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <p style="color: #6b7280; font-size: 14px;">
+                        Nova cena se primenjuje na sve buduće SMS poruke.
+                        Vaše trenutno stanje kredita ostaje nepromenjeno.
+                    </p>
+
+                    <p style="color: #6b7280; font-size: 14px;">
+                        Za više informacija posetite <a href="https://app.servishub.rs/settings" style="color: #3b82f6;">podešavanja</a>
+                        ili <a href="https://app.servishub.rs/finance/sms" style="color: #3b82f6;">SMS evidenciju</a>.
+                    </p>
+                </div>
+
+                <div style="background: #1f2937; padding: 20px; text-align: center;">
+                    <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                        © 2026 ServisHub. Sva prava zadržana.
+                    </p>
+                </div>
+            </div>
+            """
+
+            text_content = f"""
+ServisHub - Promena cene SMS notifikacija
+
+Poštovani {tenant.name},
+
+Obaveštavamo Vas da je cena SMS notifikacija {direction} sa {old_price:.2f} na {new_price:.2f} kredita po poruci.
+
+Stara cena: {old_price:.2f} kredita
+Nova cena: {new_price:.2f} kredita
+
+Nova cena se primenjuje na sve buduće SMS poruke.
+Vaše trenutno stanje kredita ostaje nepromenjeno.
+
+Za više informacija posetite podešavanja na https://app.servishub.rs/settings
+
+---
+© 2026 ServisHub. Sva prava zadržana.
+            """
+
+            try:
+                email_service.send(
+                    to=tenant.email,
+                    subject=subject,
+                    html=html_content,
+                    text=text_content
+                )
+            except Exception as e:
+                # Log error but don't fail the whole operation
+                print(f"[SMS PRICE NOTIFY] Failed to send to {tenant.email}: {e}")
+
+    except Exception as e:
+        print(f"[SMS PRICE NOTIFY] Error: {e}")

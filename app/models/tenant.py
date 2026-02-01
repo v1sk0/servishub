@@ -134,6 +134,15 @@ class Tenant(db.Model):
                 'korisnik odustane nakon postavljene ponude, servis ima pravo da naplati izvršenu dijagnostiku u iznosu od 2000 RSD.'
     )
 
+    # ============================================
+    # SMS NOTIFIKACIJE - Podesavanja za SMS
+    # ============================================
+    # SMS notifikacije su ISKLJUČENE po defaultu. Tenant mora eksplicitno aktivirati
+    # i dati saglasnost da će se SMS naplaćivati iz kredit računa (0.20 kredita/SMS)
+    sms_notifications_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    sms_notifications_consent_given = db.Column(db.Boolean, default=False, nullable=False)
+    sms_notifications_activated_at = db.Column(db.DateTime)  # Kada je aktivirao SMS
+
     # Timestampovi
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(

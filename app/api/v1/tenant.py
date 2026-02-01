@@ -1959,3 +1959,216 @@ def disconnect_google():
 
     google_service.disconnect_tenant(tenant.id)
     return {'message': 'Google integration disconnected'}
+
+
+# ============== SMS Notifications ==============
+
+@bp.route('/sms/settings', methods=['GET'])
+@jwt_required
+def get_sms_settings():
+    """
+    Vraća SMS notification podešavanja za tenant.
+
+    Uključuje:
+    - Da li je SMS uključen
+    - Da li je data saglasnost
+    - Trenutno stanje kredita
+    - Cena po SMS-u (dinamička iz PlatformSettings)
+    """
+    from app.services.sms_billing_service import SmsBillingService, get_sms_price
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    # Dohvati kredit balance i dinamičku cenu
+    credit_balance = SmsBillingService.get_credit_balance(tenant.id)
+    sms_cost = get_sms_price()
+
+    return {
+        'sms_enabled': tenant.sms_notifications_enabled,
+        'consent_given': tenant.sms_notifications_consent_given,
+        'activated_at': tenant.sms_notifications_activated_at.isoformat() if tenant.sms_notifications_activated_at else None,
+        'credit_balance': float(credit_balance) if credit_balance else 0,
+        'sms_cost_credits': float(sms_cost),
+        'can_send_sms': tenant.sms_notifications_enabled and tenant.sms_notifications_consent_given and credit_balance and credit_balance >= sms_cost
+    }
+
+
+@bp.route('/sms/enable', methods=['POST'])
+@jwt_required
+def enable_sms():
+    """
+    Uključuje SMS notifikacije za tenant.
+
+    Zahteva eksplicitnu saglasnost korisnika da:
+    - SMS notifikacije se naplaćuju iz kredit računa
+    - Cena zavisi od trenutnih PlatformSettings (dinamička)
+    - Tenant mora imati kredit na računu
+
+    Body:
+        consent: bool - Mora biti True za aktivaciju
+    """
+    from app.services.sms_billing_service import SmsBillingService, get_sms_price
+
+    user = TenantUser.query.get(g.user_id)
+    if not user or user.role.value not in ['OWNER', 'ADMIN']:
+        return {'error': 'Admin access required'}, 403
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    data = request.get_json() or {}
+    consent = data.get('consent', False)
+
+    # Dohvati dinamičku cenu
+    sms_cost = get_sms_price()
+
+    if not consent:
+        return {
+            'error': 'Morate prihvatiti uslove korišćenja SMS notifikacija',
+            'requires_consent': True,
+            'disclaimer': (
+                'SMS notifikacije se naplaćuju iz vašeg kredit računa. '
+                f'Cena po SMS-u: {sms_cost} kredita (1 kredit = 1 EUR). '
+                'Morate imati dovoljno kredita na računu da biste slali SMS poruke. '
+                'SMS poruke se šalju automatski kada je nalog spreman za preuzimanje.'
+            )
+        }, 400
+
+    # Proveri da li ima kredit
+    credit_balance = SmsBillingService.get_credit_balance(tenant.id)
+    if not credit_balance or credit_balance < sms_cost:
+        return {
+            'error': 'Nemate dovoljno kredita za aktivaciju SMS notifikacija',
+            'credit_balance': float(credit_balance) if credit_balance else 0,
+            'required': float(sms_cost),
+            'action': 'Molimo dopunite kredit račun pre aktivacije SMS notifikacija'
+        }, 400
+
+    # Aktiviraj SMS
+    tenant.sms_notifications_enabled = True
+    tenant.sms_notifications_consent_given = True
+    tenant.sms_notifications_activated_at = datetime.utcnow()
+    tenant.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    return {
+        'message': 'SMS notifikacije uspešno aktivirane',
+        'sms_enabled': True,
+        'consent_given': True,
+        'activated_at': tenant.sms_notifications_activated_at.isoformat(),
+        'credit_balance': float(credit_balance),
+        'sms_cost_credits': float(sms_cost)
+    }
+
+
+@bp.route('/sms/disable', methods=['POST'])
+@jwt_required
+def disable_sms():
+    """
+    Isključuje SMS notifikacije za tenant.
+
+    Ne briše saglasnost - samo isključuje slanje.
+    Može se ponovo uključiti bez ponovne saglasnosti.
+    """
+    user = TenantUser.query.get(g.user_id)
+    if not user or user.role.value not in ['OWNER', 'ADMIN']:
+        return {'error': 'Admin access required'}, 403
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    tenant.sms_notifications_enabled = False
+    tenant.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    return {
+        'message': 'SMS notifikacije isključene',
+        'sms_enabled': False,
+        'consent_given': tenant.sms_notifications_consent_given  # Saglasnost ostaje
+    }
+
+
+@bp.route('/sms/history', methods=['GET'])
+@jwt_required
+def get_sms_history():
+    """
+    Vraća istoriju poslanih SMS poruka za tenant.
+
+    Query params:
+        - page: broj stranice (default 1)
+        - per_page: broj po stranici (default 20, max 100)
+        - status: filter po statusu (sent, failed, pending)
+        - sms_type: filter po tipu (TICKET_READY, PICKUP_REMINDER_10, etc.)
+    """
+    from app.models import TenantSmsUsage
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    page = request.args.get('page', 1, type=int)
+    per_page = min(request.args.get('per_page', 20, type=int), 100)
+    status = request.args.get('status')
+    sms_type = request.args.get('sms_type')
+
+    # Build query
+    query = TenantSmsUsage.query.filter_by(tenant_id=tenant.id)
+
+    if status:
+        query = query.filter(TenantSmsUsage.status == status)
+    if sms_type:
+        query = query.filter(TenantSmsUsage.sms_type == sms_type)
+
+    query = query.order_by(TenantSmsUsage.created_at.desc())
+
+    # Paginate
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    return {
+        'items': [{
+            'id': u.id,
+            'sms_type': u.sms_type,
+            'recipient_masked': u.recipient_masked,
+            'status': u.status,
+            'cost': float(u.cost) if u.cost else 0,
+            'error_message': u.error_message,
+            'created_at': u.created_at.isoformat(),
+            'sent_at': u.sent_at.isoformat() if u.sent_at else None
+        } for u in pagination.items],
+        'total': pagination.total,
+        'page': pagination.page,
+        'per_page': pagination.per_page,
+        'pages': pagination.pages
+    }
+
+
+@bp.route('/sms/stats', methods=['GET'])
+@jwt_required
+def get_sms_stats():
+    """
+    Vraća statistiku SMS potrošnje za tenant.
+
+    Query params:
+        - month: mesec u formatu YYYY-MM (default: tekući mesec)
+    """
+    from app.services.sms_billing_service import SmsBillingService
+
+    tenant = Tenant.query.get(g.tenant_id)
+    if not tenant:
+        return {'error': 'Tenant not found'}, 404
+
+    month = request.args.get('month')
+
+    stats = SmsBillingService.get_tenant_sms_stats(tenant.id, month)
+
+    return {
+        'month': stats['month'],
+        'total_sent': stats['sent'],
+        'total_cost': stats['total_cost'],
+        'by_type': stats['by_type'],
+        'sms_enabled': tenant.sms_notifications_enabled
+    }
