@@ -1,14 +1,13 @@
 """
-Script to update Dolce Vita tenant:
-1. Set slug to 'dolcevita' (for dolcevita.servishub.rs)
-2. Add 9999 credits
+Script to add 9999 credits to Dolce Vita tenant.
+Uses raw SQL to avoid SQLAlchemy Enum issue.
 
 Run with: heroku run python update_dolcevita.py
 """
 from app import create_app
 from app.extensions import db
 from app.models import Tenant
-from app.models.credits import CreditBalance, CreditTransaction, OwnerType, CreditTransactionType
+from sqlalchemy import text
 from decimal import Decimal
 from datetime import datetime, timezone
 
@@ -17,66 +16,104 @@ app = create_app()
 with app.app_context():
     # Find Dolce Vita tenant
     tenant = Tenant.query.filter(
-        (Tenant.name.ilike('%dolce%vita%')) |
-        (Tenant.name.ilike('%dolcevita%'))
+        (Tenant.slug == 'dolcevita') |
+        (Tenant.name.ilike('%dolce%vita%'))
     ).first()
 
     if not tenant:
-        # List all tenants
         print("Tenant not found. Available tenants:")
         for t in Tenant.query.all():
             print(f"  {t.id}: {t.name} (slug: {t.slug})")
         exit(1)
 
-    print(f"Found tenant: ID={tenant.id}, Name={tenant.name}, Current slug={tenant.slug}")
+    print(f"Found tenant: ID={tenant.id}, Name={tenant.name}, slug={tenant.slug}")
 
-    # 1. Update slug
-    old_slug = tenant.slug
-    tenant.slug = 'dolcevita'
-    print(f"Slug changed: {old_slug} -> dolcevita")
+    # Update slug if needed
+    if tenant.slug != 'dolcevita':
+        old_slug = tenant.slug
+        tenant.slug = 'dolcevita'
+        print(f"Slug changed: {old_slug} -> dolcevita")
+        db.session.commit()
+    else:
+        print("Slug already set to 'dolcevita'")
 
-    # 2. Add 9999 credits
-    # Get or create credit balance
-    balance = CreditBalance.query.filter_by(
-        owner_type=OwnerType.TENANT,
-        tenant_id=tenant.id
-    ).first()
-
-    if not balance:
-        balance = CreditBalance(
-            owner_type=OwnerType.TENANT,
-            tenant_id=tenant.id,
-            current_balance=Decimal('0'),
-            total_purchased=Decimal('0'),
-            total_spent=Decimal('0'),
-            total_received_free=Decimal('0')
-        )
-        db.session.add(balance)
-        db.session.flush()
+    # Get credit balance using raw SQL (avoiding enum issue)
+    result = db.session.execute(text("""
+        SELECT id, balance, total_received_free
+        FROM credit_balance
+        WHERE owner_type = 'tenant' AND tenant_id = :tenant_id
+    """), {'tenant_id': tenant.id})
+    row = result.fetchone()
 
     credits_to_add = Decimal('9999')
-    balance_before = balance.current_balance
 
-    # Update balance
-    balance.current_balance += credits_to_add
-    balance.total_received_free += credits_to_add
+    if row:
+        balance_id, current_balance, total_received_free = row
+        print(f"Current balance: {current_balance}")
 
-    # Create transaction record
-    transaction = CreditTransaction(
-        credit_balance_id=balance.id,
-        transaction_type=CreditTransactionType.ADMIN,
-        amount=credits_to_add,
-        balance_before=balance_before,
-        balance_after=balance.current_balance,
-        description='Admin: Interni servis - 9999 kredita',
-        created_at=datetime.now(timezone.utc)
-    )
-    db.session.add(transaction)
+        # Update balance using raw SQL
+        db.session.execute(text("""
+            UPDATE credit_balance
+            SET balance = balance + :amount,
+                total_received_free = total_received_free + :amount,
+                updated_at = :now
+            WHERE id = :balance_id
+        """), {
+            'amount': credits_to_add,
+            'balance_id': balance_id,
+            'now': datetime.now(timezone.utc)
+        })
 
-    print(f"Credits added: {balance_before} + {credits_to_add} = {balance.current_balance}")
+        # Create transaction record
+        db.session.execute(text("""
+            INSERT INTO credit_transaction
+            (credit_balance_id, transaction_type, amount, balance_before, balance_after, description, created_at)
+            VALUES (:balance_id, 'ADMIN', :amount, :before, :after, :desc, :now)
+        """), {
+            'balance_id': balance_id,
+            'amount': credits_to_add,
+            'before': current_balance,
+            'after': current_balance + credits_to_add,
+            'desc': 'Admin: Interni servis - 9999 kredita',
+            'now': datetime.now(timezone.utc)
+        })
 
-    # Commit changes
-    db.session.commit()
-    print("\n✅ Done!")
-    print(f"  - Slug: dolcevita.servishub.rs")
-    print(f"  - Credits: {balance.current_balance}")
+        db.session.commit()
+        print(f"\n✅ Done!")
+        print(f"  - Credits added: {credits_to_add}")
+        print(f"  - Balance: {current_balance} -> {current_balance + credits_to_add}")
+    else:
+        # Create new balance
+        print("No credit balance found, creating new one...")
+        db.session.execute(text("""
+            INSERT INTO credit_balance
+            (owner_type, tenant_id, balance, total_purchased, total_spent, total_received_free, created_at, updated_at)
+            VALUES ('tenant', :tenant_id, :amount, 0, 0, :amount, :now, :now)
+        """), {
+            'tenant_id': tenant.id,
+            'amount': credits_to_add,
+            'now': datetime.now(timezone.utc)
+        })
+
+        # Get the new balance id
+        result = db.session.execute(text("""
+            SELECT id FROM credit_balance WHERE owner_type = 'tenant' AND tenant_id = :tenant_id
+        """), {'tenant_id': tenant.id})
+        balance_id = result.scalar()
+
+        # Create transaction record
+        db.session.execute(text("""
+            INSERT INTO credit_transaction
+            (credit_balance_id, transaction_type, amount, balance_before, balance_after, description, created_at)
+            VALUES (:balance_id, 'ADMIN', :amount, 0, :amount, :desc, :now)
+        """), {
+            'balance_id': balance_id,
+            'amount': credits_to_add,
+            'desc': 'Admin: Interni servis - 9999 kredita',
+            'now': datetime.now(timezone.utc)
+        })
+
+        db.session.commit()
+        print(f"\n✅ Done!")
+        print(f"  - New credit balance created")
+        print(f"  - Credits: {credits_to_add}")
