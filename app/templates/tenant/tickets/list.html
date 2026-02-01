@@ -1477,7 +1477,46 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Telefon *</label>
-                        <input type="tel" class="form-input" :class="{'invalid': validationErrors.customer_phone}" x-model="newTicket.customer_phone" placeholder="06X..." required>
+                        <div class="flex gap-2">
+                            <!-- Country selector -->
+                            <div class="relative" x-data="{ open: false }">
+                                <button @click="open = !open" type="button"
+                                        class="flex items-center gap-1 px-2 py-2 border border-gray-600 rounded-lg bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 h-[42px]">
+                                    <span x-text="selectedCountry.flag" class="text-lg"></span>
+                                    <span x-text="selectedCountry.code" class="text-xs text-gray-300"></span>
+                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+                                <div x-show="open" @click.away="open = false"
+                                     x-transition class="absolute z-50 mt-1 w-48 bg-gray-700 border border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                    <div class="px-2 py-1 text-xs font-medium text-gray-400 bg-gray-800 sticky top-0">Region</div>
+                                    <template x-for="country in exYuCountries" :key="country.code">
+                                        <button @click="selectCountry(country); open = false" type="button"
+                                                class="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-gray-600 text-left"
+                                                :class="{'bg-blue-600/30': selectedCountry.code === country.code}">
+                                            <span x-text="country.flag" class="text-base"></span>
+                                            <span x-text="country.name" class="flex-1 text-sm text-gray-200"></span>
+                                            <span x-text="country.code" class="text-xs text-gray-400"></span>
+                                        </button>
+                                    </template>
+                                    <div class="px-2 py-1 text-xs font-medium text-gray-400 bg-gray-800 sticky top-0">Ostalo</div>
+                                    <template x-for="country in otherCountries" :key="country.code">
+                                        <button @click="selectCountry(country); open = false" type="button"
+                                                class="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-gray-600 text-left"
+                                                :class="{'bg-blue-600/30': selectedCountry.code === country.code}">
+                                            <span x-text="country.flag" class="text-base"></span>
+                                            <span x-text="country.name" class="flex-1 text-sm text-gray-200"></span>
+                                            <span x-text="country.code" class="text-xs text-gray-400"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                            <!-- Phone input -->
+                            <input type="tel" class="form-input flex-1" :class="{'invalid': validationErrors.customer_phone}"
+                                   x-model="phoneNumber" @input="formatPhoneInput()" placeholder="64 123 4567" required>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Čuva se kao: <span x-text="displayPhoneFormat" class="text-gray-400"></span></p>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -3463,6 +3502,27 @@ function ticketsPage() {
             search: '',
             location_id: ''
         },
+        // ========== COUNTRY SELECTOR ==========
+        exYuCountries: [
+            { code: '+381', dial: '381', flag: '🇷🇸', name: 'Srbija' },
+            { code: '+385', dial: '385', flag: '🇭🇷', name: 'Hrvatska' },
+            { code: '+387', dial: '387', flag: '🇧🇦', name: 'BiH' },
+            { code: '+382', dial: '382', flag: '🇲🇪', name: 'Crna Gora' },
+            { code: '+386', dial: '386', flag: '🇸🇮', name: 'Slovenija' },
+            { code: '+383', dial: '383', flag: '🇽🇰', name: 'Kosovo' },
+            { code: '+389', dial: '389', flag: '🇲🇰', name: 'S. Makedonija' },
+        ],
+        otherCountries: [
+            { code: '+43', dial: '43', flag: '🇦🇹', name: 'Austrija' },
+            { code: '+49', dial: '49', flag: '🇩🇪', name: 'Nemačka' },
+            { code: '+41', dial: '41', flag: '🇨🇭', name: 'Švajcarska' },
+            { code: '+39', dial: '39', flag: '🇮🇹', name: 'Italija' },
+            { code: '+33', dial: '33', flag: '🇫🇷', name: 'Francuska' },
+            { code: '+44', dial: '44', flag: '🇬🇧', name: 'UK' },
+        ],
+        selectedCountry: { code: '+381', dial: '381', flag: '🇷🇸', name: 'Srbija' },
+        phoneNumber: '',
+        // ======================================
         newTicket: {
             customer_name: '',
             customer_phone: '',
@@ -4140,7 +4200,7 @@ function ticketsPage() {
                 errors.push('Ime i prezime');
                 this.validationErrors.customer_name = true;
             }
-            if (!this.newTicket.customer_phone?.trim()) {
+            if (!this.phoneNumber?.trim()) {
                 errors.push('Telefon');
                 this.validationErrors.customer_phone = true;
             }
@@ -4176,6 +4236,9 @@ function ticketsPage() {
 
             this.saving = true;
             try {
+                // Set formatted phone before sending
+                this.newTicket.customer_phone = this.getPhoneForStorage();
+
                 const r = await api('/api/v1/tickets', {
                     method: 'POST',
                     body: JSON.stringify(this.newTicket)
@@ -4221,7 +4284,46 @@ function ticketsPage() {
             this.selectedProblems = [];
             this.currentProblems = PROBLEM_CATEGORIES['phone'] || [];
             this.validationErrors = {};
+            // Reset phone
+            this.phoneNumber = '';
+            this.selectedCountry = { code: '+381', dial: '381', flag: '🇷🇸', name: 'Srbija' };
         },
+
+        // ========== PHONE HELPERS ==========
+        selectCountry(country) {
+            this.selectedCountry = country;
+        },
+
+        formatPhoneInput() {
+            // Dozvoli samo cifre
+            this.phoneNumber = this.phoneNumber.replace(/[^\d]/g, '');
+        },
+
+        get displayPhoneFormat() {
+            // Format za prikaz/čuvanje: 0641234567 (sa vodećom nulom za Srbiju)
+            if (!this.phoneNumber) return '0XX...';
+            const digits = this.phoneNumber.replace(/\D/g, '');
+            // Ukloni vodecu nulu ako je korisnik uneo
+            const cleanDigits = digits.startsWith('0') ? digits.slice(1) : digits;
+            // Za srpske brojeve, dodaj vodecu nulu
+            if (this.selectedCountry.dial === '381') {
+                return '0' + cleanDigits;
+            }
+            // Za ostale zemlje, prikazi sa country kodom
+            return this.selectedCountry.code + cleanDigits;
+        },
+
+        getPhoneForStorage() {
+            // Telefon za čuvanje u bazi - SA vodećom nulom za srpske brojeve
+            const digits = this.phoneNumber.replace(/\D/g, '');
+            const cleanDigits = digits.startsWith('0') ? digits.slice(1) : digits;
+            if (this.selectedCountry.dial === '381') {
+                return '0' + cleanDigits;  // 0641234567
+            }
+            // Za ostale zemlje, čuvaj pun međunarodni format
+            return '+' + this.selectedCountry.dial + cleanDigits;
+        },
+        // ===================================
 
         setDeviceType(type) {
             this.newTicket.device_type = type;
