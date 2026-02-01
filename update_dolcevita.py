@@ -33,6 +33,7 @@ with app.app_context():
     ).first()
 
     if flag:
+        print(f"  Flag ID: {flag.id}, tenant_id: {flag.tenant_id}, enabled: {flag.enabled}")
         if flag.enabled:
             print("credits_enabled flag already enabled")
         else:
@@ -60,5 +61,11 @@ with app.app_context():
         print(f"Current credit balance: {row[0]}")
     else:
         print("WARNING: No credit balance found!")
+
+    # Debug: List all credits_enabled flags
+    print("\nAll credits_enabled flags:")
+    all_flags = FeatureFlag.query.filter_by(feature_key='credits_enabled').all()
+    for f in all_flags:
+        print(f"  tenant_id={f.tenant_id}, enabled={f.enabled}")
 
     print("\n✅ Done! Refresh the page to see the credit widget.")
