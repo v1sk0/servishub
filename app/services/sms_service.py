@@ -22,6 +22,20 @@ from ..extensions import db
 from ..models import TenantUser
 
 
+class SMSLimitExceeded(Exception):
+    """Izuzetak kada je dostignut SMS limit."""
+    def __init__(self, message: str = "SMS limit dostignut za ovaj mesec"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class SMSDisabled(Exception):
+    """Izuzetak kada je SMS onemogućen za tenanta."""
+    def __init__(self, message: str = "SMS je onemogućen za ovaj servis"):
+        self.message = message
+        super().__init__(self.message)
+
+
 class SMSError(Exception):
     """Bazna klasa za SMS greske."""
     def __init__(self, message: str, code: int = 400):
@@ -52,6 +66,62 @@ class SMSService:
         """Inicijalizacija SMS servisa."""
         self.api_token = os.environ.get('D7_API_TOKEN')
         self.sender_id = os.environ.get('D7_SENDER_ID', 'ServisHub')
+
+    def check_tenant_limit(self, tenant_id: int) -> Tuple[bool, str]:
+        """
+        Proverava da li tenant može poslati SMS.
+
+        Returns:
+            Tuple (can_send, reason)
+        """
+        from ..models import TenantSmsConfig
+
+        config = TenantSmsConfig.get_or_create(tenant_id)
+
+        if not config.sms_enabled:
+            return False, "SMS je onemogućen za ovaj servis"
+
+        if not config.can_send():
+            return False, f"Dostignut mesečni limit od {config.monthly_limit} SMS poruka"
+
+        return True, "OK"
+
+    def _log_sms_usage(self, tenant_id: int, sms_type: str, recipient: str,
+                       status: str = 'sent', reference_type: str = None,
+                       reference_id: int = None, error_message: str = None,
+                       provider_message_id: str = None, user_id: int = None):
+        """
+        Loguje SMS potrošnju u TenantSmsUsage.
+
+        Args:
+            tenant_id: ID tenanta
+            sms_type: Tip SMS-a (TICKET_READY, OTP, etc.)
+            recipient: Broj telefona
+            status: Status (sent, failed, pending)
+            reference_type: Tip reference (ticket, user)
+            reference_id: ID reference
+            error_message: Poruka greške
+            provider_message_id: ID poruke od provajdera
+            user_id: ID korisnika koji je inicirao
+        """
+        from ..models import TenantSmsUsage
+
+        try:
+            TenantSmsUsage.log_sms(
+                tenant_id=tenant_id,
+                sms_type=sms_type,
+                recipient=recipient,
+                status=status,
+                reference_type=reference_type,
+                reference_id=reference_id,
+                error_message=error_message,
+                provider_message_id=provider_message_id,
+                user_id=user_id
+            )
+            db.session.commit()
+        except Exception as e:
+            print(f"[SMS USAGE LOG ERROR] {e}")
+            # Ne prekidaj slanje ako logovanje ne uspe
 
     def _generate_otp(self) -> str:
         """
@@ -267,6 +337,11 @@ class SMSService:
         if ticket.sms_notification_completed:
             return False, "SMS već poslat za ovaj nalog"
 
+        # Proveri limit tenanta
+        can_send, reason = self.check_tenant_limit(ticket.tenant_id)
+        if not can_send:
+            return False, reason
+
         # Dohvati ime servisa (tenant)
         tenant_name = ticket.tenant.name if ticket.tenant else "Servis"
 
@@ -288,11 +363,31 @@ class SMSService:
             print(f"[DEV SMS READY] To: {formatted_phone}")
             print(f"[DEV SMS READY] Message: {message}")
             ticket.sms_notification_completed = True
+            # Logiraj i u dev modu
+            self._log_sms_usage(
+                tenant_id=ticket.tenant_id,
+                sms_type='TICKET_READY',
+                recipient=formatted_phone,
+                status='sent',
+                reference_type='ticket',
+                reference_id=ticket.id
+            )
             db.session.commit()
             return True, None
 
         # Posalji
         success, error = self._send_via_d7(formatted_phone, message)
+
+        # Logiraj potrošnju
+        self._log_sms_usage(
+            tenant_id=ticket.tenant_id,
+            sms_type='TICKET_READY',
+            recipient=formatted_phone,
+            status='sent' if success else 'failed',
+            reference_type='ticket',
+            reference_id=ticket.id,
+            error_message=error if not success else None
+        )
 
         if success:
             # Oznaci da je SMS poslat
@@ -323,6 +418,11 @@ class SMSService:
         if days == 30 and ticket.sms_notification_30_days:
             return False, "30-dnevni reminder već poslat"
 
+        # Proveri limit tenanta
+        can_send, reason = self.check_tenant_limit(ticket.tenant_id)
+        if not can_send:
+            return False, reason
+
         tenant_name = ticket.tenant.name if ticket.tenant else "Servis"
 
         message = (
@@ -335,6 +435,7 @@ class SMSService:
             message = message[:157] + "..."
 
         formatted_phone = self._format_phone(ticket.customer_phone)
+        sms_type = f'PICKUP_REMINDER_{days}'
 
         # Dev mode
         if not self.api_token or os.environ.get('FLASK_ENV') == 'development':
@@ -344,10 +445,30 @@ class SMSService:
                 ticket.sms_notification_10_days = True
             elif days == 30:
                 ticket.sms_notification_30_days = True
+            # Logiraj i u dev modu
+            self._log_sms_usage(
+                tenant_id=ticket.tenant_id,
+                sms_type=sms_type,
+                recipient=formatted_phone,
+                status='sent',
+                reference_type='ticket',
+                reference_id=ticket.id
+            )
             db.session.commit()
             return True, None
 
         success, error = self._send_via_d7(formatted_phone, message)
+
+        # Logiraj potrošnju
+        self._log_sms_usage(
+            tenant_id=ticket.tenant_id,
+            sms_type=sms_type,
+            recipient=formatted_phone,
+            status='sent' if success else 'failed',
+            reference_type='ticket',
+            reference_id=ticket.id,
+            error_message=error if not success else None
+        )
 
         if success:
             if days == 10:

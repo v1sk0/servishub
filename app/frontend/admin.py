@@ -180,6 +180,15 @@ def admin_notifications():
     return render_template('admin/settings/notifications.html')
 
 
+# ============== SMS Management ==============
+
+@bp.route('/admin/sms')
+@admin_frontend_required
+def admin_sms():
+    """SMS upravljanje - limiti, potrosnja, analitika."""
+    return render_template('admin/sms/index.html')
+
+
 # ============== Settings ==============
 
 @bp.route('/admin/settings')

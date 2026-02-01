@@ -498,6 +498,11 @@ class TicketNotificationLog(db.Model):
     # Da li je uspesno kontaktiran
     contact_successful = db.Column(db.Boolean, default=False)
 
+    # SMS specifična polja
+    recipient = db.Column(db.String(100))  # Email ili telefon
+    status = db.Column(db.String(20))  # sent, failed, pending
+    message = db.Column(db.Text)  # Poruka ili greška
+
     # Relacije
     ticket = db.relationship(
         'ServiceTicket',
@@ -513,6 +518,35 @@ class TicketNotificationLog(db.Model):
     def __repr__(self):
         return f'<TicketNotificationLog {self.id} for ticket {self.ticket_id}>'
 
+    @classmethod
+    def log(cls, ticket_id: int, notification_type: str, recipient: str = None,
+            status: str = None, message: str = None, user_id: int = None,
+            contact_successful: bool = False):
+        """
+        Kreira log notifikacije za nalog.
+
+        Args:
+            ticket_id: ID naloga
+            notification_type: Tip notifikacije (SMS_READY, CALL, EMAIL, itd.)
+            recipient: Primalac (telefon ili email)
+            status: Status (sent, failed, pending)
+            message: Poruka ili greška
+            user_id: ID korisnika koji je inicirao (opciono)
+            contact_successful: Da li je kontakt uspešan
+        """
+        log_entry = cls(
+            ticket_id=ticket_id,
+            notification_type=notification_type,
+            recipient=recipient,
+            status=status,
+            comment=message,
+            message=message,
+            user_id=user_id,
+            contact_successful=contact_successful
+        )
+        db.session.add(log_entry)
+        return log_entry
+
     def to_dict(self):
         """Konvertuje log u dict za API response."""
         data = {
@@ -523,6 +557,9 @@ class TicketNotificationLog(db.Model):
             'comment': self.comment,
             'notification_type': self.notification_type,
             'contact_successful': self.contact_successful,
+            'recipient': self.recipient,
+            'status': self.status,
+            'message': self.message,
         }
 
         if self.user:

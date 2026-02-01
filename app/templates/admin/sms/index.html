@@ -1,0 +1,517 @@
+{% extends "admin/_base.html" %}
+{% set active_page = "sms" %}
+
+{% block title %}SMS Upravljanje{% endblock %}
+
+{% block content %}
+<div x-data="smsManagement()" x-init="init()">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-white mb-2">SMS Upravljanje</h1>
+        <p class="text-gray-400">Pregled statistike, upravljanje limitima i analitika SMS poruka</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- Ukupno poslato -->
+        <div class="bg-gray-800 rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-blue-600/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                </div>
+            </div>
+            <div class="text-3xl font-bold text-white mb-1" x-text="stats.total || 0"></div>
+            <div class="text-sm text-gray-400">Ukupno SMS (30 dana)</div>
+        </div>
+
+        <!-- Uspesno poslato -->
+        <div class="bg-gray-800 rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-green-600/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+            </div>
+            <div class="text-3xl font-bold text-white mb-1" x-text="stats.sent || 0"></div>
+            <div class="text-sm text-gray-400">Uspesno poslato</div>
+        </div>
+
+        <!-- Neuspesno -->
+        <div class="bg-gray-800 rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-red-600/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </div>
+            </div>
+            <div class="text-3xl font-bold text-white mb-1" x-text="stats.failed || 0"></div>
+            <div class="text-sm text-gray-400">Neuspesno</div>
+        </div>
+
+        <!-- Success Rate -->
+        <div class="bg-gray-800 rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </div>
+            </div>
+            <div class="text-3xl font-bold text-white mb-1"><span x-text="stats.success_rate || 0"></span>%</div>
+            <div class="text-sm text-gray-400">Stopa uspeha</div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="mb-6 border-b border-gray-700">
+        <nav class="flex space-x-8">
+            <button @click="activeTab = 'configs'"
+                    :class="activeTab === 'configs' ? 'border-blue-500 text-blue-500' : 'border-transparent text-gray-400 hover:text-white'"
+                    class="pb-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                SMS Konfiguracije
+            </button>
+            <button @click="activeTab = 'usage'; loadUsage()"
+                    :class="activeTab === 'usage' ? 'border-blue-500 text-blue-500' : 'border-transparent text-gray-400 hover:text-white'"
+                    class="pb-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                Istorija Slanja
+            </button>
+            <button @click="activeTab = 'top'"
+                    :class="activeTab === 'top' ? 'border-blue-500 text-blue-500' : 'border-transparent text-gray-400 hover:text-white'"
+                    class="pb-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                Top Potrosaci
+            </button>
+        </nav>
+    </div>
+
+    <!-- Configs Tab -->
+    <div x-show="activeTab === 'configs'" class="bg-gray-800 rounded-xl">
+        <!-- Search -->
+        <div class="p-4 border-b border-gray-700">
+            <div class="flex items-center gap-4">
+                <div class="flex-1">
+                    <input type="text"
+                           x-model="searchQuery"
+                           @input.debounce.300ms="loadConfigs()"
+                           placeholder="Pretrazi servise..."
+                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500">
+                </div>
+                <button @click="loadConfigs()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-700/50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Servis</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Potrosnja</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Limit</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Preostalo</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Akcije</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    <template x-for="config in configs" :key="config.tenant_id">
+                        <tr class="hover:bg-gray-700/30">
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-white" x-text="config.tenant_name"></div>
+                                <div class="text-sm text-gray-400" x-text="config.custom_sender_id || '-'"></div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span :class="config.sms_enabled ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'"
+                                      class="px-2 py-1 text-xs font-medium rounded-full"
+                                      x-text="config.sms_enabled ? 'Aktivan' : 'Onemogucen'">
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-gray-300" x-text="config.current_usage"></td>
+                            <td class="px-6 py-4 text-gray-300" x-text="config.monthly_limit === 0 ? '∞' : config.monthly_limit"></td>
+                            <td class="px-6 py-4">
+                                <span :class="{
+                                    'text-green-400': config.remaining > 20 || config.remaining === -1,
+                                    'text-yellow-400': config.remaining <= 20 && config.remaining > 5,
+                                    'text-red-400': config.remaining <= 5 && config.remaining !== -1
+                                }" x-text="config.remaining === -1 ? '∞' : config.remaining"></span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button @click="openEditModal(config)"
+                                        class="text-blue-400 hover:text-blue-300 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="px-6 py-4 border-t border-gray-700 flex items-center justify-between">
+            <div class="text-sm text-gray-400">
+                Prikazano <span x-text="configs.length"></span> od <span x-text="pagination.total"></span>
+            </div>
+            <div class="flex gap-2">
+                <button @click="prevPage()" :disabled="!pagination.has_prev"
+                        :class="pagination.has_prev ? 'hover:bg-gray-600' : 'opacity-50 cursor-not-allowed'"
+                        class="px-3 py-1 bg-gray-700 text-white rounded transition-colors">
+                    Prethodna
+                </button>
+                <button @click="nextPage()" :disabled="!pagination.has_next"
+                        :class="pagination.has_next ? 'hover:bg-gray-600' : 'opacity-50 cursor-not-allowed'"
+                        class="px-3 py-1 bg-gray-700 text-white rounded transition-colors">
+                    Sledeca
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Usage Tab -->
+    <div x-show="activeTab === 'usage'" class="bg-gray-800 rounded-xl">
+        <!-- Filters -->
+        <div class="p-4 border-b border-gray-700 flex gap-4">
+            <select x-model="usageFilters.sms_type" @change="loadUsage()"
+                    class="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                <option value="">Svi tipovi</option>
+                <option value="TICKET_READY">Nalog spreman</option>
+                <option value="PICKUP_REMINDER_10">Podsetnik 10 dana</option>
+                <option value="PICKUP_REMINDER_30">Podsetnik 30 dana</option>
+                <option value="OTP">OTP Verifikacija</option>
+            </select>
+            <select x-model="usageFilters.status" @change="loadUsage()"
+                    class="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                <option value="">Svi statusi</option>
+                <option value="sent">Poslato</option>
+                <option value="failed">Neuspesno</option>
+            </select>
+        </div>
+
+        <!-- Usage Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-700/50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Vreme</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Servis</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Tip</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Primalac</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    <template x-for="item in usageList" :key="item.id">
+                        <tr class="hover:bg-gray-700/30">
+                            <td class="px-6 py-4 text-sm text-gray-300" x-text="formatDate(item.created_at)"></td>
+                            <td class="px-6 py-4 text-white" x-text="item.tenant_name"></td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 text-xs font-medium rounded bg-gray-700 text-gray-300" x-text="formatSmsType(item.sms_type)"></span>
+                            </td>
+                            <td class="px-6 py-4 text-gray-300 font-mono text-sm" x-text="item.recipient_masked || '-'"></td>
+                            <td class="px-6 py-4">
+                                <span :class="item.status === 'sent' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'"
+                                      class="px-2 py-1 text-xs font-medium rounded-full"
+                                      x-text="item.status === 'sent' ? 'Poslato' : 'Neuspesno'">
+                                </span>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Usage Pagination -->
+        <div class="px-6 py-4 border-t border-gray-700 flex items-center justify-between">
+            <div class="text-sm text-gray-400">
+                Prikazano <span x-text="usageList.length"></span> od <span x-text="usagePagination.total"></span>
+            </div>
+            <div class="flex gap-2">
+                <button @click="prevUsagePage()" :disabled="!usagePagination.has_prev"
+                        :class="usagePagination.has_prev ? 'hover:bg-gray-600' : 'opacity-50 cursor-not-allowed'"
+                        class="px-3 py-1 bg-gray-700 text-white rounded transition-colors">
+                    Prethodna
+                </button>
+                <button @click="nextUsagePage()" :disabled="!usagePagination.has_next"
+                        :class="usagePagination.has_next ? 'hover:bg-gray-600' : 'opacity-50 cursor-not-allowed'"
+                        class="px-3 py-1 bg-gray-700 text-white rounded transition-colors">
+                    Sledeca
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Consumers Tab -->
+    <div x-show="activeTab === 'top'" class="bg-gray-800 rounded-xl p-6">
+        <h3 class="text-lg font-semibold text-white mb-4">Top 10 Servisa po Potrosnji (30 dana)</h3>
+        <div class="space-y-4">
+            <template x-for="(tenant, index) in stats.top_tenants || []" :key="tenant.tenant_id">
+                <div class="flex items-center gap-4">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+                         :class="index < 3 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-gray-700 text-gray-400'"
+                         x-text="index + 1"></div>
+                    <div class="flex-1">
+                        <div class="text-white font-medium" x-text="tenant.tenant_name"></div>
+                        <div class="h-2 bg-gray-700 rounded-full mt-1 overflow-hidden">
+                            <div class="h-full bg-blue-500 rounded-full"
+                                 :style="`width: ${(tenant.count / (stats.top_tenants[0]?.count || 1)) * 100}%`"></div>
+                        </div>
+                    </div>
+                    <div class="text-white font-semibold" x-text="tenant.count + ' SMS'"></div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div x-show="editModal.open" x-cloak
+         class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+         @click.self="editModal.open = false">
+        <div class="bg-gray-800 rounded-xl w-full max-w-md p-6">
+            <h3 class="text-lg font-semibold text-white mb-4">Uredi SMS Konfiguraciju</h3>
+            <p class="text-gray-400 mb-6" x-text="editModal.tenant_name"></p>
+
+            <div class="space-y-4">
+                <!-- SMS Enabled -->
+                <div class="flex items-center justify-between">
+                    <label class="text-gray-300">SMS Omogucen</label>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" x-model="editModal.sms_enabled" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+
+                <!-- Monthly Limit -->
+                <div>
+                    <label class="block text-gray-300 mb-2">Mesecni Limit (0 = neograniceno)</label>
+                    <input type="number" x-model.number="editModal.monthly_limit" min="0"
+                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+
+                <!-- Warning Threshold -->
+                <div>
+                    <label class="block text-gray-300 mb-2">Upozorenje na % preostalih</label>
+                    <input type="number" x-model.number="editModal.warning_threshold_percent" min="0" max="100"
+                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+
+                <!-- Admin Notes -->
+                <div>
+                    <label class="block text-gray-300 mb-2">Napomena</label>
+                    <textarea x-model="editModal.admin_notes" rows="3"
+                              class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"></textarea>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button @click="editModal.open = false"
+                        class="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
+                    Otkazi
+                </button>
+                <button @click="saveConfig()"
+                        :disabled="saving"
+                        class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50">
+                    <span x-show="!saving">Sacuvaj</span>
+                    <span x-show="saving">Cuvam...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function smsManagement() {
+    return {
+        activeTab: 'configs',
+        stats: {},
+        configs: [],
+        pagination: { page: 1, total: 0, has_next: false, has_prev: false },
+        searchQuery: '',
+        usageList: [],
+        usagePagination: { page: 1, total: 0, has_next: false, has_prev: false },
+        usageFilters: { sms_type: '', status: '' },
+        editModal: { open: false, tenant_id: null, tenant_name: '', sms_enabled: true, monthly_limit: 100, warning_threshold_percent: 20, admin_notes: '' },
+        saving: false,
+
+        async init() {
+            await this.loadStats();
+            await this.loadConfigs();
+        },
+
+        async loadStats() {
+            try {
+                const token = localStorage.getItem('admin_access_token');
+                const res = await fetch('/api/admin/sms/stats', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    this.stats = await res.json();
+                }
+            } catch (err) {
+                console.error('Failed to load stats:', err);
+            }
+        },
+
+        async loadConfigs() {
+            try {
+                const token = localStorage.getItem('admin_access_token');
+                const params = new URLSearchParams({
+                    page: this.pagination.page,
+                    per_page: 20,
+                    search: this.searchQuery
+                });
+                const res = await fetch(`/api/admin/sms/configs?${params}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    this.configs = data.items;
+                    this.pagination = {
+                        page: data.page,
+                        total: data.total,
+                        has_next: data.has_next,
+                        has_prev: data.has_prev
+                    };
+                }
+            } catch (err) {
+                console.error('Failed to load configs:', err);
+            }
+        },
+
+        async loadUsage() {
+            try {
+                const token = localStorage.getItem('admin_access_token');
+                const params = new URLSearchParams({
+                    page: this.usagePagination.page,
+                    per_page: 20,
+                    days: 30
+                });
+                if (this.usageFilters.sms_type) params.append('sms_type', this.usageFilters.sms_type);
+                if (this.usageFilters.status) params.append('status', this.usageFilters.status);
+
+                const res = await fetch(`/api/admin/sms/usage?${params}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    this.usageList = data.items;
+                    this.usagePagination = {
+                        page: data.page,
+                        total: data.total,
+                        has_next: data.has_next,
+                        has_prev: data.has_prev
+                    };
+                }
+            } catch (err) {
+                console.error('Failed to load usage:', err);
+            }
+        },
+
+        openEditModal(config) {
+            this.editModal = {
+                open: true,
+                tenant_id: config.tenant_id,
+                tenant_name: config.tenant_name,
+                sms_enabled: config.sms_enabled,
+                monthly_limit: config.monthly_limit,
+                warning_threshold_percent: config.warning_threshold_percent,
+                admin_notes: config.admin_notes || ''
+            };
+        },
+
+        async saveConfig() {
+            this.saving = true;
+            try {
+                const token = localStorage.getItem('admin_access_token');
+                const res = await fetch(`/api/admin/sms/configs/${this.editModal.tenant_id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sms_enabled: this.editModal.sms_enabled,
+                        monthly_limit: this.editModal.monthly_limit,
+                        warning_threshold_percent: this.editModal.warning_threshold_percent,
+                        admin_notes: this.editModal.admin_notes
+                    })
+                });
+
+                if (res.ok) {
+                    this.editModal.open = false;
+                    await this.loadConfigs();
+                    this.showNotification('Konfiguracija sacuvana', 'success');
+                } else {
+                    const err = await res.json();
+                    this.showNotification(err.message || 'Greska pri cuvanju', 'error');
+                }
+            } catch (err) {
+                console.error('Failed to save config:', err);
+                this.showNotification('Greska pri cuvanju', 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        prevPage() {
+            if (this.pagination.has_prev) {
+                this.pagination.page--;
+                this.loadConfigs();
+            }
+        },
+
+        nextPage() {
+            if (this.pagination.has_next) {
+                this.pagination.page++;
+                this.loadConfigs();
+            }
+        },
+
+        prevUsagePage() {
+            if (this.usagePagination.has_prev) {
+                this.usagePagination.page--;
+                this.loadUsage();
+            }
+        },
+
+        nextUsagePage() {
+            if (this.usagePagination.has_next) {
+                this.usagePagination.page++;
+                this.loadUsage();
+            }
+        },
+
+        formatDate(iso) {
+            if (!iso) return '-';
+            const d = new Date(iso);
+            return d.toLocaleDateString('sr-RS') + ' ' + d.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' });
+        },
+
+        formatSmsType(type) {
+            const map = {
+                'TICKET_READY': 'Nalog spreman',
+                'PICKUP_REMINDER_10': 'Podsetnik 10d',
+                'PICKUP_REMINDER_30': 'Podsetnik 30d',
+                'OTP': 'OTP'
+            };
+            return map[type] || type;
+        },
+
+        showNotification(message, type) {
+            // Simple notification - can be enhanced
+            alert(message);
+        }
+    };
+}
+</script>
+{% endblock %}
