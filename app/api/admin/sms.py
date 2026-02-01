@@ -7,18 +7,22 @@ Endpointi za:
 - Pregled SMS istorije i potrošnje
 """
 
+from decimal import Decimal
 from flask import Blueprint, request, jsonify, g
 from pydantic import BaseModel, ValidationError
 from typing import Optional
 from datetime import datetime, timedelta
+from sqlalchemy import func, extract
 
 from ..middleware.auth import jwt_required, admin_required
 from ...extensions import db
 from ...models import (
     Tenant, TenantSmsConfig, TenantSmsUsage,
+    CreditTransaction, CreditTransactionType,
     get_platform_sms_stats, get_sms_stats_for_tenant
 )
 from ...models.admin_activity import AdminActivityLog, AdminActionType
+from ...models.platform_settings import PlatformSettings
 
 
 bp = Blueprint('admin_sms', __name__, url_prefix='/sms')
@@ -105,6 +109,185 @@ def get_monthly_stats():
         })
 
     return jsonify({'monthly': monthly}), 200
+
+
+@bp.route('/stats/financial', methods=['GET'])
+@jwt_required
+@admin_required
+def get_financial_stats():
+    """
+    Dohvata finansijsku statistiku SMS-ova.
+
+    Prikazuje:
+    - Ukupan prihod (krediti naplaćeni od tenanata)
+    - Ukupan trošak (D7 Networks cena)
+    - Profit i marginu
+    - Mesečni breakdown
+
+    Query params:
+        - days: Broj dana unazad (default 30)
+        - months: Broj meseci za monthly breakdown (default 12)
+
+    Returns:
+        200: Finansijska statistika
+    """
+    days = request.args.get('days', 30, type=int)
+    days = min(max(days, 1), 365)
+    months_count = request.args.get('months', 12, type=int)
+
+    settings = PlatformSettings.get_settings()
+
+    # Cene iz settings-a
+    sms_price_credits = float(settings.sms_price_credits or Decimal('0.20'))
+    sms_d7_cost_usd = float(settings.sms_d7_cost_usd or Decimal('0.026'))
+    sms_usd_to_eur = float(settings.sms_usd_to_eur or Decimal('0.92'))
+
+    # D7 trošak u EUR
+    d7_cost_eur = sms_d7_cost_usd * sms_usd_to_eur
+
+    since = datetime.utcnow() - timedelta(days=days)
+
+    # Ukupno uspešno poslanih SMS-ova
+    total_sent = TenantSmsUsage.query.filter(
+        TenantSmsUsage.created_at >= since,
+        TenantSmsUsage.status == 'sent'
+    ).count()
+
+    # Prihod od SMS transakcija (krediti)
+    total_revenue_credits = db.session.query(
+        func.coalesce(func.sum(func.abs(CreditTransaction.amount)), 0)
+    ).filter(
+        CreditTransaction.created_at >= since,
+        CreditTransaction.transaction_type == CreditTransactionType.SMS_NOTIFICATION
+    ).scalar() or Decimal('0')
+
+    # Refundirana suma
+    total_refunded_credits = db.session.query(
+        func.coalesce(func.sum(CreditTransaction.amount), 0)
+    ).filter(
+        CreditTransaction.created_at >= since,
+        CreditTransaction.transaction_type == CreditTransactionType.REFUND,
+        CreditTransaction.reference_type == 'sms_refund'
+    ).scalar() or Decimal('0')
+
+    # Net prihod (nakon refunda)
+    net_revenue_credits = float(total_revenue_credits) - float(total_refunded_credits)
+
+    # Trošak D7 (u EUR)
+    total_d7_cost_eur = total_sent * d7_cost_eur
+
+    # Profit (pretpostavljamo 1 kredit = 1 EUR za kalkulaciju)
+    # U realnosti, ovo zavisi od cene kredita
+    profit_eur = net_revenue_credits - total_d7_cost_eur
+    margin_percent = (profit_eur / net_revenue_credits * 100) if net_revenue_credits > 0 else 0
+
+    # =========================================================================
+    # MESEČNI BREAKDOWN
+    # =========================================================================
+    monthly_data = []
+
+    for i in range(months_count):
+        # Izračunaj mesec
+        target_date = datetime.utcnow() - timedelta(days=30 * i)
+        year = target_date.year
+        month = target_date.month
+
+        # Start i end za mesec
+        month_start = datetime(year, month, 1)
+        if month == 12:
+            month_end = datetime(year + 1, 1, 1)
+        else:
+            month_end = datetime(year, month + 1, 1)
+
+        # Broj poslanih za mesec
+        month_sent = TenantSmsUsage.query.filter(
+            TenantSmsUsage.created_at >= month_start,
+            TenantSmsUsage.created_at < month_end,
+            TenantSmsUsage.status == 'sent'
+        ).count()
+
+        # Prihod za mesec
+        month_revenue = db.session.query(
+            func.coalesce(func.sum(func.abs(CreditTransaction.amount)), 0)
+        ).filter(
+            CreditTransaction.created_at >= month_start,
+            CreditTransaction.created_at < month_end,
+            CreditTransaction.transaction_type == CreditTransactionType.SMS_NOTIFICATION
+        ).scalar() or Decimal('0')
+
+        # Refund za mesec
+        month_refund = db.session.query(
+            func.coalesce(func.sum(CreditTransaction.amount), 0)
+        ).filter(
+            CreditTransaction.created_at >= month_start,
+            CreditTransaction.created_at < month_end,
+            CreditTransaction.transaction_type == CreditTransactionType.REFUND,
+            CreditTransaction.reference_type == 'sms_refund'
+        ).scalar() or Decimal('0')
+
+        month_net_revenue = float(month_revenue) - float(month_refund)
+        month_d7_cost = month_sent * d7_cost_eur
+        month_profit = month_net_revenue - month_d7_cost
+
+        monthly_data.append({
+            'year': year,
+            'month': month,
+            'month_name': target_date.strftime('%b %Y'),
+            'sent': month_sent,
+            'revenue_credits': round(month_net_revenue, 2),
+            'd7_cost_eur': round(month_d7_cost, 2),
+            'profit_eur': round(month_profit, 2),
+            'margin_percent': round((month_profit / month_net_revenue * 100) if month_net_revenue > 0 else 0, 1)
+        })
+
+    # =========================================================================
+    # TOP TENANTI PO POTROŠNJI (FINANSIJSKI)
+    # =========================================================================
+    top_tenants_query = db.session.query(
+        TenantSmsUsage.tenant_id,
+        func.count(TenantSmsUsage.id).label('sms_count')
+    ).filter(
+        TenantSmsUsage.created_at >= since,
+        TenantSmsUsage.status == 'sent'
+    ).group_by(TenantSmsUsage.tenant_id).order_by(
+        func.count(TenantSmsUsage.id).desc()
+    ).limit(10).all()
+
+    top_tenants = []
+    for tenant_id, sms_count in top_tenants_query:
+        tenant = Tenant.query.get(tenant_id)
+        revenue = sms_count * sms_price_credits
+        cost = sms_count * d7_cost_eur
+        profit = revenue - cost
+        top_tenants.append({
+            'tenant_id': tenant_id,
+            'tenant_name': tenant.name if tenant else 'N/A',
+            'sms_count': sms_count,
+            'revenue_credits': round(revenue, 2),
+            'd7_cost_eur': round(cost, 2),
+            'profit_eur': round(profit, 2)
+        })
+
+    return jsonify({
+        'period_days': days,
+        'pricing': {
+            'sms_price_credits': sms_price_credits,
+            'd7_cost_usd': sms_d7_cost_usd,
+            'd7_cost_eur': round(d7_cost_eur, 4),
+            'usd_to_eur': sms_usd_to_eur
+        },
+        'summary': {
+            'total_sent': total_sent,
+            'total_revenue_credits': round(float(total_revenue_credits), 2),
+            'total_refunded_credits': round(float(total_refunded_credits), 2),
+            'net_revenue_credits': round(net_revenue_credits, 2),
+            'd7_cost_eur': round(total_d7_cost_eur, 2),
+            'profit_eur': round(profit_eur, 2),
+            'margin_percent': round(margin_percent, 1)
+        },
+        'monthly': monthly_data,
+        'top_tenants': top_tenants
+    }), 200
 
 
 # ===========================================================================

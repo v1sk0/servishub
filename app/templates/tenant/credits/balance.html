@@ -3,17 +3,60 @@
 {% block title %}Krediti - ServisHub{% endblock %}
 
 {% block page_content %}
+<style>
+    /* Credit page specific styles */
+    .credit-stat-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 16px;
+        padding: 1.25rem;
+        transition: transform 0.2s ease;
+    }
+    .credit-stat-card:hover {
+        transform: translateY(-2px);
+    }
+    .credit-stat-card .shimmer {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+        animation: shimmer 2.5s infinite;
+    }
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .spending-chart-bar {
+        height: 8px;
+        border-radius: 4px;
+        background: #e2e8f0;
+        overflow: hidden;
+    }
+    .spending-chart-bar .fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+</style>
+
 <div x-data="creditsPage()" x-init="init()">
     <!-- Header -->
     <div class="md:flex md:items-center md:justify-between mb-8">
         <div class="min-w-0 flex-1">
             <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl">Krediti</h2>
-            <p class="mt-1 text-sm text-gray-500">Stanje kredita i istorija transakcija</p>
+            <p class="mt-1 text-sm text-gray-500">Upravljanje kreditima, pregled potrošnje i kupovina</p>
         </div>
         <div class="mt-4 flex gap-2 md:ml-4 md:mt-0">
             <button @click="exportCSV()" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 <svg class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                Export CSV
+                Export
             </button>
             <a href="/credits/purchase" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">
                 <svg class="-ml-0.5 mr-1.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
@@ -22,32 +65,155 @@
         </div>
     </div>
 
-    <!-- Balance Cards -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-4 mb-6">
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <dt class="text-sm font-medium text-gray-500 truncate">Trenutno stanje</dt>
-                <dd class="mt-1 text-2xl font-bold text-gray-900" x-text="balance.toFixed(2)"></dd>
+    <!-- Main Balance Card with Shimmer -->
+    <div class="credit-stat-card bg-gradient-to-br from-blue-600 to-purple-700 text-white mb-6">
+        <div class="shimmer"></div>
+        <div class="relative flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="stat-icon bg-white/20">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-white/70 text-sm font-medium">Trenutno stanje</p>
+                    <p class="text-4xl font-bold" x-text="balance.toFixed(2)">0.00</p>
+                    <p class="text-white/70 text-sm mt-1">kredita</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <div x-show="balance <= lowBalanceThreshold" class="inline-flex items-center gap-1 px-3 py-1 bg-amber-500/20 border border-amber-400/30 rounded-full text-amber-200 text-sm">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                    </svg>
+                    Nizak balans
+                </div>
             </div>
         </div>
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <dt class="text-sm font-medium text-gray-500 truncate">Ukupno kupljeno</dt>
-                <dd class="mt-1 text-lg font-semibold text-green-600" x-text="totalPurchased.toFixed(2)"></dd>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
+        <!-- Ukupno kupljeno -->
+        <div class="credit-stat-card bg-gradient-to-br from-emerald-500 to-green-600 text-white">
+            <div class="shimmer"></div>
+            <div class="relative flex items-center gap-4">
+                <div class="stat-icon bg-white/20">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-white/70 text-sm font-medium">Ukupno kupljeno</p>
+                    <p class="text-2xl font-bold" x-text="'+' + totalPurchased.toFixed(2)">+0.00</p>
+                </div>
             </div>
         </div>
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <dt class="text-sm font-medium text-gray-500 truncate">Ukupno potroseno</dt>
-                <dd class="mt-1 text-lg font-semibold text-red-600" x-text="totalSpent.toFixed(2)"></dd>
+
+        <!-- Ukupno potrošeno -->
+        <div class="credit-stat-card bg-gradient-to-br from-red-500 to-rose-600 text-white">
+            <div class="shimmer"></div>
+            <div class="relative flex items-center gap-4">
+                <div class="stat-icon bg-white/20">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-white/70 text-sm font-medium">Ukupno potroseno</p>
+                    <p class="text-2xl font-bold" x-text="'-' + totalSpent.toFixed(2)">-0.00</p>
+                </div>
             </div>
         </div>
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <dt class="text-sm font-medium text-gray-500 truncate">Besplatno dobijeno</dt>
-                <dd class="mt-1 text-lg font-semibold text-blue-600" x-text="totalFree.toFixed(2)"></dd>
+
+        <!-- Besplatno dobijeno -->
+        <div class="credit-stat-card bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+            <div class="shimmer"></div>
+            <div class="relative flex items-center gap-4">
+                <div class="stat-icon bg-white/20">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-white/70 text-sm font-medium">Bonus krediti</p>
+                    <p class="text-2xl font-bold" x-text="'+' + totalFree.toFixed(2)">+0.00</p>
+                </div>
             </div>
         </div>
+    </div>
+
+    <!-- Spending Breakdown -->
+    <div class="bg-white shadow rounded-lg overflow-hidden mb-6">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Pregled potrosnje</h3>
+            <p class="text-sm text-gray-500 mt-1">Gde su vasi krediti potroseni</p>
+        </div>
+        <div class="p-6 space-y-4">
+            <!-- SMS -->
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-sm font-medium text-gray-900">SMS Obavestenja</span>
+                        <span class="text-sm font-semibold text-gray-900" x-text="smsSpent.toFixed(2) + ' kredita'">0.00 kredita</span>
+                    </div>
+                    <div class="spending-chart-bar">
+                        <div class="fill bg-blue-500" :style="'width: ' + smsSpentPercent + '%'"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1" x-text="smsCount + ' SMS poruka poslato'">0 SMS poruka poslato</p>
+                </div>
+            </div>
+
+            <!-- Ostalo -->
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-sm font-medium text-gray-900">Ostalo</span>
+                        <span class="text-sm font-semibold text-gray-900" x-text="otherSpent.toFixed(2) + ' kredita'">0.00 kredita</span>
+                    </div>
+                    <div class="spending-chart-bar">
+                        <div class="fill bg-gray-500" :style="'width: ' + otherSpentPercent + '%'"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="mb-4 border-b border-gray-200">
+        <nav class="flex space-x-8">
+            <button @click="activeTab = 'all'"
+                    :class="activeTab === 'all' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="pb-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                Sve transakcije
+            </button>
+            <button @click="activeTab = 'sms'; filters.type = 'SMS_NOTIFICATION'; page = 1; loadHistory()"
+                    :class="activeTab === 'sms' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="pb-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                SMS Potrosnja
+            </button>
+            <button @click="activeTab = 'purchases'; filters.type = 'PURCHASE'; page = 1; loadHistory()"
+                    :class="activeTab === 'purchases' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="pb-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Kupovine
+            </button>
+        </nav>
     </div>
 
     <!-- Transaction History -->
@@ -55,12 +221,13 @@
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-gray-900">Istorija transakcija</h3>
-                <div>
+                <div x-show="activeTab === 'all'">
                     <select x-model="filters.type" @change="page = 1; loadHistory()"
                             class="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                         <option value="">Sve</option>
                         <option value="PURCHASE">Kupovine</option>
-                        <option value="DEDUCTION">Potrosnja</option>
+                        <option value="SMS_NOTIFICATION">SMS</option>
+                        <option value="DEDUCTION">Ostala potrosnja</option>
                         <option value="REFUND">Povracaj</option>
                         <option value="WELCOME_BONUS">Bonus</option>
                         <option value="ADMIN_ADJUSTMENT">Korekcija</option>
@@ -81,18 +248,19 @@
             </thead>
             <tbody class="divide-y divide-gray-200">
                 <template x-for="t in transactions" :key="t.id">
-                    <tr>
+                    <tr class="hover:bg-gray-50">
                         <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500" x-text="formatDate(t.created_at)"></td>
                         <td class="whitespace-nowrap px-3 py-4 text-sm">
-                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
                                   :class="{
-                                      'bg-green-100 text-green-800': t.type === 'PURCHASE' || t.type === 'WELCOME_BONUS' || t.type === 'REFUND',
+                                      'bg-green-100 text-green-800': t.type === 'PURCHASE' || t.type === 'WELCOME_BONUS' || t.type === 'REFUND' || t.type === 'PROMO_BONUS',
+                                      'bg-blue-100 text-blue-800': t.type === 'SMS_NOTIFICATION',
                                       'bg-red-100 text-red-800': t.type === 'DEDUCTION',
-                                      'bg-blue-100 text-blue-800': t.type === 'ADMIN_ADJUSTMENT'
+                                      'bg-purple-100 text-purple-800': t.type === 'ADMIN_ADJUSTMENT'
                                   }"
                                   x-text="typeLabel(t.type)"></span>
                         </td>
-                        <td class="px-3 py-4 text-sm text-gray-500" x-text="t.description || '-'"></td>
+                        <td class="px-3 py-4 text-sm text-gray-500 max-w-xs truncate" x-text="t.description || '-'"></td>
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-right font-semibold"
                             :class="t.amount >= 0 ? 'text-green-600' : 'text-red-600'"
                             x-text="(t.amount >= 0 ? '+' : '') + t.amount.toFixed(2)"></td>
@@ -104,19 +272,34 @@
 
         <!-- Empty -->
         <div x-show="transactions.length === 0 && !loading" class="text-center py-12">
-            <p class="text-sm text-gray-500">Nema transakcija</p>
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <p class="mt-2 text-sm text-gray-500">Nema transakcija</p>
+        </div>
+
+        <!-- Loading -->
+        <div x-show="loading" class="text-center py-12">
+            <svg class="animate-spin h-8 w-8 text-primary-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
         </div>
 
         <!-- Pagination -->
         <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6" x-show="totalPages > 1">
             <div class="text-sm text-gray-700">
-                Strana <span x-text="page"></span> od <span x-text="totalPages"></span>
+                Strana <span class="font-medium" x-text="page"></span> od <span class="font-medium" x-text="totalPages"></span>
             </div>
             <div class="flex gap-2">
                 <button @click="page--; loadHistory()" :disabled="page <= 1"
-                        class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50">Prethodna</button>
+                        class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Prethodna
+                </button>
                 <button @click="page++; loadHistory()" :disabled="page >= totalPages"
-                        class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50">Sledeca</button>
+                        class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Sledeca
+                </button>
             </div>
         </div>
     </div>
@@ -129,14 +312,34 @@ function creditsPage() {
         totalPurchased: 0,
         totalSpent: 0,
         totalFree: 0,
+        lowBalanceThreshold: 5,
         transactions: [],
         loading: false,
         page: 1,
         totalPages: 1,
         filters: { type: '' },
+        activeTab: 'all',
+        // Spending breakdown
+        smsSpent: 0,
+        smsCount: 0,
+        otherSpent: 0,
+
+        get smsSpentPercent() {
+            if (this.totalSpent <= 0) return 0;
+            return Math.min(100, (this.smsSpent / this.totalSpent) * 100);
+        },
+
+        get otherSpentPercent() {
+            if (this.totalSpent <= 0) return 0;
+            return Math.min(100, (this.otherSpent / this.totalSpent) * 100);
+        },
 
         async init() {
-            await Promise.all([this.loadBalance(), this.loadHistory()]);
+            await Promise.all([
+                this.loadBalance(),
+                this.loadHistory(),
+                this.loadSpendingBreakdown()
+            ]);
         },
 
         async loadBalance() {
@@ -148,9 +351,26 @@ function creditsPage() {
                     this.totalPurchased = data.total_purchased || 0;
                     this.totalSpent = data.total_spent || 0;
                     this.totalFree = data.total_received_free || 0;
+                    this.lowBalanceThreshold = data.low_balance_threshold || 5;
                 }
             } catch (e) {
                 console.error('Failed to load balance:', e);
+            }
+        },
+
+        async loadSpendingBreakdown() {
+            try {
+                // Load all SMS transactions to count
+                const res = await api('/api/v1/credits/history?per_page=1000&type=SMS_NOTIFICATION');
+                if (res.ok) {
+                    const data = await res.json();
+                    const smsTransactions = data.transactions || [];
+                    this.smsCount = smsTransactions.length;
+                    this.smsSpent = smsTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                    this.otherSpent = Math.max(0, this.totalSpent - this.smsSpent);
+                }
+            } catch (e) {
+                console.error('Failed to load spending breakdown:', e);
             }
         },
 
@@ -175,6 +395,7 @@ function creditsPage() {
             const labels = {
                 'PURCHASE': 'Kupovina',
                 'DEDUCTION': 'Potrosnja',
+                'SMS_NOTIFICATION': 'SMS',
                 'REFUND': 'Povracaj',
                 'WELCOME_BONUS': 'Bonus',
                 'ADMIN_ADJUSTMENT': 'Korekcija',

@@ -63,7 +63,7 @@ from .notification import (
     NotificationType, NotificationChannel, NotificationStatus, RATE_LIMITS
 )
 from .sms_management import (
-    TenantSmsConfig, TenantSmsUsage,
+    TenantSmsConfig, TenantSmsUsage, SmsDlrLog,
     get_sms_stats_for_tenant, get_platform_sms_stats
 )
 
@@ -227,6 +227,7 @@ __all__ = [
     # SMS Management
     'TenantSmsConfig',
     'TenantSmsUsage',
+    'SmsDlrLog',
     'get_sms_stats_for_tenant',
     'get_platform_sms_stats',
 ]

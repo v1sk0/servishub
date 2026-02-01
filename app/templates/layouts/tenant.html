@@ -481,6 +481,113 @@
     .glass-theme .tenant-app .hover\:bg-gray-50:hover {
         background: rgba(255, 255, 255, 0.08) !important;
     }
+
+    /* ========================================
+       CREDIT BALANCE WIDGET (Topbar)
+       ======================================== */
+    .credit-widget {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        color: white;
+        font-size: 13px;
+        font-weight: 600;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    .credit-widget:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+    .credit-widget .credit-icon {
+        width: 22px;
+        height: 22px;
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .credit-widget .credit-icon svg {
+        width: 14px;
+        height: 14px;
+    }
+    .credit-widget .credit-amount {
+        font-weight: 700;
+        font-size: 14px;
+    }
+    .credit-widget .credit-label {
+        font-size: 11px;
+        opacity: 0.85;
+        font-weight: 500;
+    }
+
+    /* Shimmer animation */
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    .credit-widget .shimmer-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        animation: shimmer 2.5s infinite;
+    }
+
+    /* Low balance warning */
+    .credit-widget.low-balance {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+    .credit-widget.low-balance:hover {
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+    }
+    .credit-widget.critical-balance {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    .credit-widget.critical-balance:hover {
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    }
+
+    /* Light theme */
+    .credit-widget {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Glass theme overrides */
+    .glass-theme .credit-widget {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.85), rgba(139, 92, 246, 0.85));
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .glass-theme .credit-widget.low-balance {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.85), rgba(217, 119, 6, 0.85));
+    }
+    .glass-theme .credit-widget.critical-balance {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.85), rgba(220, 38, 38, 0.85));
+    }
+
+    /* Credit widget skeleton */
+    .credit-widget-skeleton {
+        width: 100px;
+        height: 36px;
+        background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s infinite;
+        border-radius: 10px;
+    }
+    .glass-theme .credit-widget-skeleton {
+        background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+        background-size: 200% 100%;
+    }
+    @keyframes skeleton-loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
 </style>
 {% endblock %}
 
@@ -541,6 +648,32 @@
                 </form>
 
                 <div class="flex items-center gap-x-4 lg:gap-x-6">
+                    <!-- Credit Balance Widget -->
+                    <template x-if="creditsLoading">
+                        <div class="credit-widget-skeleton hidden sm:block"></div>
+                    </template>
+                    <template x-if="!creditsLoading && creditsEnabled">
+                        <a href="/credits" class="credit-widget hidden sm:flex"
+                           :class="{
+                               'low-balance': creditBalance <= 5 && creditBalance > 1,
+                               'critical-balance': creditBalance <= 1
+                           }">
+                            <!-- Shimmer overlay -->
+                            <div class="shimmer-overlay"></div>
+                            <!-- Icon -->
+                            <div class="credit-icon">
+                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+                                </svg>
+                            </div>
+                            <!-- Balance -->
+                            <div class="flex flex-col items-start leading-tight">
+                                <span class="credit-amount" x-text="creditBalance.toFixed(2)"></span>
+                                <span class="credit-label">kredita</span>
+                            </div>
+                        </a>
+                    </template>
+
                     <!-- Notifications -->
                     <button type="button" class="-m-2.5 p-2.5 notification-btn">
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -591,11 +724,18 @@ function tenantApp() {
         tenant: null,
         loading: true,
         sidebarOpen: false,
+        // Credit balance
+        creditBalance: 0,
+        creditsEnabled: false,
+        creditsLoading: true,
 
         async init() {
             // OAuth se sada obradjuje sinhrono u <head> pre Alpine.js
             // Ovde samo ucitavamo korisnika
-            await this.loadUser();
+            await Promise.all([
+                this.loadUser(),
+                this.loadCreditBalance()
+            ]);
         },
 
         async loadUser() {
@@ -610,6 +750,30 @@ function tenantApp() {
                 console.error('Failed to load user:', e);
             } finally {
                 this.loading = false;
+            }
+        },
+
+        async loadCreditBalance() {
+            try {
+                // First check if credits are enabled
+                const featuresRes = await api('/api/v1/tenant/features');
+                if (featuresRes.ok) {
+                    const features = await featuresRes.json();
+                    this.creditsEnabled = features.credits_enabled || false;
+                }
+
+                if (this.creditsEnabled) {
+                    // Load credit balance - API endpoint is /credits/
+                    const res = await api('/api/v1/credits/');
+                    if (res.ok) {
+                        const data = await res.json();
+                        this.creditBalance = data.balance || 0;
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load credit balance:', e);
+            } finally {
+                this.creditsLoading = false;
             }
         },
 

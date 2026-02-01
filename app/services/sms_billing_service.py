@@ -12,6 +12,8 @@ from decimal import Decimal
 from datetime import datetime
 from typing import Tuple, Optional
 
+from sqlalchemy import select
+
 from ..extensions import db
 from ..models import (
     Tenant, CreditBalance, CreditTransaction, CreditTransactionType,
@@ -115,16 +117,19 @@ class SmsBillingService:
             - transaction_id: ID CreditTransaction (za eventualni refund)
             - message: Poruka o statusu
         """
-        # Proveri da li može da pošalje
-        can_send, reason = SmsBillingService.can_send_sms(tenant_id)
-        if not can_send:
-            return False, None, reason
+        # Proveri da li može da pošalje (osnovne provere)
+        tenant = Tenant.query.get(tenant_id)
+        if not tenant:
+            return False, None, "Servis nije pronađen"
 
-        # Dohvati credit balance
-        credit_balance = CreditBalance.query.filter_by(
-            owner_type=OwnerType.TENANT,
-            tenant_id=tenant_id
-        ).first()
+        if not tenant.sms_notifications_enabled:
+            return False, None, "SMS notifikacije nisu uključene"
+
+        if not tenant.sms_notifications_consent_given:
+            return False, None, "Nije data saglasnost za SMS notifikacije"
+
+        # Dohvati dinamičku cenu
+        sms_cost = get_sms_price()
 
         # Kreiraj idempotency key
         idempotency_key = f"sms:{tenant_id}:{sms_type}:{reference_id}:{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
@@ -136,15 +141,28 @@ class SmsBillingService:
         if existing:
             return True, existing.id, "Već naplaćeno"
 
-        # Dohvati dinamičku cenu
-        sms_cost = get_sms_price()
+        # ================================================================
+        # ATOMIC CHARGING: SELECT FOR UPDATE
+        # Zaključava red u bazi dok traje transakcija
+        # Sprečava race condition kod paralelnih SMS-ova
+        # ================================================================
+        stmt = select(CreditBalance).where(
+            CreditBalance.owner_type == OwnerType.TENANT,
+            CreditBalance.tenant_id == tenant_id
+        ).with_for_update(nowait=False)  # Čekaj ako je zaključano
 
-        # Računaj balance
+        result = db.session.execute(stmt)
+        credit_balance = result.scalar_one_or_none()
+
+        if not credit_balance:
+            return False, None, "Nema kredit račun"
+
+        # Proveri balance SA LOCK-om (atomski)
         balance_before = credit_balance.balance
         balance_after = balance_before - sms_cost
 
         if balance_after < 0:
-            return False, None, "Nedovoljno kredita"
+            return False, None, f"Nedovoljno kredita (potrebno: {sms_cost}, stanje: {balance_before})"
 
         # Kreiraj transakciju
         if not description:
@@ -162,12 +180,12 @@ class SmsBillingService:
             idempotency_key=idempotency_key
         )
 
-        # Ažuriraj balance
+        # Ažuriraj balance (još uvek pod lock-om)
         credit_balance.balance = balance_after
         credit_balance.total_spent += sms_cost
 
         db.session.add(transaction)
-        db.session.commit()
+        db.session.commit()  # Commit oslobađa lock
 
         return True, transaction.id, "Uspešno naplaćeno"
 

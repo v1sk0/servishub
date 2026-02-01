@@ -395,6 +395,9 @@
         Opremu ostavljate na servis na sopstvenu odgovornost. Servis ne snosi odgovornost za gubitak podataka.
         Garancija vazi samo uz ovaj nalog. Maksimalno vreme cuvanja opreme je 30 dana od obavestenja o zavrsetku servisa.
       </div>
+      <div class="sms-clause" id="sms-clause-1" style="font-size: 10px; margin-top: 5px; padding: 3px 5px; background: #f5f5f5; border-radius: 3px;">
+        SMS obavestenja: <strong id="sms-status-1">DA</strong>
+      </div>
 
       <div class="bottom-section">
         <table class="signatures-table">
@@ -494,6 +497,9 @@
       <div class="clause-text" id="clause-2">
         Opremu ostavljate na servis na sopstvenu odgovornost. Servis ne snosi odgovornost za gubitak podataka.
         Garancija vazi samo uz ovaj nalog. Maksimalno vreme cuvanja opreme je 30 dana od obavestenja o zavrsetku servisa.
+      </div>
+      <div class="sms-clause" id="sms-clause-2" style="font-size: 10px; margin-top: 5px; padding: 3px 5px; background: #f5f5f5; border-radius: 3px;">
+        SMS obavestenja: <strong id="sms-status-2">DA</strong>
       </div>
 
       <div class="bottom-section">
@@ -647,6 +653,15 @@
         // Set print clause from tenant settings
         if (tenant?.print_clause) {
           document.getElementById(`clause-${i}`).textContent = tenant.print_clause;
+        }
+
+        // SMS status clause
+        const smsStatus = ticket.sms_opt_out ? 'NE' : 'DA';
+        document.getElementById(`sms-status-${i}`).textContent = smsStatus;
+        if (ticket.sms_opt_out) {
+          document.getElementById(`sms-status-${i}`).style.color = '#dc2626';
+        } else {
+          document.getElementById(`sms-status-${i}`).style.color = '#16a34a';
         }
       }
     }

@@ -137,6 +137,10 @@ def _register_blueprints(app):
     from .frontend.tenant_public import bp as tenant_public_bp
     app.register_blueprint(tenant_public_bp)
 
+    # Webhooks - callback endpointi za eksterne servise (D7 DLR, Stripe, itd.)
+    from .api.webhooks import bp as webhooks_bp
+    app.register_blueprint(webhooks_bp)
+
     # Zdravstvena provera - uvek dostupna
     @app.route('/health')
     def health_check():

@@ -36,15 +36,87 @@
                     <input type="text" id="customer_name" x-model="form.customer_name" required
                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                 </div>
+                <!-- Telefon sa Country Selector -->
                 <div>
                     <label for="customer_phone" class="block text-sm font-medium text-gray-700">Telefon *</label>
-                    <input type="tel" id="customer_phone" x-model="form.customer_phone" required
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    <div class="mt-1 flex gap-2">
+                        <!-- Country selector dropdown -->
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" type="button"
+                                    class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <span x-text="selectedCountry.flag" class="text-lg"></span>
+                                <span x-text="selectedCountry.code" class="text-sm text-gray-600"></span>
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+
+                            <!-- Dropdown menu -->
+                            <div x-show="open" @click.away="open = false"
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="transform opacity-100 scale-100"
+                                 x-transition:leave-end="transform opacity-0 scale-95"
+                                 class="absolute z-20 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+
+                                <!-- Ex-YU Region -->
+                                <div class="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 sticky top-0">Region</div>
+                                <template x-for="country in exYuCountries" :key="country.code">
+                                    <button @click="selectCountry(country); open = false" type="button"
+                                            class="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-100 text-left"
+                                            :class="{'bg-primary-50': selectedCountry.code === country.code}">
+                                        <span x-text="country.flag" class="text-lg"></span>
+                                        <span x-text="country.name" class="flex-1 text-sm text-gray-700"></span>
+                                        <span x-text="country.code" class="text-xs text-gray-400"></span>
+                                    </button>
+                                </template>
+
+                                <!-- Ostale zemlje -->
+                                <div class="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 sticky top-0">Ostalo</div>
+                                <template x-for="country in otherCountries" :key="country.code">
+                                    <button @click="selectCountry(country); open = false" type="button"
+                                            class="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-100 text-left"
+                                            :class="{'bg-primary-50': selectedCountry.code === country.code}">
+                                        <span x-text="country.flag" class="text-lg"></span>
+                                        <span x-text="country.name" class="flex-1 text-sm text-gray-700"></span>
+                                        <span x-text="country.code" class="text-xs text-gray-400"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Phone number input -->
+                        <input type="tel" id="customer_phone" x-model="phoneNumber"
+                               @input="formatPhoneNumber()"
+                               placeholder="64 123 4567" required
+                               class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Format: <span x-text="formattedPhonePreview"></span></p>
                 </div>
                 <div class="sm:col-span-2">
                     <label for="customer_email" class="block text-sm font-medium text-gray-700">Email</label>
                     <input type="email" id="customer_email" x-model="form.customer_email"
                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                </div>
+
+                <!-- SMS Opt-out checkbox -->
+                <div class="sm:col-span-2">
+                    <div class="relative flex items-start">
+                        <div class="flex h-6 items-center">
+                            <input id="sms_opt_out" type="checkbox" x-model="form.sms_opt_out"
+                                   class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600">
+                        </div>
+                        <div class="ml-3">
+                            <label for="sms_opt_out" class="text-sm font-medium text-gray-700">
+                                Klijent NE želi SMS obaveštenja
+                            </label>
+                            <p class="text-xs text-gray-500">
+                                Ako je čekirano, klijent neće primati SMS kada nalog bude spreman za preuzimanje
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -220,10 +292,34 @@ function newTicketPage() {
         technicians: [],
         submitting: false,
 
+        // ========== COUNTRY SELECTOR ==========
+        exYuCountries: [
+            { code: '+381', dial: '381', flag: '🇷🇸', name: 'Srbija' },
+            { code: '+385', dial: '385', flag: '🇭🇷', name: 'Hrvatska' },
+            { code: '+387', dial: '387', flag: '🇧🇦', name: 'BiH' },
+            { code: '+382', dial: '382', flag: '🇲🇪', name: 'Crna Gora' },
+            { code: '+386', dial: '386', flag: '🇸🇮', name: 'Slovenija' },
+            { code: '+383', dial: '383', flag: '🇽🇰', name: 'Kosovo' },
+            { code: '+389', dial: '389', flag: '🇲🇰', name: 'S. Makedonija' },
+        ],
+        otherCountries: [
+            { code: '+43', dial: '43', flag: '🇦🇹', name: 'Austrija' },
+            { code: '+49', dial: '49', flag: '🇩🇪', name: 'Nemačka' },
+            { code: '+41', dial: '41', flag: '🇨🇭', name: 'Švajcarska' },
+            { code: '+39', dial: '39', flag: '🇮🇹', name: 'Italija' },
+            { code: '+33', dial: '33', flag: '🇫🇷', name: 'Francuska' },
+            { code: '+44', dial: '44', flag: '🇬🇧', name: 'UK' },
+        ],
+        selectedCountry: { code: '+381', dial: '381', flag: '🇷🇸', name: 'Srbija' },
+        phoneNumber: '',
+
+        // ========================================
+
         form: {
             customer_name: '',
             customer_phone: '',
             customer_email: '',
+            sms_opt_out: false,  // Default: prima SMS (unchecked)
             device_type: 'PHONE',
             brand: '',
             model: '',
@@ -239,6 +335,31 @@ function newTicketPage() {
             technician_id: '',
             internal_notes: ''
         },
+
+        // ========== PHONE HELPERS ==========
+        selectCountry(country) {
+            this.selectedCountry = country;
+        },
+
+        formatPhoneNumber() {
+            // Dozvoli samo cifre i razmake
+            this.phoneNumber = this.phoneNumber.replace(/[^\d\s]/g, '');
+        },
+
+        get formattedPhonePreview() {
+            if (!this.phoneNumber) return this.selectedCountry.code + ' ...';
+            const digits = this.phoneNumber.replace(/\D/g, '');
+            const cleanDigits = digits.startsWith('0') ? digits.slice(1) : digits;
+            return this.selectedCountry.code + ' ' + cleanDigits;
+        },
+
+        get formattedPhoneForApi() {
+            // Format za D7: 381649090060 (bez +, samo cifre)
+            const digits = this.phoneNumber.replace(/\D/g, '');
+            const cleanDigits = digits.startsWith('0') ? digits.slice(1) : digits;
+            return this.selectedCountry.dial + cleanDigits;
+        },
+        // ===================================
 
         async loadData() {
             try {
@@ -270,9 +391,10 @@ function newTicketPage() {
         async submitForm() {
             this.submitting = true;
             try {
-                // Prepare data
+                // Prepare data - koristi formattedPhoneForApi za D7 format
                 const payload = {
                     ...this.form,
+                    customer_phone: this.formattedPhoneForApi,  // D7 format: 381649090060
                     location_id: parseInt(this.form.location_id),
                     estimated_price: this.form.estimated_price ? parseFloat(this.form.estimated_price) : null,
                     warranty_days: parseInt(this.form.warranty_days),

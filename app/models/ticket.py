@@ -175,6 +175,10 @@ class ServiceTicket(db.Model):
     sms_notification_10_days = db.Column(db.Boolean, default=False)
     sms_notification_30_days = db.Column(db.Boolean, default=False)
 
+    # SMS Opt-out - klijent je ODBIO SMS obaveštenja za ovaj tiket
+    # Default False = prima SMS (opt-in by default)
+    sms_opt_out = db.Column(db.Boolean, default=False, nullable=False)
+
     # Fakturisanje
     billing_status = db.Column(db.String(20))  # PENDING, INVOICED, PAID
     invoice_number = db.Column(db.String(20))
@@ -410,6 +414,8 @@ class ServiceTicket(db.Model):
             'ticket_notes': self.ticket_notes,
             'billing_status': self.billing_status,
             'invoice_number': self.invoice_number,
+            'sms_opt_out': self.sms_opt_out,
+            'sms_notification_completed': self.sms_notification_completed,
             'assigned_technician_id': self.assigned_technician_id,
             'location_id': self.location_id,
             'created_at': self.created_at.isoformat(),

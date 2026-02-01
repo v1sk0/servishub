@@ -166,10 +166,20 @@ class TenantSmsUsage(db.Model):
     error_message = db.Column(db.Text)
 
     # D7 Networks message ID (za praćenje)
-    provider_message_id = db.Column(db.String(100))
+    provider_message_id = db.Column(db.String(100), index=True)
 
     # Cena SMS-a (ako se naplaćuje)
     cost = db.Column(db.Numeric(10, 4), default=0)
+
+    # =========================================================================
+    # DLR (Delivery Report) polja - ažurira se preko webhook-a
+    # =========================================================================
+    # Status isporuke: pending, delivered, failed, expired
+    delivery_status = db.Column(db.String(30), default='pending')
+    # Vreme kada je DLR primljen
+    delivery_status_at = db.Column(db.DateTime(timezone=True))
+    # Error kod od operatora (ako je failed)
+    delivery_error_code = db.Column(db.String(20))
 
     # Ko je inicirao slanje (ako je manuelno)
     initiated_by_user_id = db.Column(db.Integer, db.ForeignKey('tenant_user.id', ondelete='SET NULL'))
@@ -263,9 +273,44 @@ class TenantSmsUsage(db.Model):
             'reference_type': self.reference_type,
             'reference_id': self.reference_id,
             'provider_message_id': self.provider_message_id,
+            # DLR polja
+            'delivery_status': self.delivery_status,
+            'delivery_status_at': self.delivery_status_at.isoformat() if self.delivery_status_at else None,
+            'delivery_error_code': self.delivery_error_code,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'sent_at': self.sent_at.isoformat() if self.sent_at else None,
         }
+
+
+class SmsDlrLog(db.Model):
+    """
+    Log primljenih DLR (Delivery Report) poruka.
+
+    Koristi se za:
+    - Idempotency check - sprečava dupliranje obrade istog DLR-a
+    - Audit trail - praćenje svih primljenih DLR poruka
+    """
+    __tablename__ = 'sms_dlr_log'
+
+    id = db.Column(db.BigInteger, primary_key=True)
+
+    # D7 message ID - jedinstven identifikator poruke
+    message_id = db.Column(db.String(100), nullable=False, unique=True, index=True)
+
+    # Status iz DLR-a: delivered, failed, expired
+    status = db.Column(db.String(30), nullable=False)
+
+    # Raw payload od D7 (za debug)
+    raw_payload = db.Column(db.Text)
+
+    # Error kod od operatora (ako postoji)
+    error_code = db.Column(db.String(20))
+
+    # Timestamps
+    received_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def __repr__(self):
+        return f'<SmsDlrLog {self.message_id}: {self.status}>'
 
 
 # ===== Helper funkcije za statistiku =====

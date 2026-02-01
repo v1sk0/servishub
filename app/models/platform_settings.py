@@ -26,6 +26,8 @@ class PlatformSettings(db.Model):
 
     # SMS Cenovnik
     sms_price_credits = db.Column(db.Numeric(10, 4), default=Decimal('0.20'))  # Cena SMS u kreditima
+    sms_d7_cost_usd = db.Column(db.Numeric(10, 4), default=Decimal('0.026'))  # D7 trošak po SMS ($0.026 za Srbiju)
+    sms_usd_to_eur = db.Column(db.Numeric(10, 4), default=Decimal('0.92'))  # USD to EUR kurs
 
     # Trial i pretplate
     trial_days = db.Column(db.Integer, default=90)  # DEPRECATED: koristi promo_months
@@ -112,7 +114,7 @@ class PlatformSettings(db.Model):
             'trial_days', 'demo_days', 'grace_period_days', 'promo_months',
             'default_commission',
             # SMS Pricing
-            'sms_price_credits',
+            'sms_price_credits', 'sms_d7_cost_usd', 'sms_usd_to_eur',
             # Company data (includes social for landing page)
             'company_name', 'company_address', 'company_city',
             'company_postal_code', 'company_country', 'company_pib',
@@ -128,7 +130,7 @@ class PlatformSettings(db.Model):
         for field in allowed_fields:
             if field in data and data[field] is not None:
                 # Konvertuj u Decimal za numericka polja
-                if field in ['base_price', 'location_price', 'default_commission', 'sms_price_credits']:
+                if field in ['base_price', 'location_price', 'default_commission', 'sms_price_credits', 'sms_d7_cost_usd', 'sms_usd_to_eur']:
                     setattr(settings, field, Decimal(str(data[field])))
                 else:
                     setattr(settings, field, data[field])
@@ -156,6 +158,8 @@ class PlatformSettings(db.Model):
             'default_commission': float(self.default_commission) if self.default_commission else 5.0,
             # SMS pricing
             'sms_price_credits': float(self.sms_price_credits) if self.sms_price_credits else 0.20,
+            'sms_d7_cost_usd': float(self.sms_d7_cost_usd) if self.sms_d7_cost_usd else 0.026,
+            'sms_usd_to_eur': float(self.sms_usd_to_eur) if self.sms_usd_to_eur else 0.92,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             # Company data
             'company': self.get_company_data()

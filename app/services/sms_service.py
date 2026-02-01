@@ -44,6 +44,20 @@ class SMSError(Exception):
         super().__init__(self.message)
 
 
+class SMSOptedOut(Exception):
+    """Izuzetak kada je klijent odbio SMS obaveštenja."""
+    def __init__(self, message: str = "Klijent je odbio SMS obaveštenja"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class SMSMessageTooLong(Exception):
+    """Izuzetak kada je poruka duža od 160 karaktera."""
+    def __init__(self, message: str = "SMS poruka ne sme biti duža od 160 karaktera"):
+        self.message = message
+        super().__init__(self.message)
+
+
 class SMSService:
     """
     Servis za slanje SMS poruka i OTP verifikaciju.
@@ -56,6 +70,25 @@ class SMSService:
     # D7 Networks API endpoint
     API_URL = "https://api.d7networks.com/messages/v1/send"
 
+    # SMS validacija
+    MAX_SMS_LENGTH = 160  # Striktni limit - bez multi-segment
+
+    # GSM-7 transliteracija - ćiriliča i specijalni karakteri
+    TRANSLITERATION_MAP = {
+        'ć': 'c', 'Ć': 'C',
+        'č': 'c', 'Č': 'C',
+        'š': 's', 'Š': 'S',
+        'đ': 'dj', 'Đ': 'Dj',
+        'ž': 'z', 'Ž': 'Z',
+        # Ćirilica (ako neko unese)
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd',
+        'е': 'e', 'ж': 'z', 'з': 'z', 'и': 'i', 'ј': 'j',
+        'к': 'k', 'л': 'l', 'љ': 'lj', 'м': 'm', 'н': 'n',
+        'њ': 'nj', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's',
+        'т': 't', 'ћ': 'c', 'у': 'u', 'ф': 'f', 'х': 'h',
+        'ц': 'c', 'ч': 'c', 'џ': 'dz', 'ш': 's',
+    }
+
     # OTP konfiguracija
     OTP_LENGTH = 6
     OTP_EXPIRY_MINUTES = 5
@@ -66,6 +99,47 @@ class SMSService:
         """Inicijalizacija SMS servisa."""
         self.api_token = os.environ.get('D7_API_TOKEN')
         self.sender_id = os.environ.get('D7_SENDER_ID', 'ServisHub')
+
+    def transliterate_gsm7(self, text: str) -> str:
+        """
+        Konvertuje specijalne karaktere u GSM-7 kompatibilne.
+
+        ćčšđž → ccsdz (latinica)
+        Ćirilica → latinica
+
+        Args:
+            text: Originalni tekst
+
+        Returns:
+            GSM-7 kompatibilan tekst
+        """
+        result = text
+        for char, replacement in self.TRANSLITERATION_MAP.items():
+            result = result.replace(char, replacement)
+        return result
+
+    def validate_and_prepare_message(self, message: str) -> Tuple[bool, str, str]:
+        """
+        Validira i priprema SMS poruku za slanje.
+
+        1. Transliteruje specijalne karaktere
+        2. Proverava dužinu (max 160)
+        3. Vraća grešku ako je poruka preduga
+
+        Args:
+            message: Originalna poruka
+
+        Returns:
+            Tuple (is_valid, prepared_message, error)
+        """
+        # 1. Transliteracija
+        prepared = self.transliterate_gsm7(message)
+
+        # 2. Provera dužine
+        if len(prepared) > self.MAX_SMS_LENGTH:
+            return False, prepared, f"Poruka ima {len(prepared)} karaktera (max {self.MAX_SMS_LENGTH})"
+
+        return True, prepared, None
 
     def check_tenant_limit(self, tenant_id: int) -> Tuple[bool, str]:
         """
@@ -326,11 +400,13 @@ class SMSService:
         Šalje SMS kada je servisni nalog spreman za preuzimanje.
 
         Flow sa naplatom:
-        1. Proveri da li tenant ima SMS uključen
-        2. Proveri da li ima dovoljno kredita
-        3. Naplati kredit
-        4. Pošalji SMS
-        5. Ako ne uspe - refund kredit
+        1. Proveri opt-out status
+        2. Proveri da li tenant ima SMS uključen
+        3. Proveri da li ima dovoljno kredita
+        4. Validiraj i pripremi poruku (GSM-7, max 160)
+        5. Naplati kredit
+        6. Pošalji SMS
+        7. Ako ne uspe - refund kredit
 
         Args:
             ticket: ServiceTicket objekat
@@ -339,6 +415,11 @@ class SMSService:
             Tuple (success, error_message)
         """
         from .sms_billing_service import sms_billing_service, SMS_COST_CREDITS
+
+        # 1. Proveri opt-out
+        if hasattr(ticket, 'sms_opt_out') and ticket.sms_opt_out:
+            print(f"[SMS] Skipped - customer opted out: ticket {ticket.id}")
+            return False, "opted_out"
 
         if not ticket.customer_phone:
             return False, "Kupac nema broj telefona"
@@ -350,6 +431,21 @@ class SMSService:
         can_send, reason = self.check_tenant_limit(ticket.tenant_id)
         if not can_send:
             return False, reason
+
+        # Proveri rate limit (Redis) - burst protection
+        from .sms_rate_limiter import rate_limiter
+        rate_ok, rate_reason = rate_limiter.can_send(ticket.tenant_id, ticket.customer_phone)
+        if not rate_ok:
+            self._log_sms_usage(
+                tenant_id=ticket.tenant_id,
+                sms_type='TICKET_READY',
+                recipient=ticket.customer_phone,
+                status='failed',
+                reference_type='ticket',
+                reference_id=ticket.id,
+                error_message=rate_reason
+            )
+            return False, rate_reason
 
         # Proveri da li tenant ima SMS uključen i kredit
         billing_ok, billing_reason = sms_billing_service.can_send_sms(ticket.tenant_id)
@@ -369,15 +465,28 @@ class SMSService:
         # Dohvati ime servisa (tenant)
         tenant_name = ticket.tenant.name if ticket.tenant else "Servis"
 
-        message = (
+        # Pripremi poruku
+        raw_message = (
             f"{tenant_name}: Vas uredjaj {ticket.brand} {ticket.model} "
             f"je spreman za preuzimanje. "
             f"Nalog: SRV-{ticket.ticket_number:04d}"
         )
 
-        # Skrati poruku na 160 karaktera
-        if len(message) > 160:
-            message = message[:157] + "..."
+        # Validiraj i pripremi poruku (GSM-7 transliteracija, max 160)
+        is_valid, message, validation_error = self.validate_and_prepare_message(raw_message)
+        if not is_valid:
+            # Poruka preduga - logiraj i odbij
+            print(f"[SMS ERROR] Message too long: {validation_error}")
+            self._log_sms_usage(
+                tenant_id=ticket.tenant_id,
+                sms_type='TICKET_READY',
+                recipient=ticket.customer_phone,
+                status='failed',
+                reference_type='ticket',
+                reference_id=ticket.id,
+                error_message=f"message_too_long: {validation_error}"
+            )
+            return False, f"message_too_long: {validation_error}"
 
         # Formatiraj broj
         formatted_phone = self._format_phone(ticket.customer_phone)
@@ -416,6 +525,8 @@ class SMSService:
                 reference_type='ticket',
                 reference_id=ticket.id
             )
+            # Record rate limit za dev mode
+            rate_limiter.record_send(ticket.tenant_id, ticket.customer_phone)
             db.session.commit()
             return True, None
 
@@ -434,6 +545,8 @@ class SMSService:
                 reference_id=ticket.id
             )
             self._log_ticket_notification(ticket, 'SMS_READY', message)
+            # Record rate limit
+            rate_limiter.record_send(ticket.tenant_id, ticket.customer_phone)
             db.session.commit()
         else:
             # Neuspešno - REFUND kredit
@@ -455,11 +568,13 @@ class SMSService:
         Šalje podsetnik za preuzimanje uređaja.
 
         Flow sa naplatom:
-        1. Proveri da li tenant ima SMS uključen
-        2. Proveri da li ima dovoljno kredita
-        3. Naplati kredit
-        4. Pošalji SMS
-        5. Ako ne uspe - refund kredit
+        1. Proveri opt-out status
+        2. Proveri da li tenant ima SMS uključen
+        3. Proveri da li ima dovoljno kredita
+        4. Validiraj poruku
+        5. Naplati kredit
+        6. Pošalji SMS
+        7. Ako ne uspe - refund kredit
 
         Args:
             ticket: ServiceTicket objekat
@@ -469,6 +584,11 @@ class SMSService:
             Tuple (success, error_message)
         """
         from .sms_billing_service import sms_billing_service, SMS_COST_CREDITS
+
+        # 1. Proveri opt-out
+        if hasattr(ticket, 'sms_opt_out') and ticket.sms_opt_out:
+            print(f"[SMS] Reminder skipped - customer opted out: ticket {ticket.id}")
+            return False, "opted_out"
 
         if not ticket.customer_phone:
             return False, "Kupac nema broj telefona"
@@ -487,6 +607,21 @@ class SMSService:
         if not can_send:
             return False, reason
 
+        # Proveri rate limit (Redis) - burst protection
+        from .sms_rate_limiter import rate_limiter
+        rate_ok, rate_reason = rate_limiter.can_send(ticket.tenant_id, ticket.customer_phone)
+        if not rate_ok:
+            self._log_sms_usage(
+                tenant_id=ticket.tenant_id,
+                sms_type=sms_type,
+                recipient=formatted_phone,
+                status='failed',
+                reference_type='ticket',
+                reference_id=ticket.id,
+                error_message=rate_reason
+            )
+            return False, rate_reason
+
         # Proveri da li tenant ima SMS uključen i kredit
         billing_ok, billing_reason = sms_billing_service.can_send_sms(ticket.tenant_id)
         if not billing_ok:
@@ -503,14 +638,27 @@ class SMSService:
 
         tenant_name = ticket.tenant.name if ticket.tenant else "Servis"
 
-        message = (
+        # Pripremi poruku
+        raw_message = (
             f"{tenant_name}: Podsetnik - Vas uredjaj {ticket.brand} {ticket.model} "
             f"ceka preuzimanje vec {days} dana. "
             f"Nalog: SRV-{ticket.ticket_number:04d}"
         )
 
-        if len(message) > 160:
-            message = message[:157] + "..."
+        # Validiraj i pripremi poruku (GSM-7 transliteracija, max 160)
+        is_valid, message, validation_error = self.validate_and_prepare_message(raw_message)
+        if not is_valid:
+            print(f"[SMS ERROR] Reminder message too long: {validation_error}")
+            self._log_sms_usage(
+                tenant_id=ticket.tenant_id,
+                sms_type=sms_type,
+                recipient=formatted_phone,
+                status='failed',
+                reference_type='ticket',
+                reference_id=ticket.id,
+                error_message=f"message_too_long: {validation_error}"
+            )
+            return False, f"message_too_long: {validation_error}"
 
         # Naplati kredit PRIJE slanja
         charge_success, transaction_id, charge_msg = sms_billing_service.charge_for_sms(
@@ -549,6 +697,8 @@ class SMSService:
                 reference_type='ticket',
                 reference_id=ticket.id
             )
+            # Record rate limit za dev mode
+            rate_limiter.record_send(ticket.tenant_id, ticket.customer_phone)
             db.session.commit()
             return True, None
 
@@ -570,6 +720,8 @@ class SMSService:
                 reference_id=ticket.id
             )
             self._log_ticket_notification(ticket, f'SMS_REMINDER_{days}', message)
+            # Record rate limit
+            rate_limiter.record_send(ticket.tenant_id, ticket.customer_phone)
             db.session.commit()
         else:
             # Neuspešno - REFUND kredit

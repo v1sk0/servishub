@@ -66,6 +66,72 @@
         </div>
     </div>
 
+    <!-- FINANSIJSKA STATISTIKA - Premium kartica -->
+    <div class="bg-gradient-to-r from-emerald-900/50 to-green-900/50 rounded-xl p-6 mb-8 border border-emerald-700/30">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-xl font-bold text-white">SMS Finansije</h2>
+                <p class="text-emerald-300/70 text-sm">Prihod, troškovi i profit (poslednjih 30 dana)</p>
+            </div>
+            <button @click="loadFinancialStats()" class="px-3 py-1.5 bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 rounded-lg transition-colors text-sm">
+                <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Osveži
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <!-- Prihod -->
+            <div class="bg-gray-800/50 rounded-lg p-4">
+                <div class="text-emerald-400 text-sm mb-1">Prihod (krediti)</div>
+                <div class="text-2xl font-bold text-white" x-text="financial.summary?.net_revenue_credits?.toFixed(2) || '0.00'"></div>
+                <div class="text-xs text-gray-500 mt-1">naplaćeno od servisa</div>
+            </div>
+
+            <!-- D7 Trošak -->
+            <div class="bg-gray-800/50 rounded-lg p-4">
+                <div class="text-red-400 text-sm mb-1">D7 Trošak (EUR)</div>
+                <div class="text-2xl font-bold text-white" x-text="'€' + (financial.summary?.d7_cost_eur?.toFixed(2) || '0.00')"></div>
+                <div class="text-xs text-gray-500 mt-1">plaćeno D7 Networks</div>
+            </div>
+
+            <!-- Profit -->
+            <div class="bg-gray-800/50 rounded-lg p-4">
+                <div class="text-yellow-400 text-sm mb-1">Profit (EUR)</div>
+                <div class="text-2xl font-bold" :class="(financial.summary?.profit_eur || 0) >= 0 ? 'text-green-400' : 'text-red-400'" x-text="'€' + (financial.summary?.profit_eur?.toFixed(2) || '0.00')"></div>
+                <div class="text-xs text-gray-500 mt-1">prihod - troškovi</div>
+            </div>
+
+            <!-- Marža -->
+            <div class="bg-gray-800/50 rounded-lg p-4">
+                <div class="text-blue-400 text-sm mb-1">Marža</div>
+                <div class="text-2xl font-bold text-white"><span x-text="financial.summary?.margin_percent?.toFixed(1) || '0'"></span>%</div>
+                <div class="text-xs text-gray-500 mt-1">profit / prihod</div>
+            </div>
+
+            <!-- Refund -->
+            <div class="bg-gray-800/50 rounded-lg p-4">
+                <div class="text-orange-400 text-sm mb-1">Refundirano</div>
+                <div class="text-2xl font-bold text-white" x-text="financial.summary?.total_refunded_credits?.toFixed(2) || '0.00'"></div>
+                <div class="text-xs text-gray-500 mt-1">vraćeno kreditima</div>
+            </div>
+        </div>
+
+        <!-- Cene -->
+        <div class="mt-4 pt-4 border-t border-gray-700/50 flex gap-6 text-sm">
+            <div class="text-gray-400">
+                <span class="text-gray-500">Cena SMS:</span>
+                <span class="text-white font-medium" x-text="financial.pricing?.sms_price_credits || '0.20'"></span> kredita
+            </div>
+            <div class="text-gray-400">
+                <span class="text-gray-500">D7 cena:</span>
+                $<span class="text-white font-medium" x-text="financial.pricing?.d7_cost_usd || '0.026'"></span>
+                <span class="text-gray-500 ml-1">(€<span x-text="financial.pricing?.d7_cost_eur?.toFixed(4) || '0.024'"></span>)</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Tabs -->
     <div class="mb-6 border-b border-gray-700">
         <nav class="flex space-x-8">
@@ -83,6 +149,14 @@
                     :class="activeTab === 'top' ? 'border-blue-500 text-blue-500' : 'border-transparent text-gray-400 hover:text-white'"
                     class="pb-4 px-1 border-b-2 font-medium text-sm transition-colors">
                 Top Potrosaci
+            </button>
+            <button @click="activeTab = 'finance'; loadFinancialStats()"
+                    :class="activeTab === 'finance' ? 'border-emerald-500 text-emerald-500' : 'border-transparent text-gray-400 hover:text-white'"
+                    class="pb-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Finansije
             </button>
         </nav>
     </div>
@@ -271,6 +345,92 @@
         </div>
     </div>
 
+    <!-- Finance Tab -->
+    <div x-show="activeTab === 'finance'" class="space-y-6">
+        <!-- Mesečni pregled -->
+        <div class="bg-gray-800 rounded-xl p-6">
+            <h3 class="text-lg font-semibold text-white mb-4">Mesečni Pregled Finansija</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-700/50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Mesec</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">SMS</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Prihod (kr)</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">D7 Trošak</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Profit</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Marža</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        <template x-for="row in financial.monthly || []" :key="row.month_name">
+                            <tr class="hover:bg-gray-700/30">
+                                <td class="px-4 py-3 text-white font-medium" x-text="row.month_name"></td>
+                                <td class="px-4 py-3 text-right text-gray-300" x-text="row.sent"></td>
+                                <td class="px-4 py-3 text-right text-emerald-400" x-text="row.revenue_credits.toFixed(2)"></td>
+                                <td class="px-4 py-3 text-right text-red-400" x-text="'€' + row.d7_cost_eur.toFixed(2)"></td>
+                                <td class="px-4 py-3 text-right font-medium" :class="row.profit_eur >= 0 ? 'text-green-400' : 'text-red-400'" x-text="'€' + row.profit_eur.toFixed(2)"></td>
+                                <td class="px-4 py-3 text-right">
+                                    <span :class="{
+                                        'text-green-400': row.margin_percent >= 70,
+                                        'text-yellow-400': row.margin_percent >= 50 && row.margin_percent < 70,
+                                        'text-red-400': row.margin_percent < 50
+                                    }" x-text="row.margin_percent.toFixed(1) + '%'"></span>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                    <!-- Totals row -->
+                    <tfoot class="bg-gray-700/30 border-t-2 border-gray-600">
+                        <tr class="font-semibold">
+                            <td class="px-4 py-3 text-white">UKUPNO</td>
+                            <td class="px-4 py-3 text-right text-white" x-text="financial.summary?.total_sent || 0"></td>
+                            <td class="px-4 py-3 text-right text-emerald-400" x-text="financial.summary?.net_revenue_credits?.toFixed(2) || '0.00'"></td>
+                            <td class="px-4 py-3 text-right text-red-400" x-text="'€' + (financial.summary?.d7_cost_eur?.toFixed(2) || '0.00')"></td>
+                            <td class="px-4 py-3 text-right" :class="(financial.summary?.profit_eur || 0) >= 0 ? 'text-green-400' : 'text-red-400'" x-text="'€' + (financial.summary?.profit_eur?.toFixed(2) || '0.00')"></td>
+                            <td class="px-4 py-3 text-right text-white" x-text="(financial.summary?.margin_percent?.toFixed(1) || '0') + '%'"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Top Tenanti po Zaradi -->
+        <div class="bg-gray-800 rounded-xl p-6">
+            <h3 class="text-lg font-semibold text-white mb-4">Top 10 Servisa po Zaradi (30 dana)</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-700/50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">#</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Servis</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">SMS</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Prihod</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Trošak</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase">Profit</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        <template x-for="(tenant, index) in financial.top_tenants || []" :key="tenant.tenant_id">
+                            <tr class="hover:bg-gray-700/30">
+                                <td class="px-4 py-3">
+                                    <span :class="index < 3 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-gray-700 text-gray-400'"
+                                          class="w-6 h-6 rounded-full inline-flex items-center justify-center text-xs font-bold"
+                                          x-text="index + 1"></span>
+                                </td>
+                                <td class="px-4 py-3 text-white font-medium" x-text="tenant.tenant_name"></td>
+                                <td class="px-4 py-3 text-right text-gray-300" x-text="tenant.sms_count"></td>
+                                <td class="px-4 py-3 text-right text-emerald-400" x-text="tenant.revenue_credits.toFixed(2) + ' kr'"></td>
+                                <td class="px-4 py-3 text-right text-red-400" x-text="'€' + tenant.d7_cost_eur.toFixed(2)"></td>
+                                <td class="px-4 py-3 text-right font-medium text-green-400" x-text="'€' + tenant.profit_eur.toFixed(2)"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- Edit Modal -->
     <div x-show="editModal.open" x-cloak
          class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
@@ -342,10 +502,12 @@ function smsManagement() {
         usageFilters: { sms_type: '', status: '' },
         editModal: { open: false, tenant_id: null, tenant_name: '', sms_enabled: true, monthly_limit: 100, warning_threshold_percent: 20, admin_notes: '' },
         saving: false,
+        financial: { summary: {}, monthly: [], top_tenants: [], pricing: {} },
 
         async init() {
             await this.loadStats();
             await this.loadConfigs();
+            await this.loadFinancialStats();
         },
 
         async loadStats() {
@@ -359,6 +521,20 @@ function smsManagement() {
                 }
             } catch (err) {
                 console.error('Failed to load stats:', err);
+            }
+        },
+
+        async loadFinancialStats() {
+            try {
+                const token = localStorage.getItem('admin_access_token');
+                const res = await fetch('/api/admin/sms/stats/financial?days=30&months=12', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    this.financial = await res.json();
+                }
+            } catch (err) {
+                console.error('Failed to load financial stats:', err);
             }
         },
 
