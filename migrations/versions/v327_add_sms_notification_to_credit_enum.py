@@ -1,6 +1,6 @@
 """Add SMS_NOTIFICATION to credittransactiontype enum.
 
-Revision ID: v327_add_sms_notification_to_credit_enum
+Revision ID: v327_sms_txn_enum
 Revises: v326_sms_d7_cost_fields
 Create Date: 2026-02-01
 
@@ -9,7 +9,7 @@ from alembic import op
 
 
 # revision identifiers, used by Alembic.
-revision = 'v327_add_sms_notification_to_credit_enum'
+revision = 'v327_sms_txn_enum'
 down_revision = 'v326_sms_d7_cost_fields'
 branch_labels = None
 depends_on = None
