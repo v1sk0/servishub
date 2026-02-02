@@ -615,3 +615,63 @@ curl https://app.servishub.rs/webhooks/d7/test  # {"status": "ok"}
 - [ ] Monthly breakdown radi
 
 **Status na dan 2026-02-01:** Sav kod implementiran. Webhook konfiguracija u D7 Dashboard zahteva manuelnu verifikaciju.
+
+---
+
+## FAZA 7: Cost Tracking Fix (2026-02-02)
+
+**Problem:** SMS cost se nije prikazivao u SMS evidenciji - kolona "Cena" je bila prazna.
+
+**Root Cause:**
+- `TenantSmsUsage.log_sms()` nije primao `cost` parametar
+- `_log_sms_usage()` u `sms_service.py` nije prosleđivao cost
+- Cost je postojao samo u `CreditTransaction`, ali ne i u `TenantSmsUsage`
+
+**Rešenje:**
+
+1. **Model izmena** (`app/models/sms_management.py`):
+```python
+@classmethod
+def log_sms(cls, tenant_id, sms_type, recipient, ..., cost=None):
+    usage = cls(
+        ...
+        cost=cost  # DODATO
+    )
+```
+
+2. **Service izmena** (`app/services/sms_service.py`):
+```python
+from .sms_billing_service import get_sms_price
+
+def _log_sms_usage(self, ..., cost=None):
+    TenantSmsUsage.log_sms(..., cost=cost)
+
+# Kod uspešnog slanja:
+self._log_sms_usage(..., cost=float(get_sms_price()))
+```
+
+3. **to_dict() izmena** (za API response):
+```python
+def to_dict(self):
+    return {
+        ...
+        'cost': float(self.cost) if self.cost else 0,
+        ...
+    }
+```
+
+**Izmenjeni fajlovi:**
+| Fajl | Izmena |
+|------|--------|
+| `app/models/sms_management.py` | Dodat `cost` param u `log_sms()` + `to_dict()` |
+| `app/services/sms_service.py` | Import `get_sms_price`, prosleđivanje cost-a |
+
+**Napomena za stare zapise:**
+SMS-ovi poslati pre ovog fix-a imaju `cost=NULL`. Za backfill:
+```sql
+UPDATE tenant_sms_usage
+SET cost = 0.20
+WHERE status = 'sent' AND (cost IS NULL OR cost = 0);
+```
+
+**Commit:** `d9e3cd2` - "Fix: SMS cost now recorded in TenantSmsUsage"
