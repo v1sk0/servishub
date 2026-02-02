@@ -203,14 +203,16 @@ class TenantSmsUsage(db.Model):
 
     @staticmethod
     def mask_phone(phone: str) -> str:
-        """Maskira telefon za privatnost: +381601234567 -> +381 60 ***4567"""
+        """Maskira telefon za privatnost: +381601234567 -> +38160***4567"""
         if not phone:
             return None
         # Ukloni sve osim cifara i +
         clean = ''.join(c for c in phone if c.isdigit() or c == '+')
         if len(clean) < 7:
             return '***' + clean[-4:] if len(clean) >= 4 else clean
-        return clean[:-4] + '***' + clean[-4:]
+        # Prikaži prvih 6 karaktera, zatim ***, zatim poslednje 4
+        # +381601234567 -> +38160***4567
+        return clean[:6] + '***' + clean[-4:]
 
     @classmethod
     def log_sms(cls, tenant_id: int, sms_type: str, recipient: str,
