@@ -121,59 +121,111 @@
     }
 
     /* ============================================
-       PROMO SHIMMERING EFFECT
+       PROMO SHIMMERING EFFECT - CINEMA QUALITY
+       Multi-layer light reflection system
        ============================================ */
     .promo-card {
         position: relative;
         overflow: hidden;
     }
 
+    /* Layer 1: Primary light beam - crisp center */
     .promo-card::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: -150%;
-        width: 50%;
-        height: 100%;
+        top: -100%;
+        left: -100%;
+        width: 60%;
+        height: 300%;
         background: linear-gradient(
-            105deg,
-            transparent 20%,
-            rgba(251, 191, 36, 0.08) 35%,
-            rgba(251, 191, 36, 0.15) 50%,
-            rgba(251, 191, 36, 0.08) 65%,
-            transparent 80%
+            70deg,
+            transparent 0%,
+            transparent 42%,
+            rgba(255, 255, 255, 0.03) 45%,
+            rgba(255, 248, 220, 0.08) 48%,
+            rgba(255, 255, 255, 0.15) 50%,
+            rgba(255, 248, 220, 0.08) 52%,
+            rgba(255, 255, 255, 0.03) 55%,
+            transparent 58%,
+            transparent 100%
         );
-        transform: skewX(-25deg);
-        animation: shimmer 4s ease-in-out infinite;
+        transform: rotate(25deg);
+        animation: shimmer-cinema 6s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
         pointer-events: none;
     }
 
-    @keyframes shimmer {
+    /* Layer 2: Secondary glow - soft golden aura */
+    .promo-card::after {
+        content: '';
+        position: absolute;
+        top: -80%;
+        left: -80%;
+        width: 50%;
+        height: 260%;
+        background: linear-gradient(
+            70deg,
+            transparent 0%,
+            transparent 44%,
+            rgba(251, 191, 36, 0.06) 50%,
+            transparent 56%,
+            transparent 100%
+        );
+        transform: rotate(25deg);
+        animation: shimmer-cinema 6s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+        animation-delay: 0.1s;
+        pointer-events: none;
+        filter: blur(3px);
+    }
+
+    @keyframes shimmer-cinema {
         0% {
-            left: -150%;
+            transform: rotate(25deg) translateX(-20%);
+            opacity: 0;
         }
-        40%, 100% {
-            left: 250%;
+        8% {
+            opacity: 1;
+        }
+        30% {
+            transform: rotate(25deg) translateX(380%);
+            opacity: 1;
+        }
+        38% {
+            opacity: 0;
+        }
+        100% {
+            transform: rotate(25deg) translateX(380%);
+            opacity: 0;
         }
     }
 
+    /* PROMO badge with premium text shimmer */
     .promo-badge {
-        background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%);
+        background: linear-gradient(
+            90deg,
+            #d97706 0%,
+            #f59e0b 20%,
+            #fcd34d 40%,
+            #fef3c7 50%,
+            #fcd34d 60%,
+            #f59e0b 80%,
+            #d97706 100%
+        );
+        background-size: 200% 100%;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
         font-weight: 800;
         font-size: 0.875rem;
-        letter-spacing: 0.1em;
-        animation: promo-glow 2s ease-in-out infinite;
+        letter-spacing: 0.12em;
+        animation: text-shimmer 4s ease-in-out infinite;
     }
 
-    @keyframes promo-glow {
-        0%, 100% {
-            filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.5));
+    @keyframes text-shimmer {
+        0% {
+            background-position: 100% center;
         }
-        50% {
-            filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.8));
+        50%, 100% {
+            background-position: -100% center;
         }
     }
 
