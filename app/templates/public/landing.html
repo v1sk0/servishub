@@ -131,31 +131,29 @@
     .promo-card::before {
         content: '';
         position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
+        top: 0;
+        left: -150%;
+        width: 50%;
+        height: 100%;
         background: linear-gradient(
-            45deg,
-            transparent 30%,
-            rgba(251, 191, 36, 0.1) 40%,
-            rgba(251, 191, 36, 0.25) 50%,
-            rgba(251, 191, 36, 0.1) 60%,
-            transparent 70%
+            105deg,
+            transparent 20%,
+            rgba(251, 191, 36, 0.08) 35%,
+            rgba(251, 191, 36, 0.15) 50%,
+            rgba(251, 191, 36, 0.08) 65%,
+            transparent 80%
         );
-        animation: shimmer 3s ease-in-out infinite;
+        transform: skewX(-25deg);
+        animation: shimmer 4s ease-in-out infinite;
         pointer-events: none;
     }
 
     @keyframes shimmer {
         0% {
-            transform: translateX(-100%) translateY(-100%);
+            left: -150%;
         }
-        50% {
-            transform: translateX(100%) translateY(100%);
-        }
-        100% {
-            transform: translateX(100%) translateY(100%);
+        40%, 100% {
+            left: 250%;
         }
     }
 
