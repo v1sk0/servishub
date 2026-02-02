@@ -178,6 +178,10 @@ class Tenant(db.Model):
     def default_warranty_days(self):
         """Vraca default warranty dane iz podesavanja ili globalni default."""
         settings = self.settings_json or {}
+        # Prvo proveri novo mesto (default_warranty_days direktno)
+        if 'default_warranty_days' in settings:
+            return settings['default_warranty_days']
+        # Fallback na staro mesto (warranty_defaults.default)
         warranty_defaults = settings.get('warranty_defaults', {})
         return warranty_defaults.get('default', 45)
 
