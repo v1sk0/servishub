@@ -41,9 +41,9 @@ class NotificationService:
     def __init__(self):
         """Inicijalizacija servisa."""
         self.api_key = os.environ.get('BREVO_API_KEY')
-        self.from_email = os.environ.get('BREVO_FROM_EMAIL', 'noreply@servishub.rs')
+        self.from_email = os.environ.get('BREVO_FROM_EMAIL', 'noreply@shub.rs')
         self.from_name = os.environ.get('BREVO_FROM_NAME', 'ServisHub')
-        self.frontend_url = os.environ.get('FRONTEND_URL', 'https://app.servishub.rs')
+        self.frontend_url = os.environ.get('FRONTEND_URL', 'https://app.shub.rs')
 
     # =========================================================================
     # CORE METHODS

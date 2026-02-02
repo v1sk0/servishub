@@ -2,7 +2,7 @@
 Tenant Public Site Routes - Javna stranica tenanta.
 
 Ove rute služe za prikaz javne stranice tenanta na:
-- {slug}.servishub.rs (subdomena)
+- {slug}.shub.rs (subdomena)
 - custom_domain (npr. mojservis.rs)
 
 Middleware (public_site.py) postavlja g.public_tenant i g.public_profile

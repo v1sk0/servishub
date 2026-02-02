@@ -132,9 +132,9 @@ def _get_production_cors_origins() -> list:
     if not origins or origins.strip() == '*':
         # Default production whitelist
         return [
-            'https://servishub.rs',
-            'https://www.servishub.rs',
-            'https://app.servishub.rs',
+            'https://shub.rs',
+            'https://www.shub.rs',
+            'https://app.shub.rs',
         ]
     return [o.strip() for o in origins.split(',') if o.strip()]
 

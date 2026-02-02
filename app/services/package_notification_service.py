@@ -228,7 +228,7 @@ def send_package_change_email(tenant: Tenant, change: PackageChangeHistory,
             to_email=recipient,
             subject=f"ServisHub: Promena uslova paketa - {change.change_version}",
             html_content=html_body,
-            from_email="noreply@servishub.rs"
+            from_email="noreply@shub.rs"
         )
 
         if success:

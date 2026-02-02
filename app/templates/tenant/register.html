@@ -1673,7 +1673,7 @@
 
     <!-- Footer -->
     <footer class="register-footer">
-        <a href="https://servishub.rs" class="footer-brand" target="_blank" rel="noopener">
+        <a href="https://shub.rs" class="footer-brand" target="_blank" rel="noopener">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
@@ -1893,13 +1893,13 @@ window.registerPage = function() {
                 company_latitude: this.form.company_latitude,
                 company_longitude: this.form.company_longitude
             };
-            localStorage.setItem('servishub_register_step1', JSON.stringify(step1Data));
+            localStorage.setItem('shub_register_step1', JSON.stringify(step1Data));
             console.log('Step 1 data saved to localStorage:', step1Data);
         },
 
         // Vrati podatke iz koraka 1 posle Google OAuth callback-a
         restoreStep1Data() {
-            const saved = localStorage.getItem('servishub_register_step1');
+            const saved = localStorage.getItem('shub_register_step1');
             if (saved) {
                 try {
                     const step1Data = JSON.parse(saved);
@@ -1919,7 +1919,7 @@ window.registerPage = function() {
                     this.form.company_longitude = step1Data.company_longitude || null;
 
                     // Obrisi iz localStorage nakon uspesnog vraćanja
-                    localStorage.removeItem('servishub_register_step1');
+                    localStorage.removeItem('shub_register_step1');
                 } catch (e) {
                     console.error('Error restoring step 1 data:', e);
                 }
@@ -1945,12 +1945,12 @@ window.registerPage = function() {
                     this.error = data.message || 'Greška pri pokretanju Google prijave';
                     this.googleLoading = false;
                     // Obrisi sacuvane podatke ako je doslo do greske
-                    localStorage.removeItem('servishub_register_step1');
+                    localStorage.removeItem('shub_register_step1');
                 }
             } catch (e) {
                 this.error = 'Greška u komunikaciji sa serverom';
                 this.googleLoading = false;
-                localStorage.removeItem('servishub_register_step1');
+                localStorage.removeItem('shub_register_step1');
             }
         },
 

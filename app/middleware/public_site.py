@@ -2,7 +2,7 @@
 Public Site Middleware - detekcija subdomena i custom domena.
 
 Ovaj middleware detektuje da li je request za javnu stranicu tenanta:
-1. Subdomena: {slug}.servishub.rs
+1. Subdomena: {slug}.shub.rs
 2. Custom domen: mojservis.rs (ako je verifikovan)
 
 Postavlja g.public_tenant i g.is_public_site za korišćenje u rutama.
@@ -100,9 +100,8 @@ RESERVED_SUBDOMAINS = {
 
 # Glavni domeni platforme
 PLATFORM_DOMAINS = {
-    'servishub.rs',
-    'servishub.com',
-    'servishub.local',  # Lokalni development
+    'shub.rs',
+    'shub.local',  # Lokalni development
 }
 
 
@@ -115,7 +114,7 @@ def extract_subdomain(host: str) -> str | None:
     Izvlači subdomen iz host headera.
 
     Args:
-        host: Host header (npr. "mojservis.servishub.rs")
+        host: Host header (npr. "mojservis.shub.rs")
 
     Returns:
         Subdomen string ili None ako nije subdomena
@@ -280,9 +279,9 @@ def verify_custom_domain_dns(domain: str, verification_token: str) -> dict:
     Verifikuje DNS postavke za custom domen.
 
     Proverava:
-    1. CNAME record: _servishub-verify.{domain} -> {token}.verify.servishub.rs
-    2. TXT record: _servishub-verify.{domain} -> servishub-verify={token}
-    3. CNAME record: {domain} -> proxy.servishub.rs (za routing)
+    1. CNAME record: _shub-verify.{domain} -> {token}.verify.shub.rs
+    2. TXT record: _shub-verify.{domain} -> shub-verify={token}
+    3. CNAME record: {domain} -> proxy.shub.rs (za routing)
 
     Args:
         domain: Custom domain to verify
@@ -301,9 +300,9 @@ def verify_custom_domain_dns(domain: str, verification_token: str) -> dict:
         'errors': []
     }
 
-    verify_host = f'_servishub-verify.{domain}'
-    expected_cname = f'{verification_token}.verify.servishub.rs'
-    expected_txt = f'servishub-verify={verification_token}'
+    verify_host = f'_shub-verify.{domain}'
+    expected_cname = f'{verification_token}.verify.shub.rs'
+    expected_txt = f'shub-verify={verification_token}'
 
     # Proveri CNAME verifikacioni record
     try:
@@ -327,12 +326,12 @@ def verify_custom_domain_dns(domain: str, verification_token: str) -> dict:
         except dns.exception.DNSException:
             pass
 
-    # Proveri routing CNAME (domain -> proxy.servishub.rs)
+    # Proveri routing CNAME (domain -> proxy.shub.rs)
     try:
         answers = dns.resolver.resolve(domain, 'CNAME')
         for rdata in answers:
             target = str(rdata.target).rstrip('.').lower()
-            if target == 'proxy.servishub.rs':
+            if target == 'proxy.shub.rs':
                 result['routing_record'] = True
                 break
     except dns.exception.DNSException:

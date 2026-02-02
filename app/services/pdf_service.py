@@ -753,7 +753,7 @@ class PDFService:
             c.drawString(margin, text_y, _safe_text(line))
             text_y -= 9
 
-        c.drawRightString(width - margin, footer_y, "Za podrsku: support@servishub.rs")
+        c.drawRightString(width - margin, footer_y, "Za podrsku: support@shub.rs")
 
         c.setFont(_FONT_NAME, 6)
         c.drawString(margin, 12, f"Generisano: {datetime.now().strftime('%d.%m.%Y %H:%M')}")

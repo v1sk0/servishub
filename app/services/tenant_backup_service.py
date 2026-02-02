@@ -31,19 +31,19 @@ class TenantBackupService:
     Servis za kreiranje enkriptovanih backup-a podataka tenanta.
 
     Koristi AES-256-GCM enkripciju za siguran backup.
-    Salje backup na backup@servishub.rs pre brisanja servisa.
+    Salje backup na backup@shub.rs pre brisanja servisa.
     """
 
     # SendGrid API endpoint
     SENDGRID_API_URL = "https://api.sendgrid.com/v3/mail/send"
 
     # Backup email
-    BACKUP_EMAIL = "backup@servishub.rs"
+    BACKUP_EMAIL = "backup@shub.rs"
 
     def __init__(self):
         """Inicijalizacija backup servisa."""
         self.api_key = os.environ.get('SENDGRID_API_KEY')
-        self.from_email = os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@servishub.rs')
+        self.from_email = os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@shub.rs')
         self.from_name = os.environ.get('SENDGRID_FROM_NAME', 'ServisHub Backup')
 
     def _generate_encryption_key(self) -> Tuple[bytes, str]:

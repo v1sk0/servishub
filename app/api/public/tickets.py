@@ -268,7 +268,7 @@ def get_qr_data(token):
 
     # URL for tracking (frontend will use this)
     import os
-    frontend_url = os.environ.get('FRONTEND_URL', 'https://servishub.rs')
+    frontend_url = os.environ.get('FRONTEND_URL', 'https://shub.rs')
     tracking_url = f"{frontend_url}/track/{token}"
 
     return {
@@ -299,7 +299,7 @@ def get_receipt_data(token):
     location = ServiceLocation.query.get(ticket.location_id) if ticket.location_id else None
 
     import os
-    frontend_url = os.environ.get('FRONTEND_URL', 'https://servishub.rs')
+    frontend_url = os.environ.get('FRONTEND_URL', 'https://shub.rs')
 
     return {
         'ticket_number': ticket.ticket_number,

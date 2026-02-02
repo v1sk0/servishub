@@ -6,7 +6,7 @@ Omogućava tenantu da kreira javnu prezentacijsku stranicu sa:
 - Kontakt podacima i radnim vremenom
 - Brandingom (logo, cover slika, boje)
 - Cenovnikom usluga (iz ServiceItem tabele)
-- Custom domenom (pored subdomena na servishub.rs)
+- Custom domenom (pored subdomena na shub.rs)
 """
 
 from datetime import datetime
@@ -18,7 +18,7 @@ class TenantPublicProfile(db.Model):
     Podešavanja javne stranice tenanta.
 
     Svaki tenant može imati javnu stranicu dostupnu na:
-    - {slug}.servishub.rs (subdomena)
+    - {slug}.shub.rs (subdomena)
     - custom_domain (npr. mojservis.rs) ako je podešen i verifikovan
     """
     __tablename__ = 'tenant_public_profile'
@@ -232,12 +232,12 @@ class TenantPublicProfile(db.Model):
 
         return {
             'type': 'CNAME',
-            'host': f'_servishub-verify.{self.custom_domain}',
-            'value': f'{self.custom_domain_verification_token}.verify.servishub.rs',
+            'host': f'_shub-verify.{self.custom_domain}',
+            'value': f'{self.custom_domain_verification_token}.verify.shub.rs',
             'alternative': {
                 'type': 'TXT',
-                'host': f'_servishub-verify.{self.custom_domain}',
-                'value': f'servishub-verify={self.custom_domain_verification_token}'
+                'host': f'_shub-verify.{self.custom_domain}',
+                'value': f'shub-verify={self.custom_domain_verification_token}'
             }
         }
 
@@ -362,7 +362,7 @@ class TenantPublicProfile(db.Model):
         return {
             'name': self.display_name or tenant.name,
             'slug': tenant.slug,
-            'subdomain_url': f'https://{tenant.slug}.servishub.rs',
+            'subdomain_url': f'https://{tenant.slug}.shub.rs',
             'custom_domain_url': f'https://{self.custom_domain}' if self.custom_domain and self.custom_domain_verified else None,
             'tagline': self.tagline,
             'description': self.description,

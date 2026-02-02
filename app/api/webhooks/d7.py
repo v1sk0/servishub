@@ -12,7 +12,7 @@ Sigurnosne mere:
 3. Idempotency (DlrLog sprečava duplu obradu)
 
 Konfiguracija:
-- D7 Dashboard: podesiti webhook URL https://app.servishub.rs/webhooks/d7/dlr
+- D7 Dashboard: podesiti webhook URL https://app.shub.rs/webhooks/d7/dlr
 - Heroku: dodati D7_WEBHOOK_SECRET environment varijablu
 """
 

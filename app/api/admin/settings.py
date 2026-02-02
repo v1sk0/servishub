@@ -454,8 +454,8 @@ def _notify_tenants_sms_price_change(old_price: float, new_price: float):
                     </p>
 
                     <p style="color: #6b7280; font-size: 14px;">
-                        Za više informacija posetite <a href="https://app.servishub.rs/settings" style="color: #3b82f6;">podešavanja</a>
-                        ili <a href="https://app.servishub.rs/finance/sms" style="color: #3b82f6;">SMS evidenciju</a>.
+                        Za više informacija posetite <a href="https://app.shub.rs/settings" style="color: #3b82f6;">podešavanja</a>
+                        ili <a href="https://app.shub.rs/finance/sms" style="color: #3b82f6;">SMS evidenciju</a>.
                     </p>
                 </div>
 
@@ -480,7 +480,7 @@ Nova cena: {new_price:.2f} kredita
 Nova cena se primenjuje na sve buduće SMS poruke.
 Vaše trenutno stanje kredita ostaje nepromenjeno.
 
-Za više informacija posetite podešavanja na https://app.servishub.rs/settings
+Za više informacija posetite podešavanja na https://app.shub.rs/settings
 
 ---
 © 2026 ServisHub. Sva prava zadržana.

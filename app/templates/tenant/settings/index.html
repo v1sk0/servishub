@@ -486,7 +486,7 @@
             <div class="mt-6 p-4 bg-gray-50 rounded-lg">
                 <p class="text-sm text-gray-600">
                     Za produzenje pretplate ili dodatne informacije, kontaktirajte nas na
-                    <a href="mailto:office@servishub.rs" class="text-blue-600 hover:text-blue-700">office@servishub.rs</a>
+                    <a href="mailto:office@shub.rs" class="text-blue-600 hover:text-blue-700">office@shub.rs</a>
                 </p>
             </div>
         </div>
@@ -1765,7 +1765,7 @@
                 <div x-show="publicSubTab === 'domain'" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
                     <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                         <h4 class="font-medium text-blue-900 mb-2">Sta je custom domen?</h4>
-                        <p class="text-sm text-blue-800">Pored automatske subdomena (<span x-text="tenantSlug"></span>.servishub.rs), mozete povezati svoj domen (npr. mojservis.rs) da bi vasa javna stranica bila dostupna na njemu.</p>
+                        <p class="text-sm text-blue-800">Pored automatske subdomena (<span x-text="tenantSlug"></span>.shub.rs), mozete povezati svoj domen (npr. mojservis.rs) da bi vasa javna stranica bila dostupna na njemu.</p>
                     </div>
 
                     <!-- Current Domain Status -->
@@ -1805,7 +1805,7 @@
                                     <div class="bg-white p-3 rounded border">
                                         <p class="text-xs text-gray-500 uppercase mb-1">Routing (CNAME)</p>
                                         <p><strong>Host:</strong> <code class="bg-gray-100 px-1 rounded" x-text="customDomain.domain"></code></p>
-                                        <p><strong>Vrednost:</strong> <code class="bg-gray-100 px-1 rounded">proxy.servishub.rs</code></p>
+                                        <p><strong>Vrednost:</strong> <code class="bg-gray-100 px-1 rounded">proxy.shub.rs</code></p>
                                     </div>
                                 </div>
                                 <p class="text-xs text-yellow-700 mt-3">DNS promene mogu potrajati do 24 sata da se propagiraju.</p>
@@ -2219,7 +2219,7 @@ function settingsPage() {
         uploadingIdFront: false,
         uploadingIdBack: false,
         activeTab: new URLSearchParams(window.location.search).get('tab') || 'settings',
-        currentTheme: localStorage.getItem('servishub-theme') || 'light',
+        currentTheme: localStorage.getItem('shub-theme') || 'light',
 
         // Current user info
         currentUser: { id: null, ime: '', prezime: '', email: '', role: '' },
@@ -2411,7 +2411,7 @@ function settingsPage() {
 
         setTheme(theme) {
             this.currentTheme = theme;
-            localStorage.setItem('servishub-theme', theme);
+            localStorage.setItem('shub-theme', theme);
             this.applyTheme(theme);
             showToast(theme === 'glass' ? 'Glassmorphism tema aktivirana' : 'Svetla tema aktivirana', 'success');
         },
@@ -2467,7 +2467,7 @@ function settingsPage() {
                 if (publicRes.ok) {
                     const publicData = await publicRes.json();
                     this.tenantSlug = publicData.tenant_slug || '';
-                    this.publicPageUrls.subdomain = publicData.subdomain_url || `https://${this.tenantSlug}.servishub.rs`;
+                    this.publicPageUrls.subdomain = publicData.subdomain_url || `https://${this.tenantSlug}.shub.rs`;
                     this.publicPageUrls.custom_domain = publicData.custom_domain_url || null;
 
                     // Use tenant profile data as defaults for empty fields

@@ -421,7 +421,7 @@ def get_login_info():
         return {'error': 'Tenant not found'}, 404
 
     # Generiši pun URL za login zaposlenih
-    base_url = f'https://{tenant.slug}.servishub.rs'
+    base_url = f'https://{tenant.slug}.shub.rs'
     login_url = f'{base_url}/login/{tenant.login_secret}'
 
     return {
@@ -455,7 +455,7 @@ def regenerate_login_secret():
     db.session.commit()
 
     # Generiši novi URL
-    base_url = f'https://{tenant.slug}.servishub.rs'
+    base_url = f'https://{tenant.slug}.shub.rs'
     login_url = f'{base_url}/login/{tenant.login_secret}'
 
     return {
@@ -1214,14 +1214,14 @@ def get_public_profile():
             'exists': False,
             'profile': None,
             'tenant_slug': tenant.slug,
-            'subdomain_url': f'https://{tenant.slug}.servishub.rs'
+            'subdomain_url': f'https://{tenant.slug}.shub.rs'
         }
 
     return {
         'exists': True,
         'profile': profile.to_dict(include_private=True),
         'tenant_slug': tenant.slug,
-        'subdomain_url': f'https://{tenant.slug}.servishub.rs',
+        'subdomain_url': f'https://{tenant.slug}.shub.rs',
         'custom_domain_url': f'https://{profile.custom_domain}' if profile.custom_domain and profile.custom_domain_verified else None
     }
 
@@ -1615,7 +1615,7 @@ def get_public_profile_qrcode():
     if domain_type == 'custom' and profile and profile.custom_domain and profile.custom_domain_verified:
         url = f'https://{profile.custom_domain}'
     else:
-        url = f'https://{tenant.slug}.servishub.rs'
+        url = f'https://{tenant.slug}.shub.rs'
 
     # Generiši QR kod
     qr = qrcode.QRCode(
@@ -1685,7 +1685,7 @@ def get_public_profile_preview():
         'services': [s.to_dict() for s in services] if profile.show_prices else [],
         'services_by_category': services_by_category if profile.show_prices else {},
         'urls': {
-            'subdomain': f'https://{tenant.slug}.servishub.rs',
+            'subdomain': f'https://{tenant.slug}.shub.rs',
             'custom_domain': f'https://{profile.custom_domain}' if profile.custom_domain and profile.custom_domain_verified else None
         }
     }
@@ -1769,7 +1769,7 @@ def google_callback():
     error = request.args.get('error')
 
     # Frontend URL za redirect
-    frontend_base = os.environ.get('FRONTEND_URL', 'https://app.servishub.rs')
+    frontend_base = os.environ.get('FRONTEND_URL', 'https://app.shub.rs')
 
     if error:
         return redirect(f"{frontend_base}/settings?google_error={error}")

@@ -49,9 +49,9 @@ class EmailService:
     def __init__(self):
         """Inicijalizacija Email servisa."""
         self.api_key = os.environ.get('BREVO_API_KEY')
-        self.from_email = os.environ.get('BREVO_FROM_EMAIL', 'noreply@servishub.rs')
+        self.from_email = os.environ.get('BREVO_FROM_EMAIL', 'noreply@shub.rs')
         self.from_name = os.environ.get('BREVO_FROM_NAME', 'ServisHub')
-        self.frontend_url = os.environ.get('FRONTEND_URL', 'https://app.servishub.rs')
+        self.frontend_url = os.environ.get('FRONTEND_URL', 'https://app.shub.rs')
 
     def _build_verification_url(self, token: str) -> str:
         """
@@ -628,7 +628,7 @@ Uplatni racun: 265-1234567-89
                 <hr style="border: none; border-top: 1px solid #fecaca;">
                 <p>Da biste reaktivirali nalog, molimo uplatite dugovanje ili nas kontaktirajte za dogovor.</p>
                 <p><strong>Uplatni racun:</strong> 265-1234567-89</p>
-                <p><strong>Kontakt:</strong> podrska@servishub.rs</p>
+                <p><strong>Kontakt:</strong> podrska@shub.rs</p>
             </div>
         </body>
         </html>
@@ -647,7 +647,7 @@ Dugovanje: {amount:,.0f} RSD
 
 Za reaktivaciju uplatite dugovanje ili nas kontaktirajte.
 Uplatni racun: 265-1234567-89
-Kontakt: podrska@servishub.rs
+Kontakt: podrska@shub.rs
         """
 
     def _build_payment_confirmation_html(self, tenant_name: str,

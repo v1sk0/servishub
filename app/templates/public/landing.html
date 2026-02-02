@@ -758,7 +758,7 @@
                             <div class="mockup-dot bg-red-500"></div>
                             <div class="mockup-dot bg-yellow-500"></div>
                             <div class="mockup-dot bg-green-500"></div>
-                            <span class="text-gray-500 text-sm ml-4">servishub.rs/tickets</span>
+                            <span class="text-gray-500 text-sm ml-4">shub.rs/tickets</span>
                         </div>
                         <div class="mockup-content">
                             <!-- Fake Dashboard UI -->
@@ -1577,7 +1577,7 @@ function landingPage() {
 
         // Contact data
         contact: {
-            email: 'info@servishub.rs',
+            email: 'info@shub.rs',
             phone: '+381 60 123 4567',
             location: 'Beograd, Srbija',
             social: {
@@ -1624,7 +1624,7 @@ function landingPage() {
 
         // Cookie Consent
         checkCookieConsent() {
-            const consent = localStorage.getItem('servishub-cookie-consent');
+            const consent = localStorage.getItem('shub-cookie-consent');
             if (!consent) {
                 // Show banner after 1 second delay
                 setTimeout(() => {
@@ -1634,25 +1634,25 @@ function landingPage() {
         },
 
         acceptCookies() {
-            localStorage.setItem('servishub-cookie-consent', 'accepted');
+            localStorage.setItem('shub-cookie-consent', 'accepted');
             this.showCookieBanner = false;
         },
 
         declineCookies() {
-            localStorage.setItem('servishub-cookie-consent', 'declined');
+            localStorage.setItem('shub-cookie-consent', 'declined');
             this.showCookieBanner = false;
         },
 
         // Language Switcher
         loadLanguage() {
-            const lang = localStorage.getItem('servishub-lang') || 'sr';
+            const lang = localStorage.getItem('shub-lang') || 'sr';
             this.currentLang = lang;
             this.updateLangButtons();
         },
 
         setLanguage(lang) {
             this.currentLang = lang;
-            localStorage.setItem('servishub-lang', lang);
+            localStorage.setItem('shub-lang', lang);
             this.updateLangButtons();
             // For now, just show a toast - full translation would require page reload or dynamic content
             if (lang === 'en') {
