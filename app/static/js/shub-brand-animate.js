@@ -68,6 +68,21 @@
         }
 
         init() {
+            // Measure the full text width first to prevent layout shift
+            const tempSpan = document.createElement('span');
+            tempSpan.style.visibility = 'hidden';
+            tempSpan.style.position = 'absolute';
+            tempSpan.style.whiteSpace = 'nowrap';
+            tempSpan.textContent = FULL_TEXT;
+            tempSpan.style.font = window.getComputedStyle(this.element).font;
+            document.body.appendChild(tempSpan);
+            const fullWidth = tempSpan.offsetWidth;
+            document.body.removeChild(tempSpan);
+
+            // Set minimum width to prevent layout shift
+            this.element.style.minWidth = fullWidth + 'px';
+            this.element.style.display = 'inline-block';
+
             // Set initial state (hidden)
             this.element.innerHTML = '';
             this.element.classList.add('animating');
