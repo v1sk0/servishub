@@ -56,10 +56,10 @@
         constructor(element) {
             this.element = element;
             this.options = {
-                delay: parseInt(element.dataset.shubDelay) || 800,
-                expandSpeed: parseInt(element.dataset.shubExpandSpeed) || 120,
-                pause: parseInt(element.dataset.shubPause) || 1800,
-                contractSpeed: parseInt(element.dataset.shubContractSpeed) || 100,
+                delay: parseInt(element.dataset.shubDelay) || 300,
+                expandSpeed: parseInt(element.dataset.shubExpandSpeed) || 50,
+                pause: parseInt(element.dataset.shubPause) || 800,
+                contractSpeed: parseInt(element.dataset.shubContractSpeed) || 40,
                 finalText: element.dataset.shubFinal || FINAL_TEXT,
                 loop: element.dataset.shubLoop === 'true'
             };

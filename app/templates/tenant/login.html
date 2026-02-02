@@ -493,43 +493,33 @@
         display: inline-block;
         font-family: inherit;
         font-weight: inherit;
+        color: #ffffff;
     }
 
     .shub-brand-animate .shub-char {
         display: inline-block;
         opacity: 0;
-        transform: translateY(8px) scale(0.8);
-        transition: all 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+        transform: scale(0.95);
+        transition: all 0.08s ease-out;
+        color: #ffffff;
     }
 
     .shub-brand-animate .shub-char.visible {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: scale(1);
     }
 
     .shub-brand-animate .shub-char.highlight {
-        color: var(--sh-accent-purple);
-        text-shadow: 0 0 15px var(--sh-glow-purple);
-    }
-
-    .shub-brand-animate.animating {
-        filter: drop-shadow(0 0 8px var(--sh-glow-purple));
+        color: #ffffff;
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
     }
 
     .shub-brand-animate.final .shub-char {
-        background: linear-gradient(135deg, var(--sh-accent-purple) 0%, var(--sh-accent-indigo) 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    @keyframes shub-pulse-login {
-        0%, 100% { filter: drop-shadow(0 0 4px var(--sh-glow-purple)); }
-        50% { filter: drop-shadow(0 0 12px var(--sh-glow-purple)); }
+        color: #ffffff;
     }
 
     .shub-brand-animate.final {
-        animation: shub-pulse-login 3s ease-in-out infinite;
+        text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
     }
 
     /* ========================================
@@ -707,7 +697,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             <span>Powered by</span>
-            <span class="footer-link shub-brand-animate" data-shub-animate data-shub-delay="1000">ServisHub</span>
+            <span class="footer-link">SHub.rs</span>
         </a>
     </footer>
 
