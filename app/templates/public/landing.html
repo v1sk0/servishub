@@ -1014,35 +1014,333 @@
     }
 
     /* ============================================
-       HOW IT WORKS STEP
+       HOW IT WORKS - STEPS
        ============================================ */
-    .step-number {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
+    .steps-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--space-6);
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .step-card {
+        position: relative;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 20px;
+        padding: var(--space-8) var(--space-6);
+        text-align: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .step-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(99, 102, 241, 0.3);
+        box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3);
+    }
+
+    .step-card__number {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto var(--space-5);
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.1));
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: var(--text-xl);
+        color: #a5b4fc;
+        transition: all 0.3s ease;
+    }
+
+    .step-card:hover .step-card__number {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        transform: scale(1.05);
+    }
+
+    .step-card__number--accent {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+        border-color: rgba(245, 158, 11, 0.4);
+        color: #fcd34d;
+    }
+
+    .step-card:hover .step-card__number--accent {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+    }
+
+    .step-card__content h3 {
+        font-size: var(--text-lg);
+        font-weight: 700;
+        color: var(--color-text);
+        margin-bottom: var(--space-2);
+    }
+
+    .step-card__content p {
+        font-size: var(--text-sm);
+        color: var(--color-text-muted);
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    .step-card--highlight {
+        border-color: rgba(245, 158, 11, 0.3);
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), transparent);
+    }
+
+    .step-card--highlight:hover {
+        border-color: rgba(245, 158, 11, 0.5);
+    }
+
+    /* ============================================
+       TESTIMONIALS
+       ============================================ */
+    .testimonials-section {
+        padding: var(--space-16) 0;
+    }
+
+    .testimonials-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-6);
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .testimonial-card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 20px;
+        padding: var(--space-6);
+        transition: all 0.3s ease;
+    }
+
+    .testimonial-card:hover {
+        border-color: rgba(99, 102, 241, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .testimonial-card__stars {
+        display: flex;
+        gap: 2px;
+        margin-bottom: var(--space-4);
+    }
+
+    .testimonial-card__stars svg {
+        width: 16px;
+        height: 16px;
+        color: #fbbf24;
+    }
+
+    .testimonial-card__text {
+        font-size: var(--text-base);
+        color: var(--color-text-secondary);
+        line-height: 1.7;
+        margin-bottom: var(--space-5);
+        font-style: italic;
+    }
+
+    .testimonial-card__author {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--color-border);
+    }
+
+    .testimonial-card__avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
         background: linear-gradient(135deg, #6366f1, #8b5cf6);
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 700;
-        font-size: 1.25rem;
-        flex-shrink: 0;
+        font-size: var(--text-base);
+        color: white;
     }
 
-    .step-line {
-        width: 2px;
-        height: 40px;
-        background: linear-gradient(to bottom, #6366f1, transparent);
-        margin: 8px 0;
-        margin-left: 23px;
+    .testimonial-card__name {
+        font-weight: 600;
+        color: var(--color-text);
+        font-size: var(--text-sm);
+    }
+
+    .testimonial-card__role {
+        font-size: var(--text-xs);
+        color: var(--color-text-muted);
+    }
+
+    /* ============================================
+       FAQ SECTION
+       ============================================ */
+    .faq-section {
+        padding: var(--space-16) 0;
+    }
+
+    .faq-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .faq-item {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 16px;
+        margin-bottom: var(--space-4);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .faq-item:hover {
+        border-color: rgba(99, 102, 241, 0.3);
+    }
+
+    .faq-item[open] {
+        border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .faq-item summary {
+        padding: var(--space-5) var(--space-6);
+        font-weight: 600;
+        font-size: var(--text-base);
+        color: var(--color-text);
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        list-style: none;
+    }
+
+    .faq-item summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .faq-item summary::after {
+        content: '+';
+        font-size: var(--text-xl);
+        color: var(--color-text-muted);
+        transition: transform 0.3s ease;
+    }
+
+    .faq-item[open] summary::after {
+        transform: rotate(45deg);
+    }
+
+    .faq-item__answer {
+        padding: 0 var(--space-6) var(--space-5);
+        font-size: var(--text-base);
+        color: var(--color-text-secondary);
+        line-height: 1.7;
     }
 
     /* ============================================
        RESPONSIVE
        ============================================ */
+    @media (max-width: 1024px) {
+        :root {
+            --section-py: var(--space-12);
+        }
+
+        .steps-container {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .testimonials-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .features-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .section-header h2 {
+            font-size: var(--text-3xl);
+        }
+    }
+
     @media (max-width: 768px) {
-        .stat-number { font-size: 2rem; }
-        .mockup-screen { transform: none; }
+        :root {
+            --section-py: var(--space-10);
+        }
+
+        .section-header h2 {
+            font-size: var(--text-2xl);
+        }
+
+        .section-header p {
+            font-size: var(--text-base);
+        }
+
+        .steps-container {
+            grid-template-columns: 1fr;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .testimonials-grid {
+            grid-template-columns: 1fr;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            grid-template-columns: 1fr;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-4);
+        }
+
+        .stat-value {
+            font-size: var(--text-3xl);
+        }
+
+        .stat-label {
+            font-size: var(--text-sm);
+        }
+
+        .step-card {
+            padding: var(--space-6) var(--space-5);
+        }
+
+        .step-card__number {
+            width: 48px;
+            height: 48px;
+            font-size: var(--text-lg);
+        }
+
+        .mockup-screen {
+            transform: none;
+        }
+
+        .faq-item summary {
+            padding: var(--space-4) var(--space-5);
+            font-size: var(--text-sm);
+        }
+
+        .faq-item__answer {
+            padding: 0 var(--space-5) var(--space-4);
+            font-size: var(--text-sm);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stat-value {
+            font-size: var(--text-2xl);
+        }
     }
 </style>
 {% endblock %}
@@ -1424,74 +1722,51 @@
     <!-- ============================================
          HOW IT WORKS
          ============================================ -->
-    <section id="how-it-works" class="relative py-24">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl sm:text-4xl font-bold mb-4 reveal">
+    <section id="how-it-works" class="landing-section">
+        <div class="landing-container">
+            <div class="section-header reveal">
+                <h2>
                     Počnite za <span class="gradient-text">5 minuta</span>
                 </h2>
-                <p class="text-xl text-gray-400 max-w-2xl mx-auto reveal reveal-delay-1">
+                <p>
                     Jednostavan proces registracije i podešavanja
                 </p>
             </div>
 
-            <div class="max-w-3xl mx-auto">
+            <div class="steps-container">
                 <!-- Step 1 -->
-                <div class="flex gap-6 reveal">
-                    <div class="flex flex-col items-center">
-                        <div class="step-number">1</div>
-                        <div class="step-line"></div>
-                    </div>
-                    <div class="pb-12">
-                        <h3 class="text-xl font-semibold mb-2">Registrujte se besplatno</h3>
-                        <p class="text-gray-400">
-                            Unesite osnovne podatke o servisu. Bez kreditne kartice,
-                            bez obaveza. Nalog je aktivan odmah.
-                        </p>
+                <div class="step-card reveal">
+                    <div class="step-card__number">1</div>
+                    <div class="step-card__content">
+                        <h3>Registrujte se besplatno</h3>
+                        <p>Unesite osnovne podatke o servisu. Bez kreditne kartice, bez obaveza. Nalog je aktivan odmah.</p>
                     </div>
                 </div>
 
                 <!-- Step 2 -->
-                <div class="flex gap-6 reveal reveal-delay-1">
-                    <div class="flex flex-col items-center">
-                        <div class="step-number">2</div>
-                        <div class="step-line"></div>
-                    </div>
-                    <div class="pb-12">
-                        <h3 class="text-xl font-semibold mb-2">Podesite servis</h3>
-                        <p class="text-gray-400">
-                            Lokacije, usluge i cenovnik.
-                            Sistem vas vodi kroz svaki korak.
-                        </p>
+                <div class="step-card reveal reveal-delay-1">
+                    <div class="step-card__number">2</div>
+                    <div class="step-card__content">
+                        <h3>Podesite servis</h3>
+                        <p>Lokacije, usluge i cenovnik. Sistem vas vodi kroz svaki korak.</p>
                     </div>
                 </div>
 
                 <!-- Step 3 -->
-                <div class="flex gap-6 reveal reveal-delay-2">
-                    <div class="flex flex-col items-center">
-                        <div class="step-number">3</div>
-                        <div class="step-line"></div>
-                    </div>
-                    <div class="pb-12">
-                        <h3 class="text-xl font-semibold mb-2">Kreirajte servisne naloge</h3>
-                        <p class="text-gray-400">
-                            Kreirajte prvi nalog i počnite da pratite sve popravke.
-                            Kupci dobijaju QR kod za praćenje statusa.
-                        </p>
+                <div class="step-card reveal reveal-delay-2">
+                    <div class="step-card__number">3</div>
+                    <div class="step-card__content">
+                        <h3>Kreirajte servisne naloge</h3>
+                        <p>Kreirajte prvi nalog i počnite da pratite sve popravke. Kupci dobijaju QR kod za praćenje statusa.</p>
                     </div>
                 </div>
 
                 <!-- Step 4 -->
-                <div class="flex gap-6 reveal reveal-delay-3">
-                    <div class="flex flex-col items-center">
-                        <div class="step-number">4</div>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-semibold mb-2">Dobijate najmoderniju web stranicu besplatno</h3>
-                        <p class="text-gray-400">
-                            Čim kreirate nalog, dobijate personalizovanu web stranicu
-                            sa praćenjem vaših servisnih naloga. Kupci mogu pratiti status online 24/7.
-                        </p>
+                <div class="step-card step-card--highlight reveal reveal-delay-3">
+                    <div class="step-card__number step-card__number--accent">4</div>
+                    <div class="step-card__content">
+                        <h3>Dobijate web stranicu besplatno</h3>
+                        <p>Čim kreirate nalog, dobijate personalizovanu web stranicu sa praćenjem vaših servisnih naloga. Kupci mogu pratiti status online 24/7.</p>
                     </div>
                 </div>
             </div>
@@ -1503,77 +1778,75 @@
     <!-- ============================================
          TESTIMONIALS
          ============================================ -->
-    <section class="relative py-24">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl sm:text-4xl font-bold mb-4 reveal">
-                    Šta kažu <span class="gradient-text">naši korisnici</span>
-                </h2>
+    <section class="testimonials-section">
+        <div class="landing-container">
+            <div class="section-header reveal">
+                <h2>Šta kažu <span class="gradient-text">naši korisnici</span></h2>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-6">
+            <div class="testimonials-grid">
                 <!-- Testimonial 1 -->
-                <div class="glass-card p-8 reveal">
-                    <div class="flex items-center gap-1 mb-4">
+                <div class="testimonial-card reveal">
+                    <div class="testimonial-card__stars">
                         <template x-for="i in 5">
-                            <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                            <svg fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                             </svg>
                         </template>
                     </div>
-                    <p class="text-gray-300 mb-6">
+                    <p class="testimonial-card__text">
                         "ServisHub nam je promenio način rada. Više ne gubimo naloge,
                         kupci su zadovoljniji, a mi imamo kompletan pregled poslovanja."
                     </p>
-                    <div class="flex items-center gap-3">
-                        <div class="testimonial-avatar">MP</div>
+                    <div class="testimonial-card__author">
+                        <div class="testimonial-card__avatar">MP</div>
                         <div>
-                            <div class="font-semibold">Marko Petrović</div>
-                            <div class="text-sm text-gray-500">TechFix Servis, Beograd</div>
+                            <div class="testimonial-card__name">Marko Petrović</div>
+                            <div class="testimonial-card__role">TechFix Servis, Beograd</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Testimonial 2 -->
-                <div class="glass-card p-8 reveal reveal-delay-1">
-                    <div class="flex items-center gap-1 mb-4">
+                <div class="testimonial-card reveal reveal-delay-1">
+                    <div class="testimonial-card__stars">
                         <template x-for="i in 5">
-                            <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                            <svg fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                             </svg>
                         </template>
                     </div>
-                    <p class="text-gray-300 mb-6">
+                    <p class="testimonial-card__text">
                         "Konačno sistem koji razume potrebe malih servisa.
                         Jednostavan za korišćenje, a pruža sve što nam treba."
                     </p>
-                    <div class="flex items-center gap-3">
-                        <div class="testimonial-avatar">JN</div>
+                    <div class="testimonial-card__author">
+                        <div class="testimonial-card__avatar">JN</div>
                         <div>
-                            <div class="font-semibold">Jelena Nikolić</div>
-                            <div class="text-sm text-gray-500">MobilPro, Novi Sad</div>
+                            <div class="testimonial-card__name">Jelena Nikolić</div>
+                            <div class="testimonial-card__role">MobilPro, Novi Sad</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Testimonial 3 -->
-                <div class="glass-card p-8 reveal reveal-delay-2">
-                    <div class="flex items-center gap-1 mb-4">
+                <div class="testimonial-card reveal reveal-delay-2">
+                    <div class="testimonial-card__stars">
                         <template x-for="i in 5">
-                            <svg class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                            <svg fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                             </svg>
                         </template>
                     </div>
-                    <p class="text-gray-300 mb-6">
+                    <p class="testimonial-card__text">
                         "Od kada koristimo ServisHub, produktivnost nam je porasla za 40%.
                         Preporučujem svim kolegama u branši."
                     </p>
-                    <div class="flex items-center gap-3">
-                        <div class="testimonial-avatar">SM</div>
+                    <div class="testimonial-card__author">
+                        <div class="testimonial-card__avatar">SM</div>
                         <div>
-                            <div class="font-semibold">Stefan Marković</div>
-                            <div class="text-sm text-gray-500">GSM Expert, Niš</div>
+                            <div class="testimonial-card__name">Stefan Marković</div>
+                            <div class="testimonial-card__role">GSM Expert, Niš</div>
                         </div>
                     </div>
                 </div>
@@ -1703,95 +1976,55 @@
     <!-- ============================================
          FAQ
          ============================================ -->
-    <section id="faq" class="relative py-24">
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl sm:text-4xl font-bold mb-4 reveal">
-                    Često postavljana <span class="gradient-text">pitanja</span>
-                </h2>
-                <p class="text-xl text-gray-400 reveal reveal-delay-1">
-                    Sve što treba da znate pre početka
-                </p>
+    <section id="faq" class="faq-section">
+        <div class="landing-container">
+            <div class="section-header reveal">
+                <h2>Često postavljana <span class="gradient-text">pitanja</span></h2>
+                <p class="section-subtitle">Sve što treba da znate pre početka</p>
             </div>
 
-            <div class="space-y-4" x-data="{ openFaq: null }">
-                <!-- FAQ 1 -->
-                <div class="faq-item reveal" :class="{ 'open': openFaq === 1 }">
-                    <div class="faq-question" @click="openFaq = openFaq === 1 ? null : 1">
-                        <span>Da li je ServisHub težak za korišćenje?</span>
-                        <svg class="faq-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </div>
-                    <div class="faq-answer" x-show="openFaq === 1" x-collapse>
+            <div class="faq-container">
+                <details class="faq-item reveal">
+                    <summary>Da li je ServisHub težak za korišćenje?</summary>
+                    <div class="faq-item__answer">
                         Ne! ServisHub je dizajniran da bude intuitivan i jednostavan. Većina korisnika počne da radi za manje od 15 minuta.
                     </div>
-                </div>
+                </details>
 
-                <!-- FAQ 2 -->
-                <div class="faq-item reveal reveal-delay-1" :class="{ 'open': openFaq === 2 }">
-                    <div class="faq-question" @click="openFaq = openFaq === 2 ? null : 2">
-                        <span>Mogu li da importujem postojeće podatke?</span>
-                        <svg class="faq-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </div>
-                    <div class="faq-answer" x-show="openFaq === 2" x-collapse>
+                <details class="faq-item reveal reveal-delay-1">
+                    <summary>Mogu li da importujem postojeće podatke?</summary>
+                    <div class="faq-item__answer">
                         Da, podržavamo import iz Excel-a i CSV fajlova. Naš tim može pomoći sa migracijom podataka iz drugih sistema besplatno.
                     </div>
-                </div>
+                </details>
 
-                <!-- FAQ 3 -->
-                <div class="faq-item reveal reveal-delay-2" :class="{ 'open': openFaq === 3 }">
-                    <div class="faq-question" @click="openFaq = openFaq === 3 ? null : 3">
-                        <span>Šta se dešava kada istekne trial period?</span>
-                        <svg class="faq-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </div>
-                    <div class="faq-answer" x-show="openFaq === 3" x-collapse>
+                <details class="faq-item reveal reveal-delay-2">
+                    <summary>Šta se dešava kada istekne trial period?</summary>
+                    <div class="faq-item__answer">
                         Vaši podaci ostaju sačuvani. Možete nastaviti sa pretplatom ili eksportovati sve podatke. Nema pritiska - vi odlučujete kada ste spremni.
                     </div>
-                </div>
+                </details>
 
-                <!-- FAQ 4 -->
-                <div class="faq-item reveal reveal-delay-3" :class="{ 'open': openFaq === 4 }">
-                    <div class="faq-question" @click="openFaq = openFaq === 4 ? null : 4">
-                        <span>Da li mogu pristupiti sa telefona?</span>
-                        <svg class="faq-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </div>
-                    <div class="faq-answer" x-show="openFaq === 4" x-collapse>
+                <details class="faq-item reveal reveal-delay-3">
+                    <summary>Da li mogu pristupiti sa telefona?</summary>
+                    <div class="faq-item__answer">
                         Apsolutno! ServisHub je potpuno responzivan i radi na svim uređajima. Imate pristup svim funkcijama sa telefona, tableta ili računara.
                     </div>
-                </div>
+                </details>
 
-                <!-- FAQ 5 -->
-                <div class="faq-item reveal reveal-delay-4" :class="{ 'open': openFaq === 5 }">
-                    <div class="faq-question" @click="openFaq = openFaq === 5 ? null : 5">
-                        <span>Da li su moji podaci sigurni?</span>
-                        <svg class="faq-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </div>
-                    <div class="faq-answer" x-show="openFaq === 5" x-collapse>
+                <details class="faq-item reveal reveal-delay-4">
+                    <summary>Da li su moji podaci sigurni?</summary>
+                    <div class="faq-item__answer">
                         Da, bezbednost je naš prioritet. Koristimo 256-bit SSL enkripciju, automatske backupe na AWS cloud-u i potpuno smo usklađeni sa GDPR regulativom.
                     </div>
-                </div>
+                </details>
 
-                <!-- FAQ 6 -->
-                <div class="faq-item reveal reveal-delay-5" :class="{ 'open': openFaq === 6 }">
-                    <div class="faq-question" @click="openFaq = openFaq === 6 ? null : 6">
-                        <span>Kako funkcioniše podrška?</span>
-                        <svg class="faq-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </div>
-                    <div class="faq-answer" x-show="openFaq === 6" x-collapse>
+                <details class="faq-item reveal reveal-delay-5">
+                    <summary>Kako funkcioniše podrška?</summary>
+                    <div class="faq-item__answer">
                         Nudimo podršku putem emaila i telefona. Prosečno vreme odgovora je manje od 24 sata. Svi korisnici dobijaju istu premium podršku.
                     </div>
-                </div>
+                </details>
             </div>
         </div>
     </section>
