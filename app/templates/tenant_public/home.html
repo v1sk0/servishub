@@ -7,196 +7,235 @@
 {% set warranty_days = tenant.default_warranty_days or 45 %}
 {% set fast_service = profile.fast_service_text or '1-3 sata' %}
 
-<!-- Hero Section -->
-<section class="mg-hero">
-    <div class="mg-hero__container">
-        <div class="mg-hero__content">
-            <!-- Hero Logo - Large & Centered -->
-            {% set hero_logo = profile.logo_url or tenant.logo_url %}
-            {% if hero_logo %}
-            <div class="mg-hero__logo-wrapper mg-fade-in">
-                <img src="{{ hero_logo }}" alt="{{ profile.display_name or tenant.name }}" class="mg-hero__logo">
+<!-- Hero Slider Section -->
+<section class="mg-hero-slider">
+    <!-- Swiper -->
+    <div class="swiper mg-hero-swiper">
+        <div class="swiper-wrapper">
+            <!-- Slide 1 -->
+            <div class="swiper-slide mg-hero-slide">
+                <div class="mg-hero-slide__bg" style="background-image: url('{{ profile.hero_bg_1 or '/static/images/hero-repair-1.jpg' }}');"></div>
+                <div class="mg-hero-slide__overlay"></div>
+                <div class="mg-hero-slide__content">
+                    {% set hero_logo = profile.logo_url or tenant.logo_url %}
+                    {% if hero_logo %}
+                    <div class="mg-hero-slide__logo">
+                        <img src="{{ hero_logo }}" alt="{{ profile.display_name or tenant.name }}">
+                    </div>
+                    {% endif %}
+                    <div class="mg-hero-slide__badge">
+                        <span class="mg-hero-slide__badge-dot"></span>
+                        Profesionalni servis
+                    </div>
+                    <h2 class="mg-hero-slide__title">
+                        Mobilni telefon, PC, <br>
+                        <span class="mg-hero-slide__title-gradient">Tablet, GPS navigacija...</span>
+                    </h2>
+                    <p class="mg-hero-slide__subtitle">Vratite vaš uređaj u život</p>
+                    <div class="mg-hero-slide__cta">
+                        {% if hero_phone %}
+                        <a href="tel:{{ hero_phone }}" class="mg-btn mg-btn--primary mg-btn--lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                            </svg>
+                            Pozovite odmah
+                        </a>
+                        {% endif %}
+                        {% if profile.show_prices %}
+                        <a href="/cenovnik" class="mg-btn mg-btn--secondary mg-btn--lg">
+                            Pogledajte cenovnik
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-            {% endif %}
 
-            <!-- Badge -->
-            <div class="mg-hero__badge mg-fade-in mg-fade-in-delay-1">
-                <span class="mg-hero__badge-dot"></span>
-                Profesionalni servis
+            <!-- Slide 2 -->
+            <div class="swiper-slide mg-hero-slide">
+                <div class="mg-hero-slide__bg" style="background-image: url('{{ profile.hero_bg_2 or '/static/images/hero-repair-2.jpg' }}');"></div>
+                <div class="mg-hero-slide__overlay"></div>
+                <div class="mg-hero-slide__content">
+                    {% if hero_logo %}
+                    <div class="mg-hero-slide__logo">
+                        <img src="{{ hero_logo }}" alt="{{ profile.display_name or tenant.name }}">
+                    </div>
+                    {% endif %}
+                    <div class="mg-hero-slide__badge">
+                        <span class="mg-hero-slide__badge-dot"></span>
+                        Brza usluga
+                    </div>
+                    <h2 class="mg-hero-slide__title">
+                        Popravka u prvih <span class="mg-hero-slide__title-gradient">60 min</span><br>
+                        najkasnije u 24h
+                    </h2>
+                    <p class="mg-hero-slide__subtitle">Profesionalna popravka u najkraćem roku!</p>
+                    <div class="mg-hero-slide__cta">
+                        {% if hero_phone %}
+                        <a href="tel:{{ hero_phone }}" class="mg-btn mg-btn--primary mg-btn--lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                            </svg>
+                            Pozovite odmah
+                        </a>
+                        {% endif %}
+                        {% if profile.show_prices %}
+                        <a href="/cenovnik" class="mg-btn mg-btn--secondary mg-btn--lg">
+                            Pogledajte cenovnik
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
 
-            <!-- Title with gradient -->
-            <h1 class="mg-hero__title mg-fade-in mg-fade-in-delay-2">
-                {% if profile.headline %}
-                {{ profile.headline }}
-                {% else %}
-                Brza i pouzdana <span class="mg-hero__title-gradient">popravka telefona</span>
-                {% endif %}
-            </h1>
+            <!-- Slide 3 - Garancija -->
+            <div class="swiper-slide mg-hero-slide">
+                <div class="mg-hero-slide__bg" style="background-image: url('{{ profile.hero_bg_3 or '/static/images/hero-repair-3.jpg' }}');"></div>
+                <div class="mg-hero-slide__overlay"></div>
+                <div class="mg-hero-slide__content">
+                    {% if hero_logo %}
+                    <div class="mg-hero-slide__logo">
+                        <img src="{{ hero_logo }}" alt="{{ profile.display_name or tenant.name }}">
+                    </div>
+                    {% endif %}
+                    <div class="mg-hero-slide__badge">
+                        <span class="mg-hero-slide__badge-dot"></span>
+                        Kvalitet
+                    </div>
+                    <h2 class="mg-hero-slide__title">
+                        Garancija <span class="mg-hero-slide__title-gradient">{{ warranty_days }} dana</span><br>
+                        na sve popravke
+                    </h2>
+                    <p class="mg-hero-slide__subtitle">Vaša satisfakcija je naš prioritet</p>
+                    <div class="mg-hero-slide__cta">
+                        {% if hero_phone %}
+                        <a href="tel:{{ hero_phone }}" class="mg-btn mg-btn--primary mg-btn--lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                            </svg>
+                            Pozovite odmah
+                        </a>
+                        {% endif %}
+                        {% if profile.show_prices %}
+                        <a href="/cenovnik" class="mg-btn mg-btn--secondary mg-btn--lg">
+                            Pogledajte cenovnik
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            <!-- Subtitle -->
-            {% if profile.tagline %}
-            <p class="mg-hero__subtitle mg-fade-in mg-fade-in-delay-3">{{ profile.tagline }}</p>
-            {% else %}
-            <p class="mg-hero__subtitle mg-fade-in mg-fade-in-delay-3">
-                Stručni tim sa višegodišnjim iskustvom. Garancija na sve popravke.
-                Vaša satisfakcija nam je prioritet.
-            </p>
-            {% endif %}
+        <!-- Pagination -->
+        <div class="swiper-pagination mg-hero-pagination"></div>
 
-            <!-- CTA Buttons -->
-            <div class="mg-hero__cta mg-fade-in mg-fade-in-delay-4">
-                {% if hero_phone %}
-                <a href="tel:{{ hero_phone }}" class="mg-btn mg-btn--primary mg-btn--lg">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+        <!-- Navigation arrows -->
+        <div class="swiper-button-prev mg-hero-nav mg-hero-nav--prev"></div>
+        <div class="swiper-button-next mg-hero-nav mg-hero-nav--next"></div>
+    </div>
+
+    <!-- Trust Bar - Fixed at bottom of slider -->
+    {% if profile.show_trust_badges != false %}
+    <div class="mg-hero-slider__trust-bar">
+        <div class="mg-trust-bar">
+            <div class="mg-trust-item">
+                <div class="mg-trust-item__icon">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                     </svg>
-                    Pozovite odmah
-                </a>
-                {% endif %}
-                {% if profile.show_prices %}
-                <a href="/cenovnik" class="mg-btn mg-btn--secondary mg-btn--lg">
-                    Pogledajte cenovnik
-                </a>
-                {% endif %}
-            </div>
-
-            <!-- Flash Services - Scramble Animation -->
-            {% if flash_words and flash_words|length > 0 %}
-            <div class="mg-scramble-section-inline mg-fade-in mg-fade-in-delay-5">
-                <p class="mg-scramble-label">Naše usluge</p>
-                <div class="mg-scramble-container">
-                    <div class="mg-scramble-text" id="scrambleText"></div>
+                </div>
+                <div class="mg-trust-item__text">
+                    <span class="mg-trust-item__label">Garancija</span>
+                    <span class="mg-trust-item__value">{{ warranty_days }} dana</span>
                 </div>
             </div>
-            {% endif %}
-
-            <!-- Trust Bar -->
-            {% if profile.show_trust_badges != false %}
-            <div class="mg-trust-bar mg-fade-in mg-fade-in-delay-6">
-                <div class="mg-trust-item">
-                    <div class="mg-trust-item__icon">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                        </svg>
-                    </div>
-                    <div class="mg-trust-item__text">
-                        <span class="mg-trust-item__label">Garancija</span>
-                        <span class="mg-trust-item__value">{{ warranty_days }} dana</span>
-                    </div>
+            <div class="mg-trust-item">
+                <div class="mg-trust-item__icon">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
                 </div>
-                <div class="mg-trust-item">
-                    <div class="mg-trust-item__icon">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
-                    </div>
-                    <div class="mg-trust-item__text">
-                        <span class="mg-trust-item__label">Brz servis</span>
-                        <span class="mg-trust-item__value">{{ fast_service }}</span>
-                    </div>
-                </div>
-                <div class="mg-trust-item">
-                    <div class="mg-trust-item__icon">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                        </svg>
-                    </div>
-                    <div class="mg-trust-item__text">
-                        <span class="mg-trust-item__label">Bezbednost</span>
-                        <span class="mg-trust-item__value">Vaši podaci se ne brišu</span>
-                    </div>
+                <div class="mg-trust-item__text">
+                    <span class="mg-trust-item__label">Brz servis</span>
+                    <span class="mg-trust-item__value">{{ fast_service }}</span>
                 </div>
             </div>
-            {% endif %}
+            <div class="mg-trust-item">
+                <div class="mg-trust-item__icon">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </div>
+                <div class="mg-trust-item__text">
+                    <span class="mg-trust-item__label">Bezbednost</span>
+                    <span class="mg-trust-item__value">Vaši podaci se ne brišu</span>
+                </div>
+            </div>
         </div>
     </div>
+    {% endif %}
 </section>
 
-{% if flash_words and flash_words|length > 0 %}
-<!-- Scramble Text Script -->
+<!-- Swiper JS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script>
-// TextScramble Class - Modern scramble reveal animation
-class TextScramble {
-    constructor(el) {
-        this.el = el;
-        this.chars = '!<>-_\\/[]{}—=+*^?#_▓█▒░';
-        this.update = this.update.bind(this);
-    }
-
-    setText(newText) {
-        const oldText = this.el.innerText;
-        const length = Math.max(oldText.length, newText.length);
-        const promise = new Promise(resolve => this.resolve = resolve);
-        this.queue = [];
-
-        for (let i = 0; i < length; i++) {
-            const from = oldText[i] || '';
-            const to = newText[i] || '';
-            const start = Math.floor(Math.random() * 40);
-            const end = start + Math.floor(Math.random() * 40);
-            this.queue.push({ from, to, start, end });
-        }
-
-        cancelAnimationFrame(this.frameRequest);
-        this.frame = 0;
-        this.update();
-        return promise;
-    }
-
-    update() {
-        let output = '';
-        let complete = 0;
-
-        for (let i = 0, n = this.queue.length; i < n; i++) {
-            let { from, to, start, end, char } = this.queue[i];
-
-            if (this.frame >= end) {
-                complete++;
-                output += to;
-            } else if (this.frame >= start) {
-                if (!char || Math.random() < 0.28) {
-                    char = this.chars[Math.floor(Math.random() * this.chars.length)];
-                    this.queue[i].char = char;
+document.addEventListener('DOMContentLoaded', function() {
+    const heroSwiper = new Swiper('.mg-hero-swiper', {
+        loop: true,
+        speed: 1000,
+        autoplay: {
+            delay: 5000,
+            disableOnInteraction: false,
+        },
+        effect: 'fade',
+        fadeEffect: {
+            crossFade: true
+        },
+        pagination: {
+            el: '.mg-hero-pagination',
+            clickable: true,
+        },
+        navigation: {
+            nextEl: '.mg-hero-nav--next',
+            prevEl: '.mg-hero-nav--prev',
+        },
+        on: {
+            slideChangeTransitionStart: function() {
+                // Reset animations on all slides
+                document.querySelectorAll('.mg-hero-slide__content > *').forEach(el => {
+                    el.classList.remove('mg-animate-in');
+                });
+            },
+            slideChangeTransitionEnd: function() {
+                // Trigger animations on active slide
+                const activeSlide = this.slides[this.activeIndex];
+                if (activeSlide) {
+                    const elements = activeSlide.querySelectorAll('.mg-hero-slide__content > *');
+                    elements.forEach((el, index) => {
+                        setTimeout(() => {
+                            el.classList.add('mg-animate-in');
+                        }, index * 150);
+                    });
                 }
-                output += `<span class="scramble-char">${char}</span>`;
-            } else {
-                output += from;
+            },
+            init: function() {
+                // Initial animation on first slide
+                setTimeout(() => {
+                    const activeSlide = this.slides[this.activeIndex];
+                    if (activeSlide) {
+                        const elements = activeSlide.querySelectorAll('.mg-hero-slide__content > *');
+                        elements.forEach((el, index) => {
+                            setTimeout(() => {
+                                el.classList.add('mg-animate-in');
+                            }, index * 150);
+                        });
+                    }
+                }, 100);
             }
         }
-
-        this.el.innerHTML = output;
-
-        if (complete === this.queue.length) {
-            this.resolve();
-        } else {
-            this.frameRequest = requestAnimationFrame(this.update);
-            this.frame++;
-        }
-    }
-}
-
-// Initialize scramble animation
-document.addEventListener('DOMContentLoaded', () => {
-    const phrases = {{ flash_words | tojson }};
-    const el = document.getElementById('scrambleText');
-
-    if (el && phrases.length > 0) {
-        const fx = new TextScramble(el);
-        let counter = 0;
-
-        const next = () => {
-            fx.setText(phrases[counter]).then(() => {
-                setTimeout(next, 2000);
-            });
-            counter = (counter + 1) % phrases.length;
-        };
-
-        next();
-    }
+    });
 });
 </script>
-{% endif %}
 
 {% if profile.show_tracking_widget %}
 <!-- Status Tracking -->
