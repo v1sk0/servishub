@@ -533,6 +533,9 @@ def update_settings():
     tenant.updated_at = datetime.utcnow()
     db.session.commit()
 
+    # Invalidate public site cache so new warranty_days shows immediately
+    invalidate_public_site_cache(tenant_id=tenant.id, slug=tenant.slug)
+
     return {'message': 'Settings updated'}
 
 
