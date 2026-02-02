@@ -4,7 +4,7 @@
 
 {% block content %}
 {% set hero_phone = profile.phone or tenant.telefon %}
-{% set warranty_days = profile.warranty_days or 90 %}
+{% set warranty_days = tenant.default_warranty_days or 45 %}
 {% set fast_service = profile.fast_service_text or '1-3 sata' %}
 
 <!-- Hero Section -->
