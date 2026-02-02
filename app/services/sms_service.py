@@ -99,7 +99,7 @@ class SMSService:
     def __init__(self):
         """Inicijalizacija SMS servisa."""
         self.api_token = os.environ.get('D7_API_TOKEN')
-        self.sender_id = os.environ.get('D7_SENDER_ID', 'ServisHub')
+        self.sender_id = os.environ.get('D7_SENDER_ID', 'SHub')
 
     def transliterate_gsm7(self, text: str) -> str:
         """
