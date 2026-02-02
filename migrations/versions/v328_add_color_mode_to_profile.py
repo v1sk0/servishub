@@ -1,7 +1,7 @@
 """Add color_mode to TenantPublicProfile
 
 Revision ID: v328_color_mode
-Revises: v327_add_sms_notification_to_credit_enum
+Revises: v327_sms_txn_enum
 Create Date: 2026-02-02
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'v328_color_mode'
-down_revision = 'v327_add_sms_notification_to_credit_enum'
+down_revision = 'v327_sms_txn_enum'
 branch_labels = None
 depends_on = None
 
