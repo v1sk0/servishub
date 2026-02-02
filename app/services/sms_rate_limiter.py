@@ -56,7 +56,15 @@ class SmsRateLimiter:
             return
 
         try:
-            self.redis = redis.from_url(redis_url, decode_responses=True)
+            # Heroku Redis koristi self-signed certifikate
+            if redis_url.startswith('rediss://'):
+                self.redis = redis.from_url(
+                    redis_url,
+                    decode_responses=True,
+                    ssl_cert_reqs=None  # Disable SSL verification for Heroku
+                )
+            else:
+                self.redis = redis.from_url(redis_url, decode_responses=True)
             # Test connection
             self.redis.ping()
             self._connected = True

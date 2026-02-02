@@ -32,9 +32,19 @@ def get_redis():
     global _redis_client
     if _redis_client is None:
         import redis
+        import ssl
         from flask import current_app
-        _redis_client = redis.from_url(
-            current_app.config['REDIS_URL'],
-            decode_responses=True
-        )
+        redis_url = current_app.config['REDIS_URL']
+        # Heroku Redis koristi self-signed certifikate
+        if redis_url.startswith('rediss://'):
+            _redis_client = redis.from_url(
+                redis_url,
+                decode_responses=True,
+                ssl_cert_reqs=None  # Disable SSL verification for Heroku
+            )
+        else:
+            _redis_client = redis.from_url(
+                redis_url,
+                decode_responses=True
+            )
     return _redis_client
