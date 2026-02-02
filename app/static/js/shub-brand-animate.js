@@ -1,13 +1,13 @@
 /**
  * Shub Brand Animation
  *
- * Animates "ServisHub" text from center outward, then contracts to "Shub"
+ * Animates "ServisHub" text from center outward, then contracts to "SHub"
  *
  * Sequence:
  * 1. Start from middle: sH
  * 2. Expand outward: isHu → visHub → rvisHub → ervisHub → ServisHub
  * 3. Pause at full text
- * 4. Contract to: Shub (and stay)
+ * 4. Contract to: SHub (and stay)
  *
  * Usage:
  * <span class="shub-brand-animate" data-shub-animate>ServisHub</span>
@@ -25,7 +25,7 @@
     'use strict';
 
     const FULL_TEXT = 'ServisHub';
-    const FINAL_TEXT = 'Shub';
+    const FINAL_TEXT = 'SHub';
 
     // Expansion sequence (from center outward)
     // ServisHub = S e r v i s H u b
@@ -40,16 +40,15 @@
         'ServisHub'  // Full text
     ];
 
-    // Contract sequence (to final "Shub")
-    // ServisHub → Shub (keep S, remove ervi, keep hub but capitalize H)
+    // Contract sequence (to final "SHub")
+    // ServisHub → SHub (keep S, remove ervi, keep Hub)
     const CONTRACT_SEQUENCE = [
         'ServisHub',
         'SrvisHub',   // Remove 'e'
         'SvisHub',    // Remove 'r'
         'SisHub',     // Remove 'v'
         'SsHub',      // Remove 'i'
-        'SHub',       // Remove 's'
-        'Shub'        // Lowercase 'H' to 'h' - final!
+        'SHub'        // Remove 's' - final!
     ];
 
     class ShubBrandAnimate {
