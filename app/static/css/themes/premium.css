@@ -577,3 +577,116 @@
     fill: #fbbf24;
     filter: drop-shadow(0 2px 4px rgba(251, 191, 36, 0.3));
 }
+
+/* ========================================
+   SCRAMBLE TEXT - Full Width Giant Text
+   ======================================== */
+[data-theme="premium"] .mg-scramble-section-inline {
+    margin: var(--mg-space-6) 0;
+    padding: var(--mg-space-2) 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+[data-theme="premium"] .mg-scramble-section-inline .mg-scramble-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    margin-bottom: var(--mg-space-1);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="premium"] .mg-scramble-section-inline .mg-scramble-container {
+    min-height: auto;
+    padding: 0;
+}
+
+[data-theme="premium"] .mg-scramble-section-inline .mg-scramble-text {
+    font-size: clamp(2.5rem, 10vw, 6rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    white-space: nowrap;
+    background: linear-gradient(135deg, #ffffff 0%, #c4b5fd 50%, #f0abfc 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 4px 20px rgba(139, 92, 246, 0.4));
+}
+
+[data-theme="premium"] .mg-scramble-text .scramble-char {
+    color: #a78bfa;
+    -webkit-text-fill-color: #a78bfa;
+    text-shadow: 0 0 30px rgba(167, 139, 250, 0.8);
+}
+
+/* Responsive - even bigger on desktop */
+@media (min-width: 768px) {
+    [data-theme="premium"] .mg-scramble-section-inline .mg-scramble-text {
+        font-size: clamp(3rem, 12vw, 8rem);
+    }
+}
+
+@media (min-width: 1024px) {
+    [data-theme="premium"] .mg-scramble-section-inline .mg-scramble-text {
+        font-size: clamp(4rem, 14vw, 10rem);
+    }
+}
+
+@media (min-width: 1280px) {
+    [data-theme="premium"] .mg-scramble-section-inline .mg-scramble-text {
+        font-size: clamp(5rem, 15vw, 12rem);
+    }
+}
+
+/* ========================================
+   SHUB BRAND ANIMATION
+   ServisHub → Shub expand/contract effect
+   ======================================== */
+.shub-brand-animate {
+    display: inline-block;
+    font-family: inherit;
+    font-weight: inherit;
+    position: relative;
+    overflow: hidden;
+}
+
+.shub-brand-animate .shub-char {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(10px) scale(0.8);
+    transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.shub-brand-animate .shub-char.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.shub-brand-animate .shub-char.highlight {
+    color: var(--sh-primary, #8b5cf6);
+    text-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+}
+
+/* Glow effect during animation */
+.shub-brand-animate.animating {
+    filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));
+}
+
+/* Final state - Shub with gradient */
+.shub-brand-animate.final .shub-char {
+    background: linear-gradient(135deg, var(--sh-primary, #8b5cf6) 0%, var(--sh-secondary, #ec4899) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Subtle pulse on final state */
+@keyframes shub-pulse {
+    0%, 100% { filter: drop-shadow(0 0 5px rgba(139, 92, 246, 0.3)); }
+    50% { filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.5)); }
+}
+
+.shub-brand-animate.final {
+    animation: shub-pulse 3s ease-in-out infinite;
+}
