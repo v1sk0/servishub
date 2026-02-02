@@ -198,6 +198,13 @@ class TenantPublicProfile(db.Model):
     theme = db.Column(db.String(20), default='premium')
 
     # ============================================
+    # COLOR MODE - Svetla ili tamna pozadina
+    # ============================================
+    # - dark: Tamna pozadina sa animiranim orb-ovima (default)
+    # - light: Svetla pozadina sa repair shop SVG patternima
+    color_mode = db.Column(db.String(10), default='dark')
+
+    # ============================================
     # FLASH SERVICES - Animirani prikaz usluga
     # ============================================
     # Scramble Reveal animacija koja rotira kroz usluge

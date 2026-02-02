@@ -1,4 +1,5 @@
 {% set current_theme = profile.theme or 'premium' %}
+{% set color_mode = profile.color_mode or 'dark' %}
 <!DOCTYPE html>
 <html lang="sr" data-theme="{{ current_theme }}">
 <head>
@@ -37,7 +38,7 @@
         'elite': 'elite.css'
     } %}
     {% set theme_file = theme_map.get(current_theme, 'modern-glass.css') %}
-    <!-- Cache-bust: v480 -->
+    <!-- Cache-bust: v481 -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/themes/' ~ theme_file) }}?v=480">
 
     <!-- Alpine.js -->
@@ -94,7 +95,7 @@
     }
     </script>
 </head>
-<body class="mg-page" x-data="{ mobileMenuOpen: false }">
+<body class="mg-page{% if color_mode == 'light' %} mg-page--light{% endif %}" x-data="{ mobileMenuOpen: false }">
     <!-- Animated Background Orbs -->
     <div class="mg-bg-animated">
         <div class="mg-orb mg-orb--1"></div>

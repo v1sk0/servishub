@@ -1849,3 +1849,204 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ========================================
+   LIGHT MODE - REPAIR SHOP THEME
+   ======================================== */
+.mg-page--light {
+    --mg-bg-base: #f8fafc;
+    --mg-bg-elevated: #ffffff;
+    --mg-bg-card: rgba(255, 255, 255, 0.9);
+
+    --mg-glass-bg: rgba(255, 255, 255, 0.7);
+    --mg-glass-border: rgba(99, 102, 241, 0.12);
+    --mg-glass-border-hover: rgba(99, 102, 241, 0.25);
+
+    --mg-text-primary: #1e293b;
+    --mg-text-secondary: #475569;
+    --mg-text-muted: #94a3b8;
+
+    --mg-shadow-card: 0 4px 20px -4px rgba(99, 102, 241, 0.1), 0 2px 8px -2px rgba(0, 0, 0, 0.06);
+    --mg-shadow-glow: 0 0 40px rgba(99, 102, 241, 0.08);
+
+    background: var(--mg-bg-base);
+    color: var(--mg-text-primary);
+}
+
+/* Repair Shop Pattern Background */
+.mg-page--light::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%236366f1' stroke-width='0.5' opacity='0.3'%3E%3C!-- Phone --%3E%3Crect x='10' y='5' width='12' height='20' rx='2'/%3E%3Crect x='13' y='8' width='6' height='10' rx='1'/%3E%3Ccircle cx='16' cy='22' r='1.5'/%3E%3C!-- Screwdriver --%3E%3Cpath d='M75 15 L78 12 L80 14 L77 17 L77 30 L75 30 Z'/%3E%3C!-- Wrench --%3E%3Cpath d='M40 70 L45 75 L60 60 L65 65 L50 80 L45 75' stroke-linecap='round'/%3E%3Ccircle cx='42' cy='72' r='4'/%3E%3Ccircle cx='63' cy='63' r='4'/%3E%3C!-- Gear --%3E%3Ccircle cx='80' cy='75' r='8'/%3E%3Ccircle cx='80' cy='75' r='4'/%3E%3Cpath d='M80 65 L80 67 M80 83 L80 85 M70 75 L72 75 M88 75 L90 75 M73 68 L74.5 69.5 M85.5 80.5 L87 82 M73 82 L74.5 80.5 M85.5 69.5 L87 68'/%3E%3C!-- Circuit --%3E%3Cpath d='M5 50 L15 50 L15 45 L25 45 M25 50 L35 50' stroke-linecap='round'/%3E%3Ccircle cx='25' cy='45' r='2'/%3E%3Ccircle cx='25' cy='50' r='2'/%3E%3C!-- Battery --%3E%3Crect x='55' y='35' width='15' height='8' rx='1'/%3E%3Crect x='70' y='37' width='2' height='4' rx='0.5'/%3E%3Crect x='57' y='37' width='4' height='4' rx='0.5'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 120px 120px;
+}
+
+/* Gradient overlay for depth */
+.mg-page--light::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 80% 60% at 0% 0%, rgba(99, 102, 241, 0.08), transparent 50%),
+        radial-gradient(ellipse 60% 50% at 100% 100%, rgba(168, 85, 247, 0.06), transparent 50%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(59, 130, 246, 0.04), transparent 60%);
+}
+
+/* Ensure content is above pattern */
+.mg-page--light > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Light mode navigation */
+.mg-page--light .mg-nav {
+    background: rgba(255, 255, 255, 0.85);
+    border-bottom-color: var(--mg-glass-border);
+}
+
+.mg-page--light .mg-nav__logo-text {
+    color: var(--mg-text-primary);
+}
+
+.mg-page--light .mg-nav__link {
+    color: var(--mg-text-secondary);
+}
+
+.mg-page--light .mg-nav__link:hover {
+    color: var(--mg-text-primary);
+}
+
+/* Light mode cards */
+.mg-page--light .mg-card {
+    background: var(--mg-bg-card);
+    border-color: var(--mg-glass-border);
+    box-shadow: var(--mg-shadow-card);
+}
+
+.mg-page--light .mg-card:hover {
+    border-color: var(--mg-glass-border-hover);
+    box-shadow: 0 8px 30px -8px rgba(99, 102, 241, 0.15);
+}
+
+/* Light mode service cards */
+.mg-page--light .mg-service-card {
+    background: var(--mg-bg-card);
+    border-color: var(--mg-glass-border);
+    box-shadow: var(--mg-shadow-card);
+}
+
+.mg-page--light .mg-service-card:hover {
+    border-color: var(--mg-glass-border-hover);
+    box-shadow: 0 12px 35px -10px rgba(99, 102, 241, 0.18);
+}
+
+.mg-page--light .mg-service-card__name {
+    color: var(--mg-text-primary);
+}
+
+.mg-page--light .mg-service-card__description {
+    color: var(--mg-text-secondary);
+}
+
+/* Light mode hero section */
+.mg-page--light .mg-hero__title {
+    color: var(--mg-text-primary);
+}
+
+.mg-page--light .mg-hero__subtitle {
+    color: var(--mg-text-secondary);
+}
+
+/* Light mode section titles */
+.mg-page--light .mg-section__title {
+    color: var(--mg-text-primary);
+}
+
+.mg-page--light .mg-section__subtitle {
+    color: var(--mg-text-secondary);
+}
+
+/* Light mode courier CTA */
+.mg-page--light .mg-courier {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.05));
+    border-color: rgba(99, 102, 241, 0.15);
+    box-shadow: 0 4px 20px -4px rgba(99, 102, 241, 0.1);
+}
+
+.mg-page--light .mg-courier__title {
+    color: var(--mg-text-primary);
+}
+
+.mg-page--light .mg-courier__description {
+    color: var(--mg-text-secondary);
+}
+
+/* Light mode buttons - secondary */
+.mg-page--light .mg-btn--secondary {
+    background: rgba(99, 102, 241, 0.08);
+    color: var(--mg-gradient-1);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+.mg-page--light .mg-btn--secondary:hover {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* Light mode footer */
+.mg-page--light .mg-footer {
+    background: rgba(255, 255, 255, 0.9);
+    border-top-color: var(--mg-glass-border);
+}
+
+.mg-page--light .mg-footer__text {
+    color: var(--mg-text-muted);
+}
+
+.mg-page--light .mg-footer__link {
+    color: var(--mg-text-secondary);
+}
+
+.mg-page--light .mg-footer__link:hover {
+    color: var(--mg-gradient-1);
+}
+
+/* Light mode trust items */
+.mg-page--light .mg-trust-item {
+    color: var(--mg-text-secondary);
+}
+
+/* Light mode badge */
+.mg-page--light .mg-section__badge {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--mg-gradient-1);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+/* Hide dark mode orbs in light mode */
+.mg-page--light .mg-bg-animated {
+    display: none;
+}
+
+/* Light mode info boxes */
+.mg-page--light .mg-card[style*="border-color: rgba(99, 102, 241"] {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.06), rgba(168, 85, 247, 0.03)) !important;
+}
+
+/* Smooth transition when switching modes */
+.mg-page,
+.mg-page * {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
