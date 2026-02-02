@@ -20,6 +20,7 @@ from typing import Optional, Tuple
 
 from ..extensions import db
 from ..models import TenantUser
+from .sms_billing_service import get_sms_price
 
 
 class SMSLimitExceeded(Exception):
@@ -163,7 +164,8 @@ class SMSService:
     def _log_sms_usage(self, tenant_id: int, sms_type: str, recipient: str,
                        status: str = 'sent', reference_type: str = None,
                        reference_id: int = None, error_message: str = None,
-                       provider_message_id: str = None, user_id: int = None):
+                       provider_message_id: str = None, user_id: int = None,
+                       cost: float = None):
         """
         Loguje SMS potrošnju u TenantSmsUsage.
 
@@ -177,6 +179,7 @@ class SMSService:
             error_message: Poruka greške
             provider_message_id: ID poruke od provajdera
             user_id: ID korisnika koji je inicirao
+            cost: Cena SMS-a u kreditima (ako je naplaćen)
         """
         from ..models import TenantSmsUsage
 
@@ -190,7 +193,8 @@ class SMSService:
                 reference_id=reference_id,
                 error_message=error_message,
                 provider_message_id=provider_message_id,
-                user_id=user_id
+                user_id=user_id,
+                cost=cost
             )
             db.session.commit()
         except Exception as e:
@@ -523,7 +527,8 @@ class SMSService:
                 recipient=formatted_phone,
                 status='sent',
                 reference_type='ticket',
-                reference_id=ticket.id
+                reference_id=ticket.id,
+                cost=float(get_sms_price())
             )
             # Record rate limit za dev mode
             rate_limiter.record_send(ticket.tenant_id, ticket.customer_phone)
@@ -542,7 +547,8 @@ class SMSService:
                 recipient=formatted_phone,
                 status='sent',
                 reference_type='ticket',
-                reference_id=ticket.id
+                reference_id=ticket.id,
+                cost=float(get_sms_price())
             )
             self._log_ticket_notification(ticket, 'SMS_READY', message)
             # Record rate limit
@@ -695,7 +701,8 @@ class SMSService:
                 recipient=formatted_phone,
                 status='sent',
                 reference_type='ticket',
-                reference_id=ticket.id
+                reference_id=ticket.id,
+                cost=float(get_sms_price())
             )
             # Record rate limit za dev mode
             rate_limiter.record_send(ticket.tenant_id, ticket.customer_phone)
@@ -717,7 +724,8 @@ class SMSService:
                 recipient=formatted_phone,
                 status='sent',
                 reference_type='ticket',
-                reference_id=ticket.id
+                reference_id=ticket.id,
+                cost=float(get_sms_price())
             )
             self._log_ticket_notification(ticket, f'SMS_REMINDER_{days}', message)
             # Record rate limit

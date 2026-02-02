@@ -216,7 +216,8 @@ class TenantSmsUsage(db.Model):
     def log_sms(cls, tenant_id: int, sms_type: str, recipient: str,
                 status: str = 'pending', reference_type: str = None,
                 reference_id: int = None, error_message: str = None,
-                provider_message_id: str = None, user_id: int = None):
+                provider_message_id: str = None, user_id: int = None,
+                cost: float = None):
         """
         Loguje SMS poruku.
 
@@ -230,6 +231,7 @@ class TenantSmsUsage(db.Model):
             error_message: Poruka greške
             provider_message_id: ID poruke od provajdera
             user_id: ID korisnika koji je inicirao
+            cost: Cena SMS-a u kreditima (ako je naplaćen)
 
         Returns:
             TenantSmsUsage instanca
@@ -244,7 +246,8 @@ class TenantSmsUsage(db.Model):
             error_message=error_message,
             provider_message_id=provider_message_id,
             initiated_by_user_id=user_id,
-            sent_at=datetime.utcnow() if status == 'sent' else None
+            sent_at=datetime.utcnow() if status == 'sent' else None,
+            cost=cost
         )
         db.session.add(usage)
         return usage
@@ -273,6 +276,7 @@ class TenantSmsUsage(db.Model):
             'reference_type': self.reference_type,
             'reference_id': self.reference_id,
             'provider_message_id': self.provider_message_id,
+            'cost': float(self.cost) if self.cost else 0,
             # DLR polja
             'delivery_status': self.delivery_status,
             'delivery_status_at': self.delivery_status_at.isoformat() if self.delivery_status_at else None,
