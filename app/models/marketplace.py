@@ -314,7 +314,7 @@ class PartOrderRequest(db.Model):
     price_list_item = db.relationship('SupplierPriceListItem', backref='orders')
     service_ticket = db.relationship('ServiceTicket', backref='marketplace_orders')
     messages = db.relationship(
-        'PartOrderMessage',
+        'MarketplaceOrderMessage',
         backref='order',
         cascade='all, delete-orphan',
         order_by='PartOrderMessage.created_at'
@@ -411,9 +411,9 @@ class PartOrderRequest(db.Model):
         return data
 
 
-class PartOrderMessage(db.Model):
-    """Poruka vezana za porudžbinu - omogućava komunikaciju pre/posle potvrde."""
-    __tablename__ = 'part_order_message'
+class MarketplaceOrderMessage(db.Model):
+    """Poruka vezana za marketplace porudžbinu - omogućava komunikaciju pre/posle potvrde."""
+    __tablename__ = 'marketplace_order_message'
 
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(
@@ -450,7 +450,7 @@ class PartOrderMessage(db.Model):
     sender_user = db.relationship('TenantUser')
 
     def __repr__(self):
-        return f'<PartOrderMessage {self.id}: order={self.order_id}>'
+        return f'<MarketplaceOrderMessage {self.id}: order={self.order_id}>'
 
     def to_dict(self):
         return {

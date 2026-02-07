@@ -64,9 +64,9 @@ def upgrade():
     op.create_index('ix_part_order_status', 'part_order_request', ['status'])
     op.create_index('ix_part_order_date', 'part_order_request', ['order_date'])
 
-    # PartOrderMessage
+    # MarketplaceOrderMessage
     op.create_table(
-        'part_order_message',
+        'marketplace_order_message',
         sa.Column('id', sa.Integer(), primary_key=True),
         sa.Column('order_id', sa.Integer(), sa.ForeignKey('part_order_request.id', ondelete='CASCADE'), nullable=False),
         sa.Column('sender_tenant_id', sa.Integer(), sa.ForeignKey('tenant.id', ondelete='SET NULL'), nullable=False),
@@ -77,13 +77,13 @@ def upgrade():
         sa.Column('read_at', sa.DateTime()),
         sa.Column('created_at', sa.DateTime(), server_default=sa.func.now(), nullable=False),
     )
-    op.create_index('ix_part_order_message_order', 'part_order_message', ['order_id'])
+    op.create_index('ix_marketplace_order_message_order', 'marketplace_order_message', ['order_id'])
 
 
 def downgrade():
-    """Drop part_order_message and part_order_request tables."""
-    op.drop_index('ix_part_order_message_order', 'part_order_message')
-    op.drop_table('part_order_message')
+    """Drop marketplace_order_message and part_order_request tables."""
+    op.drop_index('ix_marketplace_order_message_order', 'marketplace_order_message')
+    op.drop_table('marketplace_order_message')
 
     op.drop_index('ix_part_order_date', 'part_order_request')
     op.drop_index('ix_part_order_status', 'part_order_request')

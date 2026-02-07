@@ -87,7 +87,7 @@ from .marketplace import (
     # Cenovnici
     SupplierPriceList, SupplierPriceListItem,
     # Porudžbine
-    PartOrderRequest, PartOrderMessage,
+    PartOrderRequest, MarketplaceOrderMessage,
     # Podešavanja
     MarketplaceSettings,
     # Ocene
@@ -287,7 +287,7 @@ __all__ = [
     'SupplierPriceList',
     'SupplierPriceListItem',
     'PartOrderRequest',
-    'PartOrderMessage',
+    'MarketplaceOrderMessage',
     'MarketplaceSettings',
     'MarketplaceRating',
     'TenantFavoriteSupplier',
