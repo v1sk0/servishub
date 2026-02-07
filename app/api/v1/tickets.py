@@ -894,6 +894,7 @@ def collect_ticket(ticket_id):
                 spare_part_id=spare_part.id,
                 quantity_used=1,
                 unit_price=purchase_price,
+                unit_cost=purchase_price,  # Nabavna cena za profit tracking
                 currency='RSD',
                 added_by_id=user.id
             )
@@ -1493,6 +1494,7 @@ def add_ticket_part(ticket_id):
         spare_part_id=spare_part_id,
         quantity_used=quantity,
         unit_price=part.selling_price,
+        unit_cost=part.purchase_price,  # Nabavna cena za profit tracking
         currency=part.currency or 'RSD',
         added_by_id=user.id,
     )
@@ -1672,6 +1674,7 @@ def receive_and_use_part(ticket_id):
         spare_part_id=part.id,
         quantity_used=quantity,
         unit_price=part.purchase_price,
+        unit_cost=part.purchase_price,  # Nabavna cena za profit tracking
         currency=part.currency or 'RSD',
         added_by_id=user.id,
     )

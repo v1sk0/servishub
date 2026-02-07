@@ -34,6 +34,20 @@ class StockAdjustmentType(enum.Enum):
     RETURN_TO_SUPPLIER = 'RETURN_TO_SUPPLIER'  # Povrat dobavljaču
 
 
+class SupplierType(enum.Enum):
+    """Tip dobavljača."""
+    COMPANY = 'COMPANY'       # Pravno lice (firma)
+    INDIVIDUAL = 'INDIVIDUAL' # Fizičko lice
+
+
+class BuybackStatus(enum.Enum):
+    """Status otkupnog ugovora."""
+    DRAFT = 'DRAFT'         # U pripremi
+    SIGNED = 'SIGNED'       # Potpisan, roba primljena
+    PAID = 'PAID'           # Isplaćeno prodavcu
+    CANCELLED = 'CANCELLED' # Otkazano
+
+
 # ============================================
 # MODELI
 # ============================================
@@ -159,6 +173,12 @@ class PurchaseInvoice(db.Model):
     # Dobavljač
     supplier_name = db.Column(db.String(200), nullable=False)
     supplier_pib = db.Column(db.String(20), nullable=True)
+    supplier_id = db.Column(
+        db.Integer,
+        db.ForeignKey('simple_supplier.id', ondelete='SET NULL'),
+        nullable=True,
+        index=True
+    )
     invoice_number = db.Column(db.String(100), nullable=False)
 
     # Datumi
@@ -338,6 +358,278 @@ class PosAuditLog(db.Model):
 
     def __repr__(self):
         return f'<PosAuditLog {self.id}: {self.action} {self.entity_type}#{self.entity_id}>'
+
+
+class SimpleSupplier(db.Model):
+    """
+    Jednostavan dobavljač za prijem robe.
+
+    Razlika od Supplier modela (marketplace):
+    - Ovaj je za interne ulazne fakture i otkup
+    - Nema commission, ratings, listings
+    """
+    __tablename__ = 'simple_supplier'
+
+    id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(
+        db.Integer,
+        db.ForeignKey('tenant.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True
+    )
+
+    # Tip dobavljača
+    supplier_type = db.Column(
+        db.Enum(SupplierType),
+        nullable=False,
+        default=SupplierType.COMPANY
+    )
+
+    # Osnovni podaci (oba tipa)
+    name = db.Column(db.String(200), nullable=False)
+    phone = db.Column(db.String(50))
+    email = db.Column(db.String(100))
+    address = db.Column(db.Text)
+    city = db.Column(db.String(100))
+
+    # Za COMPANY (pravno lice)
+    company_name = db.Column(db.String(200))  # Pun pravni naziv
+    pib = db.Column(db.String(20))            # PIB (9 cifara)
+    maticni_broj = db.Column(db.String(20))   # Matični broj (8 cifara)
+    bank_account = db.Column(db.String(50))   # Žiro račun
+
+    # Za INDIVIDUAL (fizičko lice)
+    jmbg = db.Column(db.String(13))           # JMBG (13 cifara)
+    id_card_number = db.Column(db.String(20)) # Broj lične karte
+    id_card_issued_by = db.Column(db.String(100))  # Izdata od (MUP)
+    id_card_issue_date = db.Column(db.Date)   # Datum izdavanja
+
+    # Status
+    is_active = db.Column(db.Boolean, default=True)
+    notes = db.Column(db.Text)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+
+    # Relacije
+    tenant = db.relationship('Tenant', backref='simple_suppliers')
+
+    __table_args__ = (
+        db.Index('ix_simple_supplier_tenant_type', 'tenant_id', 'supplier_type'),
+    )
+
+    def __repr__(self):
+        return f'<SimpleSupplier {self.id}: {self.name}>'
+
+    def to_dict(self):
+        data = {
+            'id': self.id,
+            'supplier_type': self.supplier_type.value,
+            'name': self.name,
+            'phone': self.phone,
+            'email': self.email,
+            'address': self.address,
+            'city': self.city,
+            'is_active': self.is_active,
+        }
+        if self.supplier_type == SupplierType.COMPANY:
+            data.update({
+                'company_name': self.company_name,
+                'pib': self.pib,
+                'maticni_broj': self.maticni_broj,
+                'bank_account': self.bank_account,
+            })
+        else:
+            data.update({
+                'jmbg': self.jmbg,
+                'id_card_number': self.id_card_number,
+            })
+        return data
+
+
+class BuybackContract(db.Model):
+    """
+    Otkupni ugovor za fizička lica.
+
+    Po zakonu RS otkupni ugovor mora sadržati:
+    - Podatke o kupcu (firma koja otkupljuje)
+    - Podatke o prodavcu (fizičko lice) - ime, JMBG, LK, adresa
+    - Opis robe/artikala
+    - Cenu
+    - Datum i mesto
+    - Potpise obe strane
+    """
+    __tablename__ = 'buyback_contract'
+
+    id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(
+        db.Integer,
+        db.ForeignKey('tenant.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True
+    )
+    location_id = db.Column(
+        db.Integer,
+        db.ForeignKey('service_location.id', ondelete='SET NULL'),
+        nullable=True
+    )
+
+    # Broj ugovora: OTK-2026-00001
+    contract_number = db.Column(db.String(20), unique=True, nullable=False)
+    contract_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+
+    # Podaci o prodavcu (fizičko lice)
+    seller_name = db.Column(db.String(200), nullable=False)
+    seller_jmbg = db.Column(db.String(13), nullable=False)
+    seller_id_card = db.Column(db.String(20), nullable=False)
+    seller_id_issued_by = db.Column(db.String(100))
+    seller_address = db.Column(db.Text, nullable=False)
+    seller_city = db.Column(db.String(100))
+    seller_phone = db.Column(db.String(50))
+
+    # Opciono - veza ka SimpleSupplier za ponovne otkupe
+    supplier_id = db.Column(db.Integer, db.ForeignKey('simple_supplier.id'))
+
+    # Ukupan iznos
+    total_amount = db.Column(db.Numeric(12, 2), nullable=False, default=0)
+    currency = db.Column(db.String(3), default='RSD')
+
+    # Način isplate
+    payment_method = db.Column(db.String(20), default='CASH')  # CASH, BANK_TRANSFER
+    bank_account = db.Column(db.String(50))  # Ako je BANK_TRANSFER
+
+    # Status workflow
+    status = db.Column(
+        db.Enum(BuybackStatus),
+        default=BuybackStatus.DRAFT,
+        nullable=False,
+        index=True
+    )
+
+    # Datumi promene statusa
+    signed_at = db.Column(db.DateTime)
+    paid_at = db.Column(db.DateTime)
+    cancelled_at = db.Column(db.DateTime)
+    cancel_reason = db.Column(db.String(255))
+
+    # Audit
+    created_by_id = db.Column(db.Integer, db.ForeignKey('tenant_user.id'), nullable=False)
+    signed_by_id = db.Column(db.Integer, db.ForeignKey('tenant_user.id'))
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Napomena
+    notes = db.Column(db.Text)
+
+    # Relacije
+    tenant = db.relationship('Tenant', backref='buyback_contracts')
+    location = db.relationship('ServiceLocation')
+    supplier = db.relationship('SimpleSupplier')
+    created_by = db.relationship('TenantUser', foreign_keys=[created_by_id])
+    signed_by = db.relationship('TenantUser', foreign_keys=[signed_by_id])
+    items = db.relationship(
+        'BuybackContractItem',
+        backref='contract',
+        cascade='all, delete-orphan',
+        lazy='dynamic'
+    )
+
+    def __repr__(self):
+        return f'<BuybackContract {self.contract_number}>'
+
+    @staticmethod
+    def generate_contract_number(tenant_id: int) -> str:
+        """Generiše sledeći broj ugovora: OTK-2026-00001"""
+        year = datetime.now().year
+        prefix = f"OTK-{year}-"
+
+        last = BuybackContract.query.filter(
+            BuybackContract.tenant_id == tenant_id,
+            BuybackContract.contract_number.like(f"{prefix}%")
+        ).order_by(BuybackContract.contract_number.desc()).first()
+
+        next_num = 1
+        if last:
+            try:
+                next_num = int(last.contract_number.split('-')[-1]) + 1
+            except ValueError:
+                pass
+        return f"{prefix}{next_num:05d}"
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'contract_number': self.contract_number,
+            'contract_date': self.contract_date.isoformat() if self.contract_date else None,
+            'seller_name': self.seller_name,
+            'seller_jmbg': self.seller_jmbg,
+            'seller_id_card': self.seller_id_card,
+            'seller_address': self.seller_address,
+            'seller_phone': self.seller_phone,
+            'total_amount': float(self.total_amount) if self.total_amount else 0,
+            'currency': self.currency,
+            'payment_method': self.payment_method,
+            'status': self.status.value,
+            'items_count': self.items.count(),
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class BuybackContractItem(db.Model):
+    """Stavka otkupnog ugovora."""
+    __tablename__ = 'buyback_contract_item'
+
+    id = db.Column(db.Integer, primary_key=True)
+    contract_id = db.Column(
+        db.Integer,
+        db.ForeignKey('buyback_contract.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True
+    )
+
+    # Opis artikla
+    item_description = db.Column(db.String(300), nullable=False)
+    brand = db.Column(db.String(100))
+    model = db.Column(db.String(100))
+
+    # Identifikatori (opciono)
+    imei = db.Column(db.String(20))
+    serial_number = db.Column(db.String(50))
+
+    # Količina i cena
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    unit_price = db.Column(db.Numeric(10, 2), nullable=False)
+    line_total = db.Column(db.Numeric(12, 2), nullable=False)
+
+    # Stanje artikla
+    condition = db.Column(db.String(20), default='USED')  # NEW, USED, DAMAGED
+
+    # Kategorija (za automatsko kreiranje SparePart/GoodsItem)
+    item_type = db.Column(db.String(20), default='SPARE_PART')  # SPARE_PART, GOODS, PHONE
+    part_category = db.Column(db.String(30))  # DISPLAY, BATTERY, etc.
+
+    # Link ka kreiranom artiklu posle potpisivanja
+    spare_part_id = db.Column(db.BigInteger, db.ForeignKey('spare_part.id'))
+    goods_item_id = db.Column(db.Integer, db.ForeignKey('goods_item.id'))
+    phone_listing_id = db.Column(db.BigInteger, db.ForeignKey('phone_listing.id'))
+
+    def __repr__(self):
+        return f'<BuybackContractItem {self.id}: {self.item_description}>'
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'item_description': self.item_description,
+            'brand': self.brand,
+            'model': self.model,
+            'imei': self.imei,
+            'serial_number': self.serial_number,
+            'quantity': self.quantity,
+            'unit_price': float(self.unit_price) if self.unit_price else 0,
+            'line_total': float(self.line_total) if self.line_total else 0,
+            'condition': self.condition,
+            'item_type': self.item_type,
+        }
 
 
 # ============================================

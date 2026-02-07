@@ -338,6 +338,7 @@ class SparePartUsage(db.Model):
     )
     quantity_used = db.Column(db.Integer, nullable=False, default=1)
     unit_price = db.Column(db.Numeric(10, 2))
+    unit_cost = db.Column(db.Numeric(10, 2))  # Nabavna cena za profit tracking
     currency = db.Column(db.String(3), default='RSD')
     added_by_id = db.Column(db.Integer, db.ForeignKey('tenant_user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -353,14 +354,19 @@ class SparePartUsage(db.Model):
     )
 
     def to_dict(self):
+        profit = None
+        if self.unit_price and self.unit_cost:
+            profit = float((self.unit_price - self.unit_cost) * self.quantity_used)
         return {
             'id': self.id,
             'spare_part_id': self.spare_part_id,
             'part_name': self.spare_part.part_name if self.spare_part else None,
             'quantity_used': self.quantity_used,
             'unit_price': float(self.unit_price) if self.unit_price else None,
+            'unit_cost': float(self.unit_cost) if self.unit_cost else None,
             'currency': self.currency,
             'total': float(self.unit_price * self.quantity_used) if self.unit_price else None,
+            'profit': profit,
             'created_at': self.created_at.isoformat(),
         }
 

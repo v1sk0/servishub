@@ -107,6 +107,30 @@ class Tenant(db.Model):
     consecutive_on_time_payments = db.Column(db.Integer, default=0)  # Uzastopne uplate na vreme
 
     # ============================================
+    # MARKETPLACE RATING CACHE - Za sortiranje u pretrazi
+    # ============================================
+    supplier_positive_ratings = db.Column(db.Integer, default=0)  # Pozitivne ocene kao dobavljac
+    supplier_negative_ratings = db.Column(db.Integer, default=0)  # Negativne ocene kao dobavljac
+    buyer_positive_ratings = db.Column(db.Integer, default=0)     # Pozitivne ocene kao kupac
+    buyer_negative_ratings = db.Column(db.Integer, default=0)     # Negativne ocene kao kupac
+
+    @property
+    def supplier_rating_score(self):
+        """Procenat pozitivnih ocena kao dobavljac (0-100 ili None)."""
+        total = self.supplier_positive_ratings + self.supplier_negative_ratings
+        if total == 0:
+            return None
+        return round((self.supplier_positive_ratings / total) * 100)
+
+    @property
+    def buyer_rating_score(self):
+        """Procenat pozitivnih ocena kao kupac (0-100 ili None)."""
+        total = self.buyer_positive_ratings + self.buyer_negative_ratings
+        if total == 0:
+            return None
+        return round((self.buyer_positive_ratings / total) * 100)
+
+    # ============================================
     # CUSTOM CENE - Popusti po servisu
     # ============================================
     custom_base_price = db.Column(db.Numeric(10, 2))           # NULL = koristi platformsku cenu

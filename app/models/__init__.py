@@ -50,7 +50,10 @@ from .goods import (
     GoodsItem, PurchaseInvoice, PurchaseInvoiceItem,
     StockAdjustment, PosAuditLog,
     InvoiceStatus, StockAdjustmentType,
-    suggest_selling_price
+    suggest_selling_price,
+    # FAZA 3: Dobavljači i Otkup
+    SimpleSupplier, SupplierType,
+    BuybackContract, BuybackContractItem, BuybackStatus
 )
 from .financial_audit import FinancialAuditLog, FinancialCategory
 from .bank_import import (
@@ -65,6 +68,34 @@ from .notification import (
 from .sms_management import (
     TenantSmsConfig, TenantSmsUsage, SmsDlrLog,
     get_sms_stats_for_tenant, get_platform_sms_stats
+)
+# FAZA 5: StockMovement ledger
+from .stock_movement import (
+    StockMovement, LocationStock, MovementType,
+    create_stock_movement, get_stock_card, get_stock_by_location,
+    get_total_stock, validate_stock_balance
+)
+# FAZA 9: Transfer između lokacija
+from .transfer import (
+    TransferRequest, TransferRequestItem, TransferRequestStatus
+)
+# FAZA 10: Supplier Marketplace
+from .marketplace import (
+    # Enums
+    PriceListStatus, PartOrderStatus,
+    RatingType as MarketplaceRatingType,
+    # Cenovnici
+    SupplierPriceList, SupplierPriceListItem,
+    # Porudžbine
+    PartOrderRequest, PartOrderMessage,
+    # Podešavanja
+    MarketplaceSettings,
+    # Ocene
+    MarketplaceRating,
+    # Favoriti
+    TenantFavoriteSupplier,
+    # Dostava
+    SupplierDeliveryOption,
 )
 
 __all__ = [
@@ -204,6 +235,12 @@ __all__ = [
     'InvoiceStatus',
     'StockAdjustmentType',
     'suggest_selling_price',
+    # Simple Supplier & Buyback
+    'SimpleSupplier',
+    'SupplierType',
+    'BuybackContract',
+    'BuybackContractItem',
+    'BuybackStatus',
     # Financial Audit
     'FinancialAuditLog',
     'FinancialCategory',
@@ -230,4 +267,29 @@ __all__ = [
     'SmsDlrLog',
     'get_sms_stats_for_tenant',
     'get_platform_sms_stats',
+    # StockMovement Ledger (FAZA 5)
+    'StockMovement',
+    'LocationStock',
+    'MovementType',
+    'create_stock_movement',
+    'get_stock_card',
+    'get_stock_by_location',
+    'get_total_stock',
+    'validate_stock_balance',
+    # Transfer (FAZA 9)
+    'TransferRequest',
+    'TransferRequestItem',
+    'TransferRequestStatus',
+    # Marketplace (FAZA 10)
+    'PriceListStatus',
+    'PartOrderStatus',
+    'MarketplaceRatingType',
+    'SupplierPriceList',
+    'SupplierPriceListItem',
+    'PartOrderRequest',
+    'PartOrderMessage',
+    'MarketplaceSettings',
+    'MarketplaceRating',
+    'TenantFavoriteSupplier',
+    'SupplierDeliveryOption',
 ]
