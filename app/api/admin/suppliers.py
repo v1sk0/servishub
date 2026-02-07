@@ -13,7 +13,12 @@ from app.extensions import db
 from app.models.supplier import Supplier, SupplierUser, SupplierListing, SupplierStatus
 from app.models.admin_activity import AdminActivityLog, AdminActionType
 from app.api.middleware.auth import platform_admin_required
-from app.utils.slug import generate_slug
+from slugify import slugify
+
+
+def generate_slug(text: str) -> str:
+    """Generiše URL-friendly slug iz teksta."""
+    return slugify(text, lowercase=True, separator='-')
 
 bp = Blueprint('admin_suppliers', __name__, url_prefix='/suppliers')
 
