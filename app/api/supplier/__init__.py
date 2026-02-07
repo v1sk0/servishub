@@ -14,8 +14,9 @@ bp = Blueprint('api_supplier', __name__)
 
 def register_routes():
     """Register all supplier API routes"""
-    from . import auth, listings, orders
+    from . import auth, listings, orders, dashboard
 
     bp.register_blueprint(auth.bp)
     bp.register_blueprint(listings.bp)
     bp.register_blueprint(orders.bp)
+    bp.register_blueprint(dashboard.bp)
