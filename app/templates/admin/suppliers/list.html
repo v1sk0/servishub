@@ -519,27 +519,37 @@ function suppliersPage() {
             this.saving = true;
             const token = localStorage.getItem('admin_access_token');
 
+            // Helper: trim and convert empty to null
+            const toNull = (v) => v && v.trim() ? v.trim() : null;
+
             try {
                 const body = {
-                    name: this.addForm.name,
-                    email: this.addForm.email,
-                    pib: this.addForm.pib || null,
-                    maticni_broj: this.addForm.maticni_broj || null,
-                    phone: this.addForm.phone || null,
-                    city: this.addForm.city || null,
-                    address: this.addForm.address || null,
-                    website: this.addForm.website || null,
-                    commission_rate: (this.addForm.commission_rate || 5) / 100,
+                    name: this.addForm.name.trim(),
+                    email: this.addForm.email.trim(),
+                    pib: toNull(this.addForm.pib),
+                    maticni_broj: toNull(this.addForm.maticni_broj),
+                    phone: toNull(this.addForm.phone),
+                    city: toNull(this.addForm.city),
+                    address: toNull(this.addForm.address),
+                    website: toNull(this.addForm.website),
+                    commission_rate: parseFloat(this.addForm.commission_rate || 5) / 100,
                     auto_verify: this.addForm.auto_verify
                 };
 
                 if (this.addForm.createAdminUser) {
+                    // Validate admin user fields
+                    const au = this.addForm.admin_user;
+                    if (!au.ime || !au.prezime || !au.email || !au.password) {
+                        showToast('Popunite sva obavezna polja za admin korisnika', 'error');
+                        this.saving = false;
+                        return;
+                    }
                     body.admin_user = {
-                        ime: this.addForm.admin_user.ime,
-                        prezime: this.addForm.admin_user.prezime,
-                        email: this.addForm.admin_user.email,
-                        password: this.addForm.admin_user.password,
-                        phone: this.addForm.admin_user.phone || null
+                        ime: au.ime.trim(),
+                        prezime: au.prezime.trim(),
+                        email: au.email.trim(),
+                        password: au.password,
+                        phone: toNull(au.phone)
                     };
                 }
 
