@@ -8,16 +8,24 @@
 
 {% block content %}
 <div :class="{'admin-glass': theme === 'glass', 'admin-light': theme === 'light'}"
-     x-data="suppliersPage()" x-init="loadSuppliers()">
+     x-data="suppliersPage()" x-init="init()">
     <div class="admin-wrapper min-h-screen bg-gray-100">
         {% set active_page = 'suppliers' %}
         {% include "admin/_sidebar.html" %}
 
-        <!-- Main content -->
+        <!-- Main Content -->
         <div class="ml-64">
+            <!-- Top bar -->
             <div class="admin-topbar bg-white shadow-sm h-16 flex items-center justify-between px-8">
                 <h1 class="text-xl font-semibold text-gray-900">Dobavljaci</h1>
                 <div class="flex items-center space-x-4">
+                    <!-- Dodaj dobavljaca dugme -->
+                    <button @click="openAddModal()" class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Dodaj dobavljaca
+                    </button>
                     <!-- Theme Toggle -->
                     <div class="flex items-center space-x-2">
                         <button @click="setTheme('light')"
@@ -41,48 +49,313 @@
             </div>
 
             <div class="p-8">
-                <div x-show="loading" class="flex justify-center py-12">
-                    <svg class="animate-spin h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
+                <!-- Stats -->
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-5 mb-6">
+                    <div class="stat-card blue admin-card bg-white rounded-lg shadow p-4">
+                        <div class="text-sm text-gray-500">Ukupno</div>
+                        <div class="text-2xl font-bold text-gray-900" x-text="stats.total"></div>
+                    </div>
+                    <div class="stat-card yellow admin-card bg-white rounded-lg shadow p-4" style="border-left: 4px solid #eab308;">
+                        <div class="text-sm text-gray-500">Na cekanju</div>
+                        <div class="text-2xl font-bold text-yellow-600" x-text="stats.pending"></div>
+                    </div>
+                    <div class="stat-card green admin-card bg-white rounded-lg shadow p-4">
+                        <div class="text-sm text-gray-500">Aktivni</div>
+                        <div class="text-2xl font-bold text-green-600" x-text="stats.active"></div>
+                    </div>
+                    <div class="stat-card red admin-card bg-white rounded-lg shadow p-4">
+                        <div class="text-sm text-gray-500">Suspendovani</div>
+                        <div class="text-2xl font-bold text-red-600" x-text="stats.suspended"></div>
+                    </div>
+                    <div class="stat-card purple admin-card bg-white rounded-lg shadow p-4" style="border-left: 4px solid #9333ea;">
+                        <div class="text-sm text-gray-500">Artikala</div>
+                        <div class="text-2xl font-bold text-purple-600" x-text="stats.listings"></div>
+                    </div>
                 </div>
 
-                <div x-show="!loading" class="admin-card bg-white shadow rounded-lg overflow-hidden">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Naziv</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PIB</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Artikala</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Akcije</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <template x-for="s in suppliers" :key="s.id">
+                <!-- Filters -->
+                <div class="admin-card bg-white rounded-lg shadow p-4 mb-6">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Pretraga</label>
+                            <input type="text" x-model="filters.search" @input.debounce.300ms="loadSuppliers()"
+                                   placeholder="Naziv, email, PIB..."
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Status</label>
+                            <select x-model="filters.status" @change="loadSuppliers()"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                                <option value="">Svi</option>
+                                <option value="PENDING">Na cekanju</option>
+                                <option value="ACTIVE">Aktivni</option>
+                                <option value="SUSPENDED">Suspendovani</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Sortiranje</label>
+                            <select x-model="filters.sort" @change="loadSuppliers()"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                                <option value="created_at">Datum registracije</option>
+                                <option value="name">Naziv</option>
+                                <option value="status">Status</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button @click="resetFilters()" class="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 border border-gray-300">
+                                Resetuj
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="admin-card bg-white rounded-lg shadow overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
                                 <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <p class="text-sm font-medium text-gray-900" x-text="s.name"></p>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="s.email"></td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="s.pib || '-'"></td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="s.listings_count || 0"></td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 py-1 text-xs font-medium rounded-full"
-                                              :class="{'bg-yellow-100 text-yellow-800': s.status === 'PENDING', 'bg-green-100 text-green-800': s.status === 'ACTIVE', 'bg-red-100 text-red-800': s.status === 'SUSPENDED'}"
-                                              x-text="statusLabels[s.status]"></span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right">
-                                        <a :href="'/admin/suppliers/' + s.id" class="text-red-600 hover:text-red-900 text-sm font-medium">Detalji</a>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dobavljac</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kontakt</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PIB</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Artikala</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registrovan</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Akcije</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <template x-for="s in suppliers" :key="s.id">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-semibold" x-text="s.name.charAt(0).toUpperCase()"></div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900" x-text="s.name"></div>
+                                                    <div class="text-sm text-gray-500" x-text="s.city || '-'"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900" x-text="s.email"></div>
+                                            <div class="text-sm text-gray-500" x-text="s.phone || '-'"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="s.pib || '-'"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="text-sm font-medium text-gray-900" x-text="s.listings_count || 0"></span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 py-1 text-xs font-medium rounded-full"
+                                                  :class="statusClass(s.status)"
+                                                  x-text="statusLabels[s.status]"></span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(s.created_at)"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                            <div class="flex justify-end space-x-2">
+                                                <a :href="'/admin/suppliers/' + s.id" class="text-red-600 hover:text-red-900">Detalji</a>
+                                                <template x-if="s.status === 'PENDING'">
+                                                    <button @click="activateSupplier(s)" class="text-green-600 hover:text-green-900">Aktiviraj</button>
+                                                </template>
+                                                <template x-if="s.status === 'ACTIVE'">
+                                                    <button @click="openSuspendModal(s)" class="text-red-600 hover:text-red-900">Suspenduj</button>
+                                                </template>
+                                                <template x-if="s.status === 'SUSPENDED'">
+                                                    <button @click="reactivateSupplier(s)" class="text-green-600 hover:text-green-900">Reaktiviraj</button>
+                                                </template>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+
+                                <!-- Empty -->
+                                <tr x-show="!loading && suppliers.length === 0" x-cloak>
+                                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                                        Nema dobavljaca koji odgovaraju filterima
                                     </td>
                                 </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                    <div x-show="suppliers.length === 0" class="text-center py-12 text-gray-500">Nema dobavljaca</div>
+
+                                <!-- Loading -->
+                                <tr x-show="loading">
+                                    <td colspan="7" class="px-6 py-12 text-center">
+                                        <svg class="animate-spin mx-auto h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between" x-show="pagination.pages > 1" x-cloak>
+                        <p class="text-sm text-gray-500">
+                            <span x-text="((pagination.page - 1) * pagination.per_page) + 1"></span> -
+                            <span x-text="Math.min(pagination.page * pagination.per_page, pagination.total)"></span> od
+                            <span x-text="pagination.total"></span>
+                        </p>
+                        <div class="flex space-x-2">
+                            <button @click="prevPage()" :disabled="!pagination.has_prev" class="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm disabled:opacity-50 border border-gray-300">&lt;</button>
+                            <span class="px-3 py-1 text-gray-700" x-text="pagination.page + ' / ' + pagination.pages"></span>
+                            <button @click="nextPage()" :disabled="!pagination.has_next" class="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm disabled:opacity-50 border border-gray-300">&gt;</button>
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Supplier Modal -->
+    <div x-show="showAddModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="fixed inset-0 bg-black bg-opacity-50" @click="showAddModal = false"></div>
+            <div class="relative admin-card bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <form @submit.prevent="createSupplier()">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">Novi dobavljac</h3>
+                    </div>
+                    <div class="px-6 py-4 space-y-4">
+                        <!-- Podaci o dobavljacu -->
+                        <h4 class="font-medium text-gray-700 border-b pb-2">Podaci o dobavljacu</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Naziv *</label>
+                                <input type="text" x-model="addForm.name" required
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+                                       placeholder="Naziv firme">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Email *</label>
+                                <input type="email" x-model="addForm.email" required
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+                                       placeholder="email@firma.rs">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">PIB</label>
+                                <input type="text" x-model="addForm.pib" maxlength="9"
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+                                       placeholder="123456789">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Maticni broj</label>
+                                <input type="text" x-model="addForm.maticni_broj" maxlength="8"
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+                                       placeholder="12345678">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Telefon</label>
+                                <input type="text" x-model="addForm.phone"
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+                                       placeholder="+381 11 123 4567">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Grad</label>
+                                <input type="text" x-model="addForm.city"
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+                                       placeholder="Beograd">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Adresa</label>
+                            <input type="text" x-model="addForm.address"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+                                   placeholder="Ulica i broj">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Web sajt</label>
+                                <input type="url" x-model="addForm.website"
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+                                       placeholder="https://www.firma.rs">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Komisija (%)</label>
+                                <input type="number" x-model="addForm.commission_rate" min="0" max="100" step="0.5"
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+                                       placeholder="5">
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" x-model="addForm.auto_verify" id="auto_verify"
+                                   class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                            <label for="auto_verify" class="ml-2 text-sm text-gray-700">Odmah aktiviraj (bez verifikacije)</label>
+                        </div>
+
+                        <!-- Admin korisnik -->
+                        <div class="flex items-center mt-4">
+                            <input type="checkbox" x-model="addForm.createAdminUser" id="create_admin"
+                                   class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                            <label for="create_admin" class="ml-2 text-sm font-medium text-gray-700">Kreiraj admin korisnika za portal dobavljaca</label>
+                        </div>
+
+                        <div x-show="addForm.createAdminUser" class="space-y-4 p-4 bg-gray-50 rounded-lg mt-2">
+                            <h4 class="font-medium text-gray-700">Podaci admin korisnika</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Ime *</label>
+                                    <input type="text" x-model="addForm.admin_user.ime" :required="addForm.createAdminUser"
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Prezime *</label>
+                                    <input type="text" x-model="addForm.admin_user.prezime" :required="addForm.createAdminUser"
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Email *</label>
+                                    <input type="email" x-model="addForm.admin_user.email" :required="addForm.createAdminUser"
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Lozinka *</label>
+                                    <input type="password" x-model="addForm.admin_user.password" :required="addForm.createAdminUser"
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Telefon</label>
+                                <input type="text" x-model="addForm.admin_user.phone"
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                        <button type="button" @click="showAddModal = false" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 border border-gray-300">Otkazi</button>
+                        <button type="submit" :disabled="saving" class="px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-500 disabled:opacity-50">
+                            <span x-show="!saving">Sacuvaj</span>
+                            <span x-show="saving">Cuvanje...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suspend Modal -->
+    <div x-show="showSuspendModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="fixed inset-0 bg-black bg-opacity-50" @click="showSuspendModal = false"></div>
+            <div class="relative admin-card bg-white rounded-lg shadow-xl max-w-md w-full">
+                <form @submit.prevent="suspendSupplier()">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">Suspenduj dobavljaca</h3>
+                        <p class="text-sm text-gray-500" x-text="selectedSupplier?.name"></p>
+                    </div>
+                    <div class="px-6 py-4">
+                        <label class="block text-sm font-medium text-gray-700">Razlog suspenzije</label>
+                        <textarea x-model="suspendForm.reason" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm" placeholder="Navesite razlog..."></textarea>
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                        <button type="button" @click="showSuspendModal = false" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200 border border-gray-300">Otkazi</button>
+                        <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-500">Suspenduj</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -92,13 +365,47 @@
 function suppliersPage() {
     return {
         loading: true,
+        saving: false,
         suppliers: [],
+        pagination: { page: 1, per_page: 20, total: 0, pages: 1, has_next: false, has_prev: false },
+        stats: { total: 0, pending: 0, active: 0, suspended: 0, listings: 0 },
+        filters: { search: '', status: '', sort: 'created_at' },
         theme: localStorage.getItem('admin-theme') || 'light',
+
+        showAddModal: false,
+        showSuspendModal: false,
+        selectedSupplier: null,
+        suspendForm: { reason: '' },
+        addForm: {
+            name: '',
+            email: '',
+            pib: '',
+            maticni_broj: '',
+            phone: '',
+            city: '',
+            address: '',
+            website: '',
+            commission_rate: 5,
+            auto_verify: false,
+            createAdminUser: false,
+            admin_user: {
+                ime: '',
+                prezime: '',
+                email: '',
+                password: '',
+                phone: ''
+            }
+        },
 
         statusLabels: {
             'PENDING': 'Na cekanju',
             'ACTIVE': 'Aktivan',
             'SUSPENDED': 'Suspendovan'
+        },
+
+        init() {
+            this.loadSuppliers();
+            this.loadStats();
         },
 
         setTheme(newTheme) {
@@ -108,22 +415,49 @@ function suppliersPage() {
             }
         },
 
-        logout() {
-            localStorage.removeItem('admin_access_token');
-            localStorage.removeItem('admin_refresh_token');
-            window.location.href = '/admin/login';
+        statusClass(status) {
+            const classes = {
+                'PENDING': 'bg-yellow-100 text-yellow-800',
+                'ACTIVE': 'bg-green-100 text-green-800',
+                'SUSPENDED': 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleDateString('sr-Latn-RS');
         },
 
         async loadSuppliers() {
+            this.loading = true;
             const token = localStorage.getItem('admin_access_token');
             if (!token) { window.location.href = '/admin/login'; return; }
+
             try {
-                const r = await fetch('/api/admin/suppliers', {
+                const params = new URLSearchParams({
+                    page: this.pagination.page,
+                    per_page: this.pagination.per_page,
+                    sort: this.filters.sort,
+                    order: 'desc'
+                });
+                if (this.filters.search) params.append('search', this.filters.search);
+                if (this.filters.status) params.append('status', this.filters.status);
+
+                const r = await fetch('/api/admin/suppliers?' + params, {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 if (r.ok) {
                     const data = await r.json();
-                    this.suppliers = data.suppliers || data;
+                    this.suppliers = data.suppliers || [];
+                    this.pagination = {
+                        page: data.page || 1,
+                        per_page: data.per_page || 20,
+                        total: data.total || 0,
+                        pages: data.pages || 1,
+                        has_next: data.page < data.pages,
+                        has_prev: data.page > 1
+                    };
                 } else if (r.status === 401) {
                     window.location.href = '/admin/login';
                 }
@@ -132,7 +466,178 @@ function suppliersPage() {
             } finally {
                 this.loading = false;
             }
-        }
+        },
+
+        async loadStats() {
+            const token = localStorage.getItem('admin_access_token');
+            if (!token) return;
+
+            try {
+                const r = await fetch('/api/admin/suppliers/stats', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (r.ok) {
+                    const data = await r.json();
+                    this.stats = {
+                        total: data.suppliers?.total || 0,
+                        pending: data.suppliers?.pending || 0,
+                        active: data.suppliers?.active || 0,
+                        suspended: data.suppliers?.suspended || 0,
+                        listings: data.listings?.active || 0
+                    };
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        resetFilters() {
+            this.filters = { search: '', status: '', sort: 'created_at' };
+            this.pagination.page = 1;
+            this.loadSuppliers();
+        },
+
+        openAddModal() {
+            this.addForm = {
+                name: '',
+                email: '',
+                pib: '',
+                maticni_broj: '',
+                phone: '',
+                city: '',
+                address: '',
+                website: '',
+                commission_rate: 5,
+                auto_verify: false,
+                createAdminUser: false,
+                admin_user: { ime: '', prezime: '', email: '', password: '', phone: '' }
+            };
+            this.showAddModal = true;
+        },
+
+        async createSupplier() {
+            this.saving = true;
+            const token = localStorage.getItem('admin_access_token');
+
+            try {
+                const body = {
+                    name: this.addForm.name,
+                    email: this.addForm.email,
+                    pib: this.addForm.pib || null,
+                    maticni_broj: this.addForm.maticni_broj || null,
+                    phone: this.addForm.phone || null,
+                    city: this.addForm.city || null,
+                    address: this.addForm.address || null,
+                    website: this.addForm.website || null,
+                    commission_rate: (this.addForm.commission_rate || 5) / 100,
+                    auto_verify: this.addForm.auto_verify
+                };
+
+                if (this.addForm.createAdminUser) {
+                    body.admin_user = {
+                        ime: this.addForm.admin_user.ime,
+                        prezime: this.addForm.admin_user.prezime,
+                        email: this.addForm.admin_user.email,
+                        password: this.addForm.admin_user.password,
+                        phone: this.addForm.admin_user.phone || null
+                    };
+                }
+
+                const r = await fetch('/api/admin/suppliers', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (r.ok) {
+                    showToast('Dobavljac uspesno kreiran', 'success');
+                    this.showAddModal = false;
+                    this.loadSuppliers();
+                    this.loadStats();
+                } else {
+                    const data = await r.json();
+                    showToast(data.error || 'Greska pri kreiranju', 'error');
+                }
+            } catch (e) {
+                showToast('Greska pri kreiranju dobavljaca', 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        openSuspendModal(supplier) {
+            this.selectedSupplier = supplier;
+            this.suspendForm.reason = '';
+            this.showSuspendModal = true;
+        },
+
+        async suspendSupplier() {
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                const r = await fetch(`/api/admin/suppliers/${this.selectedSupplier.id}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: 'SUSPENDED', reason: this.suspendForm.reason })
+                });
+                if (r.ok) {
+                    showToast('Dobavljac suspendovan', 'success');
+                    this.showSuspendModal = false;
+                    this.loadSuppliers();
+                    this.loadStats();
+                }
+            } catch (e) {
+                showToast('Greska', 'error');
+            }
+        },
+
+        async activateSupplier(supplier) {
+            if (!confirm(`Aktiviraj dobavljaca "${supplier.name}"?`)) return;
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                const r = await fetch(`/api/admin/suppliers/${supplier.id}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: 'ACTIVE' })
+                });
+                if (r.ok) {
+                    showToast('Dobavljac aktiviran', 'success');
+                    this.loadSuppliers();
+                    this.loadStats();
+                }
+            } catch (e) {
+                showToast('Greska', 'error');
+            }
+        },
+
+        async reactivateSupplier(supplier) {
+            if (!confirm(`Reaktiviraj dobavljaca "${supplier.name}"?`)) return;
+            const token = localStorage.getItem('admin_access_token');
+            try {
+                const r = await fetch(`/api/admin/suppliers/${supplier.id}/activate`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (r.ok) {
+                    showToast('Dobavljac reaktiviran', 'success');
+                    this.loadSuppliers();
+                    this.loadStats();
+                }
+            } catch (e) {
+                showToast('Greska', 'error');
+            }
+        },
+
+        prevPage() { if (this.pagination.has_prev) { this.pagination.page--; this.loadSuppliers(); } },
+        nextPage() { if (this.pagination.has_next) { this.pagination.page++; this.loadSuppliers(); } }
     }
 }
 </script>
