@@ -59,10 +59,10 @@ def upgrade():
         sa.Column('completed_at', sa.DateTime()),
         sa.Column('created_at', sa.DateTime(), server_default=sa.func.now()),
     )
-    op.create_index('ix_part_order_buyer', 'part_order_request', ['buyer_tenant_id'])
-    op.create_index('ix_part_order_supplier', 'part_order_request', ['supplier_tenant_id'])
-    op.create_index('ix_part_order_status', 'part_order_request', ['status'])
-    op.create_index('ix_part_order_date', 'part_order_request', ['order_date'])
+    op.create_index('ix_part_order_req_buyer', 'part_order_request', ['buyer_tenant_id'])
+    op.create_index('ix_part_order_req_supplier', 'part_order_request', ['supplier_tenant_id'])
+    op.create_index('ix_part_order_req_status', 'part_order_request', ['status'])
+    op.create_index('ix_part_order_req_date', 'part_order_request', ['order_date'])
 
     # MarketplaceOrderMessage
     op.create_table(
@@ -85,8 +85,8 @@ def downgrade():
     op.drop_index('ix_marketplace_order_message_order', 'marketplace_order_message')
     op.drop_table('marketplace_order_message')
 
-    op.drop_index('ix_part_order_date', 'part_order_request')
-    op.drop_index('ix_part_order_status', 'part_order_request')
-    op.drop_index('ix_part_order_supplier', 'part_order_request')
-    op.drop_index('ix_part_order_buyer', 'part_order_request')
+    op.drop_index('ix_part_order_req_date', 'part_order_request')
+    op.drop_index('ix_part_order_req_status', 'part_order_request')
+    op.drop_index('ix_part_order_req_supplier', 'part_order_request')
+    op.drop_index('ix_part_order_req_buyer', 'part_order_request')
     op.drop_table('part_order_request')
