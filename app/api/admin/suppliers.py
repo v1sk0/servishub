@@ -281,14 +281,11 @@ def create_supplier():
         }
 
     # Log aktivnosti
-    AdminActivityLog.log_action(
-        admin_id=g.admin.id,
-        action_type=AdminActionType.CREATE,
-        entity_type='supplier',
-        entity_id=supplier.id,
-        description=f"Kreiran dobavljač: {supplier.name}",
-        ip_address=request.remote_addr,
-        user_agent=request.headers.get('User-Agent', '')[:200],
+    AdminActivityLog.log(
+        action_type=AdminActionType.CREATE_SUPPLIER,
+        target_type='supplier',
+        target_id=supplier.id,
+        target_name=supplier.name,
     )
 
     db.session.commit()
@@ -345,14 +342,11 @@ def update_supplier(supplier_id):
         supplier.slug = slug
 
     # Log aktivnosti
-    AdminActivityLog.log_action(
-        admin_id=g.admin.id,
-        action_type=AdminActionType.UPDATE,
-        entity_type='supplier',
-        entity_id=supplier.id,
-        description=f"Ažuriran dobavljač: {supplier.name}",
-        ip_address=request.remote_addr,
-        user_agent=request.headers.get('User-Agent', '')[:200],
+    AdminActivityLog.log(
+        action_type=AdminActionType.UPDATE_SUPPLIER,
+        target_type='supplier',
+        target_id=supplier.id,
+        target_name=supplier.name,
     )
 
     db.session.commit()
@@ -381,14 +375,11 @@ def verify_supplier(supplier_id):
     supplier.status = SupplierStatus.ACTIVE
 
     # Log aktivnosti
-    AdminActivityLog.log_action(
-        admin_id=g.admin.id,
-        action_type=AdminActionType.VERIFY,
-        entity_type='supplier',
-        entity_id=supplier.id,
-        description=f"Verifikovan dobavljač: {supplier.name}",
-        ip_address=request.remote_addr,
-        user_agent=request.headers.get('User-Agent', '')[:200],
+    AdminActivityLog.log(
+        action_type=AdminActionType.VERIFY_SUPPLIER,
+        target_type='supplier',
+        target_id=supplier.id,
+        target_name=supplier.name,
     )
 
     db.session.commit()
@@ -413,14 +404,12 @@ def suspend_supplier(supplier_id):
     reason = data.get('reason', 'No reason provided')
 
     # Log aktivnosti
-    AdminActivityLog.log_action(
-        admin_id=g.admin.id,
-        action_type=AdminActionType.SUSPEND,
-        entity_type='supplier',
-        entity_id=supplier.id,
-        description=f"Suspendovan dobavljač: {supplier.name}. Razlog: {reason}",
-        ip_address=request.remote_addr,
-        user_agent=request.headers.get('User-Agent', '')[:200],
+    AdminActivityLog.log(
+        action_type=AdminActionType.SUSPEND_SUPPLIER,
+        target_type='supplier',
+        target_id=supplier.id,
+        target_name=supplier.name,
+        details={'reason': reason},
     )
 
     db.session.commit()
@@ -446,14 +435,11 @@ def activate_supplier(supplier_id):
     supplier.status = SupplierStatus.ACTIVE
 
     # Log aktivnosti
-    AdminActivityLog.log_action(
-        admin_id=g.admin.id,
-        action_type=AdminActionType.ACTIVATE,
-        entity_type='supplier',
-        entity_id=supplier.id,
-        description=f"Reaktiviran dobavljač: {supplier.name}",
-        ip_address=request.remote_addr,
-        user_agent=request.headers.get('User-Agent', '')[:200],
+    AdminActivityLog.log(
+        action_type=AdminActionType.ACTIVATE_SUPPLIER,
+        target_type='supplier',
+        target_id=supplier.id,
+        target_name=supplier.name,
     )
 
     db.session.commit()
@@ -522,15 +508,22 @@ def change_supplier_status(supplier_id):
     else:
         return jsonify({'error': 'Unsupported status change'}), 400
 
-    # Log aktivnosti
-    AdminActivityLog.log_action(
-        admin_id=g.admin.id,
-        action_type=action_type,
-        entity_type='supplier',
-        entity_id=supplier.id,
-        description=description,
-        ip_address=request.remote_addr,
-        user_agent=request.headers.get('User-Agent', '')[:200],
+    # Log aktivnosti - mapiranje na nove action tipove
+    action_map = {
+        AdminActionType.VERIFY: AdminActionType.VERIFY_SUPPLIER,
+        AdminActionType.ACTIVATE: AdminActionType.ACTIVATE_SUPPLIER,
+        AdminActionType.SUSPEND: AdminActionType.SUSPEND_SUPPLIER,
+        AdminActionType.UPDATE: AdminActionType.UPDATE_SUPPLIER,
+    }
+    mapped_action = action_map.get(action_type, AdminActionType.UPDATE_SUPPLIER)
+
+    AdminActivityLog.log(
+        action_type=mapped_action,
+        target_type='supplier',
+        target_id=supplier.id,
+        target_name=supplier.name,
+        old_status=old_status.value if old_status else None,
+        new_status=new_status.value if new_status else None,
     )
 
     db.session.commit()
@@ -608,14 +601,11 @@ def create_supplier_user(supplier_id):
     db.session.add(user)
 
     # Log aktivnosti
-    AdminActivityLog.log_action(
-        admin_id=g.admin.id,
-        action_type=AdminActionType.CREATE,
-        entity_type='supplier_user',
-        entity_id=user.id,
-        description=f"Kreiran korisnik dobavljača: {user.email} za {supplier.name}",
-        ip_address=request.remote_addr,
-        user_agent=request.headers.get('User-Agent', '')[:200],
+    AdminActivityLog.log(
+        action_type=AdminActionType.CREATE_SUPPLIER_USER,
+        target_type='supplier_user',
+        target_id=user.id,
+        target_name=f"{user.email} ({supplier.name})",
     )
 
     db.session.commit()
@@ -657,14 +647,11 @@ def update_supplier_user(supplier_id, user_id):
         user.set_password(data['password'])
 
     # Log aktivnosti
-    AdminActivityLog.log_action(
-        admin_id=g.admin.id,
-        action_type=AdminActionType.UPDATE,
-        entity_type='supplier_user',
-        entity_id=user.id,
-        description=f"Ažuriran korisnik dobavljača: {user.email}",
-        ip_address=request.remote_addr,
-        user_agent=request.headers.get('User-Agent', '')[:200],
+    AdminActivityLog.log(
+        action_type=AdminActionType.UPDATE_SUPPLIER_USER,
+        target_type='supplier_user',
+        target_id=user.id,
+        target_name=user.email,
     )
 
     db.session.commit()
@@ -699,14 +686,12 @@ def reset_supplier_user_password(supplier_id, user_id):
     user.set_password(data['new_password'])
 
     # Log aktivnosti
-    AdminActivityLog.log_action(
-        admin_id=g.admin.id,
-        action_type=AdminActionType.UPDATE,
-        entity_type='supplier_user',
-        entity_id=user.id,
-        description=f"Resetovana lozinka korisnika dobavljača: {user.email}",
-        ip_address=request.remote_addr,
-        user_agent=request.headers.get('User-Agent', '')[:200],
+    AdminActivityLog.log(
+        action_type=AdminActionType.UPDATE_SUPPLIER_USER,
+        target_type='supplier_user',
+        target_id=user.id,
+        target_name=user.email,
+        details={'action': 'password_reset'},
     )
 
     db.session.commit()

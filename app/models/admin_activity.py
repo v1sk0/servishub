@@ -62,6 +62,15 @@ class AdminActionType(enum.Enum):
     IGNORE_TRANSACTION = 'IGNORE_TRANSACTION'   # Ignorisanje transakcije
     UNIGNORE_TRANSACTION = 'UNIGNORE_TRANSACTION'  # Ponistavanje ignorisanja
 
+    # Supplier akcije (v569)
+    CREATE_SUPPLIER = 'CREATE_SUPPLIER'         # Kreiranje dobavljaca
+    UPDATE_SUPPLIER = 'UPDATE_SUPPLIER'         # Azuriranje dobavljaca
+    VERIFY_SUPPLIER = 'VERIFY_SUPPLIER'         # Verifikacija dobavljaca
+    SUSPEND_SUPPLIER = 'SUSPEND_SUPPLIER'       # Suspenzija dobavljaca
+    ACTIVATE_SUPPLIER = 'ACTIVATE_SUPPLIER'     # Aktivacija dobavljaca
+    CREATE_SUPPLIER_USER = 'CREATE_SUPPLIER_USER'  # Kreiranje korisnika dobavljaca
+    UPDATE_SUPPLIER_USER = 'UPDATE_SUPPLIER_USER'  # Azuriranje korisnika dobavljaca
+
 
 class AdminActivityLog(db.Model):
     """
@@ -235,5 +244,13 @@ class AdminActivityLog(db.Model):
             AdminActionType.UNMATCH: 'Poništio uparivanje',
             AdminActionType.IGNORE_TRANSACTION: 'Ignorisao transakciju',
             AdminActionType.UNIGNORE_TRANSACTION: 'Poništio ignorisanje',
+            # Supplier
+            AdminActionType.CREATE_SUPPLIER: 'Kreirao dobavljača',
+            AdminActionType.UPDATE_SUPPLIER: 'Ažurirao dobavljača',
+            AdminActionType.VERIFY_SUPPLIER: 'Verifikovao dobavljača',
+            AdminActionType.SUSPEND_SUPPLIER: 'Suspendovao dobavljača',
+            AdminActionType.ACTIVATE_SUPPLIER: 'Aktivirao dobavljača',
+            AdminActionType.CREATE_SUPPLIER_USER: 'Kreirao korisnika dobavljača',
+            AdminActionType.UPDATE_SUPPLIER_USER: 'Ažurirao korisnika dobavljača',
         }
         return labels.get(self.action_type, self.action_type.value)
