@@ -9,8 +9,8 @@ from alembic import op
 
 
 # revision identifiers, used by Alembic.
-revision = 'v570_add_supplier_action_types'
-down_revision = 'v346_add_order_delivery_fk'
+revision = 'v570_supplier_action_types'
+down_revision = 'v346_order_delivery_fk'
 branch_labels = None
 depends_on = None
 
