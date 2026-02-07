@@ -33,6 +33,7 @@ def admin_login():
 
 # ============== Dashboard ==============
 
+@bp.route('/admin/')
 @bp.route('/admin')
 @bp.route('/admin/dashboard')
 @admin_frontend_required
