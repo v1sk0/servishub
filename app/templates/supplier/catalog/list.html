@@ -288,7 +288,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Brend *</label>
-                            <input type="text" x-model="form.brand" required @input="autoName()"
+                            <input type="text" x-model="form.brand" required
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                    placeholder="Samsung, Apple, Xiaomi...">
                         </div>
@@ -316,7 +316,7 @@
                     <!-- Row 2: Model compatibility -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Kompatibilni modeli</label>
-                        <input type="text" x-model="form.model_compatibility" @input="autoName()"
+                        <input type="text" x-model="form.model_compatibility"
                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                placeholder="Galaxy S21, S21+, S21 Ultra">
                         <p class="mt-1 text-xs text-gray-400">Odvojite zarezom za vise modela</p>
@@ -329,7 +329,7 @@
                             <!-- Quality (dynamic per category) -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Kvalitet</label>
-                                <select x-model="form.quality_grade" @change="onQualityChange(); autoName()"
+                                <select x-model="form.quality_grade" @change="onQualityChange()"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white">
                                     <option value="">Izaberi kvalitet</option>
                                     <template x-for="opt in getQualityOptions()" :key="opt.value">
@@ -341,7 +341,7 @@
                             <!-- Battery: Health -->
                             <div x-show="form.part_category === 'battery'">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Health (%)</label>
-                                <input type="number" x-model="form.extra_health" min="0" max="100" @input="autoName()"
+                                <input type="number" x-model="form.extra_health" min="0" max="100"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
                                        placeholder="95">
                             </div>
@@ -349,7 +349,7 @@
                             <!-- Battery: Capacity -->
                             <div x-show="form.part_category === 'battery'">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Kapacitet (mAh)</label>
-                                <input type="number" x-model="form.extra_capacity" @input="autoName()"
+                                <input type="number" x-model="form.extra_capacity"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
                                        placeholder="4000">
                             </div>
@@ -357,7 +357,7 @@
                             <!-- Camera: Position -->
                             <div x-show="form.part_category === 'camera'">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Pozicija</label>
-                                <select x-model="form.extra_position" @change="autoName()"
+                                <select x-model="form.extra_position"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white">
                                     <option value="">Izaberi</option>
                                     <option value="back">Zadnja (Main)</option>
@@ -369,7 +369,7 @@
                             <!-- IC/Chip: Type -->
                             <div x-show="form.part_category === 'ic'">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Tip cipa</label>
-                                <select x-model="form.extra_chip_type" @change="autoName()"
+                                <select x-model="form.extra_chip_type"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white">
                                     <option value="">Izaberi</option>
                                     <option value="power">Power IC</option>
@@ -384,7 +384,7 @@
                             <!-- Charging: Connector type -->
                             <div x-show="form.part_category === 'charging'">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Tip konektora</label>
-                                <select x-model="form.extra_connector" @change="autoName()"
+                                <select x-model="form.extra_connector"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white">
                                     <option value="">Izaberi</option>
                                     <option value="USB-C">USB-C</option>
@@ -396,7 +396,7 @@
                             <!-- Speaker: Position -->
                             <div x-show="form.part_category === 'speaker'">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Pozicija</label>
-                                <select x-model="form.extra_speaker_pos" @change="autoName()"
+                                <select x-model="form.extra_speaker_pos"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white">
                                     <option value="">Izaberi</option>
                                     <option value="earpiece">Slusalica (Earpiece)</option>
@@ -407,32 +407,26 @@
                             <!-- Frame / Back cover: Color -->
                             <div x-show="['frame', 'back_cover'].includes(form.part_category)">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Boja</label>
-                                <input type="text" x-model="form.extra_color" @input="autoName()"
+                                <input type="text" x-model="form.extra_color"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
                                        placeholder="Crna, Bela, Plava...">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Naziv (auto-generated) + Sifra -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Naziv artikla *</label>
-                            <input type="text" x-model="form.name" required @keydown="form._nameManual = true"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                   placeholder="Generise se automatski...">
-                            <p x-show="form._nameManual && _lastAutoName && form.name !== _lastAutoName"
-                               @click="form.name = _lastAutoName; form._nameManual = false"
-                               class="mt-1 text-xs text-purple-600 cursor-pointer hover:underline">
-                                Predlog: <span x-text="_lastAutoName"></span>
-                            </p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Sifra artikla</label>
-                            <input type="text" x-model="form.part_number"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                   placeholder="DSP-001">
-                        </div>
+                    <!-- Naziv (auto-generated, read-only) + Sifra -->
+                    <div x-show="buildSuggestedName()" x-transition
+                         class="bg-purple-50 border border-purple-200 rounded-lg px-4 py-3">
+                        <p class="text-xs font-medium text-purple-600 mb-1">Naziv artikla (automatski)</p>
+                        <p class="text-sm font-semibold text-purple-900" x-text="buildSuggestedName()"></p>
+                    </div>
+
+                    <!-- Sifra artikla -->
+                    <div class="max-w-xs">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sifra artikla</label>
+                        <input type="text" x-model="form.part_number"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                               placeholder="DSP-001">
                     </div>
 
                     <hr class="border-gray-200">
@@ -691,8 +685,6 @@ function catalogPage() {
         selectedIds: [],
         bulkPricePercent: '',
         bulkProcessing: false,
-        // Auto-name tracking
-        _lastAutoName: '',
 
         async init() {
             await Promise.all([
@@ -737,9 +729,7 @@ function catalogPage() {
 
         openAddModal() {
             this.editingId = null;
-            this._lastAutoName = '';
             this.form = {
-                name: '',
                 brand: '',
                 part_number: '',
                 part_category: '',
@@ -753,7 +743,6 @@ function catalogPage() {
                 is_original: false,
                 description: '',
                 is_active: true,
-                _nameManual: false,
                 // Category-specific extras
                 extra_health: '',
                 extra_capacity: '',
@@ -769,9 +758,7 @@ function catalogPage() {
 
         editListing(listing) {
             this.editingId = listing.id;
-            this._lastAutoName = '';
             this.form = {
-                name: listing.name,
                 brand: listing.brand || '',
                 part_number: listing.part_number || '',
                 part_category: listing.part_category || '',
@@ -785,7 +772,6 @@ function catalogPage() {
                 is_original: listing.is_original || false,
                 description: listing.description || '',
                 is_active: listing.is_active,
-                _nameManual: true, // Don't auto-override existing name
                 extra_health: '', extra_capacity: '', extra_position: '',
                 extra_chip_type: '', extra_connector: '', extra_speaker_pos: '',
                 extra_color: '',
@@ -826,7 +812,7 @@ function catalogPage() {
                 const method = this.editingId ? 'PUT' : 'POST';
 
                 const body = {
-                    name: this.form.name,
+                    name: this.buildSuggestedName() || this.form.brand || 'Artikal',
                     brand: this.form.brand || null,
                     part_number: this.form.part_number || null,
                     part_category: this.form.part_category || null,
@@ -947,18 +933,6 @@ function catalogPage() {
             this.form.extra_connector = '';
             this.form.extra_speaker_pos = '';
             this.form.extra_color = '';
-            this.autoName();
-        },
-
-        autoName() {
-            const suggested = this.buildSuggestedName();
-            if (!suggested) return;
-            // Only update if name is empty or matches last auto-generated name
-            if (!this.form.name || this.form.name === this._lastAutoName) {
-                this.form.name = suggested;
-                this.form._nameManual = false;
-            }
-            this._lastAutoName = suggested;
         },
 
         buildSuggestedName() {
@@ -1014,9 +988,7 @@ function catalogPage() {
 
         duplicateListing(listing) {
             this.editingId = null;
-            this._lastAutoName = '';
             this.form = {
-                name: listing.name,
                 brand: listing.brand || '',
                 part_number: '',  // prazno - mora nova sifra
                 part_category: listing.part_category || '',
@@ -1030,7 +1002,6 @@ function catalogPage() {
                 is_original: listing.is_original || false,
                 description: listing.description || '',
                 is_active: true,
-                _nameManual: true, // Keep duplicated name as-is
                 extra_health: '', extra_capacity: '', extra_position: '',
                 extra_chip_type: '', extra_connector: '', extra_speaker_pos: '',
                 extra_color: '',
