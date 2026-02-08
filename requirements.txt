@@ -52,5 +52,8 @@ APScheduler==3.10.4
 # PDF Generation
 reportlab==4.0.8
 
+# Excel Import/Export
+openpyxl==3.1.2
+
 # DNS verification for custom domains
 dnspython==2.4.2

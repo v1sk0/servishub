@@ -10,13 +10,32 @@
             <h1 class="text-2xl font-bold text-gray-900">Katalog</h1>
             <p class="text-gray-600 mt-1">Upravljajte svojim artiklima</p>
         </div>
-        <button @click="openAddModal()"
-                class="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors">
-            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Dodaj artikal
-        </button>
+        <div class="mt-4 sm:mt-0 flex flex-wrap gap-2">
+            <!-- Import Excel -->
+            <button @click="showImportModal = true"
+                    class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
+                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                Uvezi Excel
+            </button>
+            <!-- Export Excel -->
+            <button @click="exportExcel()"
+                    class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors border border-gray-300">
+                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Izvezi
+            </button>
+            <!-- Add New -->
+            <button @click="openAddModal()"
+                    class="inline-flex items-center px-4 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors">
+                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Dodaj artikal
+            </button>
+        </div>
     </div>
 
     <!-- Stats -->
@@ -56,11 +75,17 @@
                 <select x-model="filters.category" @change="loadListings()"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                     <option value="">Sve kategorije</option>
-                    <option value="display">Display</option>
+                    <option value="display">Display / LCD</option>
                     <option value="battery">Baterija</option>
                     <option value="camera">Kamera</option>
-                    <option value="charging">Punjenje</option>
+                    <option value="charging">Port za punjenje</option>
                     <option value="speaker">Zvucnik</option>
+                    <option value="frame">Frejm / Kuciste</option>
+                    <option value="back_cover">Zadnja maska</option>
+                    <option value="flex">Flex kabl</option>
+                    <option value="connector">Konektor</option>
+                    <option value="ic">IC / Chip</option>
+                    <option value="touch">Touch / Digitizer</option>
                     <option value="other">Ostalo</option>
                 </select>
             </div>
@@ -77,24 +102,64 @@
         </div>
     </div>
 
+    <!-- Bulk Actions Bar -->
+    <div x-show="selectedIds.length > 0" x-cloak
+         class="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p class="text-sm font-medium text-purple-800">
+            Selektovano: <span x-text="selectedIds.length" class="font-bold"></span> artikala
+        </p>
+        <div class="flex flex-wrap gap-2">
+            <!-- Bulk price change -->
+            <div class="flex items-center gap-1">
+                <input type="number" x-model="bulkPricePercent" step="1"
+                       class="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-purple-500"
+                       placeholder="%">
+                <button @click="bulkChangePrice()" :disabled="!bulkPricePercent || bulkProcessing"
+                        class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                    Promeni cenu
+                </button>
+            </div>
+            <!-- Bulk activate -->
+            <button @click="bulkToggle(true)" :disabled="bulkProcessing"
+                    class="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
+                Aktiviraj
+            </button>
+            <!-- Bulk deactivate -->
+            <button @click="bulkToggle(false)" :disabled="bulkProcessing"
+                    class="px-3 py-1.5 text-sm bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50">
+                Deaktiviraj
+            </button>
+            <!-- Clear selection -->
+            <button @click="selectedIds = []"
+                    class="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100">
+                Ponisti selekciju
+            </button>
+        </div>
+    </div>
+
     <!-- Listings Table -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Artikal</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategorija</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cena</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stanje</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Akcije</th>
+                        <th class="px-3 py-3 text-center">
+                            <input type="checkbox" @change="toggleSelectAll($event)"
+                                   :checked="selectedIds.length > 0 && selectedIds.length === listings.length"
+                                   class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Artikal</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kvalitet</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cena</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stanje</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Aktivan</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Akcije</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     <template x-if="loading">
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center">
+                            <td colspan="7" class="px-6 py-12 text-center">
                                 <svg class="animate-spin h-8 w-8 mx-auto text-purple-600" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -104,56 +169,71 @@
                     </template>
                     <template x-if="!loading && listings.length === 0">
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                                 Nema artikala
                             </td>
                         </tr>
                     </template>
                     <template x-for="listing in listings" :key="listing.id">
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4">
+                        <tr class="hover:bg-gray-50" :class="selectedIds.includes(listing.id) ? 'bg-purple-50' : ''">
+                            <td class="px-3 py-4 text-center">
+                                <input type="checkbox" :value="listing.id"
+                                       :checked="selectedIds.includes(listing.id)"
+                                       @change="toggleSelect(listing.id)"
+                                       class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                            </td>
+                            <td class="px-4 py-4">
                                 <div>
                                     <p class="font-medium text-gray-900" x-text="listing.name"></p>
                                     <p class="text-sm text-gray-500">
                                         <span x-text="listing.brand"></span>
                                         <span x-show="listing.part_number" class="ml-2 text-gray-400" x-text="'#' + listing.part_number"></span>
+                                        <span x-show="listing.part_category"
+                                              class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600"
+                                              x-text="listing.part_category"></span>
                                     </p>
                                 </div>
                             </td>
-                            <td class="px-6 py-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-                                      x-text="listing.part_category || 'Bez kategorije'"></span>
+                            <td class="px-4 py-4">
+                                <span x-show="listing.quality_grade"
+                                      class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                                      :class="qualityBadgeClass(listing.quality_grade)"
+                                      x-text="qualityLabel(listing.quality_grade)"></span>
+                                <span x-show="!listing.quality_grade" class="text-xs text-gray-400">-</span>
                             </td>
-                            <td class="px-6 py-4">
-                                <p class="font-medium text-gray-900" x-text="formatPrice(listing.price)"></p>
-                                <p class="text-xs text-gray-500" x-text="'Min: ' + (listing.min_order_qty || 1) + ' kom'"></p>
+                            <td class="px-4 py-4">
+                                <p class="font-medium text-gray-900" x-text="formatRSD(listing.price_rsd)"></p>
+                                <p class="text-xs text-gray-500" x-text="formatEUR(listing.price_eur)"></p>
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-4">
                                 <span :class="listing.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'"
-                                      class="font-medium" x-text="listing.stock_quantity + ' kom'"></span>
+                                      class="font-medium" x-text="(listing.stock_quantity || 0) + ' kom'"></span>
                             </td>
-                            <td class="px-6 py-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                                      :class="listing.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
-                                      x-text="listing.is_active ? 'Aktivan' : 'Neaktivan'"></span>
+                            <td class="px-4 py-4 text-center">
+                                <button @click="toggleActive(listing)" :disabled="listing._toggling"
+                                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50"
+                                        :class="listing.is_active ? 'bg-green-500' : 'bg-gray-300'">
+                                    <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                          :class="listing.is_active ? 'translate-x-5' : 'translate-x-0'"></span>
+                                </button>
                             </td>
-                            <td class="px-6 py-4 text-right">
-                                <button @click="editListing(listing)"
-                                        class="text-purple-600 hover:text-purple-900 mr-3">
-                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                    </svg>
-                                </button>
-                                <button @click="toggleActive(listing)"
-                                        class="text-gray-400 hover:text-gray-600">
-                                    <svg x-show="listing.is_active" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
-                                    </svg>
-                                    <svg x-show="!listing.is_active" x-cloak class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                    </svg>
-                                </button>
+                            <td class="px-4 py-4 text-right">
+                                <div class="flex items-center justify-end space-x-1">
+                                    <!-- Dupliraj -->
+                                    <button @click="duplicateListing(listing)" title="Dupliraj artikal"
+                                            class="p-1 text-gray-400 hover:text-blue-600 transition-colors">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                        </svg>
+                                    </button>
+                                    <!-- Izmeni -->
+                                    <button @click="editListing(listing)" title="Izmeni"
+                                            class="p-1 text-gray-400 hover:text-purple-600 transition-colors">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </template>
@@ -180,7 +260,7 @@
         </div>
     </div>
 
-    <!-- Add/Edit Modal -->
+    <!-- ============== Add/Edit Modal ============== -->
     <div x-show="showModal" x-cloak
          class="fixed inset-0 z-50 overflow-y-auto"
          x-transition:enter="transition ease-out duration-300"
@@ -234,11 +314,17 @@
                             <select x-model="form.part_category"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                                 <option value="">Izaberi kategoriju</option>
-                                <option value="display">Display</option>
+                                <option value="display">Display / LCD</option>
                                 <option value="battery">Baterija</option>
                                 <option value="camera">Kamera</option>
-                                <option value="charging">Punjenje</option>
+                                <option value="charging">Port za punjenje</option>
                                 <option value="speaker">Zvucnik</option>
+                                <option value="frame">Frejm / Kuciste</option>
+                                <option value="back_cover">Zadnja maska</option>
+                                <option value="flex">Flex kabl</option>
+                                <option value="connector">Konektor</option>
+                                <option value="ic">IC / Chip</option>
+                                <option value="touch">Touch / Digitizer</option>
                                 <option value="other">Ostalo</option>
                             </select>
                         </div>
@@ -251,12 +337,30 @@
                                    placeholder="Galaxy S21, S21+, S21 Ultra">
                         </div>
 
-                        <!-- Price -->
+                        <!-- Price EUR -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Cena (RSD) *</label>
-                            <input type="number" x-model="form.price" required min="1" step="0.01"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Cena EUR</label>
+                            <input type="number" x-model="form.price_eur" min="0.01" step="0.01"
+                                   @input="onEurPriceChange()"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                   placeholder="15000">
+                                   placeholder="148.94">
+                        </div>
+
+                        <!-- Price RSD -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Cena RSD</label>
+                            <input type="number" x-model="form.price_rsd" min="1" step="0.01"
+                                   @input="onRsdPriceChange()"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="17500">
+                        </div>
+
+                        <!-- EUR Rate Info -->
+                        <div class="md:col-span-2">
+                            <p class="text-xs text-gray-400">
+                                Kurs: 1 EUR = <span x-text="eurRate"></span> RSD
+                                <span class="ml-2">(unesi jednu cenu, druga se automatski preracuna)</span>
+                            </p>
                         </div>
 
                         <!-- Stock Quantity -->
@@ -286,17 +390,27 @@
                         <!-- Quality -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Kvalitet</label>
-                            <select x-model="form.quality_grade"
+                            <select x-model="form.quality_grade" @change="onQualityChange()"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                                 <option value="">Izaberi</option>
-                                <option value="original">Original</option>
-                                <option value="oem">OEM</option>
-                                <option value="aaa">AAA</option>
-                                <option value="aa">AA</option>
+                                <optgroup label="Originalni delovi">
+                                    <option value="service_pack">Service Pack (original)</option>
+                                    <option value="original">Original (pulled)</option>
+                                </optgroup>
+                                <optgroup label="Zamena - Premium">
+                                    <option value="oled_hard">OLED Hard</option>
+                                    <option value="oled_soft">OLED Soft</option>
+                                    <option value="oem">OEM</option>
+                                </optgroup>
+                                <optgroup label="Zamena - Standard">
+                                    <option value="tft_incell">TFT Incell</option>
+                                    <option value="aaa">AAA kopija</option>
+                                    <option value="copy">Copy</option>
+                                </optgroup>
                             </select>
                         </div>
 
-                        <!-- Is Original -->
+                        <!-- Is Original (auto-set from quality) -->
                         <div class="flex items-center">
                             <input type="checkbox" x-model="form.is_original" id="is_original"
                                    class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
@@ -342,6 +456,126 @@
             </div>
         </div>
     </div>
+
+    <!-- ============== Import Modal ============== -->
+    <div x-show="showImportModal" x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/50" @click="closeImportModal()"></div>
+
+            <div class="relative bg-white rounded-xl shadow-xl max-w-lg w-full">
+                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">Uvezi cenovnik iz Excel-a</h3>
+                    <button @click="closeImportModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="p-6">
+                    <!-- Drop Zone -->
+                    <div @dragover.prevent="importDragOver = true"
+                         @dragleave.prevent="importDragOver = false"
+                         @drop.prevent="handleFileDrop($event)"
+                         :class="importDragOver ? 'border-purple-500 bg-purple-50' : 'border-gray-300 bg-gray-50'"
+                         class="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors"
+                         @click="$refs.fileInput.click()">
+
+                        <template x-if="!importFile">
+                            <div>
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                </svg>
+                                <p class="mt-2 text-sm text-gray-600">Prevuci fajl ovde ili klikni za izbor</p>
+                                <p class="mt-1 text-xs text-gray-400">XLSX ili XLS, max 5MB, do 5000 redova</p>
+                            </div>
+                        </template>
+
+                        <template x-if="importFile">
+                            <div>
+                                <svg class="mx-auto h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <p class="mt-2 text-sm font-medium text-gray-900" x-text="importFile.name"></p>
+                                <p class="text-xs text-gray-500" x-text="formatFileSize(importFile.size)"></p>
+                            </div>
+                        </template>
+
+                        <input type="file" x-ref="fileInput" @change="handleFileSelect($event)"
+                               accept=".xlsx,.xls" class="hidden">
+                    </div>
+
+                    <!-- Template download -->
+                    <div class="mt-4 text-center">
+                        <a href="#" @click.prevent="downloadTemplate()"
+                           class="text-sm text-purple-600 hover:text-purple-800 underline">
+                            Preuzmi prazan sablon (.xlsx)
+                        </a>
+                    </div>
+
+                    <!-- Import Result -->
+                    <div x-show="importResult" class="mt-4">
+                        <template x-if="importResult && importResult.success">
+                            <div class="p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <p class="text-sm font-medium text-green-800">Uspesno!</p>
+                                <p class="text-sm text-green-700 mt-1">
+                                    Kreirano: <span x-text="importResult.data?.created || 0"></span>,
+                                    Azurirano: <span x-text="importResult.data?.updated || 0"></span>
+                                    <template x-if="importResult.data?.skipped > 0">
+                                        <span>, Preskoceno: <span x-text="importResult.data.skipped"></span></span>
+                                    </template>
+                                </p>
+                                <template x-if="importResult.data?.errors && importResult.data.errors.length > 0">
+                                    <div class="mt-2">
+                                        <p class="text-xs font-medium text-orange-700">Greske:</p>
+                                        <template x-for="err in importResult.data.errors.slice(0, 5)" :key="err.row">
+                                            <p class="text-xs text-orange-600" x-text="'Red ' + err.row + ': ' + err.error"></p>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        <template x-if="importResult && !importResult.success">
+                            <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                                <p class="text-sm text-red-600" x-text="importResult.error || 'Greska pri uvozu'"></p>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Import Error (general) -->
+                    <div x-show="importError" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p class="text-sm text-red-600" x-text="importError"></p>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" @click="closeImportModal()"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                            Zatvori
+                        </button>
+                        <button @click="uploadExcel()" :disabled="!importFile || importing"
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
+                            <span x-show="!importing">Uvezi</span>
+                            <span x-show="importing" class="flex items-center">
+                                <svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Uvozim...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -350,6 +584,7 @@ function catalogPage() {
         listings: [],
         stats: {},
         loading: false,
+        eurRate: 117.5,
         filters: {
             q: '',
             category: '',
@@ -357,15 +592,27 @@ function catalogPage() {
         },
         pagination: {
             page: 1,
-            per_page: 20,
+            per_page: 50,
             total: 0,
             pages: 1
         },
+        // Add/Edit modal
         showModal: false,
         editingId: null,
         form: {},
         error: null,
         saving: false,
+        // Import modal
+        showImportModal: false,
+        importFile: null,
+        importDragOver: false,
+        importing: false,
+        importResult: null,
+        importError: null,
+        // Bulk selection
+        selectedIds: [],
+        bulkPricePercent: '',
+        bulkProcessing: false,
 
         async init() {
             await Promise.all([
@@ -389,6 +636,7 @@ function catalogPage() {
                 this.listings = data.listings || [];
                 this.pagination.total = data.total || 0;
                 this.pagination.pages = data.pages || 1;
+                if (data.eur_rate) this.eurRate = data.eur_rate;
             } catch (err) {
                 console.error('Error loading listings:', err);
             } finally {
@@ -405,6 +653,8 @@ function catalogPage() {
             }
         },
 
+        // ===== Add/Edit =====
+
         openAddModal() {
             this.editingId = null;
             this.form = {
@@ -413,7 +663,8 @@ function catalogPage() {
                 part_number: '',
                 part_category: '',
                 model_compatibility: '',
-                price: '',
+                price_rsd: '',
+                price_eur: '',
                 stock_quantity: 0,
                 min_order_qty: 1,
                 delivery_days: '',
@@ -428,7 +679,22 @@ function catalogPage() {
 
         editListing(listing) {
             this.editingId = listing.id;
-            this.form = { ...listing };
+            this.form = {
+                name: listing.name,
+                brand: listing.brand || '',
+                part_number: listing.part_number || '',
+                part_category: listing.part_category || '',
+                model_compatibility: listing.model_compatibility || '',
+                price_rsd: listing.price_rsd || '',
+                price_eur: listing.price_eur || '',
+                stock_quantity: listing.stock_quantity || 0,
+                min_order_qty: listing.min_order_qty || 1,
+                delivery_days: listing.delivery_days || '',
+                quality_grade: listing.quality_grade || '',
+                is_original: listing.is_original || false,
+                description: listing.description || '',
+                is_active: listing.is_active
+            };
             this.error = null;
             this.showModal = true;
         },
@@ -438,6 +704,23 @@ function catalogPage() {
             this.editingId = null;
             this.form = {};
             this.error = null;
+        },
+
+        onEurPriceChange() {
+            const val = parseFloat(this.form.price_eur);
+            if (val && val > 0) {
+                this.form.price_rsd = (val * this.eurRate).toFixed(2);
+            }
+        },
+
+        onRsdPriceChange() {
+            // Samo preracunaj ako EUR nije unet
+            if (!this.form.price_eur || parseFloat(this.form.price_eur) <= 0) {
+                const val = parseFloat(this.form.price_rsd);
+                if (val && val > 0) {
+                    this.form.price_eur = (val / this.eurRate).toFixed(2);
+                }
+            }
         },
 
         async saveListing() {
@@ -450,23 +733,30 @@ function catalogPage() {
                     : '/api/supplier/listings';
                 const method = this.editingId ? 'PUT' : 'POST';
 
+                const body = {
+                    name: this.form.name,
+                    brand: this.form.brand || null,
+                    part_number: this.form.part_number || null,
+                    part_category: this.form.part_category || null,
+                    model_compatibility: this.form.model_compatibility || null,
+                    stock_quantity: parseInt(this.form.stock_quantity) || 0,
+                    min_order_qty: parseInt(this.form.min_order_qty) || 1,
+                    delivery_days: this.form.delivery_days ? parseInt(this.form.delivery_days) : null,
+                    quality_grade: this.form.quality_grade || null,
+                    is_original: this.form.is_original,
+                    description: this.form.description || null,
+                    is_active: this.form.is_active
+                };
+
+                // Dual pricing
+                const eurVal = parseFloat(this.form.price_eur);
+                const rsdVal = parseFloat(this.form.price_rsd);
+                if (eurVal && eurVal > 0) body.price_eur = eurVal;
+                if (rsdVal && rsdVal > 0) body.price_rsd = rsdVal;
+
                 await supplierApi(url, {
                     method,
-                    body: JSON.stringify({
-                        name: this.form.name,
-                        brand: this.form.brand || null,
-                        part_number: this.form.part_number || null,
-                        part_category: this.form.part_category || null,
-                        model_compatibility: this.form.model_compatibility || null,
-                        price: parseFloat(this.form.price),
-                        stock_quantity: parseInt(this.form.stock_quantity) || 0,
-                        min_order_qty: parseInt(this.form.min_order_qty) || 1,
-                        delivery_days: this.form.delivery_days ? parseInt(this.form.delivery_days) : null,
-                        quality_grade: this.form.quality_grade || null,
-                        is_original: this.form.is_original,
-                        description: this.form.description || null,
-                        is_active: this.form.is_active
-                    })
+                    body: JSON.stringify(body)
                 });
 
                 this.closeModal();
@@ -479,21 +769,294 @@ function catalogPage() {
             }
         },
 
+        // ===== Toggle =====
+
         async toggleActive(listing) {
+            listing._toggling = true;
+            const prevState = listing.is_active;
+            listing.is_active = !listing.is_active; // Optimistic
+
             try {
-                await supplierApi(`/api/supplier/listings/${listing.id}`, {
-                    method: 'PUT',
-                    body: JSON.stringify({ is_active: !listing.is_active })
+                await supplierApi(`/api/supplier/listings/${listing.id}/toggle`, {
+                    method: 'POST'
                 });
-                await this.loadListings();
+                await this.loadStats();
             } catch (err) {
+                listing.is_active = prevState; // Revert
                 console.error('Error toggling active:', err);
+            } finally {
+                listing._toggling = false;
             }
         },
 
-        formatPrice(price) {
+        // ===== Quality Helpers =====
+
+        qualityLabel(grade) {
+            const labels = {
+                'service_pack': 'Service Pack',
+                'original': 'Original',
+                'oled_hard': 'OLED Hard',
+                'oled_soft': 'OLED Soft',
+                'oem': 'OEM',
+                'tft_incell': 'TFT Incell',
+                'aaa': 'AAA',
+                'copy': 'Copy',
+                'aa': 'AA'
+            };
+            return labels[grade] || grade;
+        },
+
+        qualityBadgeClass(grade) {
+            const classes = {
+                'service_pack': 'bg-green-100 text-green-800',
+                'original': 'bg-green-50 text-green-700',
+                'oled_hard': 'bg-blue-100 text-blue-800',
+                'oled_soft': 'bg-blue-50 text-blue-700',
+                'oem': 'bg-indigo-100 text-indigo-800',
+                'tft_incell': 'bg-yellow-100 text-yellow-800',
+                'aaa': 'bg-orange-100 text-orange-800',
+                'copy': 'bg-gray-100 text-gray-800',
+                'aa': 'bg-gray-100 text-gray-600'
+            };
+            return classes[grade] || 'bg-gray-100 text-gray-800';
+        },
+
+        onQualityChange() {
+            const originals = ['service_pack', 'original'];
+            this.form.is_original = originals.includes(this.form.quality_grade);
+        },
+
+        // ===== Duplicate =====
+
+        duplicateListing(listing) {
+            this.editingId = null;
+            this.form = {
+                name: listing.name,
+                brand: listing.brand || '',
+                part_number: '',  // prazno - mora nova sifra
+                part_category: listing.part_category || '',
+                model_compatibility: listing.model_compatibility || '',
+                price_rsd: listing.price_rsd || '',
+                price_eur: listing.price_eur || '',
+                stock_quantity: 0,
+                min_order_qty: listing.min_order_qty || 1,
+                delivery_days: listing.delivery_days || '',
+                quality_grade: listing.quality_grade || '',
+                is_original: listing.is_original || false,
+                description: listing.description || '',
+                is_active: true
+            };
+            this.error = null;
+            this.showModal = true;
+        },
+
+        // ===== Bulk Selection =====
+
+        toggleSelect(id) {
+            const idx = this.selectedIds.indexOf(id);
+            if (idx === -1) {
+                this.selectedIds.push(id);
+            } else {
+                this.selectedIds.splice(idx, 1);
+            }
+        },
+
+        toggleSelectAll(event) {
+            if (event.target.checked) {
+                this.selectedIds = this.listings.map(l => l.id);
+            } else {
+                this.selectedIds = [];
+            }
+        },
+
+        async bulkChangePrice() {
+            const pct = parseFloat(this.bulkPricePercent);
+            if (!pct || this.selectedIds.length === 0) return;
+
+            const action = pct > 0 ? `povecate za ${pct}%` : `smanjite za ${Math.abs(pct)}%`;
+            if (!confirm(`Da li zelite da ${action} cenu za ${this.selectedIds.length} artikala?`)) return;
+
+            this.bulkProcessing = true;
+            try {
+                await supplierApi('/api/supplier/listings/bulk-price', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        listing_ids: this.selectedIds,
+                        percent_change: pct
+                    })
+                });
+                this.selectedIds = [];
+                this.bulkPricePercent = '';
+                await this.loadListings();
+            } catch (err) {
+                alert('Greska: ' + err.message);
+            } finally {
+                this.bulkProcessing = false;
+            }
+        },
+
+        async bulkToggle(activate) {
+            if (this.selectedIds.length === 0) return;
+
+            const action = activate ? 'aktivirate' : 'deaktivirate';
+            if (!confirm(`Da li zelite da ${action} ${this.selectedIds.length} artikala?`)) return;
+
+            this.bulkProcessing = true;
+            try {
+                await supplierApi('/api/supplier/listings/bulk-toggle', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        listing_ids: this.selectedIds,
+                        is_active: activate
+                    })
+                });
+                this.selectedIds = [];
+                await Promise.all([this.loadListings(), this.loadStats()]);
+            } catch (err) {
+                alert('Greska: ' + err.message);
+            } finally {
+                this.bulkProcessing = false;
+            }
+        },
+
+        // ===== Import =====
+
+        handleFileDrop(event) {
+            this.importDragOver = false;
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                this.setImportFile(files[0]);
+            }
+        },
+
+        handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                this.setImportFile(files[0]);
+            }
+        },
+
+        setImportFile(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!['xlsx', 'xls'].includes(ext)) {
+                this.importError = 'Dozvoljeni formati: .xlsx, .xls';
+                this.importFile = null;
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                this.importError = 'Fajl je prevelik (max 5MB)';
+                this.importFile = null;
+                return;
+            }
+            this.importFile = file;
+            this.importError = null;
+            this.importResult = null;
+        },
+
+        async uploadExcel() {
+            if (!this.importFile) return;
+
+            this.importing = true;
+            this.importError = null;
+            this.importResult = null;
+
+            try {
+                const formData = new FormData();
+                formData.append('file', this.importFile);
+
+                const token = localStorage.getItem('supplier_token');
+                const resp = await fetch('/api/supplier/listings/import-excel', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await resp.json();
+
+                if (resp.ok && data.success) {
+                    this.importResult = data;
+                    await Promise.all([this.loadListings(), this.loadStats()]);
+                } else {
+                    this.importResult = { success: false, error: data.error || 'Greska pri uvozu' };
+                }
+            } catch (err) {
+                this.importError = err.message;
+            } finally {
+                this.importing = false;
+            }
+        },
+
+        closeImportModal() {
+            this.showImportModal = false;
+            this.importFile = null;
+            this.importDragOver = false;
+            this.importResult = null;
+            this.importError = null;
+        },
+
+        // ===== Export =====
+
+        async exportExcel() {
+            try {
+                const token = localStorage.getItem('supplier_token');
+                const resp = await fetch('/api/supplier/listings/export-excel', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!resp.ok) throw new Error('Export greska');
+
+                const blob = await resp.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = resp.headers.get('content-disposition')?.split('filename=')[1] || 'cenovnik.xlsx';
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error('Export error:', err);
+            }
+        },
+
+        async downloadTemplate() {
+            try {
+                const token = localStorage.getItem('supplier_token');
+                const resp = await fetch('/api/supplier/listings/template', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!resp.ok) throw new Error('Template download greska');
+
+                const blob = await resp.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'sablon_cenovnik.xlsx';
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error('Template download error:', err);
+            }
+        },
+
+        // ===== Price Formatting =====
+
+        formatRSD(price) {
+            if (!price) return '-';
             return new Intl.NumberFormat('sr-RS').format(price) + ' RSD';
         },
+
+        formatEUR(price) {
+            if (!price) return '-';
+            return new Intl.NumberFormat('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price) + ' EUR';
+        },
+
+        formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        },
+
+        // ===== Pagination =====
 
         prevPage() {
             if (this.pagination.page > 1) {

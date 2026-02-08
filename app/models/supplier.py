@@ -62,6 +62,9 @@ class Supplier(db.Model):
     rating = db.Column(db.Numeric(2, 1))  # 1-5 prosek
     rating_count = db.Column(db.Integer, default=0)
 
+    # Valutni kurs (EUR -> RSD) po dobavljacu
+    eur_rate = db.Column(db.Numeric(8, 4), default=117.5)
+
     # Timestampovi
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(
@@ -164,9 +167,11 @@ class SupplierListing(db.Model):
     is_original = db.Column(db.Boolean, default=False)
     quality_grade = db.Column(db.String(20))
 
-    # Cena i kolicina
-    price = db.Column(db.Numeric(10, 2), nullable=False)
-    currency = db.Column(db.String(3), default='RSD')
+    # Cena i kolicina - dual pricing (RSD + EUR)
+    price = db.Column(db.Numeric(10, 2))  # Legacy - ne koristi se vise
+    currency = db.Column(db.String(3), default='RSD')  # Legacy
+    price_rsd = db.Column(db.Numeric(10, 2))
+    price_eur = db.Column(db.Numeric(10, 2))
     min_order_qty = db.Column(db.Integer, default=1)
     stock_quantity = db.Column(db.Integer)               # NULL = neograniceno
     stock_status = db.Column(db.String(20), default='IN_STOCK')  # IN_STOCK, LOW, OUT_OF_STOCK
@@ -207,9 +212,10 @@ class SupplierListing(db.Model):
             'description': self.description,
             'is_original': self.is_original,
             'quality_grade': self.quality_grade,
-            'price': float(self.price),
-            'currency': self.currency,
+            'price_rsd': float(self.price_rsd) if self.price_rsd else None,
+            'price_eur': float(self.price_eur) if self.price_eur else None,
             'min_order_qty': self.min_order_qty,
+            'stock_quantity': self.stock_quantity,
             'stock_status': self.stock_status,
             'delivery_days': self.delivery_days,
             'is_active': self.is_active,
