@@ -698,3 +698,75 @@ Hvala vam na poverenju!
 
 # Singleton instanca servisa
 email_service = EmailService()
+
+
+def send_supplier_order_email(order, event_type):
+    """
+    Salje email notifikaciju vezanu za supplier order.
+
+    Non-blocking - loguje greske ali ne baca exception.
+    Idempotent via NotificationLog event_key.
+
+    event_type: new_order, offered, confirmed, shipped, delivered, rejected, cancelled, expired, reminder_pending
+    """
+    from app.models import Supplier, Tenant
+    from app.models.notification import NotificationLog, NotificationStatus
+
+    event_key = f'supplier_order_{event_type}_{order.id}'
+
+    # Idempotency check
+    if NotificationLog.already_sent(event_key):
+        return
+
+    supplier = Supplier.query.get(order.seller_supplier_id) if order.seller_supplier_id else None
+    tenant = Tenant.query.get(order.buyer_tenant_id) if order.buyer_tenant_id else None
+
+    subjects = {
+        'new_order': f'Nova narudzbina {order.order_number}',
+        'offered': f'Dobavljac potvrdio dostupnost - {order.order_number}',
+        'confirmed': f'Narudzbina potvrđena - {order.order_number}',
+        'shipped': f'Narudzbina poslata - {order.order_number}',
+        'delivered': f'Narudzbina isporucena - {order.order_number}',
+        'rejected': f'Narudzbina odbijena - {order.order_number}',
+        'cancelled': f'Narudzbina otkazana - {order.order_number}',
+        'expired': f'Narudzbina istekla - {order.order_number}',
+        'reminder_pending': f'Podsetnik: Imate neobradjenu narudzbinu {order.order_number}',
+    }
+
+    subject = subjects.get(event_type, f'Azuriranje narudzbine {order.order_number}')
+
+    # Determine recipient
+    recipient_email = None
+    if event_type in ('new_order', 'confirmed', 'reminder_pending'):
+        # Email supplier-u
+        if supplier and supplier.email:
+            recipient_email = supplier.email
+    elif event_type in ('offered', 'rejected', 'cancelled', 'expired', 'shipped', 'delivered'):
+        # Email tenant-u
+        if tenant and tenant.email:
+            recipient_email = tenant.email
+
+    if not recipient_email:
+        return
+
+    try:
+        success = email_service._send_email(
+            to_email=recipient_email,
+            subject=subject,
+            html_content=f'<p>{subject}</p><p>Broj narudzbine: {order.order_number}<br>Status: {order.status.value}</p>',
+        )
+
+        # Log notification
+        from app.extensions import db
+        log = NotificationLog(
+            event_key=event_key,
+            notification_type='EMAIL',
+            channel='EMAIL',
+            recipient=recipient_email,
+            subject=subject,
+            status=NotificationStatus.SENT if success else NotificationStatus.FAILED,
+        )
+        db.session.add(log)
+        db.session.commit()
+    except Exception:
+        pass

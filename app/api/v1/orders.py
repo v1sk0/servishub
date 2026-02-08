@@ -9,7 +9,8 @@ from app.models import (
     Supplier, SupplierListing,
     Tenant, SparePart, PartVisibility,
     TenantUser, ServiceLocation, ServiceTicket,
-    SupplierReveal
+    SupplierReveal,
+    OrderRating, RaterType, OrderRatingType,
 )
 from app.models.credits import OwnerType, CreditTransactionType
 from app.api.middleware.auth import jwt_required
@@ -632,6 +633,93 @@ def accept_order(order_id):
     }, 200
 
 
+@bp.route('/<int:order_id>/rate', methods=['POST'])
+@jwt_required
+def rate_order(order_id):
+    """
+    Tenant ocenjuje supplier-a (BUYER -> SELLER rating).
+    Samo COMPLETED narudzbine. Dupli -> 409.
+    Azurira supplier.rating i supplier.rating_count.
+    """
+    order = PartOrder.query.filter_by(
+        id=order_id,
+        buyer_tenant_id=g.tenant_id
+    ).first()
+
+    if not order:
+        return {'error': 'Order not found'}, 404
+
+    if order.status != OrderStatus.COMPLETED:
+        return {
+            'error': 'Ocena je moguca samo za zavrsene narudzbine',
+            'code': 'NOT_COMPLETED',
+        }, 400
+
+    if order.seller_type != SellerType.SUPPLIER:
+        return {'error': 'Ocena je moguca samo za supplier narudzbine'}, 400
+
+    data = request.json or {}
+    rating_val = data.get('rating')
+    if rating_val not in ('POSITIVE', 'NEGATIVE'):
+        return {'error': 'rating mora biti POSITIVE ili NEGATIVE'}, 400
+
+    comment = data.get('comment', '')
+    if comment and len(comment) > 500:
+        return {'error': 'Komentar ne moze biti duzi od 500 karaktera'}, 400
+
+    # Check for duplicate (UniqueConstraint)
+    existing = OrderRating.query.filter_by(
+        order_id=order.id,
+        rater_type=RaterType.BUYER,
+        rater_id=g.tenant_id,
+    ).first()
+
+    if existing:
+        return {
+            'error': 'Vec ste ocenili ovu narudzbinu',
+            'code': 'ALREADY_RATED',
+        }, 409
+
+    supplier_id = order.seller_supplier_id
+    rating = OrderRating(
+        order_id=order.id,
+        rater_type=RaterType.BUYER,
+        rater_id=g.tenant_id,
+        rated_id=supplier_id,
+        rating=OrderRatingType[rating_val],
+        comment=comment or None,
+    )
+    db.session.add(rating)
+
+    # Azuriraj supplier.rating i supplier.rating_count
+    supplier = Supplier.query.get(supplier_id)
+    if supplier:
+        positive_count = OrderRating.query.filter_by(
+            rated_id=supplier_id,
+            rater_type=RaterType.BUYER,
+            rating=OrderRatingType.POSITIVE,
+        ).count()
+        # +1 ako je ova ocena POSITIVE (jer jos nije commitovana)
+        if rating_val == 'POSITIVE':
+            positive_count += 1
+
+        total_count = OrderRating.query.filter_by(
+            rated_id=supplier_id,
+            rater_type=RaterType.BUYER,
+        ).count() + 1  # +1 za ovu novu
+
+        supplier.rating = Decimal(str(round(positive_count / total_count * 5, 1))) if total_count > 0 else None
+        supplier.rating_count = total_count
+
+    db.session.commit()
+
+    return {
+        'success': True,
+        'message': 'Ocena uspesno sacuvana',
+        'rating_id': rating.id,
+    }, 201
+
+
 @bp.route('/statuses', methods=['GET'])
 @jwt_required
 def list_statuses():
@@ -640,6 +728,7 @@ def list_statuses():
         'statuses': [
             {'value': 'DRAFT', 'label': 'Nacrt', 'description': 'Not yet sent'},
             {'value': 'SENT', 'label': 'Poslato', 'description': 'Awaiting seller confirmation'},
+            {'value': 'OFFERED', 'label': 'Ponudjeno', 'description': 'Seller confirmed availability, awaiting buyer'},
             {'value': 'CONFIRMED', 'label': 'Potvrđeno', 'description': 'Seller confirmed'},
             {'value': 'REJECTED', 'label': 'Odbijeno', 'description': 'Seller rejected'},
             {'value': 'SHIPPED', 'label': 'Poslato', 'description': 'In transit'},

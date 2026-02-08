@@ -508,3 +508,7 @@ def _register_cli_commands(app):
         click.echo(f'Poslato: {sent}')
         click.echo(f'Gresaka: {errors}')
         click.echo('Gotovo!')
+
+    # Import check-orders iz commands modula
+    from .commands.jobs import check_orders_cmd
+    app.cli.add_command(check_orders_cmd)

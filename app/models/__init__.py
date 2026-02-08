@@ -17,6 +17,7 @@ from .ticket import ServiceTicket, TicketStatus, TicketPriority, TicketNotificat
 from .inventory import PhoneListing, SparePart, PhoneCondition, PartVisibility, PartCategory, SparePartUsage, SparePartLog, StockActionType
 from .supplier import Supplier, SupplierListing, SupplierUser, SupplierStatus
 from .order import PartOrder, PartOrderItem, PartOrderMessage, OrderStatus, SellerType, generate_order_number
+from .order_rating import OrderRating, RaterType, OrderRatingType
 from .representative import ServiceRepresentative, RepresentativeStatus, SubscriptionPayment, PaymentStatus
 from .email_verification import PendingEmailVerification
 from .security_event import SecurityEvent, SecurityEventType, SecurityEventSeverity
@@ -149,6 +150,10 @@ __all__ = [
     'OrderStatus',
     'SellerType',
     'generate_order_number',
+    # Order Rating modeli
+    'OrderRating',
+    'RaterType',
+    'OrderRatingType',
     # Representative modeli
     'ServiceRepresentative',
     'RepresentativeStatus',

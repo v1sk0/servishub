@@ -1,0 +1,325 @@
+{% extends "layouts/supplier.html" %}
+
+{% block title %}Izvestaji - Supplier Portal{% endblock %}
+
+{% block content %}
+<div x-data="reportsPage()" x-init="init()">
+    <!-- Page Header -->
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Izvestaji</h1>
+            <p class="text-gray-600 mt-1">Analizirajte vasu prodaju i performanse.</p>
+        </div>
+        <!-- Export -->
+        <div class="flex gap-2">
+            <button @click="exportReport('csv')"
+                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                CSV
+            </button>
+            <button @click="exportReport('xlsx')"
+                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Date Range + Presets -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div class="flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-2">
+                <label class="text-sm font-medium text-gray-700">Od:</label>
+                <input type="date" x-model="startDate" @change="loadData()"
+                       class="rounded-lg border-gray-300 text-sm">
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="text-sm font-medium text-gray-700">Do:</label>
+                <input type="date" x-model="endDate" @change="loadData()"
+                       class="rounded-lg border-gray-300 text-sm">
+            </div>
+            <div class="flex gap-2">
+                <button @click="setPreset(7)" class="px-3 py-1.5 text-xs rounded-full border"
+                        :class="preset === 7 ? 'bg-purple-100 text-purple-700 border-purple-300' : 'text-gray-600 border-gray-300 hover:bg-gray-50'">
+                    7 dana
+                </button>
+                <button @click="setPreset(30)" class="px-3 py-1.5 text-xs rounded-full border"
+                        :class="preset === 30 ? 'bg-purple-100 text-purple-700 border-purple-300' : 'text-gray-600 border-gray-300 hover:bg-gray-50'">
+                    30 dana
+                </button>
+                <button @click="setPreset('this_month')" class="px-3 py-1.5 text-xs rounded-full border"
+                        :class="preset === 'this_month' ? 'bg-purple-100 text-purple-700 border-purple-300' : 'text-gray-600 border-gray-300 hover:bg-gray-50'">
+                    Ovaj mesec
+                </button>
+                <button @click="setPreset('last_month')" class="px-3 py-1.5 text-xs rounded-full border"
+                        :class="preset === 'last_month' ? 'bg-purple-100 text-purple-700 border-purple-300' : 'text-gray-600 border-gray-300 hover:bg-gray-50'">
+                    Prosli mesec
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="-mb-px flex space-x-8">
+            <button @click="activeTab = 'summary'" class="pb-3 px-1 text-sm font-medium border-b-2"
+                    :class="activeTab === 'summary' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'">
+                Pregled
+            </button>
+            <button @click="activeTab = 'articles'; loadArticles()" class="pb-3 px-1 text-sm font-medium border-b-2"
+                    :class="activeTab === 'articles' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'">
+                Po Artiklu
+            </button>
+            <button @click="activeTab = 'tenants'; loadTenants()" class="pb-3 px-1 text-sm font-medium border-b-2"
+                    :class="activeTab === 'tenants' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'">
+                Po Kupcu
+            </button>
+        </nav>
+    </div>
+
+    <!-- Loading -->
+    <div x-show="loading" class="text-center py-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+        <p class="text-gray-500 mt-3">Ucitavanje...</p>
+    </div>
+
+    <!-- Summary Tab -->
+    <div x-show="activeTab === 'summary' && !loading">
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <p class="text-sm font-medium text-gray-600">Broj narudzbina</p>
+                <p class="text-3xl font-bold text-gray-900 mt-1" x-text="summary.totals?.orders_count || 0"></p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <p class="text-sm font-medium text-gray-600">Prihod (RSD)</p>
+                <p class="text-3xl font-bold text-green-600 mt-1" x-text="formatMoney(summary.totals?.revenue_rsd)"></p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <p class="text-sm font-medium text-gray-600">Provizija (RSD)</p>
+                <p class="text-3xl font-bold text-orange-600 mt-1" x-text="formatMoney(summary.totals?.commission_rsd)"></p>
+            </div>
+        </div>
+
+        <!-- Top Articles + Top Tenants -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Top 5 Articles -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Top 5 artikala</h3>
+                <div class="space-y-3">
+                    <template x-for="article in summary.top_articles || []" :key="article.part_name">
+                        <div class="flex items-center justify-between py-2 border-b border-gray-50">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900" x-text="article.part_name"></p>
+                                <p class="text-xs text-gray-500">Prodato: <span x-text="article.quantity_sold"></span> kom</p>
+                            </div>
+                            <span class="text-sm font-semibold text-green-600" x-text="formatMoney(article.revenue_rsd) + ' RSD'"></span>
+                        </div>
+                    </template>
+                    <p x-show="!summary.top_articles?.length" class="text-sm text-gray-500 py-4 text-center">
+                        Nema podataka za izabrani period
+                    </p>
+                </div>
+            </div>
+
+            <!-- Top 5 Tenants -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Top 5 kupaca</h3>
+                <div class="space-y-3">
+                    <template x-for="t in summary.top_tenants || []" :key="t.tenant_id">
+                        <div class="flex items-center justify-between py-2 border-b border-gray-50">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900" x-text="t.name"></p>
+                                <p class="text-xs text-gray-500" x-text="t.city || ''"></p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-sm font-semibold text-green-600" x-text="formatMoney(t.total_spent) + ' RSD'"></span>
+                                <p class="text-xs text-gray-500"><span x-text="t.orders_count"></span> narudzbina</p>
+                            </div>
+                        </div>
+                    </template>
+                    <p x-show="!summary.top_tenants?.length" class="text-sm text-gray-500 py-4 text-center">
+                        Nema podataka za izabrani period
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Articles Tab -->
+    <div x-show="activeTab === 'articles' && !loading">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Artikal</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brend</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Prodato</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Prihod (RSD)</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Prosecna cena</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <template x-for="a in articles" :key="a.part_name">
+                        <tr>
+                            <td class="px-6 py-4 text-sm text-gray-900" x-text="a.part_name"></td>
+                            <td class="px-6 py-4 text-sm text-gray-500" x-text="a.brand || '-'"></td>
+                            <td class="px-6 py-4 text-sm text-gray-900 text-right" x-text="a.quantity_sold"></td>
+                            <td class="px-6 py-4 text-sm font-medium text-green-600 text-right" x-text="formatMoney(a.revenue_rsd)"></td>
+                            <td class="px-6 py-4 text-sm text-gray-500 text-right" x-text="formatMoney(a.avg_unit_price)"></td>
+                        </tr>
+                    </template>
+                </tbody>
+                <tfoot x-show="articleTotals" class="bg-gray-50">
+                    <tr>
+                        <td colspan="2" class="px-6 py-3 text-sm font-semibold text-gray-900">Ukupno</td>
+                        <td class="px-6 py-3 text-sm font-semibold text-gray-900 text-right" x-text="articleTotals?.total_quantity || 0"></td>
+                        <td class="px-6 py-3 text-sm font-semibold text-green-600 text-right" x-text="formatMoney(articleTotals?.total_revenue)"></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <p x-show="!articles.length" class="text-sm text-gray-500 py-8 text-center">
+                Nema podataka za izabrani period
+            </p>
+        </div>
+    </div>
+
+    <!-- Tenants Tab -->
+    <div x-show="activeTab === 'tenants' && !loading">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kupac</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grad</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Narudzbina</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ukupna potrosnja (RSD)</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <template x-for="t in tenants" :key="t.tenant_id">
+                        <tr>
+                            <td class="px-6 py-4 text-sm text-gray-900" x-text="t.name"></td>
+                            <td class="px-6 py-4 text-sm text-gray-500" x-text="t.city || '-'"></td>
+                            <td class="px-6 py-4 text-sm text-gray-900 text-right" x-text="t.orders_count"></td>
+                            <td class="px-6 py-4 text-sm font-medium text-green-600 text-right" x-text="formatMoney(t.total_spent)"></td>
+                        </tr>
+                    </template>
+                </tbody>
+                <tfoot x-show="tenantTotals" class="bg-gray-50">
+                    <tr>
+                        <td colspan="2" class="px-6 py-3 text-sm font-semibold text-gray-900">Ukupno (<span x-text="tenantTotals?.tenant_count || 0"></span> kupaca)</td>
+                        <td class="px-6 py-3 text-sm font-semibold text-gray-900 text-right" x-text="tenantTotals?.total_orders || 0"></td>
+                        <td class="px-6 py-3 text-sm font-semibold text-green-600 text-right" x-text="formatMoney(tenantTotals?.total_revenue)"></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <p x-show="!tenants.length" class="text-sm text-gray-500 py-8 text-center">
+                Nema podataka za izabrani period
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+function reportsPage() {
+    return {
+        activeTab: 'summary',
+        loading: false,
+        preset: 30,
+        startDate: '',
+        endDate: '',
+        summary: {},
+        articles: [],
+        articleTotals: null,
+        tenants: [],
+        tenantTotals: null,
+
+        init() {
+            this.setPreset(30);
+        },
+
+        setPreset(val) {
+            this.preset = val;
+            const now = new Date();
+            if (val === 'this_month') {
+                this.startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+                this.endDate = now.toISOString().split('T')[0];
+            } else if (val === 'last_month') {
+                this.startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
+                this.endDate = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+            } else {
+                const start = new Date(now);
+                start.setDate(start.getDate() - val);
+                this.startDate = start.toISOString().split('T')[0];
+                this.endDate = now.toISOString().split('T')[0];
+            }
+            this.loadData();
+        },
+
+        async loadData() {
+            this.loading = true;
+            try {
+                await this.loadSummary();
+                if (this.activeTab === 'articles') await this.loadArticles();
+                if (this.activeTab === 'tenants') await this.loadTenants();
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async loadSummary() {
+            const resp = await supplierApi(`/reports/summary?start_date=${this.startDate}&end_date=${this.endDate}`);
+            if (resp.ok) {
+                const data = await resp.json();
+                this.summary = data;
+            }
+        },
+
+        async loadArticles() {
+            const resp = await supplierApi(`/reports/by-article?start_date=${this.startDate}&end_date=${this.endDate}`);
+            if (resp.ok) {
+                const data = await resp.json();
+                this.articles = data.articles || [];
+                this.articleTotals = data.totals;
+            }
+        },
+
+        async loadTenants() {
+            const resp = await supplierApi(`/reports/by-tenant?start_date=${this.startDate}&end_date=${this.endDate}`);
+            if (resp.ok) {
+                const data = await resp.json();
+                this.tenants = data.tenants || [];
+                this.tenantTotals = data.totals;
+            }
+        },
+
+        exportReport(format) {
+            const type = this.activeTab === 'articles' ? 'by-article' :
+                         this.activeTab === 'tenants' ? 'by-tenant' : 'summary';
+            const token = localStorage.getItem('supplier_token');
+            const url = `/api/supplier/reports/export?type=${type}&format=${format}&start_date=${this.startDate}&end_date=${this.endDate}`;
+            // Direct download via fetch + blob
+            fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            }).then(r => r.blob()).then(blob => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `izvestaj_${type}_${this.startDate}_${this.endDate}.${format}`;
+                a.click();
+            });
+        },
+
+        formatMoney(val) {
+            if (!val && val !== 0) return '0';
+            return Number(val).toLocaleString('sr-RS', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        }
+    };
+}
+</script>
+{% endblock %}

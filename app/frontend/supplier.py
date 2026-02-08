@@ -65,6 +65,14 @@ def supplier_order_detail(order_id):
     return render_template('supplier/orders/detail.html', order_id=order_id)
 
 
+# ============== Reports ==============
+
+@bp.route('/supplier/reports')
+def supplier_reports():
+    """Izvestaji dobavljaca."""
+    return render_template('supplier/reports.html')
+
+
 # ============== Settings ==============
 
 @bp.route('/supplier/settings')

@@ -27,6 +27,7 @@ class OrderStatus(enum.Enum):
     """
     DRAFT = 'DRAFT'
     SENT = 'SENT'
+    OFFERED = 'OFFERED'      # Dobavljac potvrdio dostupnost, ceka tenant potvrdu
     CONFIRMED = 'CONFIRMED'
     REJECTED = 'REJECTED'
     SHIPPED = 'SHIPPED'
@@ -120,8 +121,16 @@ class PartOrder(db.Model):
     tracking_number = db.Column(db.String(100))
     tracking_url = db.Column(db.String(500))
 
+    # Delivery info (supplier popunjava pri confirm-availability)
+    delivery_method = db.Column(db.String(30))          # courier, own_delivery, pickup
+    courier_service = db.Column(db.String(50))           # d_express, aks, bex...
+    delivery_cost = db.Column(db.Numeric(10, 2))         # Cena dostave u RSD
+    estimated_delivery_days = db.Column(db.Integer)       # Procenjeni dani
+    delivery_cutoff_time = db.Column(db.Time)             # Rok za slanje danas (opciono)
+
     # Timestampovi za svaki status
     sent_at = db.Column(db.DateTime)
+    offered_at = db.Column(db.DateTime)                   # Kad je supplier potvrdio dostupnost
     confirmed_at = db.Column(db.DateTime)
     rejected_at = db.Column(db.DateTime)
     rejection_reason = db.Column(db.Text)
@@ -131,6 +140,9 @@ class PartOrder(db.Model):
     cancelled_at = db.Column(db.DateTime)
     cancellation_reason = db.Column(db.Text)
     cancelled_by = db.Column(db.String(10))  # BUYER / SELLER
+
+    # Auto-expiry (2h za SENT, 4h za OFFERED)
+    expires_at = db.Column(db.DateTime)
 
     # Timestampovi
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
