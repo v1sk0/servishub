@@ -58,9 +58,9 @@
                                     <div class="text-right">
                                         <p class="text-sm text-gray-900">
                                             <span x-text="item.quantity"></span> x
-                                            <span x-text="formatPrice(item.unit_price)"></span> RSD
+                                            <span x-text="formatPrice(item.unit_price)"></span> <span x-text="order.currency || 'RSD'"></span>
                                         </p>
-                                        <p class="text-sm font-medium text-gray-900" x-text="formatPrice(item.total_price) + ' RSD'"></p>
+                                        <p class="text-sm font-medium text-gray-900" x-text="formatPrice(item.total_price) + ' ' + (order.currency || 'RSD')"></p>
                                     </div>
                                 </div>
                             </li>
@@ -69,11 +69,11 @@
                     <div class="px-6 py-4 bg-gray-50 border-t">
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-500">Medjuzbir:</span>
-                            <span class="text-gray-900" x-text="formatPrice(order.subtotal) + ' RSD'"></span>
+                            <span class="text-gray-900" x-text="formatPrice(order.subtotal) + ' ' + (order.currency || 'RSD')"></span>
                         </div>
                         <div class="flex justify-between text-base font-medium mt-2 pt-2 border-t">
                             <span class="text-gray-900">Ukupno:</span>
-                            <span class="text-gray-900" x-text="formatPrice(order.total_amount) + ' RSD'"></span>
+                            <span class="text-gray-900" x-text="formatPrice(order.total_amount) + ' ' + (order.currency || 'RSD')"></span>
                         </div>
                     </div>
                 </div>

@@ -109,7 +109,7 @@
                                 <span class="text-gray-600" x-text="order.items_count + ' artikala'"></span>
                             </td>
                             <td class="px-6 py-4">
-                                <p class="font-medium text-gray-900" x-text="formatPrice(order.total_amount)"></p>
+                                <p class="font-medium text-gray-900" x-text="formatPrice(order.total_amount, order.currency)"></p>
                             </td>
                             <td class="px-6 py-4">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
@@ -208,15 +208,15 @@
                                                 <p class="text-xs text-gray-500" x-text="item.part_number"></p>
                                             </td>
                                             <td class="px-4 py-3 text-right text-sm" x-text="item.quantity"></td>
-                                            <td class="px-4 py-3 text-right text-sm" x-text="formatPrice(item.unit_price)"></td>
-                                            <td class="px-4 py-3 text-right text-sm font-medium" x-text="formatPrice(item.total_price)"></td>
+                                            <td class="px-4 py-3 text-right text-sm" x-text="formatPrice(item.unit_price, orderDetail?.currency)"></td>
+                                            <td class="px-4 py-3 text-right text-sm font-medium" x-text="formatPrice(item.total_price, orderDetail?.currency)"></td>
                                         </tr>
                                     </template>
                                 </tbody>
                                 <tfoot class="bg-gray-100">
                                     <tr>
                                         <td colspan="3" class="px-4 py-2 text-right text-sm font-medium text-gray-700">Ukupno:</td>
-                                        <td class="px-4 py-2 text-right text-sm font-bold text-gray-900" x-text="formatPrice(orderDetail?.total_amount)"></td>
+                                        <td class="px-4 py-2 text-right text-sm font-bold text-gray-900" x-text="formatPrice(orderDetail?.total_amount, orderDetail?.currency)"></td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -526,9 +526,9 @@ function ordersPage() {
             }
         },
 
-        formatPrice(price) {
-            if (!price) return '0 RSD';
-            return new Intl.NumberFormat('sr-RS').format(price) + ' RSD';
+        formatPrice(price, currency) {
+            if (!price) return '0';
+            return new Intl.NumberFormat('sr-RS').format(price) + ' ' + (currency || 'RSD');
         },
 
         formatDate(dateStr) {

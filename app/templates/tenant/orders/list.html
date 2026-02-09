@@ -269,7 +269,7 @@
                                         <p class="text-sm text-gray-500" x-text="(item.brand || '') + ' ' + (item.model || '')"></p>
                                     </div>
                                     <div class="text-right">
-                                        <p class="font-medium text-gray-900" x-text="formatPrice(item.total_price) + ' RSD'"></p>
+                                        <p class="font-medium text-gray-900" x-text="formatPrice(item.total_price) + ' ' + (selectedOrder?.currency || 'RSD')"></p>
                                         <p class="text-sm text-gray-500" x-text="item.quantity + ' x ' + formatPrice(item.unit_price)"></p>
                                     </div>
                                 </div>
