@@ -29,6 +29,11 @@
                         class="py-4 px-6 border-b-2 font-medium text-sm">
                     Bezbednost
                 </button>
+                <button @click="activeTab = 'appearance'"
+                        :class="activeTab === 'appearance' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="py-4 px-6 border-b-2 font-medium text-sm">
+                    Izgled
+                </button>
             </nav>
         </div>
 
@@ -178,6 +183,88 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Appearance Tab -->
+            <div x-show="activeTab === 'appearance'" x-cloak>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Tema</h3>
+                <p class="text-sm text-gray-500 mb-6">Izaberite kako zelite da izgleda vasa radna povrsina</p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
+                    <!-- Light Theme -->
+                    <button @click="setTheme('light')"
+                            class="relative rounded-xl border-2 p-4 text-left transition-all hover:shadow-md"
+                            :class="currentTheme === 'light' ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-gray-300'">
+                        <div class="rounded-lg overflow-hidden border border-gray-200 mb-3">
+                            <div class="h-6 bg-white border-b border-gray-100 flex items-center px-2">
+                                <div class="flex space-x-1">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                                    <div class="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                                    <div class="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                                </div>
+                            </div>
+                            <div class="flex h-20">
+                                <div class="w-12 bg-white border-r border-gray-100 p-1">
+                                    <div class="w-full h-1.5 bg-purple-200 rounded mb-1"></div>
+                                    <div class="w-full h-1.5 bg-gray-100 rounded mb-1"></div>
+                                    <div class="w-full h-1.5 bg-gray-100 rounded"></div>
+                                </div>
+                                <div class="flex-1 bg-gray-50 p-2">
+                                    <div class="flex space-x-1 mb-1">
+                                        <div class="w-8 h-4 bg-white rounded border border-gray-100"></div>
+                                        <div class="w-8 h-4 bg-white rounded border border-gray-100"></div>
+                                    </div>
+                                    <div class="w-full h-6 bg-white rounded border border-gray-100"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="font-medium text-gray-900">Svetla</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Klasican svetli interfejs</p>
+                        <div x-show="currentTheme === 'light'"
+                             class="absolute top-2 right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
+                            <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                    </button>
+
+                    <!-- Glass/Dark Theme -->
+                    <button @click="setTheme('glass')"
+                            class="relative rounded-xl border-2 p-4 text-left transition-all hover:shadow-md"
+                            :class="currentTheme === 'glass' ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-gray-300'">
+                        <div class="rounded-lg overflow-hidden border border-gray-700 mb-3">
+                            <div class="h-6 bg-slate-800 border-b border-slate-700 flex items-center px-2">
+                                <div class="flex space-x-1">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-slate-600"></div>
+                                    <div class="w-1.5 h-1.5 rounded-full bg-slate-600"></div>
+                                    <div class="w-1.5 h-1.5 rounded-full bg-slate-600"></div>
+                                </div>
+                            </div>
+                            <div class="flex h-20">
+                                <div class="w-12 bg-slate-800 border-r border-slate-700 p-1">
+                                    <div class="w-full h-1.5 bg-purple-500/40 rounded mb-1"></div>
+                                    <div class="w-full h-1.5 bg-slate-700 rounded mb-1"></div>
+                                    <div class="w-full h-1.5 bg-slate-700 rounded"></div>
+                                </div>
+                                <div class="flex-1 bg-slate-900 p-2">
+                                    <div class="flex space-x-1 mb-1">
+                                        <div class="w-8 h-4 bg-slate-800 rounded border border-slate-700"></div>
+                                        <div class="w-8 h-4 bg-slate-800 rounded border border-slate-700"></div>
+                                    </div>
+                                    <div class="w-full h-6 bg-slate-800 rounded border border-slate-700"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="font-medium text-gray-900">Glassmorphism</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Tamna tema sa staklenim efektom</p>
+                        <div x-show="currentTheme === 'glass'"
+                             class="absolute top-2 right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
+                            <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -219,6 +306,7 @@ function settingsPage() {
         saving: false,
         message: '',
         messageType: 'success',
+        currentTheme: localStorage.getItem('shub-theme') || 'light',
 
         async init() {
             await this.loadProfile();
@@ -226,7 +314,7 @@ function settingsPage() {
 
         async loadProfile() {
             try {
-                const data = await supplierApi('/api/supplier/auth/me');
+                const data = await supplierApi('/auth/me');
 
                 this.profile = {
                     ime: data.user.ime,
@@ -254,13 +342,10 @@ function settingsPage() {
         async saveProfile() {
             this.saving = true;
             try {
-                await supplierApi('/api/supplier/auth/me', {
-                    method: 'PUT',
-                    body: JSON.stringify({
-                        ime: this.profile.ime,
-                        prezime: this.profile.prezime,
-                        phone: this.profile.phone
-                    })
+                await supplierApi('/auth/me', 'PUT', {
+                    ime: this.profile.ime,
+                    prezime: this.profile.prezime,
+                    phone: this.profile.phone
                 });
                 this.showMessage('Profil sacuvan', 'success');
             } catch (err) {
@@ -273,14 +358,11 @@ function settingsPage() {
         async saveCompany() {
             this.saving = true;
             try {
-                await supplierApi('/api/supplier/auth/me', {
-                    method: 'PUT',
-                    body: JSON.stringify({
-                        company_name: this.company.name,
-                        company_email: this.company.email,
-                        company_phone: this.company.phone,
-                        city: this.company.city
-                    })
+                await supplierApi('/auth/me', 'PUT', {
+                    company_name: this.company.name,
+                    company_email: this.company.email,
+                    company_phone: this.company.phone,
+                    city: this.company.city
                 });
                 this.showMessage('Kompanija sacuvana', 'success');
             } catch (err) {
@@ -298,12 +380,9 @@ function settingsPage() {
 
             this.saving = true;
             try {
-                await supplierApi('/api/supplier/auth/password', {
-                    method: 'PUT',
-                    body: JSON.stringify({
-                        current_password: this.passwords.current,
-                        new_password: this.passwords.new
-                    })
+                await supplierApi('/auth/password', 'PUT', {
+                    current_password: this.passwords.current,
+                    new_password: this.passwords.new
                 });
                 this.passwords = { current: '', new: '', confirm: '' };
                 this.showMessage('Lozinka promenjena', 'success');
@@ -312,6 +391,17 @@ function settingsPage() {
             } finally {
                 this.saving = false;
             }
+        },
+
+        setTheme(theme) {
+            this.currentTheme = theme;
+            localStorage.setItem('shub-theme', theme);
+            if (theme === 'glass') {
+                document.documentElement.classList.add('glass-theme');
+            } else {
+                document.documentElement.classList.remove('glass-theme');
+            }
+            this.showMessage(theme === 'glass' ? 'Tamna tema aktivirana' : 'Svetla tema aktivirana', 'success');
         },
 
         showMessage(msg, type) {

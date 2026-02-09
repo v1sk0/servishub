@@ -18,7 +18,7 @@ def register_routes():
     """
     from . import auth, tenants, kyc, dashboard, activity, security, settings, payments, scheduler, threads
     from . import bank_import, bank_transactions, notifications, sms
-    from . import suppliers
+    from . import suppliers, credits
 
     bp.register_blueprint(auth.bp)
     bp.register_blueprint(tenants.bp)
@@ -34,4 +34,5 @@ def register_routes():
     bp.register_blueprint(notifications.bp)
     bp.register_blueprint(sms.bp)
     bp.register_blueprint(suppliers.bp)
+    bp.register_blueprint(credits.bp)
     # scheduler rute su direktno na bp, nije sub-blueprint

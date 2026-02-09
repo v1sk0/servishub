@@ -288,9 +288,17 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Brend *</label>
-                            <input type="text" x-model="form.brand" required
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                   placeholder="Samsung, Apple, Xiaomi...">
+                            <select x-model="form.brand_select" required @change="onBrandSelectChange()"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                <option value="">Izaberi brend</option>
+                                <template x-for="b in brands" :key="b">
+                                    <option :value="b" x-text="b"></option>
+                                </template>
+                                <option value="__other">Ostalo...</option>
+                            </select>
+                            <input x-show="form.brand_select === '__other'" x-transition
+                                   type="text" x-model="form.brand_custom" placeholder="Unesite naziv brenda"
+                                   class="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Kategorija *</label>
@@ -685,11 +693,14 @@ function catalogPage() {
         selectedIds: [],
         bulkPricePercent: '',
         bulkProcessing: false,
+        // Brands
+        brands: [],
 
         async init() {
             await Promise.all([
                 this.loadListings(),
-                this.loadStats()
+                this.loadStats(),
+                this.loadBrands()
             ]);
         },
 
@@ -725,12 +736,33 @@ function catalogPage() {
             }
         },
 
+        async loadBrands() {
+            try {
+                const data = await supplierApi('/listings/brands');
+                this.brands = data.brands || [];
+            } catch (err) {
+                console.error('Error loading brands:', err);
+            }
+        },
+
+        onBrandSelectChange() {
+            if (this.form.brand_select === '__other') {
+                this.form.brand = '';
+                this.form.brand_custom = '';
+            } else {
+                this.form.brand = this.form.brand_select;
+                this.form.brand_custom = '';
+            }
+        },
+
         // ===== Add/Edit =====
 
         openAddModal() {
             this.editingId = null;
             this.form = {
                 brand: '',
+                brand_select: '',
+                brand_custom: '',
                 part_number: '',
                 part_category: '',
                 model_compatibility: '',
@@ -758,8 +790,12 @@ function catalogPage() {
 
         editListing(listing) {
             this.editingId = listing.id;
+            const brandVal = listing.brand || '';
+            const isStandard = this.brands.includes(brandVal);
             this.form = {
-                brand: listing.brand || '',
+                brand: brandVal,
+                brand_select: isStandard ? brandVal : (brandVal ? '__other' : ''),
+                brand_custom: isStandard ? '' : brandVal,
                 part_number: listing.part_number || '',
                 part_category: listing.part_category || '',
                 model_compatibility: listing.model_compatibility || '',
@@ -811,9 +847,15 @@ function catalogPage() {
                     : '/listings';
                 const method = this.editingId ? 'PUT' : 'POST';
 
+                // Resolve brand from dropdown or custom input
+                const finalBrand = this.form.brand_select === '__other'
+                    ? (this.form.brand_custom || '').trim()
+                    : this.form.brand_select;
+                this.form.brand = finalBrand;
+
                 const body = {
-                    name: this.buildSuggestedName() || this.form.brand || 'Artikal',
-                    brand: this.form.brand || null,
+                    name: this.buildSuggestedName() || finalBrand || 'Artikal',
+                    brand: finalBrand || null,
                     part_number: this.form.part_number || null,
                     part_category: this.form.part_category || null,
                     model_compatibility: this.form.model_compatibility || null,
@@ -963,7 +1005,11 @@ function catalogPage() {
                 parts.push(catLabels[cat] || '');
             }
 
-            if (this.form.brand) parts.push(this.form.brand);
+            // Resolve brand from dropdown/custom
+            const brand = this.form.brand_select === '__other'
+                ? (this.form.brand_custom || '').trim()
+                : (this.form.brand_select || this.form.brand || '');
+            if (brand) parts.push(brand);
 
             // First model from compatibility list
             const model = this.form.model_compatibility?.split(',')[0]?.trim();
@@ -988,8 +1034,12 @@ function catalogPage() {
 
         duplicateListing(listing) {
             this.editingId = null;
+            const brandVal = listing.brand || '';
+            const isStd = this.brands.includes(brandVal);
             this.form = {
-                brand: listing.brand || '',
+                brand: brandVal,
+                brand_select: isStd ? brandVal : (brandVal ? '__other' : ''),
+                brand_custom: isStd ? '' : brandVal,
                 part_number: '',  // prazno - mora nova sifra
                 part_category: listing.part_category || '',
                 model_compatibility: listing.model_compatibility || '',

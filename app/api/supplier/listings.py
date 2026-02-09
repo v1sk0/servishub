@@ -10,6 +10,7 @@ from app.extensions import db
 from app.models import SupplierListing, Supplier
 from .auth import supplier_jwt_required
 from app.utils.file_security import validate_upload
+from app.constants.brands import get_brand_list, validate_brand
 from pydantic import BaseModel, Field, model_validator
 from typing import Optional
 from datetime import datetime
@@ -611,6 +612,15 @@ def get_stats():
         'out_of_stock': out_of_stock,
         'categories': {cat or 'uncategorized': count for cat, count in categories}
     }
+
+
+# ============== Brands ==============
+
+@bp.route('/brands', methods=['GET'])
+@supplier_jwt_required
+def list_brands():
+    """Return list of standard brands for dropdown"""
+    return {'brands': get_brand_list()}
 
 
 # ============== JSON Import (Legacy) ==============
