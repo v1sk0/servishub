@@ -210,11 +210,14 @@
                                       class="font-medium" x-text="(listing.stock_quantity || 0) + ' kom'"></span>
                             </td>
                             <td class="px-4 py-4 text-center">
-                                <button @click="toggleActive(listing)" :disabled="listing._toggling"
-                                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50"
-                                        :class="listing.is_active ? 'bg-green-500' : 'bg-gray-300'">
-                                    <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                                          :class="listing.is_active ? 'translate-x-5' : 'translate-x-0'"></span>
+                                <button @click="confirmToggle(listing)" :disabled="listing._toggling"
+                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 disabled:opacity-50"
+                                        :class="listing.is_active
+                                            ? 'bg-green-500 text-white hover:bg-green-600'
+                                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300'">
+                                    <span class="inline-block h-1.5 w-1.5 rounded-full mr-1.5"
+                                          :class="listing.is_active ? 'bg-white' : 'bg-gray-400'"></span>
+                                    <span x-text="listing.is_active ? 'Aktivan' : 'Neaktivan'"></span>
                                 </button>
                             </td>
                             <td class="px-4 py-4 text-right">
@@ -537,6 +540,58 @@
         </div>
     </div>
 
+    <!-- ============== Toggle Confirm Modal ============== -->
+    <div x-show="showToggleModal" x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/50" @click="showToggleModal = false"></div>
+            <div class="relative bg-white rounded-xl shadow-xl max-w-sm w-full p-6"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100">
+                <div class="text-center">
+                    <!-- Icon -->
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4"
+                         :class="toggleTarget?.is_active ? 'bg-red-100' : 'bg-green-100'">
+                        <svg x-show="toggleTarget?.is_active" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                        </svg>
+                        <svg x-show="!toggleTarget?.is_active" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <!-- Title -->
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1"
+                        x-text="toggleTarget?.is_active ? 'Deaktiviraj artikal?' : 'Aktiviraj artikal?'"></h3>
+                    <!-- Description -->
+                    <p class="text-sm text-gray-500 mb-1" x-text="toggleTarget?.name"></p>
+                    <p class="text-sm text-gray-500 mb-5"
+                       x-text="toggleTarget?.is_active
+                           ? 'Artikal nece biti vidljiv kupcima dok ga ponovo ne aktivirate.'
+                           : 'Artikal ce biti vidljiv kupcima na marketplace-u.'"></p>
+                    <!-- Actions -->
+                    <div class="flex justify-center space-x-3">
+                        <button @click="showToggleModal = false"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium">
+                            Odustani
+                        </button>
+                        <button @click="executeToggle()"
+                                class="px-4 py-2 rounded-lg text-white text-sm font-medium"
+                                :class="toggleTarget?.is_active ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'">
+                            <span x-text="toggleTarget?.is_active ? 'Deaktiviraj' : 'Aktiviraj'"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ============== Import Modal ============== -->
     <div x-show="showImportModal" x-cloak
          class="fixed inset-0 z-50 overflow-y-auto"
@@ -695,6 +750,9 @@ function catalogPage() {
         bulkProcessing: false,
         // Brands
         brands: [],
+        // Toggle confirm modal
+        showToggleModal: false,
+        toggleTarget: null,
 
         async init() {
             await Promise.all([
@@ -888,7 +946,16 @@ function catalogPage() {
 
         // ===== Toggle =====
 
-        async toggleActive(listing) {
+        confirmToggle(listing) {
+            this.toggleTarget = listing;
+            this.showToggleModal = true;
+        },
+
+        async executeToggle() {
+            const listing = this.toggleTarget;
+            if (!listing) return;
+            this.showToggleModal = false;
+
             listing._toggling = true;
             const prevState = listing.is_active;
             listing.is_active = !listing.is_active; // Optimistic
@@ -901,6 +968,7 @@ function catalogPage() {
                 console.error('Error toggling active:', err);
             } finally {
                 listing._toggling = false;
+                this.toggleTarget = null;
             }
         },
 
