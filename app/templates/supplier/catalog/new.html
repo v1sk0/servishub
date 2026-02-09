@@ -124,7 +124,7 @@ function catalogNewPage() {
         async saveListing() {
             this.saving = true;
             try {
-                const response = await supplierApi('/api/supplier/listings', {
+                const response = await supplierApi('/listings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(this.form)

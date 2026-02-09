@@ -126,26 +126,26 @@ function orderDetailPage(id) {
         statusLabels: { 'SENT': 'Nova', 'CONFIRMED': 'Potvrdjena', 'REJECTED': 'Odbijena', 'SHIPPED': 'Poslato', 'DELIVERED': 'Isporuceno', 'COMPLETED': 'Zavrseno', 'CANCELLED': 'Otkazano' },
         async loadOrder() {
             try {
-                const r = await supplierApi('/api/supplier/orders/' + this.orderId);
+                const r = await supplierApi('/orders/' + this.orderId);
                 if (r.ok) { this.order = await r.json(); this.tracking.number = this.order.tracking_number || ''; this.tracking.url = this.order.tracking_url || ''; }
             } catch (e) { console.error(e); } finally { this.loading = false; }
         },
         async updateStatus(action) {
             this.updating = true;
             try {
-                await supplierApi('/api/supplier/orders/' + this.orderId + '/' + action, { method: 'PUT' });
+                await supplierApi('/orders/' + this.orderId + '/' + action, { method: 'PUT' });
                 await this.loadOrder();
                 showToast('Status azuriran', 'success');
             } catch (e) { showToast('Greska', 'error'); } finally { this.updating = false; }
         },
         async sendMessage() {
             if (!this.newMessage) return;
-            await supplierApi('/api/supplier/orders/' + this.orderId + '/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message_text: this.newMessage }) });
+            await supplierApi('/orders/' + this.orderId + '/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message_text: this.newMessage }) });
             this.newMessage = '';
             await this.loadOrder();
         },
         async saveTracking() {
-            await supplierApi('/api/supplier/orders/' + this.orderId + '/tracking', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.tracking) });
+            await supplierApi('/orders/' + this.orderId + '/tracking', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.tracking) });
             showToast('Tracking sacuvan', 'success');
         },
         getStatusClass(s) {

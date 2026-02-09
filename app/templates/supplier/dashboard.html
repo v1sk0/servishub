@@ -208,7 +208,7 @@ function dashboardPage() {
 
         async loadStats() {
             try {
-                const data = await supplierApi('/api/supplier/listings/stats');
+                const data = await supplierApi('/listings/stats');
                 this.stats = data;
             } catch (err) {
                 console.error('Error loading stats:', err);
@@ -217,10 +217,10 @@ function dashboardPage() {
 
         async loadOrders() {
             try {
-                const data = await supplierApi('/api/supplier/orders?per_page=5');
+                const data = await supplierApi('/orders?per_page=5');
                 this.recentOrders = data.orders || [];
                 // Count pending orders
-                const allOrders = await supplierApi('/api/supplier/orders?status=SENT');
+                const allOrders = await supplierApi('/orders?status=SENT');
                 this.orderStats.pending = allOrders.total || 0;
             } catch (err) {
                 console.error('Error loading orders:', err);
@@ -229,7 +229,7 @@ function dashboardPage() {
 
         async loadSupplierInfo() {
             try {
-                const data = await supplierApi('/api/supplier/auth/me');
+                const data = await supplierApi('/auth/me');
                 this.supplierInfo = data.supplier || {};
             } catch (err) {
                 console.error('Error loading supplier info:', err);

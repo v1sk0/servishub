@@ -119,20 +119,20 @@ function catalogDetailPage(id) {
         form: { name: '', part_category: 'OTHER', quality_grade: 'OEM', brand: '', model_compatibility: '', price: null, min_order_qty: 1, delivery_days: 2, stock_status: 'IN_STOCK', is_active: true },
         async loadListing() {
             try {
-                const r = await supplierApi('/api/supplier/listings/' + this.listingId);
+                const r = await supplierApi('/listings/' + this.listingId);
                 if (r.ok) { this.listing = await r.json(); Object.assign(this.form, this.listing); }
             } catch (e) { console.error(e); } finally { this.loading = false; }
         },
         async saveListing() {
             this.saving = true;
             try {
-                const r = await supplierApi('/api/supplier/listings/' + this.listingId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.form) });
+                const r = await supplierApi('/listings/' + this.listingId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.form) });
                 if (r.ok) { showToast('Sacuvano', 'success'); window.location.href = '/supplier/catalog'; }
             } catch (e) { showToast('Greska', 'error'); } finally { this.saving = false; }
         },
         async deleteListing() {
             if (!confirm('Obrisati artikal?')) return;
-            await supplierApi('/api/supplier/listings/' + this.listingId, { method: 'DELETE' });
+            await supplierApi('/listings/' + this.listingId, { method: 'DELETE' });
             window.location.href = '/supplier/catalog';
         }
     }

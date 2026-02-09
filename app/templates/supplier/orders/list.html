@@ -416,7 +416,7 @@ function ordersPage() {
                     params.append('status', this.filterStatus);
                 }
 
-                const data = await supplierApi(`/api/supplier/orders?${params}`);
+                const data = await supplierApi(`/orders?${params}`);
                 this.orders = data.orders || [];
                 this.pagination.total = data.total || 0;
                 this.pagination.pages = data.pages || 1;
@@ -429,7 +429,7 @@ function ordersPage() {
 
         async loadStats() {
             try {
-                const data = await supplierApi('/api/supplier/orders/stats');
+                const data = await supplierApi('/orders/stats');
                 this.stats = data;
             } catch (err) {
                 console.error('Error loading stats:', err);
@@ -442,7 +442,7 @@ function ordersPage() {
             this.shippingInfo = { tracking_number: '', tracking_url: '' };
 
             try {
-                const data = await supplierApi(`/api/supplier/orders/${order.id}`);
+                const data = await supplierApi(`/orders/${order.id}`);
                 this.orderDetail = data;
                 if (data.tracking_number) {
                     this.shippingInfo.tracking_number = data.tracking_number;
@@ -466,7 +466,7 @@ function ordersPage() {
             if (!confirm('Da li ste sigurni da zelite da potvrdite ovu narudzbinu?')) return;
 
             try {
-                await supplierApi(`/api/supplier/orders/${this.selectedOrder.id}/confirm`, {
+                await supplierApi(`/orders/${this.selectedOrder.id}/confirm`, {
                     method: 'POST',
                     body: JSON.stringify({})
                 });
@@ -484,7 +484,7 @@ function ordersPage() {
 
         async submitReject() {
             try {
-                await supplierApi(`/api/supplier/orders/${this.selectedOrder.id}/reject`, {
+                await supplierApi(`/orders/${this.selectedOrder.id}/reject`, {
                     method: 'POST',
                     body: JSON.stringify({ reason: this.rejectReason })
                 });
@@ -498,7 +498,7 @@ function ordersPage() {
 
         async shipOrder() {
             try {
-                await supplierApi(`/api/supplier/orders/${this.selectedOrder.id}/ship`, {
+                await supplierApi(`/orders/${this.selectedOrder.id}/ship`, {
                     method: 'POST',
                     body: JSON.stringify(this.shippingInfo)
                 });
@@ -513,13 +513,13 @@ function ordersPage() {
             if (!this.newMessage.trim()) return;
 
             try {
-                await supplierApi(`/api/supplier/orders/${this.selectedOrder.id}/messages`, {
+                await supplierApi(`/orders/${this.selectedOrder.id}/messages`, {
                     method: 'POST',
                     body: JSON.stringify({ message: this.newMessage })
                 });
                 this.newMessage = '';
                 // Reload order to get new message
-                const data = await supplierApi(`/api/supplier/orders/${this.selectedOrder.id}`);
+                const data = await supplierApi(`/orders/${this.selectedOrder.id}`);
                 this.orderDetail = data;
             } catch (err) {
                 alert('Greska: ' + err.message);
