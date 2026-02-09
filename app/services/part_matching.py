@@ -7,11 +7,14 @@ Koristi se u Smart Part Offers flow-u (Paket E):
 - Vraca prosecne cene za summary tabelu
 """
 
+import logging
 from decimal import Decimal
 from sqlalchemy import func, or_
 from ..extensions import db
 from ..models.supplier import Supplier, SupplierListing, SupplierStatus
 from ..constants.brands import normalize_brand
+
+logger = logging.getLogger(__name__)
 
 
 # Quality grupe za prikaz u summary tabeli
@@ -89,6 +92,24 @@ def find_matching_listings(brand, model, part_category=None):
     Filter: is_active=True, stock > 0, supplier.status=ACTIVE
     """
     normalized_brand = normalize_brand(brand)
+    logger.info(f'[PartMatch] brand={brand!r} -> normalized={normalized_brand!r}, model={model!r}, category={part_category!r}')
+
+    # Debug: count all active listings for this brand
+    debug_count = (
+        db.session.query(func.count(SupplierListing.id))
+        .join(Supplier, SupplierListing.supplier_id == Supplier.id)
+        .filter(SupplierListing.is_active.is_(True))
+        .scalar()
+    )
+    logger.info(f'[PartMatch] Total active listings in DB: {debug_count}')
+
+    # Debug: count suppliers with ACTIVE status
+    active_suppliers = (
+        db.session.query(func.count(Supplier.id))
+        .filter(Supplier.status == SupplierStatus.ACTIVE)
+        .scalar()
+    )
+    logger.info(f'[PartMatch] Active suppliers: {active_suppliers}')
 
     query = (
         db.session.query(SupplierListing)
@@ -105,6 +126,19 @@ def find_matching_listings(brand, model, part_category=None):
 
     # Brand filter (case-insensitive)
     if normalized_brand:
+        # Debug: check brand values in DB
+        brand_listings = (
+            db.session.query(SupplierListing.brand, func.count(SupplierListing.id))
+            .join(Supplier, SupplierListing.supplier_id == Supplier.id)
+            .filter(
+                SupplierListing.is_active.is_(True),
+                Supplier.status == SupplierStatus.ACTIVE,
+            )
+            .group_by(SupplierListing.brand)
+            .all()
+        )
+        logger.info(f'[PartMatch] Brands in DB: {[(b, c) for b, c in brand_listings]}')
+
         query = query.filter(
             func.upper(SupplierListing.brand) == normalized_brand.upper()
         )
@@ -115,23 +149,41 @@ def find_matching_listings(brand, model, part_category=None):
             func.lower(SupplierListing.part_category) == part_category.lower()
         )
 
+    # Debug: show what model_compatibility values exist for this brand
+    if normalized_brand:
+        compat_values = (
+            db.session.query(SupplierListing.model_compatibility, SupplierListing.part_category, SupplierListing.quality_grade)
+            .join(Supplier, SupplierListing.supplier_id == Supplier.id)
+            .filter(
+                SupplierListing.is_active.is_(True),
+                Supplier.status == SupplierStatus.ACTIVE,
+                func.upper(SupplierListing.brand) == normalized_brand.upper(),
+            )
+            .all()
+        )
+        logger.info(f'[PartMatch] Listings for brand {normalized_brand}: {[(c, cat, q) for c, cat, q in compat_values]}')
+
     # Model matching - ILIKE na model_compatibility
     if model:
         model_pattern = f'%{model}%'
+        logger.info(f'[PartMatch] Trying primary match: ILIKE {model_pattern!r}')
         primary = query.filter(
             SupplierListing.model_compatibility.ilike(model_pattern)
         ).all()
+        logger.info(f'[PartMatch] Primary match results: {len(primary)}')
 
         if primary:
             return primary
 
         # Fallback 1: strip brand prefix (Galaxy S21 -> S21)
         model_number = _extract_model_number(model, normalized_brand)
+        logger.info(f'[PartMatch] Fallback 1: model_number={model_number!r} (from {model!r})')
         if model_number != model:
             prefix_pattern = f'%{model_number}%'
             result = query.filter(
                 SupplierListing.model_compatibility.ilike(prefix_pattern)
             ).all()
+            logger.info(f'[PartMatch] Fallback 1 results: {len(result)}')
             if result:
                 return result
 
