@@ -145,11 +145,17 @@ def find_matching_listings(brand, model, part_category=None):
             func.upper(SupplierListing.brand) == normalized_brand.upper()
         )
 
-    # Category filter
+    # Category filter (supports comma-separated list)
     if part_category:
-        query = query.filter(
-            func.lower(SupplierListing.part_category) == part_category.lower()
-        )
+        cats = [c.strip().lower() for c in part_category.split(',') if c.strip()]
+        if len(cats) == 1:
+            query = query.filter(
+                func.lower(SupplierListing.part_category) == cats[0]
+            )
+        elif cats:
+            query = query.filter(
+                func.lower(SupplierListing.part_category).in_(cats)
+            )
 
     # Debug: show what model_compatibility values exist for this brand
     if normalized_brand:

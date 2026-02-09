@@ -4802,15 +4802,16 @@ function ticketsPage() {
             'oled_soft': 'OLED Soft', 'oem': 'OEM', 'tft_incell': 'TFT InCell', 'aaa': 'AAA', 'copy': 'Kopija',
         },
 
-        detectPartCategory(desc) {
-            if (!desc) return null;
+        detectPartCategories(desc) {
+            if (!desc) return [];
             const lower = desc.toLowerCase();
+            const found = [];
             for (const [cat, keywords] of this._categoryKeywords) {
                 for (const kw of keywords) {
-                    if (lower.includes(kw)) return cat;
+                    if (lower.includes(kw)) { found.push(cat); break; }
                 }
             }
-            return null;
+            return found;
         },
 
         getCatLabel(cat) { return this._catLabels[cat] || (cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : ''); },
@@ -4820,12 +4821,12 @@ function ticketsPage() {
             clearTimeout(this._partSearchTimer);
             const brand = this.newTicket.brand?.trim();
             const model = this.newTicket.model?.trim();
-            const category = this.detectPartCategory(this.newTicket.problem_description);
+            const categories = this.detectPartCategories(this.newTicket.problem_description);
 
-            const hasEnoughInfo = brand && brand.length >= 2 && model && model.length >= 1 && category;
+            const hasEnoughInfo = brand && brand.length >= 2 && model && model.length >= 1 && categories.length > 0;
 
             if (hasEnoughInfo) {
-                const searchKey = brand + '|' + (model || '') + '|' + (category || '');
+                const searchKey = brand + '|' + (model || '') + '|' + categories.join(',');
                 if (searchKey === this._lastPartSearchKey) return;
                 this._partSearchTimer = setTimeout(() => this.checkPartOffers(), 800);
             } else {
@@ -4835,16 +4836,18 @@ function ticketsPage() {
                 this.partOffers.offers = [];
                 this.selectedListing = null;
                 this.selectedOffer = null;
+                this._lastPartSearchKey = null;
             }
         },
 
         async checkPartOffers() {
             const brand = this.newTicket.brand?.trim();
             const model = this.newTicket.model?.trim();
-            const category = this.detectPartCategory(this.newTicket.problem_description);
-            if (!brand) return;
+            const categories = this.detectPartCategories(this.newTicket.problem_description);
+            if (!brand || categories.length === 0) return;
 
-            this._lastPartSearchKey = brand + '|' + (model || '') + '|' + (category || '');
+            const catStr = categories.join(',');
+            this._lastPartSearchKey = brand + '|' + (model || '') + '|' + catStr;
             this.partOffers.loading = true;
             this.partOffers.loaded = false;
             this.partOffers.expandedKey = null;
@@ -4855,7 +4858,7 @@ function ticketsPage() {
             try {
                 let url = '/api/v1/part-offers/search?brand=' + encodeURIComponent(brand);
                 if (model) url += '&model=' + encodeURIComponent(model);
-                if (category) url += '&category=' + encodeURIComponent(category);
+                url += '&category=' + encodeURIComponent(catStr);
                 console.log('[PartOffers] Searching:', url);
                 const resp = await api(url);
                 if (resp.ok) {
