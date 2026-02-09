@@ -110,13 +110,14 @@ def search_parts():
     """
     brand = request.args.get('brand')
     model = request.args.get('model')
+    category = request.args.get('category')
 
     if not brand:
         return {'error': 'Brand je obavezan'}, 400
 
-    print(f'[PartOffers] Search: brand={brand!r}, model={model!r}', flush=True)
+    print(f'[PartOffers] Search: brand={brand!r}, model={model!r}, category={category!r}', flush=True)
 
-    all_listings = find_matching_listings(brand, model)
+    all_listings = find_matching_listings(brand, model, part_category=category)
 
     print(f'[PartOffers] Search found {len(all_listings)} listings', flush=True)
 

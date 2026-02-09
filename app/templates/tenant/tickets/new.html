@@ -298,6 +298,7 @@
                 <div>
                     <label for="problem_description" class="block text-sm font-medium text-gray-700">Opis kvara *</label>
                     <textarea id="problem_description" x-model="form.problem_description" rows="4" required
+                              @input="debouncedSearch()"
                               placeholder="Opišite problem sa uređajem..."
                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"></textarea>
                 </div>
@@ -489,6 +490,25 @@ function newTicketPage() {
             return this.gradeLabels[grade.toLowerCase()] || grade;
         },
 
+        detectCategory(description) {
+            if (!description) return null;
+            const lower = description.toLowerCase();
+            const mapping = [
+                ['display', ['ekran', 'display', 'lcd', 'oled', 'staklo', 'touchscreen', 'touch screen', 'crn ekran', 'razbijen']],
+                ['battery', ['baterija', 'battery', 'ne puni', 'brzo trosi', 'gasi se']],
+                ['charging_port', ['konektor', 'punjac', 'charging', 'port za punjenje', 'usb-c', 'usb c', 'ne puni se']],
+                ['camera', ['kamera', 'camera', 'foto', 'slika', 'ne slika']],
+                ['back_cover', ['maska', 'poklopac', 'zadnja maska', 'back cover', 'zadnji poklopac']],
+                ['speaker', ['zvucnik', 'speaker', 'mikrofon', 'zvuk', 'ne cuje se']],
+            ];
+            for (const [cat, keywords] of mapping) {
+                for (const kw of keywords) {
+                    if (lower.includes(kw)) return cat;
+                }
+            }
+            return null;
+        },
+
         // ========== PHONE HELPERS ==========
         selectCountry(country) {
             this.selectedCountry = country;
@@ -517,9 +537,15 @@ function newTicketPage() {
             clearTimeout(this._searchTimer);
             const brand = this.form.brand?.trim();
             const model = this.form.model?.trim();
+            const category = this.detectCategory(this.form.problem_description);
 
-            if (brand && brand.length >= 2 && model && model.length >= 1) {
-                const searchKey = brand + '|' + model;
+            // Treba brand + (model ILI detektovana kategorija iz opisa kvara)
+            const hasEnoughInfo = brand && brand.length >= 2 && (
+                (model && model.length >= 1) || category
+            );
+
+            if (hasEnoughInfo) {
+                const searchKey = brand + '|' + (model || '') + '|' + (category || '');
                 if (searchKey === this._lastSearchKey) return;
                 this._searchTimer = setTimeout(() => this.checkPartOffers(), 800);
             } else {
@@ -535,9 +561,11 @@ function newTicketPage() {
         async checkPartOffers() {
             const brand = this.form.brand?.trim();
             const model = this.form.model?.trim();
-            if (!brand || !model) return;
+            const category = this.detectCategory(this.form.problem_description);
 
-            this._lastSearchKey = brand + '|' + model;
+            if (!brand) return;
+
+            this._lastSearchKey = brand + '|' + (model || '') + '|' + (category || '');
             this.partOffers.loading = true;
             this.partOffers.loaded = false;
             this.partOffers.expandedKey = null;
@@ -546,13 +574,17 @@ function newTicketPage() {
             this.selectedOffer = null;
 
             try {
-                const url = '/api/v1/part-offers/search?brand=' + encodeURIComponent(brand) + '&model=' + encodeURIComponent(model);
+                let url = '/api/v1/part-offers/search?brand=' + encodeURIComponent(brand);
+                if (model) url += '&model=' + encodeURIComponent(model);
+                if (category) url += '&category=' + encodeURIComponent(category);
+                console.log('[PartOffers] Searching:', url);
                 const resp = await api(url);
                 if (resp.ok) {
                     const data = await resp.json();
+                    console.log('[PartOffers] Results:', data);
                     this.partOffers.summary = data.categories || [];
                     this.partOffers.brand = data.brand || brand;
-                    this.partOffers.model = data.model || model;
+                    this.partOffers.model = data.model || model || '';
                     this.partOffers.loaded = true;
                 }
             } catch (e) {
