@@ -217,7 +217,6 @@ def search_offers():
             'stock_hint': get_stock_hint(listing.stock_quantity),
             'part_name': listing.name,
             'supplier_rating': sup_rating,
-            'supplier_rating_count': sup_rating_count,
         })
 
     return {

@@ -655,11 +655,6 @@
     }
     .part-offer-stars .star.filled { color: #f59e0b; }
     .part-offer-stars .star.empty { color: #d1d5db; }
-    .part-offer-stars .star-count {
-        font-size: 0.625rem;
-        color: #94a3b8;
-        margin-left: 0.25rem;
-    }
     .part-offer-select-btn {
         font-size: 0.75rem;
         padding: 0.25rem 0.75rem;
@@ -2017,11 +2012,10 @@
                                                     <span class="part-offer-stock"
                                                           :class="offer.stock_hint === 'available' ? 'available' : (offer.stock_hint === 'low' ? 'low' : 'last')"
                                                           x-text="offer.stock_hint === 'available' ? 'Na stanju' : (offer.stock_hint === 'low' ? 'Malo' : 'Poslednji')"></span>
-                                                    <span class="part-offer-stars" :title="offer.supplier_rating ? (offer.supplier_rating + '/5 (' + offer.supplier_rating_count + ')') : 'Neocenjen'">
+                                                    <span class="part-offer-stars">
                                                         <template x-for="s in 5" :key="s">
                                                             <span class="star" :class="offer.supplier_rating && s <= Math.round(offer.supplier_rating) ? 'filled' : 'empty'" x-text="offer.supplier_rating && s <= Math.round(offer.supplier_rating) ? '\u2605' : '\u2606'"></span>
                                                         </template>
-                                                        <span class="star-count" x-show="offer.supplier_rating_count > 0" x-text="'(' + offer.supplier_rating_count + ')'"></span>
                                                     </span>
                                                 </div>
                                                 <button type="button" @click="selectPartOffer(offer)"
