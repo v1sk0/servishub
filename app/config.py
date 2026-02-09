@@ -73,7 +73,7 @@ class Config:
     TRIAL_DAYS = 90  # 3 meseca besplatno
     BASE_SUBSCRIPTION_PRICE = 3600  # RSD
     LOCATION_SUBSCRIPTION_PRICE = 1800  # RSD po dodatnoj lokaciji
-    SUPPLIER_COMMISSION_RATE = 0.05  # 5% provizija
+    SUPPLIER_COMMISSION_RATE = 0  # Bez provizije - koristi se kredit sistem
 
     # Warranty defaults (mogu se override-ovati per-tenant)
     DEFAULT_WARRANTY_DAYS = 45

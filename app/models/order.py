@@ -191,13 +191,9 @@ class PartOrder(db.Model):
         return f'<PartOrder {self.order_number}>'
 
     def calculate_totals(self):
-        """Racuna subtotal, proviziju i total."""
+        """Racuna subtotal i total. Bez provizije - koristi se kredit sistem."""
         self.subtotal = sum(item.total_price for item in self.items)
-        # Provizija samo za dobavljace, ne za partnere
-        if self.seller_type == SellerType.SUPPLIER:
-            self.commission_amount = self.subtotal * 0.05  # 5%
-        else:
-            self.commission_amount = 0
+        self.commission_amount = 0
         self.total_amount = self.subtotal
 
     def to_dict(self):

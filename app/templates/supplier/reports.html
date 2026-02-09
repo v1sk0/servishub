@@ -100,8 +100,8 @@
                 <p class="text-3xl font-bold text-green-600 mt-1" x-text="formatMoney(summary.totals?.revenue_rsd)"></p>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <p class="text-sm font-medium text-gray-600">Provizija (RSD)</p>
-                <p class="text-3xl font-bold text-orange-600 mt-1" x-text="formatMoney(summary.totals?.commission_rsd)"></p>
+                <p class="text-sm font-medium text-gray-600">Prosecna narudzbina</p>
+                <p class="text-3xl font-bold text-orange-600 mt-1" x-text="summary.totals?.orders_count > 0 ? formatMoney(summary.totals?.revenue_rsd / summary.totals?.orders_count) : '0'"></p>
             </div>
         </div>
 

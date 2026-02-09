@@ -298,10 +298,6 @@ def create_order():
         for item in items:
             subtotal += Decimal(str(item['listing'].price)) * item['quantity']
 
-        # 5% commission
-        commission = subtotal * Decimal('0.05')
-        total = subtotal + commission
-
         order = PartOrder(
             buyer_tenant_id=g.tenant_id,
             buyer_location_id=data.location_id,
@@ -312,8 +308,8 @@ def create_order():
             order_number=generate_order_number(),
             status=OrderStatus.DRAFT,
             subtotal=subtotal,
-            commission_amount=commission,
-            total_amount=total,
+            commission_amount=Decimal('0'),
+            total_amount=subtotal,
             currency='RSD',
             buyer_notes=data.notes
         )
@@ -347,10 +343,6 @@ def create_order():
             if price:
                 subtotal += Decimal(str(price)) * item['quantity']
 
-        # 5% commission
-        commission = subtotal * Decimal('0.05')
-        total = subtotal + commission
-
         order = PartOrder(
             buyer_tenant_id=g.tenant_id,
             buyer_location_id=data.location_id,
@@ -361,8 +353,8 @@ def create_order():
             order_number=generate_order_number(),
             status=OrderStatus.DRAFT,
             subtotal=subtotal,
-            commission_amount=commission,
-            total_amount=total,
+            commission_amount=Decimal('0'),
+            total_amount=subtotal,
             currency='RSD',
             buyer_notes=data.notes
         )

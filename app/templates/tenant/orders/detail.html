@@ -71,10 +71,6 @@
                             <span class="text-gray-500">Medjuzbir:</span>
                             <span class="text-gray-900" x-text="formatPrice(order.subtotal) + ' RSD'"></span>
                         </div>
-                        <div x-show="order.commission_amount > 0" class="flex justify-between text-sm mt-1">
-                            <span class="text-gray-500">Provizija (5%):</span>
-                            <span class="text-gray-900" x-text="formatPrice(order.commission_amount) + ' RSD'"></span>
-                        </div>
                         <div class="flex justify-between text-base font-medium mt-2 pt-2 border-t">
                             <span class="text-gray-900">Ukupno:</span>
                             <span class="text-gray-900" x-text="formatPrice(order.total_amount) + ' RSD'"></span>

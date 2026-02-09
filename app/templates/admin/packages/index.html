@@ -483,24 +483,6 @@
                                 </div>
                             </div>
 
-                            <div class="max-w-md">
-                                <div class="bg-purple-50 rounded-xl p-5 border border-purple-200">
-                                    <div class="flex items-center gap-3 mb-4">
-                                        <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                                            <span class="text-xl font-bold text-purple-600">%</span>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-semibold text-purple-900">Default Provizija</h4>
-                                            <p class="text-xs text-purple-700">Na svaku prodaju rezervnog dela</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <input type="number" x-model="form.default_commission" step="0.5" min="0" max="50"
-                                               class="w-24 px-4 py-2 rounded-lg border border-purple-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 text-lg font-bold text-center bg-white">
-                                        <span class="text-purple-800 font-medium">%</span>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         <!-- Success/Error Message -->
@@ -557,8 +539,7 @@ function packagesPage() {
             location_price: 1800,
             currency: 'RSD',
             trial_days: 60,
-            grace_period_days: 7,
-            default_commission: 5
+            grace_period_days: 7
         },
 
         init() {
@@ -593,7 +574,6 @@ function packagesPage() {
                     if (data.currency !== undefined) this.form.currency = data.currency;
                     if (data.trial_days !== undefined) this.form.trial_days = data.trial_days;
                     if (data.grace_period_days !== undefined) this.form.grace_period_days = data.grace_period_days;
-                    if (data.default_commission !== undefined) this.form.default_commission = data.default_commission;
                 } else if (r.status === 401) {
                     window.location.href = '/admin/login';
                 }

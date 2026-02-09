@@ -557,10 +557,6 @@ def complete_order(order_id):
     if supplier:
         if order.subtotal:
             supplier.total_sales = (supplier.total_sales or Decimal('0')) + order.subtotal
-        if order.commission_amount:
-            supplier.total_commission = (
-                (supplier.total_commission or Decimal('0')) + order.commission_amount
-            )
 
     order.status = OrderStatus.COMPLETED
     order.completed_at = datetime.utcnow()

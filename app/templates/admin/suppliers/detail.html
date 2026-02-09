@@ -106,8 +106,8 @@
                                     <dd class="text-sm text-gray-900" x-text="supplier.phone || '-'"></dd>
                                 </div>
                                 <div class="flex justify-between">
-                                    <dt class="text-sm text-gray-500">Provizija</dt>
-                                    <dd class="text-sm text-gray-900" x-text="(supplier.commission_rate || 5) + '%'"></dd>
+                                    <dt class="text-sm text-gray-500">Rejting</dt>
+                                    <dd class="text-sm text-gray-900" x-text="supplier.rating ? (supplier.rating + '/5') : '-'"></dd>
                                 </div>
                             </dl>
                         </div>

@@ -124,8 +124,8 @@
                                 <p class="font-medium text-purple-900" x-text="formatPrice(company.total_sales)"></p>
                             </div>
                             <div>
-                                <p class="text-xs text-purple-600">Provizija</p>
-                                <p class="font-medium text-purple-900" x-text="company.commission_rate + '%'"></p>
+                                <p class="text-xs text-purple-600">Rejting</p>
+                                <p class="font-medium text-purple-900" x-text="(company.rating || '-') + (company.rating ? '/5' : '')"></p>
                             </div>
                         </div>
                     </div>
