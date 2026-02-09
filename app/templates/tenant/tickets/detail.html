@@ -183,6 +183,136 @@
                     </div>
                 </div>
 
+                <!-- Marketplace Delovi -->
+                <div class="bg-white shadow rounded-lg p-6" x-show="ticket.brand && !ticket.is_written_off">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900 flex items-center gap-2">
+                            <svg class="h-5 w-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                            Dostupni delovi
+                        </h3>
+                        <button @click="loadPartOffersSummary()" class="text-sm text-primary-600 hover:text-primary-500 flex items-center gap-1">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            Osvezi
+                        </button>
+                    </div>
+
+                    <!-- Loading -->
+                    <div x-show="partOffers.loading" class="flex justify-center py-6">
+                        <svg class="animate-spin h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+
+                    <!-- No results -->
+                    <div x-show="!partOffers.loading && partOffers.loaded && partOffers.summary.length === 0" class="text-center py-4">
+                        <svg class="mx-auto h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                        <p class="text-gray-500 text-sm mt-2">Nema dostupnih delova za ovaj uredaj</p>
+                    </div>
+
+                    <!-- Summary Table -->
+                    <div x-show="!partOffers.loading && partOffers.summary.length > 0">
+                        <div class="overflow-hidden rounded-lg border border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase">Kategorija</th>
+                                        <th class="px-4 py-2.5 text-center text-xs font-medium text-gray-500 uppercase">Original</th>
+                                        <th class="px-4 py-2.5 text-center text-xs font-medium text-gray-500 uppercase">Kopija</th>
+                                        <th class="px-4 py-2.5 text-right text-xs font-medium text-gray-500 uppercase">Dobavljaca</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <template x-for="cat in partOffers.summary" :key="cat.category">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-4 py-3 text-sm font-medium text-gray-900" x-text="partCategoryLabel(cat.category)"></td>
+                                            <td class="px-4 py-3 text-center">
+                                                <button x-show="cat.quality_groups.original"
+                                                        @click="loadOffers(cat.category, 'original')"
+                                                        class="text-sm font-medium text-primary-600 hover:text-primary-800 hover:underline">
+                                                    ~<span x-text="cat.quality_groups.original?.avg_eur?.toFixed(0)"></span> EUR
+                                                </button>
+                                                <span x-show="!cat.quality_groups.original" class="text-gray-400 text-sm">—</span>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <button x-show="cat.quality_groups.kopija"
+                                                        @click="loadOffers(cat.category, 'kopija')"
+                                                        class="text-sm font-medium text-primary-600 hover:text-primary-800 hover:underline">
+                                                    ~<span x-text="cat.quality_groups.kopija?.avg_eur?.toFixed(0)"></span> EUR
+                                                </button>
+                                                <span x-show="!cat.quality_groups.kopija" class="text-gray-400 text-sm">—</span>
+                                            </td>
+                                            <td class="px-4 py-3 text-right text-sm text-gray-500" x-text="totalSupplierCount(cat)"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">Kliknite na cenu da vidite ponude dobavljaca</p>
+                    </div>
+
+                    <!-- Offers Panel (when category clicked) -->
+                    <div x-show="partOffers.selectedCategory" x-transition class="mt-4 border-t pt-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-sm font-semibold text-gray-900">
+                                <span x-text="partCategoryLabel(partOffers.selectedCategory)"></span>
+                                <span class="text-gray-400 mx-1">&middot;</span>
+                                <span x-text="partOffers.selectedQuality === 'original' ? 'Original' : 'Kopija'" class="text-purple-600"></span>
+                            </h4>
+                            <button @click="partOffers.selectedCategory = null; partOffers.offers = []"
+                                    class="text-sm text-gray-400 hover:text-gray-600">&times; Zatvori</button>
+                        </div>
+
+                        <!-- Loading offers -->
+                        <div x-show="partOffers.offersLoading" class="flex justify-center py-4">
+                            <svg class="animate-spin h-5 w-5 text-primary-600" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
+
+                        <!-- Offers list -->
+                        <div x-show="!partOffers.offersLoading && partOffers.offers.length > 0" class="space-y-2">
+                            <template x-for="(offer, i) in partOffers.offers" :key="offer.listing_id">
+                                <div class="flex items-center justify-between p-3 rounded-lg border transition-colors"
+                                     :class="i === 0 ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-100 hover:border-gray-200'">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="text-sm font-medium text-gray-900" x-text="'Ponuda ' + (i+1)"></span>
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-700"
+                                                  x-text="qualityGradeLabel(offer.quality_grade)"></span>
+                                            <span class="text-xs"
+                                                  :class="offer.stock_hint === 'available' ? 'text-green-600' : offer.stock_hint === 'low' ? 'text-orange-500' : 'text-red-500'"
+                                                  x-text="stockHintLabel(offer.stock_hint)"></span>
+                                            <span x-show="i === 0" class="text-xs text-green-700 font-medium">Najbolja cena</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-4 ml-4">
+                                        <div class="text-right">
+                                            <p class="text-sm font-bold text-gray-900" x-text="offer.price_eur ? offer.price_eur.toFixed(2) + ' EUR' : ''"></p>
+                                            <p class="text-xs text-gray-500" x-text="offer.price_rsd ? Math.round(offer.price_rsd).toLocaleString('sr-RS') + ' RSD' : ''"></p>
+                                        </div>
+                                        <button @click="createPartOrder(offer.listing_id)"
+                                                :disabled="partOffers.orderCreating"
+                                                class="shrink-0 px-3 py-1.5 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-500 disabled:opacity-50 transition-colors">
+                                            Poruci
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- No offers -->
+                        <div x-show="!partOffers.offersLoading && partOffers.offers.length === 0" class="text-center py-4">
+                            <p class="text-gray-500 text-sm">Nema ponuda za ovu kategoriju i kvalitet</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Internal Notes -->
                 <div class="bg-white shadow rounded-lg p-6" x-show="ticket.internal_notes">
                     <h3 class="text-lg font-medium text-gray-900 mb-2">Interne beleške</h3>
@@ -603,6 +733,18 @@ function ticketDetailPage(ticketId) {
             resolution: ''
         },
 
+        // Part offers (marketplace)
+        partOffers: {
+            loading: false,
+            loaded: false,
+            summary: [],
+            selectedCategory: null,
+            selectedQuality: null,
+            offers: [],
+            offersLoading: false,
+            orderCreating: false,
+        },
+
         paymentMethodLabels: {
             'CASH': 'Gotovina',
             'CARD': 'Kartica',
@@ -651,6 +793,7 @@ function ticketDetailPage(ticketId) {
                 if (response.ok) {
                     this.ticket = await response.json();
                     this.paymentAmount = this.ticket.final_price || this.ticket.estimated_price || 0;
+                    this.loadPartOffersSummary();
                 }
             } catch (e) {
                 console.error('Failed to load ticket:', e);
@@ -913,6 +1056,99 @@ function ticketDetailPage(ticketId) {
                 hour: '2-digit',
                 minute: '2-digit'
             });
+        },
+
+        // ===== Part Offers (Marketplace) =====
+
+        partCategoryLabel(cat) {
+            const labels = {
+                'display': 'Display / LCD', 'battery': 'Baterija', 'camera': 'Kamera',
+                'charging': 'Port za punjenje', 'speaker': 'Zvucnik', 'frame': 'Frejm / Kuciste',
+                'back_cover': 'Zadnja maska', 'flex': 'Flex kabl', 'connector': 'Konektor',
+                'ic': 'IC / Chip', 'touch': 'Touch / Digitizer', 'other': 'Ostalo'
+            };
+            return labels[cat] || cat;
+        },
+
+        qualityGradeLabel(grade) {
+            const labels = {
+                'service_pack': 'Service Pack', 'original': 'Original', 'oled_hard': 'OLED Hard',
+                'oled_soft': 'OLED Soft', 'oem': 'OEM', 'tft_incell': 'TFT Incell',
+                'aaa': 'AAA', 'copy': 'Kopija'
+            };
+            return labels[grade] || grade;
+        },
+
+        stockHintLabel(hint) {
+            const labels = { 'available': 'Na stanju', 'low': 'Malo na stanju', 'last_one': 'Poslednji kom!' };
+            return labels[hint] || '';
+        },
+
+        totalSupplierCount(cat) {
+            let count = 0;
+            for (const g of Object.values(cat.quality_groups)) {
+                count += g.supplier_count || 0;
+            }
+            return count;
+        },
+
+        async loadPartOffersSummary() {
+            if (!this.ticket?.brand) return;
+            this.partOffers.loading = true;
+            try {
+                const res = await api('/api/v1/part-offers/ticket/' + this.ticketId + '/summary');
+                if (res.ok) {
+                    const data = await res.json();
+                    this.partOffers.summary = data.categories || [];
+                }
+            } catch (e) {
+                console.error('Failed to load part offers:', e);
+            } finally {
+                this.partOffers.loading = false;
+                this.partOffers.loaded = true;
+            }
+        },
+
+        async loadOffers(category, quality) {
+            this.partOffers.selectedCategory = category;
+            this.partOffers.selectedQuality = quality;
+            this.partOffers.offersLoading = true;
+            this.partOffers.offers = [];
+            try {
+                const res = await api('/api/v1/part-offers/ticket/' + this.ticketId + '/offers?category=' + encodeURIComponent(category) + '&quality=' + quality);
+                if (res.ok) {
+                    const data = await res.json();
+                    this.partOffers.offers = data.offers || [];
+                }
+            } catch (e) {
+                console.error('Failed to load offers:', e);
+            } finally {
+                this.partOffers.offersLoading = false;
+            }
+        },
+
+        async createPartOrder(listingId) {
+            this.partOffers.orderCreating = true;
+            try {
+                const res = await api('/api/v1/part-offers/order', 'POST', {
+                    listing_id: listingId,
+                    quantity: 1,
+                    service_ticket_id: this.ticketId
+                });
+                if (res.ok) {
+                    showToast('Narudzbina poslata! Ceka potvrdu dobavljaca.', 'success');
+                    this.partOffers.selectedCategory = null;
+                    this.partOffers.offers = [];
+                    this.loadPartOffersSummary();
+                } else {
+                    const data = await res.json();
+                    showToast(data.error || 'Greska pri kreiranju narudzbine', 'error');
+                }
+            } catch (e) {
+                showToast('Greska: ' + e.message, 'error');
+            } finally {
+                this.partOffers.orderCreating = false;
+            }
         }
     }
 }
