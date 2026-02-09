@@ -50,13 +50,42 @@ def strip_model_suffix(model):
     return model.strip()
 
 
+def _extract_model_number(model, brand=None):
+    """
+    Izvlaci broj modela bez brand prefiksa.
+
+    'Galaxy S21' -> 'S21'
+    'iPhone 14 Pro' -> '14 Pro'
+    'Redmi Note 12' -> 'Note 12'
+    """
+    if not model:
+        return model
+
+    # Poznati prefiksi za uklanjanje
+    prefixes = ['galaxy', 'iphone', 'ipad', 'pixel', 'xperia', 'redmi', 'poco', 'moto']
+    if brand:
+        prefixes.append(brand.lower())
+
+    lower = model.strip().lower()
+    for prefix in prefixes:
+        if lower.startswith(prefix + ' '):
+            return model[len(prefix):].strip()
+        if lower.startswith(prefix):
+            rest = model[len(prefix):].strip()
+            if rest:
+                return rest
+
+    return model.strip()
+
+
 def find_matching_listings(brand, model, part_category=None):
     """
     Pronalazi aktivne listinge za brand+model+category.
 
     1. normalize_brand(brand)
     2. ILIKE match na model_compatibility
-    3. Fallback: strip suffix pa ponovo ILIKE
+    3. Fallback 1: strip brand prefix (Galaxy S21 -> S21)
+    4. Fallback 2: strip model suffix (S21 Pro -> S21)
     Filter: is_active=True, stock > 0, supplier.status=ACTIVE
     """
     normalized_brand = normalize_brand(brand)
@@ -67,7 +96,6 @@ def find_matching_listings(brand, model, part_category=None):
         .filter(
             SupplierListing.is_active.is_(True),
             Supplier.status == SupplierStatus.ACTIVE,
-            Supplier.is_verified.is_(True),
             or_(
                 SupplierListing.stock_quantity.is_(None),  # NULL = neograniceno
                 SupplierListing.stock_quantity > 0,
@@ -97,13 +125,34 @@ def find_matching_listings(brand, model, part_category=None):
         if primary:
             return primary
 
-        # Fallback: strip suffix
+        # Fallback 1: strip brand prefix (Galaxy S21 -> S21)
+        model_number = _extract_model_number(model, normalized_brand)
+        if model_number != model:
+            prefix_pattern = f'%{model_number}%'
+            result = query.filter(
+                SupplierListing.model_compatibility.ilike(prefix_pattern)
+            ).all()
+            if result:
+                return result
+
+        # Fallback 2: strip suffix (S21 Pro -> S21)
         stripped = strip_model_suffix(model)
         if stripped != model:
             fallback_pattern = f'%{stripped}%'
-            return query.filter(
+            result = query.filter(
                 SupplierListing.model_compatibility.ilike(fallback_pattern)
             ).all()
+            if result:
+                return result
+
+        # Fallback 3: strip prefix + suffix combined
+        if model_number != model:
+            stripped_number = strip_model_suffix(model_number)
+            if stripped_number != model_number:
+                combined_pattern = f'%{stripped_number}%'
+                return query.filter(
+                    SupplierListing.model_compatibility.ilike(combined_pattern)
+                ).all()
 
         return primary  # Prazan rezultat
 
