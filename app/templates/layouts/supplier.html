@@ -1,6 +1,13 @@
 {% extends "layouts/base.html" %}
 
 {% block head %}
+<script>
+// Auth guard - redirect before page renders if no token
+if (!sessionStorage.getItem('supplier_access_token')) {
+    window.location.replace('/supplier/login');
+    document.documentElement.style.display = 'none';
+}
+</script>
 <style>
     /* ========================================
        LIGHT THEME (Default) - Supplier Portal

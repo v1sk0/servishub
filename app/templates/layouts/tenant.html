@@ -1,6 +1,13 @@
 {% extends "layouts/base.html" %}
 
 {% block head %}
+<script>
+// Auth guard - redirect before page renders if no token
+if (!sessionStorage.getItem('access_token') && !(new URLSearchParams(window.location.search)).get('auth')) {
+    window.location.replace('/login');
+    document.documentElement.style.display = 'none';
+}
+</script>
 <!--
     KRITIČNO: OAuth Token Handler
     Koristi sinhroni XMLHttpRequest da blokira SVE dok se tokeni ne preuzmu.
