@@ -110,13 +110,13 @@ def get_ticket_summary(ticket_id):
     """
     ticket = _validate_ticket(ticket_id)
     if not ticket:
-        current_app.logger.warning(f'[PartOffers] Ticket {ticket_id} not found or not owned by tenant {g.tenant_id}')
+        print(f'[PartOffers] Ticket {ticket_id} not found or not owned by tenant {g.tenant_id}', flush=True)
         return {'error': 'Servisni nalog nije pronadjen'}, 404
 
     brand = ticket.brand
     model = ticket.model
 
-    current_app.logger.info(f'[PartOffers] Summary for ticket {ticket_id}: brand={brand!r}, model={model!r}')
+    print(f'[PartOffers] Summary for ticket {ticket_id}: brand={brand!r}, model={model!r}', flush=True)
 
     if not brand:
         return {'error': 'Servisni nalog nema definisan brend'}, 400
@@ -124,7 +124,7 @@ def get_ticket_summary(ticket_id):
     # Pronalazenje svih listinga za ovaj uredjaj
     all_listings = find_matching_listings(brand, model)
 
-    current_app.logger.info(f'[PartOffers] Found {len(all_listings)} matching listings for brand={brand!r}, model={model!r}')
+    print(f'[PartOffers] Found {len(all_listings)} matching listings for brand={brand!r}, model={model!r}', flush=True)
 
     if not all_listings:
         return {
