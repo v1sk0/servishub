@@ -28,9 +28,9 @@
                 const data = JSON.parse(xhr.responseText);
                 console.log('[OAuth] Tokens received, saving...');
 
-                localStorage.setItem('access_token', data.access_token);
+                sessionStorage.setItem('access_token', data.access_token);
                 if (data.refresh_token) {
-                    localStorage.setItem('refresh_token', data.refresh_token);
+                    sessionStorage.setItem('refresh_token', data.refresh_token);
                 }
 
                 console.log('[OAuth] Tokens saved! Redirecting...');
@@ -782,8 +782,8 @@ function tenantApp() {
                 await api('/auth/logout', 'POST');
             } catch (e) {}
 
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
+            sessionStorage.removeItem('access_token');
+            sessionStorage.removeItem('refresh_token');
             window.location.href = '/login';
         }
     }

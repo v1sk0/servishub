@@ -9,6 +9,7 @@ from typing import Optional
 from datetime import datetime, timedelta
 import jwt
 import os
+import uuid
 
 bp = Blueprint('supplier_auth', __name__, url_prefix='/auth')
 
@@ -48,6 +49,7 @@ def create_supplier_tokens(supplier_id: int, user_id: int):
         'type': 'supplier_access',
         'supplier_id': supplier_id,
         'user_id': user_id,
+        'jti': str(uuid.uuid4()),
         'exp': now + JWT_ACCESS_EXPIRES,
         'iat': now
     }
@@ -56,6 +58,7 @@ def create_supplier_tokens(supplier_id: int, user_id: int):
         'type': 'supplier_refresh',
         'supplier_id': supplier_id,
         'user_id': user_id,
+        'jti': str(uuid.uuid4()),
         'exp': now + JWT_REFRESH_EXPIRES,
         'iat': now
     }
@@ -107,8 +110,17 @@ def supplier_jwt_required(f):
         if not user or not user.is_active:
             return {'error': 'User account not active'}, 403
 
+        # Check token blacklist
+        try:
+            from app.services.token_blacklist_service import token_blacklist
+            if token_blacklist.is_blacklisted(payload):
+                return {'error': 'Token is revoked. Please login again.'}, 401
+        except ImportError:
+            pass
+
         g.supplier_id = payload['supplier_id']
         g.supplier_user_id = payload['user_id']
+        g.supplier_token_payload = payload
 
         return f(*args, **kwargs)
 
@@ -361,5 +373,12 @@ def change_password():
 @bp.route('/logout', methods=['POST'])
 @supplier_jwt_required
 def logout():
-    """Logout (client should discard tokens)"""
+    """Logout - blacklist token and discard on client"""
+    try:
+        from app.services.token_blacklist_service import token_blacklist
+        payload = getattr(g, 'supplier_token_payload', None)
+        if payload:
+            token_blacklist.blacklist_token(payload)
+    except Exception:
+        pass
     return {'message': 'Logged out successfully'}

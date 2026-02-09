@@ -291,14 +291,14 @@ function tenantsPage() {
         },
 
         logout() {
-            localStorage.removeItem('admin_access_token');
-            localStorage.removeItem('admin_refresh_token');
+            sessionStorage.removeItem('admin_access_token');
+            sessionStorage.removeItem('admin_refresh_token');
             window.location.href = '/admin/login';
         },
 
         async loadTenants() {
             this.loading = true;
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             if (!token) { window.location.href = '/admin/login'; return; }
 
             try {
@@ -380,7 +380,7 @@ function tenantsPage() {
 
         async activateTrial(tenant) {
             if (!confirm(`Aktiviraj TRIAL (60 dana) za "${tenant.name}"?\n\nOvo će:\n- Promeniti status u TRIAL\n- Postaviti trial period na 60 dana\n- Verifikovati KYC predstavnika`)) return;
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const response = await fetch(`/api/admin/tenants/${tenant.id}/activate-trial`, {
                     method: 'POST',
@@ -401,7 +401,7 @@ function tenantsPage() {
         // UKLONENO v3.05: activateTenant() - aktivacija samo kroz billing flow
 
         async suspendTenant() {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const response = await fetch(`/api/admin/tenants/${this.selectedTenant.id}/suspend`, {
                     method: 'POST',
@@ -421,7 +421,7 @@ function tenantsPage() {
         // UKLONENO v3.05: unsuspendTenant() - reaktivacija samo kroz placanje
 
         async extendTrial() {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const response = await fetch(`/api/admin/tenants/${this.selectedTenant.id}/extend-trial`, {
                     method: 'POST',

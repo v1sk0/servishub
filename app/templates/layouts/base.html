@@ -446,7 +446,7 @@
                 options = methodOrOptions;
             }
 
-            const token = localStorage.getItem('access_token');
+            const token = sessionStorage.getItem('access_token');
             const headers = {
                 'Content-Type': 'application/json',
                 ...options.headers
@@ -461,7 +461,7 @@
                 // Try refresh token
                 const refreshed = await refreshToken();
                 if (refreshed) {
-                    headers['Authorization'] = `Bearer ${localStorage.getItem('access_token')}`;
+                    headers['Authorization'] = `Bearer ${sessionStorage.getItem('access_token')}`;
                     return fetch(url, { ...options, headers });
                 } else {
                     window.location.href = '/login';
@@ -472,7 +472,7 @@
         }
 
         async function refreshToken() {
-            const refreshToken = localStorage.getItem('refresh_token');
+            const refreshToken = sessionStorage.getItem('refresh_token');
             if (!refreshToken) return false;
 
             try {
@@ -484,16 +484,16 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    localStorage.setItem('access_token', data.access_token);
-                    localStorage.setItem('refresh_token', data.refresh_token);
+                    sessionStorage.setItem('access_token', data.access_token);
+                    sessionStorage.setItem('refresh_token', data.refresh_token);
                     return true;
                 }
             } catch (e) {
                 console.error('Token refresh failed:', e);
             }
 
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
+            sessionStorage.removeItem('access_token');
+            sessionStorage.removeItem('refresh_token');
             return false;
         }
 

@@ -1446,7 +1446,7 @@ function messagesApp() {
         async loadThreads() {
             this.loading = true;
             try {
-                const token = localStorage.getItem('access_token');
+                const token = sessionStorage.getItem('access_token');
                 const response = await fetch('/api/v1/threads?limit=50', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -1468,7 +1468,7 @@ function messagesApp() {
             this.lastMessageId = 0;
 
             try {
-                const token = localStorage.getItem('access_token');
+                const token = sessionStorage.getItem('access_token');
                 const response = await fetch(`/api/v1/threads/${thread.id}/messages`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -1525,7 +1525,7 @@ function messagesApp() {
             this.isTyping = false;
 
             try {
-                const token = localStorage.getItem('access_token');
+                const token = sessionStorage.getItem('access_token');
                 const response = await fetch(`/api/v1/threads/${this.selectedThread.id}/messages`, {
                     method: 'POST',
                     headers: {
@@ -1560,7 +1560,7 @@ function messagesApp() {
             if (!this.selectedThread) return;
 
             try {
-                const token = localStorage.getItem('access_token');
+                const token = sessionStorage.getItem('access_token');
                 const url = `/api/v1/threads/${this.selectedThread.id}/messages?after_id=${this.lastMessageId}`;
                 const response = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -1590,7 +1590,7 @@ function messagesApp() {
             if (!this.selectedThread) return;
 
             try {
-                const token = localStorage.getItem('access_token');
+                const token = sessionStorage.getItem('access_token');
                 const response = await fetch(`/api/v1/threads/${this.selectedThread.id}/typing`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -1620,7 +1620,7 @@ function messagesApp() {
         async sendTypingStatus(isTyping) {
             if (!this.selectedThread) return;
             try {
-                const token = localStorage.getItem('access_token');
+                const token = sessionStorage.getItem('access_token');
                 await fetch(`/api/v1/threads/${this.selectedThread.id}/typing`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -1650,7 +1650,7 @@ function messagesApp() {
 
             this.creating = true;
             try {
-                const token = localStorage.getItem('access_token');
+                const token = sessionStorage.getItem('access_token');
                 const response = await fetch('/api/v1/threads', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },

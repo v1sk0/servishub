@@ -187,7 +187,7 @@ function financeApp() {
         async loadSummary() {
             this.loading = true;
             try {
-                const token = localStorage.getItem('access_token');
+                const token = sessionStorage.getItem('access_token');
                 const res = await fetch(`/api/v1/finance/summary?days=${this.days}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });

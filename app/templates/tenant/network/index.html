@@ -704,7 +704,7 @@ function networkApp() {
         async loadConnections() {
             this.loading = true;
             try {
-                const token = localStorage.getItem('access_token');
+                const token = sessionStorage.getItem('access_token');
                 const response = await fetch('/api/v1/connections', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -720,7 +720,7 @@ function networkApp() {
 
         async loadInvites() {
             try {
-                const token = localStorage.getItem('access_token');
+                const token = sessionStorage.getItem('access_token');
                 const response = await fetch('/api/v1/connections/invites?active_only=true', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -740,7 +740,7 @@ function networkApp() {
         async createInvite() {
             this.creating = true;
             try {
-                const token = localStorage.getItem('access_token');
+                const token = sessionStorage.getItem('access_token');
                 const response = await fetch('/api/v1/connections/invites', {
                     method: 'POST',
                     headers: {
@@ -778,7 +778,7 @@ function networkApp() {
             if (!confirm('Sigurno želite da poništite ovaj poziv?')) return;
 
             try {
-                const token = localStorage.getItem('access_token');
+                const token = sessionStorage.getItem('access_token');
                 await fetch(`/api/v1/connections/invites/${inviteId}/revoke`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -807,7 +807,7 @@ function networkApp() {
             }
 
             try {
-                const authToken = localStorage.getItem('access_token');
+                const authToken = sessionStorage.getItem('access_token');
                 const response = await fetch('/api/v1/connections/invites/accept', {
                     method: 'POST',
                     headers: {
@@ -843,7 +843,7 @@ function networkApp() {
             this.savingPermissions = true;
 
             try {
-                const token = localStorage.getItem('access_token');
+                const token = sessionStorage.getItem('access_token');
                 const response = await fetch(`/api/v1/connections/${this.selectedConnection.id}/permissions`, {
                     method: 'PUT',
                     headers: {
@@ -868,7 +868,7 @@ function networkApp() {
             if (!confirm('Sigurno želite da blokirate ovu konekciju? Neće moći da vam šalje poruke.')) return;
 
             try {
-                const token = localStorage.getItem('access_token');
+                const token = sessionStorage.getItem('access_token');
                 await fetch(`/api/v1/connections/${connId}/block`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -881,7 +881,7 @@ function networkApp() {
 
         async unblockConnection(connId) {
             try {
-                const token = localStorage.getItem('access_token');
+                const token = sessionStorage.getItem('access_token');
                 await fetch(`/api/v1/connections/${connId}/unblock`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${token}` }

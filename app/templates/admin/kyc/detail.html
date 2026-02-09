@@ -165,8 +165,8 @@ function kycDetailPage(id) {
         },
 
         logout() {
-            localStorage.removeItem('admin_access_token');
-            localStorage.removeItem('admin_refresh_token');
+            sessionStorage.removeItem('admin_access_token');
+            sessionStorage.removeItem('admin_refresh_token');
             window.location.href = '/admin/login';
         },
 
@@ -176,7 +176,7 @@ function kycDetailPage(id) {
         },
 
         async loadKyc() {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             if (!token) { window.location.href = '/admin/login'; return; }
             try {
                 const r = await fetch('/api/admin/kyc/' + this.representativeId, {
@@ -195,7 +195,7 @@ function kycDetailPage(id) {
         },
 
         async verify() {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const response = await fetch('/api/admin/kyc/' + this.representativeId + '/verify', {
                     method: 'PUT',
@@ -212,7 +212,7 @@ function kycDetailPage(id) {
         async reject() {
             const reason = prompt('Razlog odbijanja:');
             if (!reason) return;
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const response = await fetch('/api/admin/kyc/' + this.representativeId + '/reject', {
                     method: 'PUT',

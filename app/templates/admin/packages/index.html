@@ -577,7 +577,7 @@ function packagesPage() {
         },
 
         async loadPackages() {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             if (!token) {
                 window.location.href = '/admin/login';
                 return;
@@ -607,7 +607,7 @@ function packagesPage() {
         async savePackages() {
             this.saving = true;
             this.message = '';
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
 
             try {
                 const r = await fetch('/api/admin/settings/packages', {

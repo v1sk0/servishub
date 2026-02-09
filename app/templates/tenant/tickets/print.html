@@ -543,7 +543,7 @@
     // Get tokens from localStorage
     function getAccessToken() {
       // Try 'access_token' first (used by tenant login)
-      const directToken = localStorage.getItem('access_token');
+      const directToken = sessionStorage.getItem('access_token');
       if (directToken) {
         return directToken;
       }

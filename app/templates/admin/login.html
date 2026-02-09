@@ -140,8 +140,8 @@ function adminLogin() {
                         this.error = '';
                     } else {
                         // No 2FA, login directly
-                        localStorage.setItem('admin_access_token', data.tokens.access_token);
-                        localStorage.setItem('admin_refresh_token', data.tokens.refresh_token);
+                        sessionStorage.setItem('admin_access_token', data.tokens.access_token);
+                        sessionStorage.setItem('admin_refresh_token', data.tokens.refresh_token);
                         window.location.href = '/admin/dashboard';
                     }
                 } else {
@@ -172,8 +172,8 @@ function adminLogin() {
                 const data = await response.json();
 
                 if (response.ok) {
-                    localStorage.setItem('admin_access_token', data.tokens.access_token);
-                    localStorage.setItem('admin_refresh_token', data.tokens.refresh_token);
+                    sessionStorage.setItem('admin_access_token', data.tokens.access_token);
+                    sessionStorage.setItem('admin_refresh_token', data.tokens.refresh_token);
                     window.location.href = '/admin/dashboard';
                 } else {
                     this.error = data.message || 'Neispravan kod';

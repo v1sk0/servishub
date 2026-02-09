@@ -545,7 +545,7 @@ function supportPage() {
         },
 
         async init() {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             if (!token) { window.location.href = '/admin/login'; return; }
             await this.loadThreads();
             // Poll for threads every 15s
@@ -553,7 +553,7 @@ function supportPage() {
         },
 
         async loadThreads() {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const response = await fetch('/api/admin/threads?type=SUPPORT', {
                     headers: { 'Authorization': 'Bearer ' + token }
@@ -590,7 +590,7 @@ function supportPage() {
         },
 
         async loadMessages() {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const response = await fetch(`/api/admin/threads/${this.selectedThread.id}/messages`, {
                     headers: { 'Authorization': 'Bearer ' + token }
@@ -610,7 +610,7 @@ function supportPage() {
 
         async pollNewMessages() {
             if (!this.selectedThread) return;
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 // Use after_id to only get new messages
                 const url = `/api/admin/threads/${this.selectedThread.id}/messages?after_id=${this.lastMessageId}`;
@@ -640,7 +640,7 @@ function supportPage() {
 
         async pollTyping() {
             if (!this.selectedThread) return;
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const response = await fetch(`/api/admin/threads/${this.selectedThread.id}/typing`, {
                     headers: { 'Authorization': 'Bearer ' + token }
@@ -673,7 +673,7 @@ function supportPage() {
 
         async sendTypingStatus(typing) {
             if (!this.selectedThread) return;
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 await fetch(`/api/admin/threads/${this.selectedThread.id}/typing`, {
                     method: 'POST',
@@ -695,7 +695,7 @@ function supportPage() {
             this.isTyping = false;
             this.sendTypingStatus(false);
 
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
 
             try {
                 const response = await fetch(`/api/admin/threads/${this.selectedThread.id}/messages`, {
@@ -729,7 +729,7 @@ function supportPage() {
         },
 
         async updateStatus() {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const response = await fetch(`/api/admin/threads/${this.selectedThread.id}/status`, {
                     method: 'PUT',

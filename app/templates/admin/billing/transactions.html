@@ -335,13 +335,13 @@ function transactionsPage() {
         },
 
         logout() {
-            localStorage.removeItem('admin_access_token');
-            localStorage.removeItem('admin_refresh_token');
+            sessionStorage.removeItem('admin_access_token');
+            sessionStorage.removeItem('admin_refresh_token');
             window.location.href = '/admin/login';
         },
 
         async loadTransactions() {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             if (!token) { window.location.href = '/admin/login'; return; }
             this.loading = true;
 
@@ -393,7 +393,7 @@ function transactionsPage() {
         },
 
         async loadSuggestions(txnId) {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             this.loadingSuggestions[txnId] = true;
 
             try {
@@ -412,7 +412,7 @@ function transactionsPage() {
         },
 
         async matchTransaction(txnId, paymentId) {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const r = await fetch('/api/admin/bank-transactions/' + txnId + '/match', {
                     method: 'POST',
@@ -438,7 +438,7 @@ function transactionsPage() {
         async unmatchTransaction(txnId) {
             if (!confirm('Da li ste sigurni da zelite da ponistite uparivanje?')) return;
 
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const r = await fetch('/api/admin/bank-transactions/' + txnId + '/unmatch', {
                     method: 'POST',
@@ -458,7 +458,7 @@ function transactionsPage() {
         },
 
         async ignoreTransaction(txnId) {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const r = await fetch('/api/admin/bank-transactions/' + txnId + '/ignore', {
                     method: 'POST',
@@ -475,7 +475,7 @@ function transactionsPage() {
         },
 
         async unignoreTransaction(txnId) {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const r = await fetch('/api/admin/bank-transactions/' + txnId + '/unignore', {
                     method: 'POST',

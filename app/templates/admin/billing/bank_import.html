@@ -448,13 +448,13 @@ function bankImportPage() {
         },
 
         logout() {
-            localStorage.removeItem('admin_access_token');
-            localStorage.removeItem('admin_refresh_token');
+            sessionStorage.removeItem('admin_access_token');
+            sessionStorage.removeItem('admin_refresh_token');
             window.location.href = '/admin/login';
         },
 
         async loadImports() {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             if (!token) { window.location.href = '/admin/login'; return; }
             try {
                 const r = await fetch('/api/admin/bank-import', {
@@ -486,7 +486,7 @@ function bankImportPage() {
 
         async uploadFile(file) {
             // Prvo pozivamo preview endpoint da prikazemo transakcije pre importa
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             this.uploading = true;
             this.pendingFile = file;
 
@@ -520,7 +520,7 @@ function bankImportPage() {
             // Korisnik je potvrdio import - sada zapravo cuvamo u bazu
             if (!this.pendingFile || this.previewData?.is_duplicate) return;
 
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             this.importProgress = { active: true, percent: 10, message: 'Ucitavanje fajla...' };
 
             try {
@@ -585,7 +585,7 @@ function bankImportPage() {
         },
 
         async processImport(importId) {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             this.processingId = importId;
 
             try {
@@ -612,7 +612,7 @@ function bankImportPage() {
         async deleteImport(importId) {
             if (!confirm('Da li ste sigurni da zelite da obrisete ovaj import?')) return;
 
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const r = await fetch('/api/admin/bank-import/' + importId, {
                     method: 'DELETE',

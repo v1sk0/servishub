@@ -431,7 +431,7 @@ function suppliersPage() {
 
         async loadSuppliers() {
             this.loading = true;
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             if (!token) { window.location.href = '/admin/login'; return; }
 
             try {
@@ -469,7 +469,7 @@ function suppliersPage() {
         },
 
         async loadStats() {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             if (!token) return;
 
             try {
@@ -517,7 +517,7 @@ function suppliersPage() {
 
         async createSupplier() {
             this.saving = true;
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
 
             // Helper: trim and convert empty to null
             const toNull = (v) => v && v.trim() ? v.trim() : null;
@@ -585,7 +585,7 @@ function suppliersPage() {
         },
 
         async suspendSupplier() {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const r = await fetch(`/api/admin/suppliers/${this.selectedSupplier.id}/status`, {
                     method: 'PUT',
@@ -608,7 +608,7 @@ function suppliersPage() {
 
         async activateSupplier(supplier) {
             if (!confirm(`Aktiviraj dobavljaca "${supplier.name}"?`)) return;
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const r = await fetch(`/api/admin/suppliers/${supplier.id}/status`, {
                     method: 'PUT',
@@ -630,7 +630,7 @@ function suppliersPage() {
 
         async reactivateSupplier(supplier) {
             if (!confirm(`Reaktiviraj dobavljaca "${supplier.name}"?`)) return;
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             try {
                 const r = await fetch(`/api/admin/suppliers/${supplier.id}/activate`, {
                     method: 'POST',

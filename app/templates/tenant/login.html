@@ -790,8 +790,8 @@ function loginForm() {
                 const data = await response.json();
 
                 if (response.ok) {
-                    localStorage.setItem('access_token', data.tokens.access_token);
-                    localStorage.setItem('refresh_token', data.tokens.refresh_token);
+                    sessionStorage.setItem('access_token', data.tokens.access_token);
+                    sessionStorage.setItem('refresh_token', data.tokens.refresh_token);
                     window.location.href = '/dashboard';
                 } else {
                     this.error = data.message || data.error || 'Pogrešan email ili lozinka';

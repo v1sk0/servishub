@@ -302,7 +302,7 @@ function reportsPage() {
         exportReport(format) {
             const type = this.activeTab === 'articles' ? 'by-article' :
                          this.activeTab === 'tenants' ? 'by-tenant' : 'summary';
-            const token = localStorage.getItem('supplier_token');
+            const token = sessionStorage.getItem('supplier_token');
             const url = `/api/supplier/reports/export?type=${type}&format=${format}&start_date=${this.startDate}&end_date=${this.endDate}`;
             // Direct download via fetch + blob
             fetch(url, {

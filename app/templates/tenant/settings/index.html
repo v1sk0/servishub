@@ -2682,7 +2682,7 @@ function settingsPage() {
                 const response = await fetch('/api/v1/tenant/upload/logo', {
                     method: 'POST',
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('access_token')
                     },
                     body: formData
                 });

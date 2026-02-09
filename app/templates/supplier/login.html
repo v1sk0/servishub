@@ -107,7 +107,7 @@ function supplierLoginPage() {
 
         init() {
             // Check if already logged in
-            const token = localStorage.getItem('supplier_access_token');
+            const token = sessionStorage.getItem('supplier_access_token');
             if (token) {
                 window.location.href = '/supplier/dashboard';
             }
@@ -136,8 +136,8 @@ function supplierLoginPage() {
                 }
 
                 // Store tokens
-                localStorage.setItem('supplier_access_token', data.access_token);
-                localStorage.setItem('supplier_refresh_token', data.refresh_token);
+                sessionStorage.setItem('supplier_access_token', data.access_token);
+                sessionStorage.setItem('supplier_refresh_token', data.refresh_token);
 
                 // Redirect to dashboard
                 window.location.href = '/supplier/dashboard';

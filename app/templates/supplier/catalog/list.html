@@ -1283,7 +1283,7 @@ function catalogPage() {
                 const formData = new FormData();
                 formData.append('file', this.importFile);
 
-                const token = localStorage.getItem('supplier_access_token');
+                const token = sessionStorage.getItem('supplier_access_token');
                 const resp = await fetch('/api/supplier/listings/import-excel', {
                     method: 'POST',
                     headers: {
@@ -1319,7 +1319,7 @@ function catalogPage() {
 
         async exportExcel() {
             try {
-                const token = localStorage.getItem('supplier_access_token');
+                const token = sessionStorage.getItem('supplier_access_token');
                 const resp = await fetch('/api/supplier/listings/export-excel', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -1339,7 +1339,7 @@ function catalogPage() {
 
         async downloadTemplate() {
             try {
-                const token = localStorage.getItem('supplier_access_token');
+                const token = sessionStorage.getItem('supplier_access_token');
                 const resp = await fetch('/api/supplier/listings/template', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });

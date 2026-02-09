@@ -80,7 +80,7 @@ function phonesReport() {
         days: 30,
         data: {},
         async loadData() {
-            const token = localStorage.getItem('access_token');
+            const token = sessionStorage.getItem('access_token');
             const res = await fetch(`/api/v1/finance/phones?days=${this.days}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });

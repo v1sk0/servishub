@@ -679,7 +679,7 @@ function settingsPage() {
         },
 
         checkAuth() {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             if (!token) {
                 window.location.href = '/admin/login';
             }
@@ -693,8 +693,8 @@ function settingsPage() {
         },
 
         logout() {
-            localStorage.removeItem('admin_access_token');
-            localStorage.removeItem('admin_refresh_token');
+            sessionStorage.removeItem('admin_access_token');
+            sessionStorage.removeItem('admin_refresh_token');
             window.location.href = '/admin/login';
         },
 
@@ -703,7 +703,7 @@ function settingsPage() {
         // =====================
 
         async load2FAStatus() {
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             if (!token) return;
 
             try {
@@ -722,7 +722,7 @@ function settingsPage() {
         async start2FASetup() {
             this.twoFA.loading = true;
             this.twoFA.error = '';
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
 
             try {
                 const r = await fetch('/api/admin/auth/2fa/setup', {
@@ -753,7 +753,7 @@ function settingsPage() {
         async verify2FA() {
             this.twoFA.loading = true;
             this.twoFA.error = '';
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
 
             try {
                 const r = await fetch('/api/admin/auth/2fa/enable', {
@@ -803,7 +803,7 @@ function settingsPage() {
 
         async regenerateBackupCodes() {
             this.twoFA.loading = true;
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
 
             try {
                 const r = await fetch('/api/admin/auth/2fa/backup-codes', {
@@ -840,7 +840,7 @@ function settingsPage() {
         async disable2FA() {
             this.twoFA.loading = true;
             this.twoFA.disableError = '';
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
 
             try {
                 const r = await fetch('/api/admin/auth/2fa/disable', {
@@ -875,7 +875,7 @@ function settingsPage() {
 
         async loadCompanyData() {
             this.companyLoading = true;
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
             if (!token) return;
 
             try {
@@ -920,7 +920,7 @@ function settingsPage() {
 
         async saveCompany() {
             this.companySaving = true;
-            const token = localStorage.getItem('admin_access_token');
+            const token = sessionStorage.getItem('admin_access_token');
 
             try {
                 const r = await fetch('/api/admin/settings/company', {

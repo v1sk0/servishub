@@ -546,13 +546,13 @@ function smsManagement() {
         },
 
         logout() {
-            localStorage.removeItem('admin_access_token');
+            sessionStorage.removeItem('admin_access_token');
             window.location.href = '/admin/login';
         },
 
         async loadStats() {
             try {
-                const token = localStorage.getItem('admin_access_token');
+                const token = sessionStorage.getItem('admin_access_token');
                 const res = await fetch('/api/admin/sms/stats', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -566,7 +566,7 @@ function smsManagement() {
 
         async loadFinancialStats() {
             try {
-                const token = localStorage.getItem('admin_access_token');
+                const token = sessionStorage.getItem('admin_access_token');
                 const res = await fetch('/api/admin/sms/stats/financial?days=30&months=12', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -580,7 +580,7 @@ function smsManagement() {
 
         async loadConfigs() {
             try {
-                const token = localStorage.getItem('admin_access_token');
+                const token = sessionStorage.getItem('admin_access_token');
                 const params = new URLSearchParams({
                     page: this.pagination.page,
                     per_page: 20,
@@ -606,7 +606,7 @@ function smsManagement() {
 
         async loadUsage() {
             try {
-                const token = localStorage.getItem('admin_access_token');
+                const token = sessionStorage.getItem('admin_access_token');
                 const params = new URLSearchParams({
                     page: this.usagePagination.page,
                     per_page: 20,
@@ -648,7 +648,7 @@ function smsManagement() {
         async saveConfig() {
             this.saving = true;
             try {
-                const token = localStorage.getItem('admin_access_token');
+                const token = sessionStorage.getItem('admin_access_token');
                 const res = await fetch(`/api/admin/sms/configs/${this.editModal.tenant_id}`, {
                     method: 'PUT',
                     headers: {

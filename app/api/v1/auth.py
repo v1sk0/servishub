@@ -539,14 +539,22 @@ def logout():
     """
     Odjava korisnika.
 
-    Trenutno samo loguje odjavu - tokeni ostaju validni do isteka.
-    Za pravu invalidaciju tokena potreban je Redis blacklist (TODO).
+    Blacklist-uje token u Redis i loguje odjavu.
 
     Returns:
         200: Uspesna odjava
     """
     from ...models import AuditLog, AuditAction
     from ...extensions import db
+
+    # Blacklist token
+    try:
+        from ...services.token_blacklist_service import token_blacklist
+        payload = getattr(g, 'token_payload', None)
+        if payload:
+            token_blacklist.blacklist_token(payload)
+    except Exception:
+        pass
 
     # Loguj odjavu u AuditLog
     if hasattr(g, 'current_user_id'):
