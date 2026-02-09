@@ -644,6 +644,16 @@
     .part-offer-stock.available { color: #16a34a; }
     .part-offer-stock.low { color: #d97706; }
     .part-offer-stock.last { color: #dc2626; }
+    .part-offer-rating {
+        font-size: 0.625rem;
+        padding: 0.125rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+    .part-offer-rating.excellent { background: #dcfce7; color: #166534; }
+    .part-offer-rating.good { background: #dbeafe; color: #1e40af; }
+    .part-offer-rating.poor { background: #fee2e2; color: #991b1b; }
+    .part-offer-rating.unrated { background: #f1f5f9; color: #94a3b8; }
     .part-offer-select-btn {
         font-size: 0.75rem;
         padding: 0.25rem 0.75rem;
@@ -766,6 +776,10 @@
     }
     .glass-theme .part-offers-selected-text { color: #4ade80; }
     .glass-theme .part-offers-empty { color: #6b7280; }
+    .glass-theme .part-offer-rating.excellent { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+    .glass-theme .part-offer-rating.good { background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
+    .glass-theme .part-offer-rating.poor { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+    .glass-theme .part-offer-rating.unrated { background: rgba(255, 255, 255, 0.1); color: #6b7280; }
 
     /* ========================================
        PREMIUM POWER TOGGLE - "Ne pali" button
@@ -1998,6 +2012,9 @@
                                                     <span class="part-offer-stock"
                                                           :class="offer.stock_hint === 'available' ? 'available' : (offer.stock_hint === 'low' ? 'low' : 'last')"
                                                           x-text="offer.stock_hint === 'available' ? 'Na stanju' : (offer.stock_hint === 'low' ? 'Malo' : 'Poslednji')"></span>
+                                                    <span class="part-offer-rating"
+                                                          :class="offer.supplier_rating === 'Odlican' ? 'excellent' : (offer.supplier_rating === 'Dobar' ? 'good' : (offer.supplier_rating === 'Los' ? 'poor' : 'unrated'))"
+                                                          x-text="offer.supplier_rating"></span>
                                                 </div>
                                                 <button type="button" @click="selectPartOffer(offer)"
                                                         class="part-offer-select-btn"

@@ -201,6 +201,18 @@ def search_offers():
 
     offers = []
     for listing in top:
+        # Supplier rating
+        supplier = Supplier.query.get(listing.supplier_id)
+        rating_label = 'Neocenjen'
+        if supplier and supplier.rating_count and supplier.rating_count > 0 and supplier.rating is not None:
+            r = float(supplier.rating)
+            if r >= 4.0:
+                rating_label = 'Odlican'
+            elif r >= 3.0:
+                rating_label = 'Dobar'
+            else:
+                rating_label = 'Los'
+
         offers.append({
             'listing_id': listing.id,
             'price_eur': float(listing.price_eur) if listing.price_eur else None,
@@ -208,6 +220,8 @@ def search_offers():
             'quality_grade': listing.quality_grade,
             'stock_hint': get_stock_hint(listing.stock_quantity),
             'part_name': listing.name,
+            'supplier_rating': rating_label,
+            'supplier_rating_count': supplier.rating_count if supplier else 0,
         })
 
     return {
