@@ -55,7 +55,7 @@ def _get_delivery_info(supplier, tenant_city):
     if tenant_lower and tenant_lower in cities:
         rounds = supplier.delivery_rounds or {}
         if _can_deliver_today(rounds):
-            return {'type': 'own_delivery', 'label': 'Dostava u toku dana'}
+            return {'type': 'own_delivery', 'label': 'Dostava: Danas'}
         else:
             return {'type': 'own_delivery', 'label': 'Dostava sledeci radni dan'}
 

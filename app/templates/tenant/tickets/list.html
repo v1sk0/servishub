@@ -2041,7 +2041,7 @@
                                                     <template x-if="offer.delivery_label">
                                                         <span class="delivery-badge"
                                                               :class="{
-                                                                  'delivery-today': offer.delivery_label.includes('u toku dana'),
+                                                                  'delivery-today': offer.delivery_label.includes('Danas'),
                                                                   'delivery-next': offer.delivery_label.includes('sledeci'),
                                                                   'delivery-courier': offer.delivery_label.includes('Brza posta'),
                                                                   'delivery-pickup': offer.delivery_label.includes('preuzimanje')
@@ -2052,7 +2052,7 @@
                                                 <button type="button" @click="selectPartOffer(offer)"
                                                         class="part-offer-select-btn"
                                                         :class="selectedListing === offer.listing_id ? 'active' : 'default'"
-                                                        x-text="selectedListing === offer.listing_id ? 'Izabrano ✓' : 'Izaberi'"></button>
+                                                        x-text="selectedListing === offer.listing_id ? 'Izabrano ✓' : 'Poruči'"></button>
                                             </div>
                                         </template>
                                     </div>
@@ -2069,7 +2069,7 @@
                                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                 </svg>
-                                Deo ce biti narucen nakon kreiranja naloga
+                                Deo će biti naručen po potvrdi dobavljača. Čekamo potvrdu.
                             </span>
                             <button type="button" @click="selectedListing = null; selectedOffer = null" class="part-offers-cancel-btn">
                                 Ponisti
@@ -4822,9 +4822,7 @@ function ticketsPage() {
             const model = this.newTicket.model?.trim();
             const category = this.detectPartCategory(this.newTicket.problem_description);
 
-            const hasEnoughInfo = brand && brand.length >= 2 && (
-                (model && model.length >= 1) || category
-            );
+            const hasEnoughInfo = brand && brand.length >= 2 && model && model.length >= 1 && category;
 
             if (hasEnoughInfo) {
                 const searchKey = brand + '|' + (model || '') + '|' + (category || '');
