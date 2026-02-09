@@ -1,0 +1,336 @@
+{% extends "layouts/supplier.html" %}
+
+{% block title %}Dostava - Supplier Portal{% endblock %}
+
+{% block content %}
+<div x-data="deliveryPage()" x-init="init()">
+    <!-- Page Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Konfiguracija dostave</h1>
+        <p class="text-gray-600 mt-1">Definisajte gradove, ture, kurirske sluzbe i licno preuzimanje</p>
+    </div>
+
+    <!-- Loading -->
+    <template x-if="loading">
+        <div class="flex items-center justify-center py-12">
+            <svg class="animate-spin h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        </div>
+    </template>
+
+    <template x-if="!loading">
+        <div class="space-y-6">
+            <!-- Section 1: Gradovi dostave -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-1">Gradovi dostave</h2>
+                <p class="text-sm text-gray-500 mb-4">Gradovi u koje dostavljate svojom dostavom (ture). Ostali gradovi ce biti pokriveni kurirskom sluzbom.</p>
+
+                <!-- Dodati gradovi -->
+                <div class="flex flex-wrap gap-2 mb-4" x-show="cities.length > 0">
+                    <template x-for="(city, idx) in cities" :key="idx">
+                        <span class="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-full text-sm font-medium">
+                            <span x-text="city"></span>
+                            <button type="button" @click="removeCity(idx)" class="ml-1 text-purple-400 hover:text-purple-700">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </span>
+                    </template>
+                </div>
+
+                <!-- Input za nov grad -->
+                <div class="flex gap-2 mb-4">
+                    <input type="text" x-model="newCity" @keydown.enter.prevent="addCity()"
+                           placeholder="Unesite ime grada..."
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm">
+                    <button type="button" @click="addCity()"
+                            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium">
+                        Dodaj
+                    </button>
+                </div>
+
+                <!-- Predlozeni gradovi -->
+                <div>
+                    <p class="text-xs text-gray-500 mb-2">Brzo dodajte:</p>
+                    <div class="flex flex-wrap gap-1.5">
+                        <template x-for="sg in suggestedCities" :key="sg">
+                            <button type="button" @click="addSuggestedCity(sg)"
+                                    x-show="!cities.includes(sg)"
+                                    class="px-2.5 py-1 text-xs bg-gray-100 text-gray-600 rounded-full hover:bg-purple-50 hover:text-purple-700 transition-colors"
+                                    x-text="sg">
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Ture dostave -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-1">Ture dostave</h2>
+                <p class="text-sm text-gray-500 mb-4">Definisajte ture za svaki tip dana. Prazna lista = ne dostavljate taj dan.</p>
+
+                <!-- Day tabs -->
+                <div class="border-b border-gray-200 mb-4">
+                    <nav class="flex -mb-px">
+                        <button @click="roundsTab = 'weekday'"
+                                :class="roundsTab === 'weekday' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                                class="py-3 px-4 border-b-2 font-medium text-sm">
+                            Radni dani
+                        </button>
+                        <button @click="roundsTab = 'saturday'"
+                                :class="roundsTab === 'saturday' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                                class="py-3 px-4 border-b-2 font-medium text-sm">
+                            Subota
+                        </button>
+                        <button @click="roundsTab = 'sunday'"
+                                :class="roundsTab === 'sunday' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                                class="py-3 px-4 border-b-2 font-medium text-sm">
+                            Nedelja
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Rounds for current tab -->
+                <template x-for="dayKey in ['weekday', 'saturday', 'sunday']" :key="dayKey">
+                    <div x-show="roundsTab === dayKey" x-cloak>
+                        <div class="space-y-3 mb-4">
+                            <template x-for="(round, ri) in (rounds[dayKey] || [])" :key="ri">
+                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex-1 grid grid-cols-3 gap-3">
+                                        <div>
+                                            <label class="block text-xs text-gray-500 mb-1">Naziv ture</label>
+                                            <input type="text" x-model="round.name" placeholder="npr. Prva tura"
+                                                   class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs text-gray-500 mb-1">Rok za prijem</label>
+                                            <input type="time" x-model="round.cutoff"
+                                                   class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs text-gray-500 mb-1">Vreme isporuke</label>
+                                            <input type="text" x-model="round.delivery_time" placeholder="npr. do 15:00"
+                                                   class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-purple-500">
+                                        </div>
+                                    </div>
+                                    <button type="button" @click="removeRound(dayKey, ri)"
+                                            class="p-1.5 text-gray-400 hover:text-red-500 mt-4">
+                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+
+                        <template x-if="(rounds[dayKey] || []).length === 0">
+                            <p class="text-sm text-gray-400 italic mb-4">Nema tura - ne dostavljate ovog dana</p>
+                        </template>
+
+                        <button type="button" @click="addRound(dayKey)"
+                                x-show="(rounds[dayKey] || []).length < 4"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                            </svg>
+                            Dodaj turu
+                        </button>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Section 3: Kurirske sluzbe -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-1">Kurirske sluzbe</h2>
+                <p class="text-sm text-gray-500 mb-4">Odaberite kurirske sluzbe sa kojima saradjujete. Koriste se za gradove van vase zone dostave.</p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <template x-for="cs in courierServicesList" :key="cs.id">
+                        <label class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+                               :class="selectedCouriers.includes(cs.id) ? 'border-purple-300 bg-purple-50' : 'border-gray-200 hover:border-gray-300'">
+                            <input type="checkbox" :value="cs.id" x-model="selectedCouriers"
+                                   class="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                            <span class="text-sm font-medium" :class="selectedCouriers.includes(cs.id) ? 'text-purple-700' : 'text-gray-700'"
+                                  x-text="cs.name"></span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Section 4: Licno preuzimanje + napomene -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Ostale opcije</h2>
+
+                <div class="space-y-4">
+                    <!-- Toggle licno preuzimanje -->
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-700">Licno preuzimanje</p>
+                            <p class="text-xs text-gray-500">Kupci mogu licno preuzeti narudzbinu na vasoj adresi</p>
+                        </div>
+                        <button type="button" @click="allowsPickup = !allowsPickup"
+                                :class="allowsPickup ? 'bg-purple-600' : 'bg-gray-200'"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out">
+                            <span :class="allowsPickup ? 'translate-x-5' : 'translate-x-0'"
+                                  class="inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out mt-0.5 ml-0.5"></span>
+                        </button>
+                    </div>
+
+                    <!-- Napomene -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Napomene o dostavi</label>
+                        <textarea x-model="deliveryNotes" rows="3" placeholder="npr. Besplatna dostava za narudzbine preko 100 EUR..."
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save button -->
+            <div class="flex justify-end">
+                <button type="button" @click="save()" :disabled="saving"
+                        class="inline-flex items-center gap-2 px-6 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg x-show="saving" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span x-text="saving ? 'Cuvam...' : 'Sacuvaj konfiguraciju'"></span>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <!-- Toast -->
+    <div x-show="toast.show" x-transition
+         :class="toast.type === 'success' ? 'bg-green-50 text-green-800 border-green-200' : 'bg-red-50 text-red-800 border-red-200'"
+         class="fixed bottom-4 right-4 px-4 py-3 rounded-lg border shadow-lg z-50 max-w-sm"
+         x-text="toast.message">
+    </div>
+</div>
+
+<script>
+function deliveryPage() {
+    return {
+        loading: true,
+        saving: false,
+        toast: { show: false, message: '', type: 'success' },
+
+        // Data
+        cities: [],
+        newCity: '',
+        rounds: { weekday: [], saturday: [], sunday: [] },
+        roundsTab: 'weekday',
+        selectedCouriers: [],
+        courierServicesList: [],
+        allowsPickup: false,
+        deliveryNotes: '',
+
+        suggestedCities: [
+            'Beograd', 'Novi Sad', 'Nis', 'Kragujevac', 'Subotica',
+            'Novi Pazar', 'Leskovac', 'Cacak', 'Pancevo', 'Zrenjanin',
+            'Kraljevo', 'Smederevo', 'Valjevo', 'Uzice', 'Sabac'
+        ],
+
+        async init() {
+            try {
+                // Load courier services and config in parallel
+                const [configRes, couriersRes] = await Promise.all([
+                    supplierApi('/delivery/'),
+                    supplierApi('/delivery/courier-services'),
+                ]);
+
+                if (configRes.success && configRes.data) {
+                    const d = configRes.data;
+                    this.cities = d.delivery_cities || [];
+                    this.rounds = {
+                        weekday: d.delivery_rounds?.weekday || [],
+                        saturday: d.delivery_rounds?.saturday || [],
+                        sunday: d.delivery_rounds?.sunday || [],
+                    };
+                    this.selectedCouriers = d.courier_services || [];
+                    this.allowsPickup = d.allows_pickup || false;
+                    this.deliveryNotes = d.delivery_notes || '';
+                }
+
+                if (couriersRes.success && couriersRes.data) {
+                    this.courierServicesList = couriersRes.data;
+                }
+            } catch (e) {
+                this.showToast('Greska pri ucitavanju konfiguracije', 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        addCity() {
+            const city = this.newCity.trim();
+            if (!city) return;
+            if (this.cities.some(c => c.toLowerCase() === city.toLowerCase())) {
+                this.showToast('Grad je vec dodat', 'error');
+                return;
+            }
+            this.cities.push(city);
+            this.newCity = '';
+        },
+
+        addSuggestedCity(city) {
+            if (!this.cities.some(c => c.toLowerCase() === city.toLowerCase())) {
+                this.cities.push(city);
+            }
+        },
+
+        removeCity(idx) {
+            this.cities.splice(idx, 1);
+        },
+
+        addRound(dayKey) {
+            if (!this.rounds[dayKey]) this.rounds[dayKey] = [];
+            if (this.rounds[dayKey].length >= 4) return;
+            this.rounds[dayKey].push({ name: '', cutoff: '', delivery_time: '' });
+        },
+
+        removeRound(dayKey, idx) {
+            this.rounds[dayKey].splice(idx, 1);
+        },
+
+        async save() {
+            this.saving = true;
+            try {
+                // Filter out empty rounds
+                const cleanRounds = {};
+                for (const key of ['weekday', 'saturday', 'sunday']) {
+                    cleanRounds[key] = (this.rounds[key] || []).filter(
+                        r => r.name && r.cutoff && r.delivery_time
+                    );
+                }
+
+                const res = await supplierApi('/delivery/', 'PUT', {
+                    delivery_cities: this.cities,
+                    delivery_rounds: cleanRounds,
+                    courier_services: this.selectedCouriers,
+                    allows_pickup: this.allowsPickup,
+                    delivery_notes: this.deliveryNotes,
+                });
+
+                if (res.success) {
+                    this.showToast('Konfiguracija sacuvana', 'success');
+                } else {
+                    this.showToast(res.error || 'Greska pri cuvanju', 'error');
+                }
+            } catch (e) {
+                this.showToast('Greska pri cuvanju konfiguracije', 'error');
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        showToast(message, type = 'success') {
+            this.toast = { show: true, message, type };
+            setTimeout(() => { this.toast.show = false; }, 3000);
+        },
+    };
+}
+</script>
+{% endblock %}

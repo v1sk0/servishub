@@ -73,6 +73,14 @@ def supplier_reports():
     return render_template('supplier/reports.html')
 
 
+# ============== Delivery ==============
+
+@bp.route('/supplier/delivery')
+def supplier_delivery():
+    """Konfiguracija dostave dobavljaca."""
+    return render_template('supplier/delivery.html')
+
+
 # ============== Settings ==============
 
 @bp.route('/supplier/settings')

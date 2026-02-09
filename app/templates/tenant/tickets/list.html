@@ -655,6 +655,20 @@
     }
     .part-offer-stars .star.filled { color: #f59e0b; }
     .part-offer-stars .star.empty { color: #d1d5db; }
+    .delivery-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 0.656rem;
+        font-weight: 600;
+        padding: 1px 7px;
+        border-radius: 4px;
+        white-space: nowrap;
+    }
+    .delivery-badge.delivery-today { background: #dcfce7; color: #166534; }
+    .delivery-badge.delivery-next { background: #d1fae5; color: #065f46; }
+    .delivery-badge.delivery-courier { background: #dbeafe; color: #1e40af; }
+    .delivery-badge.delivery-pickup { background: #fef3c7; color: #92400e; }
     .part-offer-select-btn {
         font-size: 0.75rem;
         padding: 0.25rem 0.75rem;
@@ -780,6 +794,13 @@
     .glass-theme .part-offer-stars .star.filled { color: #fbbf24; }
     .glass-theme .part-offer-stars .star.empty { color: #4b5563; }
     .glass-theme .part-offer-stars .star-count { color: #6b7280; }
+    .glass-theme .delivery-badge.delivery-today { background: rgba(22, 163, 74, 0.15); color: #4ade80; }
+    .glass-theme .delivery-badge.delivery-next { background: rgba(5, 150, 105, 0.15); color: #34d399; }
+    .glass-theme .delivery-badge.delivery-courier { background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
+    .glass-theme .delivery-badge.delivery-pickup { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .glass-theme .part-offers-info-note { background: rgba(180, 130, 11, 0.1) !important; }
+    .glass-theme .part-offers-info-note svg { color: #d4a017 !important; }
+    .glass-theme .part-offers-info-note span { color: #d4a017 !important; }
 
     /* ========================================
        PREMIUM POWER TOGGLE - "Ne pali" button
@@ -2017,6 +2038,16 @@
                                                             <span class="star" :class="offer.supplier_rating && s <= Math.round(offer.supplier_rating) ? 'filled' : 'empty'" x-text="offer.supplier_rating && s <= Math.round(offer.supplier_rating) ? '\u2605' : '\u2606'"></span>
                                                         </template>
                                                     </span>
+                                                    <template x-if="offer.delivery_label">
+                                                        <span class="delivery-badge"
+                                                              :class="{
+                                                                  'delivery-today': offer.delivery_label.includes('u toku dana'),
+                                                                  'delivery-next': offer.delivery_label.includes('sledeci'),
+                                                                  'delivery-courier': offer.delivery_label.includes('Brza posta'),
+                                                                  'delivery-pickup': offer.delivery_label.includes('preuzimanje')
+                                                              }"
+                                                              x-text="offer.delivery_label"></span>
+                                                    </template>
                                                 </div>
                                                 <button type="button" @click="selectPartOffer(offer)"
                                                         class="part-offer-select-btn"
@@ -2046,11 +2077,11 @@
                         </div>
 
                         <!-- Napomena -->
-                        <div style="margin-top:0.5rem;display:flex;align-items:flex-start;gap:0.375rem;padding:0 0.25rem;">
-                            <svg style="width:13px;height:13px;color:#94a3b8;flex-shrink:0;margin-top:1px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div class="part-offers-info-note" style="margin-top:0.5rem;display:flex;align-items:flex-start;gap:0.375rem;padding:0.375rem 0.5rem;background:#fef9e7;border-radius:6px;">
+                            <svg style="width:13px;height:13px;color:#d4a017;flex-shrink:0;margin-top:1px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            <span style="font-size:0.688rem;color:#94a3b8;line-height:1.3;">Ove informacije su vidljive samo vama. Nece se prikazati na nalogu niti na printu za kupca.</span>
+                            <span style="font-size:0.688rem;color:#b8860b;line-height:1.3;">Ove informacije su vidljive samo vama. Nece se prikazati na nalogu niti na printu za kupca.</span>
                         </div>
                     </div>
                 </div>

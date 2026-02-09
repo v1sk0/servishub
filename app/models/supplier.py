@@ -65,6 +65,13 @@ class Supplier(db.Model):
     # Valutni kurs (EUR -> RSD) po dobavljacu
     eur_rate = db.Column(db.Numeric(8, 4), default=117.5)
 
+    # Delivery konfiguracija
+    delivery_cities = db.Column(db.JSON, default=list)         # ["Beograd", "Novi Sad", "Nis"]
+    delivery_rounds = db.Column(db.JSON, default=dict)          # {"weekday": [...], "saturday": [...], "sunday": []}
+    courier_services_config = db.Column(db.JSON, default=list)  # ["d_express", "aks", "post_express"]
+    allows_pickup = db.Column(db.Boolean, default=False)        # Licno preuzimanje
+    delivery_notes = db.Column(db.Text)                         # Napomene o dostavi
+
     # Timestampovi
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(

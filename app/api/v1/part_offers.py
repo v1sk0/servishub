@@ -27,9 +27,45 @@ from app.api.middleware.auth import jwt_required
 from app.services.part_matching import (
     find_matching_listings, build_summary, get_stock_hint, QUALITY_GROUPS,
 )
+from app.models.tenant import Tenant
 from app.constants.brands import normalize_brand
 
 bp = Blueprint('part_offers', __name__, url_prefix='/part-offers')
+
+
+# ============== Delivery Helpers ==============
+
+def _can_deliver_today(rounds):
+    """Proverava da li dobavljac moze danas da isporuci."""
+    now = datetime.now(tz=ZoneInfo('Europe/Belgrade'))
+    day = now.weekday()
+    day_key = 'weekday' if day < 5 else ('saturday' if day == 5 else 'sunday')
+    for r in rounds.get(day_key, []):
+        cutoff = r.get('cutoff', '')
+        if cutoff and now.strftime('%H:%M') < cutoff:
+            return True
+    return False
+
+
+def _get_delivery_info(supplier, tenant_city):
+    """Odredjuje nacin dostave i vraca label string za anonimni prikaz."""
+    cities = [c.lower().strip() for c in (supplier.delivery_cities or [])]
+    tenant_lower = (tenant_city or '').lower().strip()
+
+    if tenant_lower and tenant_lower in cities:
+        rounds = supplier.delivery_rounds or {}
+        if _can_deliver_today(rounds):
+            return {'type': 'own_delivery', 'label': 'Dostava u toku dana'}
+        else:
+            return {'type': 'own_delivery', 'label': 'Dostava sledeci radni dan'}
+
+    if supplier.courier_services_config:
+        return {'type': 'courier', 'label': 'Brza posta, 1-2 radna dana'}
+
+    if supplier.allows_pickup:
+        return {'type': 'pickup', 'label': 'Licno preuzimanje'}
+
+    return {'type': None, 'label': None}
 
 
 # ============== Helpers ==============
@@ -199,15 +235,20 @@ def search_offers():
     filtered.sort(key=sort_key)
     top = filtered[:3]
 
+    # Get tenant city for delivery info
+    tenant = Tenant.query.get(g.tenant_id)
+    tenant_city = tenant.grad if tenant else None
+
     offers = []
     for listing in top:
         supplier = Supplier.query.get(listing.supplier_id)
         sup_rating = None
-        sup_rating_count = 0
+        delivery_label = None
         if supplier:
-            sup_rating_count = supplier.rating_count or 0
-            if sup_rating_count > 0 and supplier.rating is not None:
+            if (supplier.rating_count or 0) > 0 and supplier.rating is not None:
                 sup_rating = round(float(supplier.rating), 1)
+            delivery = _get_delivery_info(supplier, tenant_city)
+            delivery_label = delivery['label']
 
         offers.append({
             'listing_id': listing.id,
@@ -217,6 +258,7 @@ def search_offers():
             'stock_hint': get_stock_hint(listing.stock_quantity),
             'part_name': listing.name,
             'supplier_rating': sup_rating,
+            'delivery_label': delivery_label,
         })
 
     return {
@@ -339,8 +381,18 @@ def get_ticket_offers(ticket_id):
     # Top 3
     top = filtered[:3]
 
+    # Get tenant city for delivery info
+    tenant = Tenant.query.get(g.tenant_id)
+    tenant_city = tenant.grad if tenant else None
+
     offers = []
     for listing in top:
+        supplier = Supplier.query.get(listing.supplier_id)
+        delivery_label = None
+        if supplier:
+            delivery = _get_delivery_info(supplier, tenant_city)
+            delivery_label = delivery['label']
+
         offers.append({
             'offer_token': _generate_offer_token(g.tenant_id, listing.id, ticket_id),
             'listing_id': listing.id,
@@ -348,7 +400,7 @@ def get_ticket_offers(ticket_id):
             'price_rsd': float(listing.price_rsd) if listing.price_rsd else None,
             'quality_grade': listing.quality_grade,
             'stock_hint': get_stock_hint(listing.stock_quantity),
-            'delivery_days': listing.delivery_days,
+            'delivery_label': delivery_label,
         })
 
     return {
