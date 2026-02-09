@@ -4974,6 +4974,7 @@ function ticketsPage() {
             }).filter(Boolean);
             this.newTicket.problem_description = labels.join(', ');
             this.newTicket.problem_areas = [...this.selectedProblems];
+            this.debouncedPartSearch();
         },
 
         syncSelectedProblems() {
