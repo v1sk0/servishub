@@ -2,6 +2,55 @@
 
 {% block title %}Katalog - Supplier Portal{% endblock %}
 
+{% block head %}
+{{ super() }}
+<style>
+.toggle-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+}
+.toggle-badge.active {
+    background: #22c55e !important;
+    color: #fff !important;
+}
+.toggle-badge.active:hover {
+    background: #16a34a !important;
+}
+.toggle-badge.inactive {
+    background: #e5e7eb !important;
+    color: #6b7280 !important;
+}
+.toggle-badge.inactive:hover {
+    background: #d1d5db !important;
+}
+.glass-theme .toggle-badge.inactive {
+    background: rgba(255,255,255,0.12) !important;
+    color: #94a3b8 !important;
+}
+.glass-theme .toggle-badge.inactive:hover {
+    background: rgba(255,255,255,0.18) !important;
+}
+.toggle-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 6px;
+    background: #9ca3af;
+}
+.toggle-dot.active {
+    background: #fff !important;
+}
+</style>
+{% endblock head %}
+
 {% block content %}
 <div x-data="catalogPage()" x-init="init()">
     <!-- Page Header -->
@@ -210,15 +259,13 @@
                                       class="font-medium" x-text="(listing.stock_quantity || 0) + ' kom'"></span>
                             </td>
                             <td class="px-4 py-4 text-center">
-                                <button @click="confirmToggle(listing)" :disabled="listing._toggling"
-                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 disabled:opacity-50"
-                                        :class="listing.is_active
-                                            ? 'bg-green-500 text-white hover:bg-green-600'
-                                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300'">
-                                    <span class="inline-block h-1.5 w-1.5 rounded-full mr-1.5"
-                                          :class="listing.is_active ? 'bg-white' : 'bg-gray-400'"></span>
+                                <span @click="confirmToggle(listing)"
+                                      class="toggle-badge"
+                                      :class="listing.is_active ? 'active' : 'inactive'"
+                                      :style="listing._toggling ? 'opacity:0.5;pointer-events:none' : ''">
+                                    <span class="toggle-dot" :class="listing.is_active ? 'active' : ''"></span>
                                     <span x-text="listing.is_active ? 'Aktivan' : 'Neaktivan'"></span>
-                                </button>
+                                </span>
                             </td>
                             <td class="px-4 py-4 text-right">
                                 <div class="flex items-center justify-end space-x-1">
