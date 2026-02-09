@@ -460,6 +460,314 @@
     .form-section-title { font-size: 0.875rem; font-weight: 600; color: #3b82f6; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0; }
 
     /* ========================================
+       PART OFFERS - Dostupni delovi
+       ======================================== */
+    .part-offers-loading {
+        margin-top: 1.5rem;
+        padding: 0.875rem 1rem;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .part-offers-loading span {
+        font-size: 0.813rem;
+        color: #3b82f6;
+        font-weight: 500;
+    }
+    .part-offers-section {
+        margin-top: 1.5rem;
+        background: #ffffff;
+        border: 1px solid #d1fae5;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .part-offers-header {
+        padding: 0.75rem 1rem;
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        border-bottom: 1px solid #d1fae5;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .part-offers-header-title {
+        font-size: 0.813rem;
+        font-weight: 600;
+        color: #166534;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    .part-offers-header-title svg {
+        width: 16px;
+        height: 16px;
+        color: #22c55e;
+    }
+    .part-offers-header-meta {
+        font-size: 0.688rem;
+        color: #6b7280;
+        font-weight: 500;
+    }
+    .part-offers-body {
+        padding: 0.75rem;
+    }
+    .part-offers-cat-label {
+        font-size: 0.688rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.375rem;
+    }
+    .part-offers-quality-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .part-offers-quality-card {
+        padding: 0.75rem;
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+    .part-offers-quality-card:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+    }
+    .part-offers-quality-card.expanded {
+        border-color: #3b82f6;
+        background: #dbeafe;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+    }
+    .part-offers-quality-label {
+        font-size: 0.625rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .part-offers-quality-card.expanded .part-offers-quality-label {
+        color: #1e40af;
+    }
+    .part-offers-quality-price {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-top: 0.125rem;
+    }
+    .part-offers-quality-card.expanded .part-offers-quality-price {
+        color: #1e40af;
+    }
+    .part-offers-quality-count {
+        font-size: 0.625rem;
+        color: #94a3b8;
+        margin-top: 0.125rem;
+    }
+    .part-offers-quality-card.expanded .part-offers-quality-count {
+        color: #3b82f6;
+    }
+
+    /* Offers list */
+    .part-offers-list {
+        margin-top: 0.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #ffffff;
+    }
+    .part-offer-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.625rem 0.75rem;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.15s;
+    }
+    .part-offer-item:last-child {
+        border-bottom: none;
+    }
+    .part-offer-item:hover {
+        background: #f8fafc;
+    }
+    .part-offer-item.selected-offer {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+    }
+    .part-offer-info {
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+        flex-wrap: wrap;
+    }
+    .part-offer-rank {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        color: #64748b;
+        font-size: 0.688rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .part-offer-item.selected-offer .part-offer-rank {
+        background: #22c55e;
+        color: white;
+    }
+    .part-offer-price {
+        font-size: 0.938rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    .part-offer-quality-tag {
+        font-size: 0.625rem;
+        padding: 0.125rem 0.5rem;
+        border-radius: 4px;
+        background: #f1f5f9;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .part-offer-stock {
+        font-size: 0.688rem;
+        font-weight: 600;
+    }
+    .part-offer-stock.available { color: #16a34a; }
+    .part-offer-stock.low { color: #d97706; }
+    .part-offer-stock.last { color: #dc2626; }
+    .part-offer-select-btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: all 0.2s;
+    }
+    .part-offer-select-btn.default {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+    .part-offer-select-btn.default:hover {
+        background: #3b82f6;
+        color: white;
+    }
+    .part-offer-select-btn.active {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+        box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+    }
+
+    /* Selected confirmation bar */
+    .part-offers-selected-bar {
+        margin-top: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .part-offers-selected-text {
+        font-size: 0.75rem;
+        color: #166534;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    .part-offers-selected-text svg {
+        width: 14px;
+        height: 14px;
+        color: #22c55e;
+    }
+    .part-offers-cancel-btn {
+        font-size: 0.75rem;
+        color: #6b7280;
+        border: none;
+        background: none;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+    .part-offers-cancel-btn:hover {
+        color: #ef4444;
+    }
+    .part-offers-empty {
+        text-align: center;
+        padding: 0.75rem;
+        font-size: 0.813rem;
+        color: #94a3b8;
+    }
+
+    /* Glass theme overrides for part offers */
+    .glass-theme .part-offers-loading {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+    .glass-theme .part-offers-loading span { color: #93c5fd; }
+    .glass-theme .part-offers-section {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(34, 197, 94, 0.3);
+    }
+    .glass-theme .part-offers-header {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+        border-bottom-color: rgba(34, 197, 94, 0.2);
+    }
+    .glass-theme .part-offers-header-title { color: #4ade80; }
+    .glass-theme .part-offers-header-meta { color: #9ca3af; }
+    .glass-theme .part-offers-cat-label { color: #9ca3af; }
+    .glass-theme .part-offers-quality-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    .glass-theme .part-offers-quality-card:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: rgba(59, 130, 246, 0.5);
+    }
+    .glass-theme .part-offers-quality-card.expanded {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.5);
+    }
+    .glass-theme .part-offers-quality-label { color: #9ca3af; }
+    .glass-theme .part-offers-quality-card.expanded .part-offers-quality-label { color: #93c5fd; }
+    .glass-theme .part-offers-quality-price { color: #ffffff; }
+    .glass-theme .part-offers-quality-card.expanded .part-offers-quality-price { color: #ffffff; }
+    .glass-theme .part-offers-quality-count { color: #6b7280; }
+    .glass-theme .part-offers-quality-card.expanded .part-offers-quality-count { color: #93c5fd; }
+    .glass-theme .part-offers-list {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    .glass-theme .part-offer-item {
+        border-bottom-color: rgba(255, 255, 255, 0.05);
+    }
+    .glass-theme .part-offer-item:hover { background: rgba(255, 255, 255, 0.05); }
+    .glass-theme .part-offer-item.selected-offer { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3); }
+    .glass-theme .part-offer-rank { background: rgba(255, 255, 255, 0.1); color: #d1d5db; }
+    .glass-theme .part-offer-item.selected-offer .part-offer-rank { background: #22c55e; color: white; }
+    .glass-theme .part-offer-price { color: #ffffff; }
+    .glass-theme .part-offer-quality-tag { background: rgba(255, 255, 255, 0.1); color: #d1d5db; }
+    .glass-theme .part-offer-select-btn.default { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+    .glass-theme .part-offer-select-btn.default:hover { background: #3b82f6; color: white; }
+    .glass-theme .part-offers-selected-bar {
+        background: rgba(34, 197, 94, 0.1);
+        border-color: rgba(34, 197, 94, 0.3);
+    }
+    .glass-theme .part-offers-selected-text { color: #4ade80; }
+    .glass-theme .part-offers-empty { color: #6b7280; }
+
+    /* ========================================
        PREMIUM POWER TOGGLE - "Ne pali" button
        ======================================== */
     .power-toggle {
@@ -1632,95 +1940,91 @@
                 </div>
 
                 <!-- Section: Dostupni delovi kod dobavljaca -->
-                <div x-show="partOffers.loading" x-cloak style="margin-top: 1.5rem; padding: 12px; background: rgba(59,130,246,0.1); border-radius: 8px; border: 1px solid rgba(59,130,246,0.3);">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <svg class="animate-spin" style="width:18px;height:18px;color:#3b82f6;" fill="none" viewBox="0 0 24 24">
-                            <circle style="opacity:0.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path style="opacity:0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span style="font-size:13px;color:#93c5fd;">Pretrazujemo dostupne delove...</span>
-                    </div>
+                <div x-show="partOffers.loading" x-cloak class="part-offers-loading">
+                    <svg class="animate-spin" style="width:18px;height:18px;color:#3b82f6;" fill="none" viewBox="0 0 24 24">
+                        <circle style="opacity:0.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path style="opacity:0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Pretrazujemo dostupne delove...</span>
                 </div>
 
-                <div x-show="partOffers.loaded && partOffers.summary.length > 0" x-cloak
-                     style="margin-top: 1.5rem; padding: 12px; background: rgba(34,197,94,0.08); border-radius: 8px; border: 1px solid rgba(34,197,94,0.3);">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                        <span style="font-size:13px;font-weight:600;color:#4ade80;display:flex;align-items:center;gap:6px;">
-                            <svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div x-show="partOffers.loaded && partOffers.summary.length > 0" x-cloak class="part-offers-section">
+                    <div class="part-offers-header">
+                        <span class="part-offers-header-title">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            Dostupni delovi
+                            Dostupni delovi kod dobavljaca
                         </span>
-                        <span style="font-size:11px;color:#9ca3af;" x-text="partOffers.brand + ' ' + partOffers.model"></span>
+                        <span class="part-offers-header-meta" x-text="partOffers.brand + ' ' + partOffers.model"></span>
                     </div>
 
-                    <template x-for="cat in partOffers.summary" :key="cat.category">
-                        <div style="margin-bottom:8px;">
-                            <div style="font-size:12px;font-weight:500;color:#d1d5db;margin-bottom:4px;" x-text="getCatLabel(cat.category)"></div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-                                <template x-for="[key, group] in Object.entries(cat.quality_groups)" :key="key">
-                                    <div style="padding:8px;border-radius:6px;cursor:pointer;transition:all 0.15s;font-size:12px;"
-                                         :style="partOffers.expandedKey === cat.category + '_' + key
-                                             ? 'background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.5);'
-                                             : 'background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);'"
-                                         @click="loadPartOffers(cat.category, key)">
-                                        <div style="font-weight:600;color:#e5e7eb;text-transform:uppercase;font-size:10px;letter-spacing:0.5px;" x-text="group.label"></div>
-                                        <div style="font-size:15px;font-weight:700;color:#fff;margin-top:2px;"
-                                             x-text="group.avg_eur ? ('~' + group.avg_eur.toFixed(0) + ' EUR') : (group.avg_rsd ? ('~' + Math.round(group.avg_rsd) + ' RSD') : 'N/A')">
+                    <div class="part-offers-body">
+                        <template x-for="cat in partOffers.summary" :key="cat.category">
+                            <div style="margin-bottom:0.5rem;">
+                                <div class="part-offers-cat-label" x-text="getCatLabel(cat.category)"></div>
+                                <div class="part-offers-quality-grid">
+                                    <template x-for="[key, group] in Object.entries(cat.quality_groups)" :key="key">
+                                        <div class="part-offers-quality-card"
+                                             :class="{'expanded': partOffers.expandedKey === cat.category + '_' + key}"
+                                             @click="loadPartOffers(cat.category, key)">
+                                            <div class="part-offers-quality-label" x-text="group.label"></div>
+                                            <div class="part-offers-quality-price"
+                                                 x-text="group.avg_eur ? ('~' + group.avg_eur.toFixed(0) + ' EUR') : (group.avg_rsd ? ('~' + Math.round(group.avg_rsd) + ' RSD') : 'N/A')">
+                                            </div>
+                                            <div class="part-offers-quality-count"
+                                                 x-text="group.count + (group.count === 1 ? ' ponuda' : ' ponude')"></div>
                                         </div>
-                                        <div style="font-size:10px;color:#9ca3af;margin-top:1px;"
-                                             x-text="group.count + (group.count === 1 ? ' ponuda' : ' ponude')"></div>
-                                    </div>
-                                </template>
-                            </div>
+                                    </template>
+                                </div>
 
-                            <!-- Ponude za izabranu grupu -->
-                            <div x-show="partOffers.expandedKey && partOffers.expandedKey.startsWith(cat.category + '_')" x-cloak style="margin-top:6px;">
-                                <div x-show="partOffers.offersLoading" style="text-align:center;padding:8px;">
-                                    <svg class="animate-spin" style="width:16px;height:16px;color:#3b82f6;margin:0 auto;" fill="none" viewBox="0 0 24 24">
-                                        <circle style="opacity:0.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path style="opacity:0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                </div>
-                                <template x-for="(offer, idx) in partOffers.offers" :key="offer.listing_id">
-                                    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:6px;margin-bottom:3px;transition:all 0.15s;"
-                                         :style="selectedListing === offer.listing_id
-                                             ? 'background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.5);'
-                                             : 'background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);'">
-                                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                                            <span style="font-size:11px;color:#6b7280;" x-text="'#' + (idx+1)"></span>
-                                            <span style="font-size:14px;font-weight:600;color:#fff;"
-                                                  x-text="offer.price_eur ? (offer.price_eur.toFixed(2) + ' EUR') : (offer.price_rsd ? (Math.round(offer.price_rsd) + ' RSD') : 'N/A')"></span>
-                                            <span style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.1);color:#d1d5db;"
-                                                  x-text="getGrLabel(offer.quality_grade)"></span>
-                                            <span style="font-size:10px;"
-                                                  :style="offer.stock_hint === 'available' ? 'color:#4ade80' : (offer.stock_hint === 'low' ? 'color:#fbbf24' : 'color:#f87171')"
-                                                  x-text="offer.stock_hint === 'available' ? 'Na stanju' : (offer.stock_hint === 'low' ? 'Malo' : 'Poslednji')"></span>
-                                        </div>
-                                        <button type="button" @click="selectPartOffer(offer)"
-                                                style="font-size:11px;padding:3px 10px;border-radius:5px;border:none;cursor:pointer;font-weight:500;white-space:nowrap;"
-                                                :style="selectedListing === offer.listing_id
-                                                    ? 'background:#16a34a;color:#fff;'
-                                                    : 'background:rgba(59,130,246,0.2);color:#93c5fd;'"
-                                                x-text="selectedListing === offer.listing_id ? 'Izabrano ✓' : 'Izaberi'"></button>
+                                <!-- Ponude za izabranu grupu -->
+                                <div x-show="partOffers.expandedKey && partOffers.expandedKey.startsWith(cat.category + '_')" x-cloak>
+                                    <div x-show="partOffers.offersLoading" style="text-align:center;padding:0.75rem;">
+                                        <svg class="animate-spin" style="width:18px;height:18px;color:#3b82f6;margin:0 auto;" fill="none" viewBox="0 0 24 24">
+                                            <circle style="opacity:0.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path style="opacity:0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
                                     </div>
-                                </template>
-                                <div x-show="!partOffers.offersLoading && partOffers.offers.length === 0"
-                                     style="text-align:center;padding:6px;font-size:12px;color:#6b7280;">
-                                    Nema ponuda
+                                    <div x-show="!partOffers.offersLoading && partOffers.offers.length > 0" class="part-offers-list">
+                                        <template x-for="(offer, idx) in partOffers.offers" :key="offer.listing_id">
+                                            <div class="part-offer-item"
+                                                 :class="{'selected-offer': selectedListing === offer.listing_id}">
+                                                <div class="part-offer-info">
+                                                    <span class="part-offer-rank" x-text="idx + 1"></span>
+                                                    <span class="part-offer-price"
+                                                          x-text="offer.price_eur ? (offer.price_eur.toFixed(2) + ' EUR') : (offer.price_rsd ? (Math.round(offer.price_rsd) + ' RSD') : 'N/A')"></span>
+                                                    <span class="part-offer-quality-tag" x-text="getGrLabel(offer.quality_grade)"></span>
+                                                    <span class="part-offer-stock"
+                                                          :class="offer.stock_hint === 'available' ? 'available' : (offer.stock_hint === 'low' ? 'low' : 'last')"
+                                                          x-text="offer.stock_hint === 'available' ? 'Na stanju' : (offer.stock_hint === 'low' ? 'Malo' : 'Poslednji')"></span>
+                                                </div>
+                                                <button type="button" @click="selectPartOffer(offer)"
+                                                        class="part-offer-select-btn"
+                                                        :class="selectedListing === offer.listing_id ? 'active' : 'default'"
+                                                        x-text="selectedListing === offer.listing_id ? 'Izabrano ✓' : 'Izaberi'"></button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div x-show="!partOffers.offersLoading && partOffers.offers.length === 0" class="part-offers-empty">
+                                        Nema ponuda
+                                    </div>
                                 </div>
                             </div>
+                        </template>
+
+                        <!-- Izabrani deo -->
+                        <div x-show="selectedListing" x-cloak class="part-offers-selected-bar">
+                            <span class="part-offers-selected-text">
+                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Deo ce biti narucen nakon kreiranja naloga
+                            </span>
+                            <button type="button" @click="selectedListing = null; selectedOffer = null" class="part-offers-cancel-btn">
+                                Ponisti
+                            </button>
                         </div>
-                    </template>
-
-                    <!-- Izabrani deo -->
-                    <div x-show="selectedListing" x-cloak
-                         style="margin-top:6px;padding:6px 10px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:6px;display:flex;align-items:center;justify-content:space-between;">
-                        <span style="font-size:11px;color:#4ade80;">Deo ce biti narucen nakon kreiranja naloga</span>
-                        <button type="button" @click="selectedListing = null; selectedOffer = null"
-                                style="font-size:11px;color:#6b7280;text-decoration:underline;border:none;background:none;cursor:pointer;">
-                            Ponisti
-                        </button>
                     </div>
                 </div>
 
