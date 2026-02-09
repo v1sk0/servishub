@@ -101,6 +101,123 @@ def check_stock_conflicts(listing_id):
 
 # ============== Routes ==============
 
+@bp.route('/search', methods=['GET'])
+@jwt_required
+def search_parts():
+    """
+    Pretraga dostupnih delova po brand+model (bez ticket_id).
+    Koristi se na formi za kreiranje naloga.
+    """
+    brand = request.args.get('brand')
+    model = request.args.get('model')
+
+    if not brand:
+        return {'error': 'Brand je obavezan'}, 400
+
+    print(f'[PartOffers] Search: brand={brand!r}, model={model!r}', flush=True)
+
+    all_listings = find_matching_listings(brand, model)
+
+    print(f'[PartOffers] Search found {len(all_listings)} listings', flush=True)
+
+    if not all_listings:
+        return {
+            'success': True,
+            'categories': [],
+            'message': 'Nema dostupnih delova za ovaj uredjaj',
+        }
+
+    # Grupisanje po kategorijama
+    categories = {}
+    for listing in all_listings:
+        cat = listing.part_category or 'other'
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(listing)
+
+    result = []
+    for cat, listings in categories.items():
+        summary = build_summary(listings)
+        if summary:
+            cat_data = {
+                'category': cat,
+                'quality_groups': {},
+            }
+            for group_key, group_data in summary.items():
+                cat_data['quality_groups'][group_key] = {
+                    'label': group_data['label'],
+                    'avg_eur': float(group_data['avg_eur']) if group_data['avg_eur'] else None,
+                    'avg_rsd': float(group_data['avg_rsd']) if group_data['avg_rsd'] else None,
+                    'count': group_data['count'],
+                    'supplier_count': group_data['supplier_count'],
+                }
+            result.append(cat_data)
+
+    return {
+        'success': True,
+        'brand': normalize_brand(brand) or brand,
+        'model': model,
+        'categories': result,
+    }
+
+
+@bp.route('/search/offers', methods=['GET'])
+@jwt_required
+def search_offers():
+    """
+    Top 3 anonimne ponude po brand+model+category+quality (bez ticket_id).
+    """
+    brand = request.args.get('brand')
+    model = request.args.get('model')
+    category = request.args.get('category')
+    quality = request.args.get('quality')
+
+    if not brand or not category or not quality:
+        return {'error': 'brand, category i quality su obavezni'}, 400
+
+    if quality not in QUALITY_GROUPS:
+        return {'error': f'Nevalidan quality: {quality}'}, 400
+
+    listings = find_matching_listings(brand, model, part_category=category)
+
+    # Filter po quality grupi
+    quality_grades = QUALITY_GROUPS[quality]['grades']
+    filtered = [
+        l for l in listings
+        if l.quality_grade and l.quality_grade.lower() in quality_grades
+    ]
+
+    # Sort po ceni (EUR prioritet, pa RSD)
+    def sort_key(l):
+        if l.price_eur:
+            return float(l.price_eur)
+        if l.price_rsd:
+            return float(l.price_rsd) / 117.5
+        return float('inf')
+
+    filtered.sort(key=sort_key)
+    top = filtered[:3]
+
+    offers = []
+    for listing in top:
+        offers.append({
+            'listing_id': listing.id,
+            'price_eur': float(listing.price_eur) if listing.price_eur else None,
+            'price_rsd': float(listing.price_rsd) if listing.price_rsd else None,
+            'quality_grade': listing.quality_grade,
+            'stock_hint': get_stock_hint(listing.stock_quantity),
+            'part_name': listing.name,
+        })
+
+    return {
+        'success': True,
+        'offers': offers,
+        'category': category,
+        'quality': quality,
+        'quality_label': QUALITY_GROUPS[quality]['label'],
+    }
+
+
 @bp.route('/ticket/<int:ticket_id>/summary', methods=['GET'])
 @jwt_required
 def get_ticket_summary(ticket_id):
@@ -264,7 +381,7 @@ def create_order(self=None):
 
     # Validate supplier is active
     supplier = Supplier.query.get(listing.supplier_id)
-    if not supplier or supplier.status != SupplierStatus.ACTIVE or not supplier.is_verified:
+    if not supplier or supplier.status != SupplierStatus.ACTIVE:
         return {'error': 'Dobavljac nije aktivan'}, 400
 
     # Check stock
