@@ -1581,7 +1581,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div class="form-group">
                         <label class="form-label">Marka *</label>
-                        <input type="text" class="form-input" :class="{'invalid': validationErrors.brand}" x-model="newTicket.brand" list="brandList" placeholder="Samsung, Apple..." autocomplete="off" required>
+                        <input type="text" class="form-input" :class="{'invalid': validationErrors.brand}" x-model="newTicket.brand" list="brandList" placeholder="Samsung, Apple..." autocomplete="off" @input="debouncedPartSearch()" required>
                         <datalist id="brandList">
                             <option value="Apple">
                             <option value="Samsung">
@@ -1604,7 +1604,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Model *</label>
-                        <input type="text" class="form-input" :class="{'invalid': validationErrors.model}" x-model="newTicket.model" placeholder="Galaxy S21, iPhone 13..." required>
+                        <input type="text" class="form-input" :class="{'invalid': validationErrors.model}" x-model="newTicket.model" placeholder="Galaxy S21, iPhone 13..." @input="debouncedPartSearch()" required>
                     </div>
                 </div>
 
@@ -1628,7 +1628,100 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Opis kvara <span x-show="selectedProblems.length === 0">*</span></label>
-                    <textarea class="form-input" :class="{'invalid': validationErrors.problem_description}" rows="2" x-model="newTicket.problem_description" @input="syncSelectedProblems()" placeholder="Opišite problem..."></textarea>
+                    <textarea class="form-input" :class="{'invalid': validationErrors.problem_description}" rows="2" x-model="newTicket.problem_description" @input="syncSelectedProblems(); debouncedPartSearch()" placeholder="Opišite problem..."></textarea>
+                </div>
+
+                <!-- Section: Dostupni delovi kod dobavljaca -->
+                <div x-show="partOffers.loading" x-cloak style="margin-top: 1.5rem; padding: 12px; background: rgba(59,130,246,0.1); border-radius: 8px; border: 1px solid rgba(59,130,246,0.3);">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <svg class="animate-spin" style="width:18px;height:18px;color:#3b82f6;" fill="none" viewBox="0 0 24 24">
+                            <circle style="opacity:0.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path style="opacity:0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span style="font-size:13px;color:#93c5fd;">Pretrazujemo dostupne delove...</span>
+                    </div>
+                </div>
+
+                <div x-show="partOffers.loaded && partOffers.summary.length > 0" x-cloak
+                     style="margin-top: 1.5rem; padding: 12px; background: rgba(34,197,94,0.08); border-radius: 8px; border: 1px solid rgba(34,197,94,0.3);">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <span style="font-size:13px;font-weight:600;color:#4ade80;display:flex;align-items:center;gap:6px;">
+                            <svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Dostupni delovi
+                        </span>
+                        <span style="font-size:11px;color:#9ca3af;" x-text="partOffers.brand + ' ' + partOffers.model"></span>
+                    </div>
+
+                    <template x-for="cat in partOffers.summary" :key="cat.category">
+                        <div style="margin-bottom:8px;">
+                            <div style="font-size:12px;font-weight:500;color:#d1d5db;margin-bottom:4px;" x-text="getCatLabel(cat.category)"></div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                                <template x-for="[key, group] in Object.entries(cat.quality_groups)" :key="key">
+                                    <div style="padding:8px;border-radius:6px;cursor:pointer;transition:all 0.15s;font-size:12px;"
+                                         :style="partOffers.expandedKey === cat.category + '_' + key
+                                             ? 'background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.5);'
+                                             : 'background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);'"
+                                         @click="loadPartOffers(cat.category, key)">
+                                        <div style="font-weight:600;color:#e5e7eb;text-transform:uppercase;font-size:10px;letter-spacing:0.5px;" x-text="group.label"></div>
+                                        <div style="font-size:15px;font-weight:700;color:#fff;margin-top:2px;"
+                                             x-text="group.avg_eur ? ('~' + group.avg_eur.toFixed(0) + ' EUR') : (group.avg_rsd ? ('~' + Math.round(group.avg_rsd) + ' RSD') : 'N/A')">
+                                        </div>
+                                        <div style="font-size:10px;color:#9ca3af;margin-top:1px;"
+                                             x-text="group.count + (group.count === 1 ? ' ponuda' : ' ponude')"></div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Ponude za izabranu grupu -->
+                            <div x-show="partOffers.expandedKey && partOffers.expandedKey.startsWith(cat.category + '_')" x-cloak style="margin-top:6px;">
+                                <div x-show="partOffers.offersLoading" style="text-align:center;padding:8px;">
+                                    <svg class="animate-spin" style="width:16px;height:16px;color:#3b82f6;margin:0 auto;" fill="none" viewBox="0 0 24 24">
+                                        <circle style="opacity:0.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path style="opacity:0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </div>
+                                <template x-for="(offer, idx) in partOffers.offers" :key="offer.listing_id">
+                                    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:6px;margin-bottom:3px;transition:all 0.15s;"
+                                         :style="selectedListing === offer.listing_id
+                                             ? 'background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.5);'
+                                             : 'background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);'">
+                                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                            <span style="font-size:11px;color:#6b7280;" x-text="'#' + (idx+1)"></span>
+                                            <span style="font-size:14px;font-weight:600;color:#fff;"
+                                                  x-text="offer.price_eur ? (offer.price_eur.toFixed(2) + ' EUR') : (offer.price_rsd ? (Math.round(offer.price_rsd) + ' RSD') : 'N/A')"></span>
+                                            <span style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.1);color:#d1d5db;"
+                                                  x-text="getGrLabel(offer.quality_grade)"></span>
+                                            <span style="font-size:10px;"
+                                                  :style="offer.stock_hint === 'available' ? 'color:#4ade80' : (offer.stock_hint === 'low' ? 'color:#fbbf24' : 'color:#f87171')"
+                                                  x-text="offer.stock_hint === 'available' ? 'Na stanju' : (offer.stock_hint === 'low' ? 'Malo' : 'Poslednji')"></span>
+                                        </div>
+                                        <button type="button" @click="selectPartOffer(offer)"
+                                                style="font-size:11px;padding:3px 10px;border-radius:5px;border:none;cursor:pointer;font-weight:500;white-space:nowrap;"
+                                                :style="selectedListing === offer.listing_id
+                                                    ? 'background:#16a34a;color:#fff;'
+                                                    : 'background:rgba(59,130,246,0.2);color:#93c5fd;'"
+                                                x-text="selectedListing === offer.listing_id ? 'Izabrano ✓' : 'Izaberi'"></button>
+                                    </div>
+                                </template>
+                                <div x-show="!partOffers.offersLoading && partOffers.offers.length === 0"
+                                     style="text-align:center;padding:6px;font-size:12px;color:#6b7280;">
+                                    Nema ponuda
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Izabrani deo -->
+                    <div x-show="selectedListing" x-cloak
+                         style="margin-top:6px;padding:6px 10px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:6px;display:flex;align-items:center;justify-content:space-between;">
+                        <span style="font-size:11px;color:#4ade80;">Deo ce biti narucen nakon kreiranja naloga</span>
+                        <button type="button" @click="selectedListing = null; selectedOffer = null"
+                                style="font-size:11px;color:#6b7280;text-decoration:underline;border:none;background:none;cursor:pointer;">
+                            Ponisti
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Section: Stanje uredaja -->
@@ -3555,6 +3648,16 @@ function ticketsPage() {
         selectedProblems: [],
         currentProblems: PROBLEM_CATEGORIES['phone'] || [],
 
+        // Part offers state
+        partOffers: {
+            loading: false, loaded: false, summary: [], brand: '', model: '',
+            expandedKey: null, offers: [], offersLoading: false,
+        },
+        selectedListing: null,
+        selectedOffer: null,
+        _partSearchTimer: null,
+        _lastPartSearchKey: '',
+
         // Notification modal state
         showNotifyModal: false,
         notifyTicket: null,
@@ -4252,6 +4355,22 @@ function ticketsPage() {
                     body: JSON.stringify(this.newTicket)
                 });
                 if (r.ok) {
+                    const ticketData = await r.json();
+                    // Auto-narucivanje dela ako je izabran
+                    if (this.selectedListing && ticketData.id) {
+                        try {
+                            await api('/api/v1/part-offers/order', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    listing_id: this.selectedListing,
+                                    quantity: 1,
+                                    service_ticket_id: ticketData.id
+                                })
+                            });
+                        } catch (e) {
+                            console.error('Auto-order failed:', e);
+                        }
+                    }
                     this.showAddModal = false;
                     this.resetNewTicket();
                     await this.loadAllTickets();
@@ -4295,7 +4414,144 @@ function ticketsPage() {
             // Reset phone
             this.phoneNumber = '';
             this.selectedCountry = { code: '+381', dial: '381', flag: '🇷🇸', name: 'Srbija' };
+            // Reset part offers
+            this.partOffers = { loading: false, loaded: false, summary: [], brand: '', model: '', expandedKey: null, offers: [], offersLoading: false };
+            this.selectedListing = null;
+            this.selectedOffer = null;
+            this._lastPartSearchKey = '';
         },
+
+        // ========== PART OFFERS METHODS ==========
+        _categoryKeywords: [
+            ['display', ['ekran', 'display', 'lcd', 'oled', 'staklo', 'touchscreen', 'touch screen', 'crn ekran', 'razbijen']],
+            ['battery', ['baterija', 'battery', 'ne puni', 'brzo trosi', 'gasi se']],
+            ['charging_port', ['konektor', 'punjac', 'charging', 'port za punjenje', 'usb-c', 'usb c', 'ne puni se']],
+            ['camera', ['kamera', 'camera', 'foto', 'slika', 'ne slika']],
+            ['back_cover', ['maska', 'poklopac', 'zadnja maska', 'back cover', 'zadnji poklopac']],
+            ['speaker', ['zvucnik', 'speaker', 'mikrofon', 'zvuk', 'ne cuje se']],
+        ],
+        _catLabels: {
+            'display': 'Ekran / Display', 'battery': 'Baterija', 'charging_port': 'Port za punjenje',
+            'charging': 'Port za punjenje', 'camera': 'Kamera', 'back_cover': 'Zadnja maska',
+            'frame': 'Okvir', 'speaker': 'Zvucnik', 'motherboard': 'Maticna ploca', 'other': 'Ostalo',
+        },
+        _gradeLabels: {
+            'service_pack': 'Service Pack', 'original': 'Original', 'oled_hard': 'OLED Hard',
+            'oled_soft': 'OLED Soft', 'oem': 'OEM', 'tft_incell': 'TFT InCell', 'aaa': 'AAA', 'copy': 'Kopija',
+        },
+
+        detectPartCategory(desc) {
+            if (!desc) return null;
+            const lower = desc.toLowerCase();
+            for (const [cat, keywords] of this._categoryKeywords) {
+                for (const kw of keywords) {
+                    if (lower.includes(kw)) return cat;
+                }
+            }
+            return null;
+        },
+
+        getCatLabel(cat) { return this._catLabels[cat] || (cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : ''); },
+        getGrLabel(grade) { return (grade && this._gradeLabels[grade.toLowerCase()]) || grade || ''; },
+
+        debouncedPartSearch() {
+            clearTimeout(this._partSearchTimer);
+            const brand = this.newTicket.brand?.trim();
+            const model = this.newTicket.model?.trim();
+            const category = this.detectPartCategory(this.newTicket.problem_description);
+
+            const hasEnoughInfo = brand && brand.length >= 2 && (
+                (model && model.length >= 1) || category
+            );
+
+            if (hasEnoughInfo) {
+                const searchKey = brand + '|' + (model || '') + '|' + (category || '');
+                if (searchKey === this._lastPartSearchKey) return;
+                this._partSearchTimer = setTimeout(() => this.checkPartOffers(), 800);
+            } else {
+                this.partOffers.loaded = false;
+                this.partOffers.summary = [];
+                this.partOffers.expandedKey = null;
+                this.partOffers.offers = [];
+                this.selectedListing = null;
+                this.selectedOffer = null;
+            }
+        },
+
+        async checkPartOffers() {
+            const brand = this.newTicket.brand?.trim();
+            const model = this.newTicket.model?.trim();
+            const category = this.detectPartCategory(this.newTicket.problem_description);
+            if (!brand) return;
+
+            this._lastPartSearchKey = brand + '|' + (model || '') + '|' + (category || '');
+            this.partOffers.loading = true;
+            this.partOffers.loaded = false;
+            this.partOffers.expandedKey = null;
+            this.partOffers.offers = [];
+            this.selectedListing = null;
+            this.selectedOffer = null;
+
+            try {
+                let url = '/api/v1/part-offers/search?brand=' + encodeURIComponent(brand);
+                if (model) url += '&model=' + encodeURIComponent(model);
+                if (category) url += '&category=' + encodeURIComponent(category);
+                console.log('[PartOffers] Searching:', url);
+                const resp = await api(url);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    console.log('[PartOffers] Results:', data);
+                    this.partOffers.summary = data.categories || [];
+                    this.partOffers.brand = data.brand || brand;
+                    this.partOffers.model = data.model || model || '';
+                    this.partOffers.loaded = true;
+                }
+            } catch (e) {
+                console.error('Part offers search failed:', e);
+            } finally {
+                this.partOffers.loading = false;
+            }
+        },
+
+        async loadPartOffers(category, quality) {
+            const key = category + '_' + quality;
+            if (this.partOffers.expandedKey === key) {
+                this.partOffers.expandedKey = null;
+                this.partOffers.offers = [];
+                return;
+            }
+            this.partOffers.expandedKey = key;
+            this.partOffers.offersLoading = true;
+            this.partOffers.offers = [];
+            try {
+                const brand = this.newTicket.brand?.trim();
+                const model = this.newTicket.model?.trim();
+                let url = '/api/v1/part-offers/search/offers?brand=' + encodeURIComponent(brand) +
+                    '&category=' + encodeURIComponent(category) +
+                    '&quality=' + encodeURIComponent(quality);
+                if (model) url += '&model=' + encodeURIComponent(model);
+                const resp = await api(url);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    this.partOffers.offers = data.offers || [];
+                }
+            } catch (e) {
+                console.error('Part offers load failed:', e);
+            } finally {
+                this.partOffers.offersLoading = false;
+            }
+        },
+
+        selectPartOffer(offer) {
+            if (this.selectedListing === offer.listing_id) {
+                this.selectedListing = null;
+                this.selectedOffer = null;
+            } else {
+                this.selectedListing = offer.listing_id;
+                this.selectedOffer = offer;
+            }
+        },
+        // =========================================
 
         // ========== PHONE HELPERS ==========
         selectCountry(country) {
