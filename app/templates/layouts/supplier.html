@@ -539,6 +539,7 @@ function supplierApp() {
                 const data = await supplierApi('/auth/me');
                 this.user = data.user;
                 this.supplier = data.supplier;
+                if (data.supplier?.name) sessionStorage.setItem('supplier_name', data.supplier.name);
             } catch (e) {
                 console.error('Failed to load user:', e);
                 window.location.href = '/supplier/login';
@@ -554,6 +555,7 @@ function supplierApp() {
 
             sessionStorage.removeItem('supplier_access_token');
             sessionStorage.removeItem('supplier_refresh_token');
+            sessionStorage.removeItem('supplier_name');
             window.location.href = '/supplier/login';
         }
     }
