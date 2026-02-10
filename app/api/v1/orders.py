@@ -198,6 +198,7 @@ def get_order(order_id):
         'timestamps': {
             'created_at': order.created_at.isoformat(),
             'sent_at': order.sent_at.isoformat() if order.sent_at else None,
+            'offered_at': order.offered_at.isoformat() if order.offered_at else None,
             'confirmed_at': order.confirmed_at.isoformat() if order.confirmed_at else None,
             'shipped_at': order.shipped_at.isoformat() if order.shipped_at else None,
             'delivered_at': order.delivered_at.isoformat() if order.delivered_at else None,
@@ -206,7 +207,13 @@ def get_order(order_id):
             'cancelled_at': order.cancelled_at.isoformat() if order.cancelled_at else None
         },
         'rejection_reason': order.rejection_reason,
-        'cancellation_reason': order.cancellation_reason
+        'cancellation_reason': order.cancellation_reason,
+        'delivery_method': order.delivery_method,
+        'courier_service': order.courier_service,
+        'delivery_cost': float(order.delivery_cost) if order.delivery_cost else None,
+        'estimated_delivery_days': order.estimated_delivery_days,
+        'seller_notes': order.seller_notes,
+        'expires_at': order.expires_at.isoformat() if order.expires_at else None,
     }
 
 

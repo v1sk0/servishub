@@ -20,7 +20,7 @@
     </div>
 
     <!-- Stats -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <p class="text-sm text-gray-500 mb-1">Ukupno</p>
             <p class="text-2xl font-bold text-gray-900" x-text="stats.total || 0"></p>
@@ -32,6 +32,10 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <p class="text-sm text-gray-500 mb-1">Poslato</p>
             <p class="text-2xl font-bold text-blue-600" x-text="stats.sent || 0"></p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <p class="text-sm text-gray-500 mb-1">Ponudjeno</p>
+            <p class="text-2xl font-bold text-amber-600" x-text="stats.offered || 0"></p>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <p class="text-sm text-gray-500 mb-1">Potvrdjeno</p>
@@ -69,6 +73,7 @@
                     <option value="">Svi statusi</option>
                     <option value="DRAFT">Nacrt</option>
                     <option value="SENT">Poslato</option>
+                    <option value="OFFERED">Ponudjeno</option>
                     <option value="CONFIRMED">Potvrdjeno</option>
                     <option value="REJECTED">Odbijeno</option>
                     <option value="SHIPPED">Na putu</option>
@@ -176,6 +181,20 @@
                                 </button>
                             </template>
 
+                            <!-- Offered actions (supplier confirmed, waiting for tenant) -->
+                            <template x-if="order.status === 'OFFERED'">
+                                <div class="flex gap-2">
+                                    <button @click="confirmOfferedOrder(order)"
+                                            class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm">
+                                        Potvrdi
+                                    </button>
+                                    <button @click="cancelOrder(order)"
+                                            class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition text-sm">
+                                        Otkazi
+                                    </button>
+                                </div>
+                            </template>
+
                             <!-- Shipped actions -->
                             <template x-if="order.status === 'SHIPPED'">
                                 <button @click="confirmDelivery(order)"
@@ -277,6 +296,37 @@
                         </div>
                     </div>
 
+                    <!-- Delivery Info (for OFFERED+ orders) -->
+                    <div x-show="selectedOrder?.delivery_method" class="mb-6">
+                        <h3 class="font-medium text-gray-900 mb-2">Isporuka</h3>
+                        <div class="bg-blue-50 rounded-lg p-4 space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Nacin:</span>
+                                <span class="font-medium text-gray-900"
+                                      x-text="selectedOrder?.delivery_method === 'courier' ? ('Kurirska sluzba' + (selectedOrder?.courier_service ? ' (' + selectedOrder.courier_service + ')' : '')) : (selectedOrder?.delivery_method === 'own_delivery' ? 'Licna dostava' : 'Licno preuzimanje')"></span>
+                            </div>
+                            <div class="flex justify-between text-sm" x-show="selectedOrder?.estimated_delivery_days">
+                                <span class="text-gray-600">Rok isporuke:</span>
+                                <span class="font-medium text-gray-900" x-text="'~' + selectedOrder?.estimated_delivery_days + ' dana'"></span>
+                            </div>
+                            <div class="flex justify-between text-sm" x-show="selectedOrder?.delivery_cost">
+                                <span class="text-gray-600">Cena dostave:</span>
+                                <span class="font-medium text-gray-900" x-text="formatPrice(selectedOrder?.delivery_cost) + ' RSD'"></span>
+                            </div>
+                            <div class="text-sm text-gray-600" x-show="selectedOrder?.seller_notes" x-text="selectedOrder?.seller_notes"></div>
+                        </div>
+                    </div>
+
+                    <!-- Expiry Warning (for OFFERED orders) -->
+                    <div x-show="selectedOrder?.status === 'OFFERED' && selectedOrder?.expires_at" class="mb-6 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="text-sm text-amber-800">Dobavljac je potvrdio dostupnost. Potvrdite narudzbinu pre isteka roka.</span>
+                        </div>
+                    </div>
+
                     <!-- Totals -->
                     <div class="border-t border-gray-200 pt-4 mb-6">
                         <div class="flex justify-between text-sm mb-2">
@@ -320,6 +370,13 @@
                                     <div class="w-2 h-2 rounded-full bg-blue-500"></div>
                                     <span class="text-gray-500">Poslato:</span>
                                     <span class="text-gray-900" x-text="formatDateTime(selectedOrder?.timestamps?.sent_at)"></span>
+                                </div>
+                            </template>
+                            <template x-if="selectedOrder?.timestamps?.offered_at">
+                                <div class="flex items-center gap-3 text-sm">
+                                    <div class="w-2 h-2 rounded-full bg-amber-500"></div>
+                                    <span class="text-gray-500">Ponudjeno:</span>
+                                    <span class="text-gray-900" x-text="formatDateTime(selectedOrder?.timestamps?.offered_at)"></span>
                                 </div>
                             </template>
                             <template x-if="selectedOrder?.timestamps?.confirmed_at">
@@ -418,6 +475,11 @@
                         <button x-show="selectedOrder?.status === 'DRAFT'" @click="sendOrder(selectedOrder); detailsModal = false"
                                 class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                             Posalji narudzbinu
+                        </button>
+
+                        <button x-show="selectedOrder?.status === 'OFFERED'" @click="confirmOfferedOrder(selectedOrder); detailsModal = false"
+                                class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                            Potvrdi narudzbinu
                         </button>
 
                         <button x-show="selectedOrder?.status === 'SHIPPED'" @click="confirmDelivery(selectedOrder); detailsModal = false"
@@ -543,6 +605,7 @@ function ordersPage() {
                         total: orders.length,
                         draft: orders.filter(o => o.status === 'DRAFT').length,
                         sent: orders.filter(o => o.status === 'SENT').length,
+                        offered: orders.filter(o => o.status === 'OFFERED').length,
                         confirmed: orders.filter(o => o.status === 'CONFIRMED').length,
                         delivered: orders.filter(o => o.status === 'DELIVERED').length,
                         completed: orders.filter(o => o.status === 'COMPLETED').length
@@ -607,6 +670,28 @@ function ordersPage() {
                 showToast('Greska pri otkazivanju', 'error');
             } finally {
                 this.submitting = false;
+            }
+        },
+
+        async confirmOfferedOrder(order) {
+            if (!confirm('Potvrdite narudzbinu? 1 kredit ce biti iskoriscen za otkrivanje podataka dobavljaca.')) return;
+
+            try {
+                const response = await api(`/part-offers/orders/${order.id}/confirm`, 'POST');
+                if (response.ok) {
+                    const data = await response.json();
+                    showToast(data.message || 'Narudzbina potvrđena', 'success');
+                    if (data.cutoff_warning) {
+                        setTimeout(() => showToast(data.cutoff_warning, 'warning'), 1000);
+                    }
+                } else {
+                    const err = await response.json();
+                    showToast(err.error || 'Greska pri potvrdi', 'error');
+                }
+                this.loadOrders();
+            } catch (e) {
+                console.error('Failed to confirm offered order:', e);
+                showToast('Greska pri potvrdi narudzbine', 'error');
             }
         },
 
@@ -675,6 +760,7 @@ function ordersPage() {
             const labels = {
                 'DRAFT': 'Nacrt',
                 'SENT': 'Poslato',
+                'OFFERED': 'Ponudjeno',
                 'CONFIRMED': 'Potvrdjeno',
                 'REJECTED': 'Odbijeno',
                 'SHIPPED': 'Na putu',
@@ -690,6 +776,7 @@ function ordersPage() {
             const classes = {
                 'DRAFT': 'bg-gray-100 text-gray-700',
                 'SENT': 'bg-blue-100 text-blue-700',
+                'OFFERED': 'bg-amber-100 text-amber-700',
                 'CONFIRMED': 'bg-green-100 text-green-700',
                 'REJECTED': 'bg-red-100 text-red-700',
                 'SHIPPED': 'bg-purple-100 text-purple-700',
