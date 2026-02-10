@@ -254,6 +254,9 @@
                                     <template x-if="order.status === 'SHIPPED'">
                                         <button @click="quickDeliver(order)" class="px-2.5 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Isporuceno</button>
                                     </template>
+                                    <template x-if="order.status === 'DELIVERED'">
+                                        <button @click="quickComplete(order)" class="px-2.5 py-1 bg-emerald-600 text-white rounded text-xs hover:bg-emerald-700">Oceni</button>
+                                    </template>
                                     <button @click="viewOrder(order)" class="px-2.5 py-1 text-purple-600 hover:text-purple-900 text-xs">Detalji</button>
                                 </div>
                             </td>
@@ -548,6 +551,14 @@
                             <button @click="deliverOrder()"
                                     class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
                                 Oznaci kao isporuceno
+                            </button>
+                        </template>
+
+                        <!-- For DELIVERED status -->
+                        <template x-if="selectedOrder?.status === 'DELIVERED'">
+                            <button @click="completeOrder()"
+                                    class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                                Oceni narudzbinu
                             </button>
                         </template>
 
@@ -1021,7 +1032,7 @@ function ordersPage() {
                 'OFFERED': 'Cekanje na potvrdu kupca.',
                 'CONFIRMED': 'Kupac je potvrdio. Posaljite posiljku.',
                 'SHIPPED': 'Posiljka je na putu. Ceka se prijem.',
-                'DELIVERED': 'Posiljka isporucena. Ceka se potvrda kupca.',
+                'DELIVERED': 'Posiljka isporucena. Ocenite narudzbinu.',
                 'COMPLETED': 'Narudzbina je uspesno zavrsena.',
                 'REJECTED': 'Narudzbina je odbijena.',
                 'CANCELLED': 'Narudzbina je otkazana.',
@@ -1034,6 +1045,18 @@ function ordersPage() {
                 await supplierApi(`/orders/${this.selectedOrder.id}/deliver`, 'POST', {});
                 this.closeDetailModal();
                 showToast('Narudzbina oznacena kao isporucena', 'success');
+                await Promise.all([this.loadOrders(), this.loadStats()]);
+            } catch (err) {
+                alert('Greska: ' + err.message);
+            }
+        },
+
+        async completeOrder() {
+            if (!confirm('Zavrsite narudzbinu i ocenite kupca?')) return;
+            try {
+                await supplierApi(`/orders/${this.selectedOrder.id}/complete`, 'POST', {});
+                this.closeDetailModal();
+                showToast('Narudzbina zavrsena', 'success');
                 await Promise.all([this.loadOrders(), this.loadStats()]);
             } catch (err) {
                 alert('Greska: ' + err.message);
@@ -1068,6 +1091,17 @@ function ordersPage() {
             try {
                 await supplierApi(`/orders/${order.id}/deliver`, 'POST', {});
                 showToast('Narudzbina oznacena kao isporucena', 'success');
+                await Promise.all([this.loadOrders(), this.loadStats()]);
+            } catch (err) {
+                alert('Greska: ' + err.message);
+            }
+        },
+
+        async quickComplete(order) {
+            if (!confirm('Zavrsite narudzbinu i ocenite kupca?')) return;
+            try {
+                await supplierApi(`/orders/${order.id}/complete`, 'POST', {});
+                showToast('Narudzbina zavrsena', 'success');
                 await Promise.all([this.loadOrders(), this.loadStats()]);
             } catch (err) {
                 alert('Greska: ' + err.message);
