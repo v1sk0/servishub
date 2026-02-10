@@ -118,6 +118,7 @@ def list_orders():
             'items_count': len(items),
             'item_summary': item_summary,
             'ticket_label': ticket_label,
+            'service_ticket_id': order.service_ticket_id,
             'total_amount': float(order.total_amount) if order.total_amount else None,
             'currency': order.currency or 'RSD',
             'created_at': order.created_at.isoformat(),

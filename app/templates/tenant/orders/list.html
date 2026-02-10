@@ -112,6 +112,7 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Narudzbina</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Servisni nalog</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Detalj</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cena</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -124,7 +125,12 @@
                         <tr class="hover:bg-gray-50 cursor-pointer" @click="viewOrder(order)">
                             <td class="px-4 py-3">
                                 <p class="text-sm font-medium text-gray-900" x-text="order.order_number"></p>
-                                <p x-show="order.ticket_label" class="text-xs text-gray-500" x-text="'za ' + order.ticket_label"></p>
+                            </td>
+                            <td class="px-4 py-3" @click.stop>
+                                <template x-if="order.ticket_label">
+                                    <a :href="'/tickets/' + order.service_ticket_id" class="text-sm text-blue-600 hover:text-blue-800 hover:underline" x-text="order.ticket_label"></a>
+                                </template>
+                                <span x-show="!order.ticket_label" class="text-sm text-gray-400">-</span>
                             </td>
                             <td class="px-4 py-3">
                                 <p class="text-sm text-gray-900" x-text="order.item_summary || '-'"></p>
