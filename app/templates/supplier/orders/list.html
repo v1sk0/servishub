@@ -339,6 +339,107 @@
         </div>
     </div>
 
+    <!-- Confirm Order Modal -->
+    <div x-show="showConfirmModal" x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         x-transition>
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/50" @click="showConfirmModal = false"></div>
+            <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Potvrda narudzbine</h3>
+                <p class="text-sm text-gray-600 mb-4">Potvrdite dostupnost artikla i nacin isporuke.</p>
+
+                <!-- Delivery Method -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nacin isporuke</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                               :class="confirmData.delivery_method === 'courier' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'">
+                            <input type="radio" x-model="confirmData.delivery_method" value="courier" class="text-purple-600">
+                            <div>
+                                <p class="font-medium text-gray-900">Kurirska sluzba</p>
+                                <p class="text-xs text-gray-500">Slanje brzom postom</p>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                               :class="confirmData.delivery_method === 'own_delivery' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'">
+                            <input type="radio" x-model="confirmData.delivery_method" value="own_delivery" class="text-purple-600">
+                            <div>
+                                <p class="font-medium text-gray-900">Licna dostava</p>
+                                <p class="text-xs text-gray-500">Sopstvena dostava</p>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                               :class="confirmData.delivery_method === 'pickup' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'">
+                            <input type="radio" x-model="confirmData.delivery_method" value="pickup" class="text-purple-600">
+                            <div>
+                                <p class="font-medium text-gray-900">Licno preuzimanje</p>
+                                <p class="text-xs text-gray-500">Kupac preuzima</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Courier service (if courier) -->
+                <div x-show="confirmData.delivery_method === 'courier'" class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kurirska sluzba</label>
+                    <select x-model="confirmData.courier_service"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        <option value="">Izaberite...</option>
+                        <option value="d_express">D Express</option>
+                        <option value="aks">AKS Express</option>
+                        <option value="bex">BEX Express</option>
+                        <option value="post_express">Post Express</option>
+                        <option value="city_express">City Express</option>
+                    </select>
+                </div>
+
+                <!-- Delivery cost & days -->
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cena dostave (RSD)</label>
+                        <input type="number" x-model="confirmData.delivery_cost" min="0" placeholder="0"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Rok (dana)</label>
+                        <input type="number" x-model="confirmData.estimated_delivery_days" min="0" max="30" placeholder="1-2"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Napomena (opciono)</label>
+                    <textarea x-model="confirmData.notes" rows="2"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                              placeholder="Npr. na stanju, saljem danas..."></textarea>
+                </div>
+
+                <!-- Credit warning -->
+                <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-sm text-amber-800">1 kredit ce biti iskoriscen za ovu potvrdu.</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <button @click="showConfirmModal = false"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        Odustani
+                    </button>
+                    <button @click="submitConfirm()"
+                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        Potvrdi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Reject Modal -->
     <div x-show="showRejectModal" x-cloak
          class="fixed inset-0 z-50 overflow-y-auto"
@@ -388,6 +489,14 @@ function ordersPage() {
         shippingInfo: {
             tracking_number: '',
             tracking_url: ''
+        },
+        showConfirmModal: false,
+        confirmData: {
+            delivery_method: 'courier',
+            courier_service: '',
+            delivery_cost: '',
+            estimated_delivery_days: '',
+            notes: ''
         },
         showRejectModal: false,
         rejectReason: '',
@@ -462,15 +571,37 @@ function ordersPage() {
             this.newMessage = '';
         },
 
-        async confirmOrder() {
-            if (!confirm('Da li ste sigurni da zelite da potvrdite ovu narudzbinu?')) return;
+        confirmOrder() {
+            this.confirmData = { delivery_method: 'courier', courier_service: '', delivery_cost: '', estimated_delivery_days: '', notes: '' };
+            this.showConfirmModal = true;
+        },
 
+        async submitConfirm() {
             try {
-                await supplierApi(`/orders/${this.selectedOrder.id}/confirm`, {
-                    method: 'POST',
-                    body: JSON.stringify({})
-                });
+                // Smart offer orders use confirm-availability
+                if (this.orderDetail?.service_ticket_id) {
+                    const payload = {
+                        delivery_method: this.confirmData.delivery_method,
+                        notes: this.confirmData.notes || null
+                    };
+                    if (this.confirmData.delivery_method === 'courier' && this.confirmData.courier_service) {
+                        payload.courier_service = this.confirmData.courier_service;
+                    }
+                    if (this.confirmData.delivery_cost) {
+                        payload.delivery_cost = parseFloat(this.confirmData.delivery_cost);
+                    }
+                    if (this.confirmData.estimated_delivery_days) {
+                        payload.estimated_delivery_days = parseInt(this.confirmData.estimated_delivery_days);
+                    }
+                    await supplierApi(`/orders/${this.selectedOrder.id}/confirm-availability`, 'POST', payload);
+                } else {
+                    await supplierApi(`/orders/${this.selectedOrder.id}/confirm`, 'POST', {
+                        notes: this.confirmData.notes || null
+                    });
+                }
+                this.showConfirmModal = false;
                 this.closeDetailModal();
+                showToast('Narudzbina potvrđena', 'success');
                 await Promise.all([this.loadOrders(), this.loadStats()]);
             } catch (err) {
                 alert('Greska: ' + err.message);
@@ -484,12 +615,10 @@ function ordersPage() {
 
         async submitReject() {
             try {
-                await supplierApi(`/orders/${this.selectedOrder.id}/reject`, {
-                    method: 'POST',
-                    body: JSON.stringify({ reason: this.rejectReason })
-                });
+                await supplierApi(`/orders/${this.selectedOrder.id}/reject`, 'POST', { reason: this.rejectReason });
                 this.showRejectModal = false;
                 this.closeDetailModal();
+                showToast('Narudzbina odbijena', 'success');
                 await Promise.all([this.loadOrders(), this.loadStats()]);
             } catch (err) {
                 alert('Greska: ' + err.message);
@@ -498,11 +627,9 @@ function ordersPage() {
 
         async shipOrder() {
             try {
-                await supplierApi(`/orders/${this.selectedOrder.id}/ship`, {
-                    method: 'POST',
-                    body: JSON.stringify(this.shippingInfo)
-                });
+                await supplierApi(`/orders/${this.selectedOrder.id}/ship`, 'POST', this.shippingInfo);
                 this.closeDetailModal();
+                showToast('Narudzbina oznacena kao poslata', 'success');
                 await Promise.all([this.loadOrders(), this.loadStats()]);
             } catch (err) {
                 alert('Greska: ' + err.message);
@@ -513,12 +640,8 @@ function ordersPage() {
             if (!this.newMessage.trim()) return;
 
             try {
-                await supplierApi(`/orders/${this.selectedOrder.id}/messages`, {
-                    method: 'POST',
-                    body: JSON.stringify({ message: this.newMessage })
-                });
+                await supplierApi(`/orders/${this.selectedOrder.id}/messages`, 'POST', { message: this.newMessage });
                 this.newMessage = '';
-                // Reload order to get new message
                 const data = await supplierApi(`/orders/${this.selectedOrder.id}`);
                 this.orderDetail = data;
             } catch (err) {
