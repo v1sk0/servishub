@@ -139,9 +139,19 @@
                                 <p class="text-sm font-semibold text-gray-900" x-text="order.total_amount ? (formatPrice(order.total_amount) + ' ' + order.currency) : '-'"></p>
                             </td>
                             <td class="px-4 py-3">
-                                <span :class="getStatusClass(order.status)"
-                                      class="text-xs font-medium px-2.5 py-1 rounded-full"
-                                      x-text="getStatusLabel(order.status)"></span>
+                                <div class="flex items-center gap-2">
+                                    <span x-show="isActiveStatus(order.status)" class="relative flex h-2.5 w-2.5 flex-shrink-0">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" :class="getStatusDotClass(order.status)"></span>
+                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5" :class="getStatusDotClass(order.status)"></span>
+                                    </span>
+                                    <div>
+                                        <span :class="getStatusClass(order.status)"
+                                              class="text-xs font-medium px-2.5 py-1 rounded-full status-badge"
+                                              :class="{ 'status-shimmer': isActiveStatus(order.status) }"
+                                              x-text="getStatusLabel(order.status)"></span>
+                                        <p class="text-[11px] text-gray-500 mt-1 leading-tight" x-text="getStatusDescription(order.status)"></p>
+                                    </div>
+                                </div>
                             </td>
                             <td class="px-4 py-3">
                                 <span class="text-sm text-gray-500" x-text="formatDate(order.created_at)"></span>
@@ -493,6 +503,26 @@
 
 </div>
 
+<style>
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+.status-shimmer {
+    background-size: 200% 100%;
+    animation: shimmer 2.5s ease-in-out infinite;
+}
+.status-shimmer.bg-blue-100 {
+    background-image: linear-gradient(90deg, #dbeafe 0%, #bfdbfe 25%, #93c5fd 50%, #bfdbfe 75%, #dbeafe 100%);
+}
+.status-shimmer.bg-amber-100 {
+    background-image: linear-gradient(90deg, #fef3c7 0%, #fde68a 25%, #fcd34d 50%, #fde68a 75%, #fef3c7 100%);
+}
+.status-shimmer.bg-purple-100 {
+    background-image: linear-gradient(90deg, #f3e8ff 0%, #e9d5ff 25%, #d8b4fe 50%, #e9d5ff 75%, #f3e8ff 100%);
+}
+</style>
+
 <script>
 function ordersPage() {
     return {
@@ -750,6 +780,34 @@ function ordersPage() {
                 'DISPUTED': 'bg-orange-100 text-orange-700'
             };
             return classes[status] || 'bg-gray-100 text-gray-700';
+        },
+
+        getStatusDescription(status) {
+            const desc = {
+                'DRAFT': 'Narudzbina nije poslata',
+                'SENT': 'Ceka se potvrda dobavljaca',
+                'OFFERED': 'Potvrdite ili otkazite',
+                'CONFIRMED': 'Ceka se slanje',
+                'REJECTED': 'Dobavljac je odbio narudzbinu',
+                'SHIPPED': 'Posiljka je na putu',
+                'DELIVERED': 'Posiljka primljena',
+                'COMPLETED': 'Transakcija zavrsena',
+                'CANCELLED': 'Narudzbina otkazana',
+            };
+            return desc[status] || '';
+        },
+
+        getStatusDotClass(status) {
+            const dots = {
+                'SENT': 'bg-blue-500',
+                'OFFERED': 'bg-amber-500',
+                'SHIPPED': 'bg-purple-500',
+            };
+            return dots[status] || 'bg-gray-400';
+        },
+
+        isActiveStatus(status) {
+            return ['SENT', 'OFFERED', 'SHIPPED'].includes(status);
         },
 
         getQualityLabel(grade) {
