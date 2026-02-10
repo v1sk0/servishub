@@ -339,10 +339,8 @@
                                         </p>
                                     </div>
                                     <div class="text-right">
-                                        <p class="font-medium text-gray-900">
-                                            <span x-text="formatPrice(item.total_price) + ' ' + (selectedOrder?.currency || 'RSD')"></span>
-                                            <span x-show="isEur()" class="text-xs text-gray-400 font-normal" x-text="'(okvirno: ' + formatRsd(toRsd(item.total_price)) + ' RSD)'"></span>
-                                        </p>
+                                        <p class="font-medium text-gray-900" x-text="formatPrice(item.total_price) + ' ' + (selectedOrder?.currency || 'RSD')"></p>
+                                        <p x-show="isEur()" class="text-xs text-gray-400" x-text="'okvirno ' + formatRsd(toRsd(item.total_price)) + ' RSD'"></p>
                                         <p class="text-sm text-gray-500" x-text="item.quantity + ' x ' + formatPrice(item.unit_price) + ' ' + (selectedOrder?.currency || 'RSD')"></p>
                                     </div>
                                 </div>
@@ -386,10 +384,10 @@
                         <!-- Subtotal -->
                         <div class="flex justify-between">
                             <span class="text-gray-600">Stavke:</span>
-                            <span class="font-semibold text-gray-900">
-                                <span x-text="formatPrice(selectedOrder?.total_amount) + ' ' + (selectedOrder?.currency || 'RSD')"></span>
-                                <span x-show="isEur()" class="text-xs text-gray-400 font-normal" x-text="'(okvirno: ' + formatRsd(toRsd(selectedOrder?.total_amount)) + ' RSD)'"></span>
-                            </span>
+                            <div class="text-right">
+                                <span class="font-semibold text-gray-900" x-text="formatPrice(selectedOrder?.total_amount) + ' ' + (selectedOrder?.currency || 'RSD')"></span>
+                                <p x-show="isEur()" class="text-xs text-gray-400" x-text="'okvirno ' + formatRsd(toRsd(selectedOrder?.total_amount)) + ' RSD'"></p>
+                            </div>
                         </div>
                         <!-- Delivery cost -->
                         <div class="flex justify-between" x-show="selectedOrder?.delivery_cost">
