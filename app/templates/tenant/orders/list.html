@@ -77,7 +77,8 @@
                     <option value="CONFIRMED">Potvrdjeno</option>
                     <option value="REJECTED">Odbijeno</option>
                     <option value="SHIPPED">Na putu</option>
-                    <option value="COMPLETED">Isporuceno</option>
+                    <option value="DELIVERED">Isporuceno</option>
+                    <option value="COMPLETED">Zavrseno</option>
                     <option value="CANCELLED">Otkazano</option>
                 </select>
             </div>
@@ -208,7 +209,7 @@
                                     <template x-if="order.status === 'SHIPPED'">
                                         <button @click="confirmDelivery(order)" class="px-2.5 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Potvrdi prijem</button>
                                     </template>
-                                    <template x-if="order.status === 'COMPLETED'">
+                                    <template x-if="order.status === 'DELIVERED'">
                                         <button @click="completeOrder(order)" class="px-2.5 py-1 bg-emerald-600 text-white rounded text-xs hover:bg-emerald-700">Oceni</button>
                                     </template>
                                 </div>
@@ -482,6 +483,13 @@
                                     <span class="text-gray-900" x-text="formatDateTime(selectedOrder?.timestamps?.delivered_at)"></span>
                                 </div>
                             </template>
+                            <template x-if="selectedOrder?.timestamps?.completed_at">
+                                <div class="flex items-center gap-3 text-sm">
+                                    <div class="w-2 h-2 rounded-full bg-emerald-600"></div>
+                                    <span class="text-gray-500">Narudzbina zavrsena:</span>
+                                    <span class="text-gray-900" x-text="formatDateTime(selectedOrder?.timestamps?.completed_at)"></span>
+                                </div>
+                            </template>
                             <template x-if="selectedOrder?.timestamps?.cancelled_at">
                                 <div class="flex items-center gap-3 text-sm">
                                     <div class="w-2 h-2 rounded-full bg-red-500"></div>
@@ -555,7 +563,7 @@
                             Potvrdi prijem
                         </button>
 
-                        <button x-show="selectedOrder?.status === 'COMPLETED'" @click="completeOrder(selectedOrder); detailsModal = false"
+                        <button x-show="selectedOrder?.status === 'DELIVERED'" @click="completeOrder(selectedOrder); detailsModal = false"
                                 class="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
                             Oceni narudzbinu
                         </button>
@@ -824,7 +832,8 @@ function ordersPage() {
                         sent: orders.filter(o => o.status === 'SENT').length,
                         offered: orders.filter(o => o.status === 'OFFERED').length,
                         confirmed: orders.filter(o => o.status === 'CONFIRMED').length,
-                        completed: orders.filter(o => ['DELIVERED', 'COMPLETED'].includes(o.status)).length
+                        delivered: orders.filter(o => o.status === 'DELIVERED').length,
+                        completed: orders.filter(o => o.status === 'COMPLETED').length
                     };
                 }
             } catch (e) {
@@ -981,7 +990,7 @@ function ordersPage() {
                 'REJECTED': 'Odbijeno',
                 'SHIPPED': 'Na putu',
                 'DELIVERED': 'Isporuceno',
-                'COMPLETED': 'Isporuceno',
+                'COMPLETED': 'Zavrseno',
                 'CANCELLED': 'Otkazano',
                 'DISPUTED': 'Sporno'
             };
@@ -1070,8 +1079,8 @@ function ordersPage() {
                 'OFFERED': 'Dobavljac je potvrdio dostupnost. Potvrdite narudzbinu ili otkazite.',
                 'CONFIRMED': 'Narudzbina je potvrđena. Ceka se slanje od strane dobavljaca.',
                 'SHIPPED': 'Posiljka je na putu. Potvrdite prijem kada stigne.',
-                'DELIVERED': 'Narudzbina je isporucena.',
-                'COMPLETED': 'Narudzbina je isporucena.',
+                'DELIVERED': 'Posiljka je isporucena. Ocenite narudzbinu.',
+                'COMPLETED': 'Narudzbina je zavrsena.',
                 'REJECTED': 'Dobavljac je odbio narudzbinu.',
                 'CANCELLED': 'Narudzbina je otkazana.',
             };
