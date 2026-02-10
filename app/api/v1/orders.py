@@ -167,18 +167,26 @@ def get_order(order_id):
             'name': 'Anoniman dobavljac'
         }
 
-    # Get items
+    # Get items with quality info from linked listing
     items = PartOrderItem.query.filter_by(order_id=order.id).all()
-    items_list = [{
-        'id': item.id,
-        'part_name': item.part_name,
-        'part_number': item.part_number,
-        'brand': item.brand,
-        'model': item.model,
-        'quantity': item.quantity,
-        'unit_price': float(item.unit_price),
-        'total_price': float(item.total_price)
-    } for item in items]
+    items_list = []
+    for item in items:
+        quality_grade = None
+        if item.supplier_listing_id:
+            listing = SupplierListing.query.get(item.supplier_listing_id)
+            if listing:
+                quality_grade = listing.quality_grade
+        items_list.append({
+            'id': item.id,
+            'part_name': item.part_name,
+            'part_number': item.part_number,
+            'brand': item.brand,
+            'model': item.model,
+            'quality_grade': quality_grade,
+            'quantity': item.quantity,
+            'unit_price': float(item.unit_price),
+            'total_price': float(item.total_price)
+        })
 
     # Get messages
     messages = PartOrderMessage.query.filter_by(

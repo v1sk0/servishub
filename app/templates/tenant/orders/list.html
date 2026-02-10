@@ -248,7 +248,10 @@
                                 <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                     <div>
                                         <p class="font-medium text-gray-900" x-text="item.part_name"></p>
-                                        <p class="text-sm text-gray-500" x-text="(item.brand || '') + ' ' + (item.model || '')"></p>
+                                        <p class="text-sm text-gray-500">
+                                            <span x-show="item.quality_grade" x-text="getQualityLabel(item.quality_grade)" class="inline-block bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 rounded mr-1"></span>
+                                            <span x-show="item.part_number" x-text="item.part_number"></span>
+                                        </p>
                                     </div>
                                     <div class="text-right">
                                         <p class="font-medium text-gray-900" x-text="formatPrice(item.total_price) + ' ' + (selectedOrder?.currency || 'RSD')"></p>
@@ -741,6 +744,20 @@ function ordersPage() {
                 'DISPUTED': 'bg-orange-100 text-orange-700'
             };
             return classes[status] || 'bg-gray-100 text-gray-700';
+        },
+
+        getQualityLabel(grade) {
+            const labels = {
+                'service_pack': 'Service Pack',
+                'original': 'Original',
+                'oled_hard': 'OLED Hard',
+                'oled_soft': 'OLED Soft',
+                'oem': 'OEM',
+                'tft_incell': 'TFT Incell',
+                'aaa': 'AAA',
+                'copy': 'Kopija'
+            };
+            return labels[grade] || grade;
         },
 
         formatPrice(price) {
