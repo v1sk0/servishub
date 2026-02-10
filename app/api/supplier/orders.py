@@ -745,14 +745,19 @@ def get_order_stats():
         count = base_query.filter_by(status=status).count()
         status_counts[status.value] = count
 
-    # Total revenue (completed orders)
-    total_revenue = db.session.query(
+    # Turnover by currency (completed orders)
+    turnover_by_currency = db.session.query(
+        PartOrder.currency,
         func.sum(PartOrder.subtotal)
     ).filter(
         PartOrder.seller_type == SellerType.SUPPLIER,
         PartOrder.seller_supplier_id == g.supplier_id,
         PartOrder.status == OrderStatus.COMPLETED
-    ).scalar() or 0
+    ).group_by(PartOrder.currency).all()
+
+    turnover = {}
+    for currency, amount in turnover_by_currency:
+        turnover[currency or 'RSD'] = float(amount or 0)
 
     # Pending count (SENT + OFFERED)
     pending = status_counts.get('SENT', 0)
@@ -763,6 +768,5 @@ def get_order_stats():
         'pending_confirmation': pending,
         'pending_tenant_confirmation': offered,
         'status_breakdown': status_counts,
-        'total_revenue': float(total_revenue),
-        'currency': 'RSD'
+        'turnover': turnover
     }
