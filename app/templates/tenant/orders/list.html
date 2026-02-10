@@ -111,18 +111,26 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th class="px-2 py-3 w-8"></th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Narudzbina</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Servisni nalog</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Detalj</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Cena</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Datum</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Poruceno</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Akcije</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
                     <template x-for="order in orders" :key="order.id">
                         <tr class="hover:bg-gray-50 cursor-pointer" @click="viewOrder(order)">
+                            <!-- Pulsing dot indicator -->
+                            <td class="px-2 py-3 text-center">
+                                <span x-show="isActiveStatus(order.status)" class="relative inline-flex h-3 w-3">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" :class="getStatusDotClass(order.status)"></span>
+                                    <span class="relative inline-flex rounded-full h-3 w-3" :class="getStatusDotClass(order.status)"></span>
+                                </span>
+                            </td>
                             <td class="px-4 py-3 text-center">
                                 <p class="text-sm font-medium text-gray-900" x-text="order.order_number"></p>
                             </td>
@@ -139,22 +147,20 @@
                                 <p class="text-sm font-semibold text-gray-900" x-text="order.total_amount ? (formatPrice(order.total_amount) + ' ' + order.currency) : '-'"></p>
                             </td>
                             <td class="px-4 py-3">
-                                <div class="flex items-center justify-center gap-2">
-                                    <span x-show="isActiveStatus(order.status)" class="relative flex h-2.5 w-2.5 flex-shrink-0">
-                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" :class="getStatusDotClass(order.status)"></span>
-                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5" :class="getStatusDotClass(order.status)"></span>
-                                    </span>
-                                    <div class="text-center">
-                                        <span :class="getStatusClass(order.status)"
-                                              class="text-xs font-semibold px-2.5 py-1 rounded-full status-badge"
-                                              :class="{ 'status-shimmer': isActiveStatus(order.status) }"
-                                              x-text="getStatusLabel(order.status)"></span>
-                                        <p class="text-[11px] text-gray-500 mt-1 leading-tight" x-text="getStatusDescription(order.status)"></p>
-                                    </div>
+                                <div class="text-center">
+                                    <span :class="getStatusClass(order.status)"
+                                          class="text-xs font-semibold px-2.5 py-1 rounded-full status-badge"
+                                          :class="{ 'status-shimmer': isActiveStatus(order.status) }"
+                                          x-text="getStatusLabel(order.status)"></span>
+                                    <p class="text-[11px] text-gray-500 mt-1 leading-tight" x-text="getStatusDescription(order.status)"></p>
                                 </div>
                             </td>
+                            <!-- Poruceno: exact time + waiting duration -->
                             <td class="px-4 py-3 text-center">
-                                <span class="text-sm text-gray-500" x-text="formatDate(order.created_at)"></span>
+                                <p class="text-sm text-gray-700" x-text="formatTime(order.created_at)"></p>
+                                <p class="text-[11px] mt-0.5 leading-tight waiting-duration"
+                                   :class="isActiveStatus(order.status) ? 'text-amber-600 font-medium' : 'text-gray-400'"
+                                   x-text="getWaitingDuration(order)"></p>
                             </td>
                             <td class="px-4 py-3 text-center" @click.stop>
                                 <div class="flex items-center justify-center gap-2">
@@ -554,6 +560,9 @@
     background-image: linear-gradient(90deg, rgba(139,92,246,0.2) 0%, rgba(139,92,246,0.35) 25%, rgba(167,139,250,0.45) 50%, rgba(139,92,246,0.35) 75%, rgba(139,92,246,0.2) 100%) !important;
 }
 
+/* Glass theme: waiting duration */
+.glass-theme .tenant-app td .waiting-duration.text-amber-600 { color: #fbbf24 !important; }
+
 /* Glass theme: action buttons in table */
 .glass-theme .tenant-app td .bg-red-100 { background: rgba(239, 68, 68, 0.2) !important; }
 .glass-theme .tenant-app td .text-red-700 { color: #f87171 !important; }
@@ -870,6 +879,39 @@ function ordersPage() {
             if (!dateStr) return '-';
             const date = new Date(dateStr);
             return date.toLocaleDateString('sr-RS');
+        },
+
+        formatTime(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            const today = new Date();
+            const isToday = d.toDateString() === today.toDateString();
+            const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+            const isYesterday = d.toDateString() === yesterday.toDateString();
+            const time = d.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' });
+            if (isToday) return 'Danas ' + time;
+            if (isYesterday) return 'Juce ' + time;
+            return d.toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit' }) + ' ' + time;
+        },
+
+        getWaitingDuration(order) {
+            if (['COMPLETED', 'CANCELLED', 'REJECTED'].includes(order.status)) {
+                return '';
+            }
+            const created = new Date(order.created_at);
+            const now = new Date();
+            const diffMs = now - created;
+            const diffMin = Math.floor(diffMs / 60000);
+            if (diffMin < 1) return 'upravo';
+            if (diffMin < 60) return 'pre ' + diffMin + ' min';
+            const diffH = Math.floor(diffMin / 60);
+            if (diffH < 24) {
+                const remMin = diffMin % 60;
+                return 'pre ' + diffH + 'h ' + (remMin > 0 ? remMin + 'min' : '');
+            }
+            const diffD = Math.floor(diffH / 24);
+            const remH = diffH % 24;
+            return 'pre ' + diffD + 'd ' + (remH > 0 ? remH + 'h' : '');
         },
 
         formatDateTime(dateStr) {
