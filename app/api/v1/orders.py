@@ -102,6 +102,13 @@ def list_orders():
             if len(items) > 1:
                 item_summary += f' +{len(items) - 1}'
 
+        # Get linked ticket number
+        ticket_label = None
+        if order.service_ticket_id:
+            ticket = ServiceTicket.query.get(order.service_ticket_id)
+            if ticket:
+                ticket_label = ticket.ticket_number_formatted
+
         result.append({
             'id': order.id,
             'order_number': order.order_number,
@@ -110,6 +117,7 @@ def list_orders():
             'status': order.status.value,
             'items_count': len(items),
             'item_summary': item_summary,
+            'ticket_label': ticket_label,
             'total_amount': float(order.total_amount) if order.total_amount else None,
             'currency': order.currency or 'RSD',
             'created_at': order.created_at.isoformat(),

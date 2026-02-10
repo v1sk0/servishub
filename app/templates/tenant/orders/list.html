@@ -124,6 +124,7 @@
                         <tr class="hover:bg-gray-50 cursor-pointer" @click="viewOrder(order)">
                             <td class="px-4 py-3">
                                 <p class="text-sm font-medium text-gray-900" x-text="order.order_number"></p>
+                                <p x-show="order.ticket_label" class="text-xs text-gray-500" x-text="'za ' + order.ticket_label"></p>
                             </td>
                             <td class="px-4 py-3">
                                 <p class="text-sm text-gray-900" x-text="order.item_summary || '-'"></p>
