@@ -261,6 +261,7 @@ def search_offers():
             'quality_grade': listing.quality_grade,
             'stock_hint': get_stock_hint(listing.stock_quantity),
             'part_name': listing.name,
+            'description': listing.description,
             'supplier_rating': sup_rating,
             'supplier_rating_count': sup_rating_count,
             'supplier_trust_tier': sup_trust_tier,
@@ -406,6 +407,8 @@ def get_ticket_offers(ticket_id):
             'price_rsd': float(listing.price_rsd) if listing.price_rsd else None,
             'quality_grade': listing.quality_grade,
             'stock_hint': get_stock_hint(listing.stock_quantity),
+            'part_name': listing.name,
+            'description': listing.description,
             'delivery_label': delivery_label,
         })
 

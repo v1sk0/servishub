@@ -637,6 +637,14 @@
         font-weight: 600;
         text-transform: uppercase;
     }
+    .part-offer-variant-tag {
+        font-size: 0.625rem;
+        padding: 0.125rem 0.5rem;
+        border-radius: 4px;
+        background: #ede9fe;
+        color: #7c3aed;
+        font-weight: 600;
+    }
     .part-offer-stock {
         font-size: 0.688rem;
         font-weight: 600;
@@ -783,6 +791,7 @@
     .glass-theme .part-offer-item.selected-offer .part-offer-rank { background: #22c55e; color: white; }
     .glass-theme .part-offer-price { color: #ffffff; }
     .glass-theme .part-offer-quality-tag { background: rgba(255, 255, 255, 0.1); color: #d1d5db; }
+    .glass-theme .part-offer-variant-tag { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; }
     .glass-theme .part-offer-select-btn.default { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
     .glass-theme .part-offer-select-btn.default:hover { background: #3b82f6; color: white; }
     .glass-theme .part-offers-selected-bar {
@@ -2030,6 +2039,9 @@
                                                     <span class="part-offer-price"
                                                           x-text="offer.price_eur ? (offer.price_eur.toFixed(2) + ' EUR') : (offer.price_rsd ? (Math.round(offer.price_rsd) + ' RSD') : 'N/A')"></span>
                                                     <span class="part-offer-quality-tag" x-text="getGrLabel(offer.quality_grade)"></span>
+                                                    <template x-if="getOfferVariant(offer)">
+                                                        <span class="part-offer-variant-tag" x-text="getOfferVariant(offer)"></span>
+                                                    </template>
                                                     <span class="part-offer-stock"
                                                           :class="offer.stock_hint === 'available' ? 'available' : (offer.stock_hint === 'low' ? 'low' : 'last')"
                                                           x-text="offer.stock_hint === 'available' ? 'Na stanju' : (offer.stock_hint === 'low' ? 'Malo' : 'Poslednji')"></span>
@@ -4816,6 +4828,17 @@ function ticketsPage() {
 
         getCatLabel(cat) { return this._catLabels[cat] || (cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : ''); },
         getGrLabel(grade) { return (grade && this._gradeLabels[grade.toLowerCase()]) || grade || ''; },
+
+        getOfferVariant(offer) {
+            // Extract variant from part_name parentheses, e.g. "Display Apple iPhone 11 (JK Soft OLED)" → "JK Soft OLED"
+            if (offer.part_name) {
+                const m = offer.part_name.match(/\(([^)]+)\)\s*$/);
+                if (m) return m[1];
+            }
+            // Fallback to description field (raw quality text like "JK soft oled")
+            if (offer.description) return offer.description;
+            return null;
+        },
 
         debouncedPartSearch() {
             clearTimeout(this._partSearchTimer);
