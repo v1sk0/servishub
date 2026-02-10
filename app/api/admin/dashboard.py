@@ -20,65 +20,6 @@ from app.api.middleware.auth import platform_admin_required
 bp = Blueprint('admin_dashboard', __name__, url_prefix='/dashboard')
 
 
-# PRIVREMENO - Debug endpoint za proveru baze
-@bp.route('/debug-tenants', methods=['GET'])
-def debug_tenants():
-    """Debug: Lista svih tenanta u bazi (PRIVREMENO - ukloniti posle testiranja!)"""
-    from app.models import Tenant
-    tenants = Tenant.query.all()
-    return jsonify({
-        'total': len(tenants),
-        'tenants': [{
-            'id': t.id,
-            'name': t.name,
-            'email': t.email,
-            'status': t.status.value if t.status else None,
-            'created_at': t.created_at.isoformat() if t.created_at else None
-        } for t in tenants]
-    }), 200
-
-
-# PRIVREMENO - Debug endpoint za proveru korisnika
-@bp.route('/debug-users', methods=['GET'])
-def debug_users():
-    """Debug: Lista svih korisnika u bazi (PRIVREMENO - ukloniti posle testiranja!)"""
-    from app.models import User
-    users = User.query.all()
-    return jsonify({
-        'total': len(users),
-        'users': [{
-            'id': u.id,
-            'tenant_id': u.tenant_id,
-            'email': u.email,
-            'ime': u.ime,
-            'prezime': u.prezime,
-            'role': u.role.value if u.role else None,
-            'is_active': u.is_active,
-            'created_at': u.created_at.isoformat() if u.created_at else None
-        } for u in users]
-    }), 200
-
-
-# PRIVREMENO - Debug endpoint za proveru admina
-@bp.route('/debug-admins', methods=['GET'])
-def debug_admins():
-    """Debug: Lista svih platform admina u bazi (PRIVREMENO - ukloniti posle testiranja!)"""
-    from app.models.admin import PlatformAdmin
-    admins = PlatformAdmin.query.all()
-    return jsonify({
-        'total': len(admins),
-        'admins': [{
-            'id': a.id,
-            'email': a.email,
-            'ime': a.ime,
-            'prezime': a.prezime,
-            'role': a.role.value if a.role else None,
-            'is_active': a.is_active,
-            'created_at': a.created_at.isoformat() if a.created_at else None
-        } for a in admins]
-    }), 200
-
-
 @bp.route('', methods=['GET'])
 @platform_admin_required
 def get_dashboard():

@@ -85,7 +85,22 @@ def list_orders():
             tenant = Tenant.query.get(order.seller_tenant_id)
             seller_name = tenant.name if tenant else 'Unknown'
 
-        items_count = PartOrderItem.query.filter_by(order_id=order.id).count()
+        items = PartOrderItem.query.filter_by(order_id=order.id).all()
+
+        # Build summary string: "Display Samsung S21 kopija 50 EUR"
+        item_summary = None
+        if items:
+            first = items[0]
+            parts = []
+            if first.part_name:
+                parts.append(first.part_name)
+            if first.brand:
+                parts.append(first.brand)
+            if first.model:
+                parts.append(first.model)
+            item_summary = ' '.join(parts)
+            if len(items) > 1:
+                item_summary += f' +{len(items) - 1}'
 
         result.append({
             'id': order.id,
@@ -93,7 +108,8 @@ def list_orders():
             'seller_type': order.seller_type.value,
             'seller_name': seller_name,
             'status': order.status.value,
-            'items_count': items_count,
+            'items_count': len(items),
+            'item_summary': item_summary,
             'total_amount': float(order.total_amount) if order.total_amount else None,
             'currency': order.currency or 'RSD',
             'created_at': order.created_at.isoformat(),

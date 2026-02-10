@@ -105,116 +105,70 @@
         </a>
     </div>
 
-    <!-- Orders List -->
-    <div x-show="!loading && orders.length > 0" class="space-y-4">
-        <template x-for="order in orders" :key="order.id">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
-                <!-- Order Header -->
-                <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg flex items-center justify-center"
-                             :class="order.seller_type === 'supplier' ? 'bg-purple-100' : 'bg-blue-100'">
-                            <svg x-show="order.seller_type === 'supplier'" class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                            </svg>
-                            <svg x-show="order.seller_type === 'tenant'" class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="font-medium text-gray-900" x-text="order.order_number"></p>
-                            <p class="text-sm text-gray-500" x-text="order.seller_name"></p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span :class="getStatusClass(order.status)"
-                              class="text-xs font-medium px-3 py-1 rounded-full"
-                              x-text="getStatusLabel(order.status)"></span>
-                        <span class="text-sm text-gray-500" x-text="formatDate(order.created_at)"></span>
-                    </div>
-                </div>
-
-                <!-- Order Body -->
-                <div class="p-4">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div class="flex items-center gap-6 text-sm">
-                            <div>
-                                <span class="text-gray-500">Stavki:</span>
-                                <span class="font-medium text-gray-900 ml-1" x-text="order.items_count"></span>
-                            </div>
-                            <div x-show="order.total_amount">
-                                <span class="text-gray-500">Ukupno:</span>
-                                <span class="font-bold text-gray-900 ml-1" x-text="formatPrice(order.total_amount) + ' ' + order.currency"></span>
-                            </div>
-                            <div x-show="order.tracking_number">
-                                <span class="text-gray-500">Tracking:</span>
-                                <span class="font-medium text-blue-600 ml-1" x-text="order.tracking_number"></span>
-                            </div>
-                        </div>
-
-                        <!-- Actions -->
-                        <div class="flex items-center gap-2">
-                            <button @click="viewOrder(order)"
-                                    class="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm">
-                                Detalji
-                            </button>
-
-                            <!-- Draft actions -->
-                            <template x-if="order.status === 'DRAFT'">
-                                <div class="flex gap-2">
-                                    <button @click="sendOrder(order)"
-                                            class="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm">
-                                        Posalji
-                                    </button>
-                                    <button @click="cancelOrder(order)"
-                                            class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition text-sm">
-                                        Obrisi
-                                    </button>
+    <!-- Orders Table -->
+    <div x-show="!loading && orders.length > 0" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Narudzbina</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Detalj</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cena</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datum</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Akcije</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <template x-for="order in orders" :key="order.id">
+                        <tr class="hover:bg-gray-50 cursor-pointer" @click="viewOrder(order)">
+                            <td class="px-4 py-3">
+                                <p class="text-sm font-medium text-gray-900" x-text="order.order_number"></p>
+                            </td>
+                            <td class="px-4 py-3">
+                                <p class="text-sm text-gray-900" x-text="order.item_summary || '-'"></p>
+                            </td>
+                            <td class="px-4 py-3">
+                                <p class="text-sm font-semibold text-gray-900" x-text="order.total_amount ? (formatPrice(order.total_amount) + ' ' + order.currency) : '-'"></p>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span :class="getStatusClass(order.status)"
+                                      class="text-xs font-medium px-2.5 py-1 rounded-full"
+                                      x-text="getStatusLabel(order.status)"></span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="text-sm text-gray-500" x-text="formatDate(order.created_at)"></span>
+                            </td>
+                            <td class="px-4 py-3 text-right" @click.stop>
+                                <div class="flex items-center justify-end gap-2">
+                                    <template x-if="order.status === 'DRAFT'">
+                                        <div class="flex gap-1">
+                                            <button @click="sendOrder(order)" class="px-2.5 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">Posalji</button>
+                                            <button @click="cancelOrder(order)" class="px-2.5 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200">Obrisi</button>
+                                        </div>
+                                    </template>
+                                    <template x-if="order.status === 'SENT'">
+                                        <button @click="cancelOrder(order)" class="px-2.5 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200">Otkazi</button>
+                                    </template>
+                                    <template x-if="order.status === 'OFFERED'">
+                                        <div class="flex gap-1">
+                                            <button @click="confirmOfferedOrder(order)" class="px-2.5 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Potvrdi</button>
+                                            <button @click="cancelOrder(order)" class="px-2.5 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200">Otkazi</button>
+                                        </div>
+                                    </template>
+                                    <template x-if="order.status === 'SHIPPED'">
+                                        <button @click="confirmDelivery(order)" class="px-2.5 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Potvrdi prijem</button>
+                                    </template>
+                                    <template x-if="order.status === 'DELIVERED'">
+                                        <button @click="completeOrder(order)" class="px-2.5 py-1 bg-emerald-600 text-white rounded text-xs hover:bg-emerald-700">Zavrsi</button>
+                                    </template>
                                 </div>
-                            </template>
-
-                            <!-- Sent actions -->
-                            <template x-if="order.status === 'SENT'">
-                                <button @click="cancelOrder(order)"
-                                        class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition text-sm">
-                                    Otkazi
-                                </button>
-                            </template>
-
-                            <!-- Offered actions (supplier confirmed, waiting for tenant) -->
-                            <template x-if="order.status === 'OFFERED'">
-                                <div class="flex gap-2">
-                                    <button @click="confirmOfferedOrder(order)"
-                                            class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm">
-                                        Potvrdi
-                                    </button>
-                                    <button @click="cancelOrder(order)"
-                                            class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition text-sm">
-                                        Otkazi
-                                    </button>
-                                </div>
-                            </template>
-
-                            <!-- Shipped actions -->
-                            <template x-if="order.status === 'SHIPPED'">
-                                <button @click="confirmDelivery(order)"
-                                        class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm">
-                                    Potvrdi prijem
-                                </button>
-                            </template>
-
-                            <!-- Delivered actions -->
-                            <template x-if="order.status === 'DELIVERED'">
-                                <button @click="completeOrder(order)"
-                                        class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition text-sm">
-                                    Zavrsi
-                                </button>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </template>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Pagination -->
