@@ -339,8 +339,11 @@
                                         </p>
                                     </div>
                                     <div class="text-right">
-                                        <p class="font-medium text-gray-900" x-text="formatPrice(item.total_price) + ' ' + (selectedOrder?.currency || 'RSD')"></p>
-                                        <p class="text-sm text-gray-500" x-text="item.quantity + ' x ' + formatPrice(item.unit_price)"></p>
+                                        <p class="font-medium text-gray-900">
+                                            <span x-text="formatPrice(item.total_price) + ' ' + (selectedOrder?.currency || 'RSD')"></span>
+                                            <span x-show="isEur()" class="text-xs text-gray-400 font-normal" x-text="'(okvirno: ' + formatRsd(toRsd(item.total_price)) + ' RSD)'"></span>
+                                        </p>
+                                        <p class="text-sm text-gray-500" x-text="item.quantity + ' x ' + formatPrice(item.unit_price) + ' ' + (selectedOrder?.currency || 'RSD')"></p>
                                     </div>
                                 </div>
                             </template>
@@ -379,10 +382,29 @@
                     </div>
 
                     <!-- Totals -->
-                    <div class="border-t border-gray-200 pt-4 mb-6">
-                        <div class="flex justify-between font-bold">
-                            <span class="text-gray-900">Ukupno:</span>
-                            <span class="text-gray-900" x-text="formatPrice(selectedOrder?.total_amount) + ' ' + (selectedOrder?.currency || 'RSD')"></span>
+                    <div class="border-t border-gray-200 pt-4 mb-6 space-y-2">
+                        <!-- Subtotal -->
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Stavke:</span>
+                            <span class="font-semibold text-gray-900">
+                                <span x-text="formatPrice(selectedOrder?.total_amount) + ' ' + (selectedOrder?.currency || 'RSD')"></span>
+                                <span x-show="isEur()" class="text-xs text-gray-400 font-normal" x-text="'(okvirno: ' + formatRsd(toRsd(selectedOrder?.total_amount)) + ' RSD)'"></span>
+                            </span>
+                        </div>
+                        <!-- Delivery cost -->
+                        <div class="flex justify-between" x-show="selectedOrder?.delivery_cost">
+                            <span class="text-gray-600">Dostava:</span>
+                            <span class="font-semibold text-gray-900" x-text="formatRsd(selectedOrder?.delivery_cost || 0) + ' RSD'"></span>
+                        </div>
+                        <!-- Grand total in RSD -->
+                        <div class="flex justify-between pt-2 border-t border-gray-100" x-show="isEur() || selectedOrder?.delivery_cost">
+                            <span class="font-bold text-gray-900">Ukupno okvirno:</span>
+                            <span class="font-bold text-gray-900 text-lg" x-text="formatRsd(getGrandTotalRsd()) + ' RSD'"></span>
+                        </div>
+                        <!-- Simple total (non-EUR without delivery) -->
+                        <div class="flex justify-between" x-show="!isEur() && !selectedOrder?.delivery_cost">
+                            <span class="font-bold text-gray-900">Ukupno:</span>
+                            <span class="font-bold text-gray-900" x-text="formatPrice(selectedOrder?.total_amount) + ' ' + (selectedOrder?.currency || 'RSD')"></span>
                         </div>
                     </div>
 
@@ -1122,6 +1144,27 @@ function ordersPage() {
             if (!dateStr) return '-';
             const date = new Date(dateStr);
             return date.toLocaleDateString('sr-RS') + ' ' + date.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' });
+        },
+
+        EUR_TO_RSD: 117.5,
+
+        toRsd(eur) {
+            if (!eur) return 0;
+            return Math.round(eur * this.EUR_TO_RSD);
+        },
+
+        formatRsd(rsd) {
+            return new Intl.NumberFormat('sr-RS').format(rsd);
+        },
+
+        isEur() {
+            return (this.selectedOrder?.currency || 'RSD') === 'EUR';
+        },
+
+        getGrandTotalRsd() {
+            const itemsRsd = this.isEur() ? this.toRsd(this.selectedOrder?.total_amount || 0) : (this.selectedOrder?.total_amount || 0);
+            const deliveryRsd = this.selectedOrder?.delivery_cost || 0;
+            return itemsRsd + deliveryRsd;
         }
     }
 }
