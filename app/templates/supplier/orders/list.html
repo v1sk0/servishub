@@ -832,6 +832,13 @@ function ordersPage() {
                 this.pagination.page = 1;
                 this.loadOrders();
             });
+
+            // Auto-refresh every 15s when tab visible
+            setInterval(() => {
+                if (!document.hidden && !this.selectedOrder) {
+                    Promise.all([this.loadOrders(), this.loadStats()]);
+                }
+            }, 15000);
         },
 
         async loadOrders() {

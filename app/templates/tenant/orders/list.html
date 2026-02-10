@@ -941,6 +941,10 @@ function ordersPage() {
 
         async init() {
             await this.loadOrders();
+            // Auto-refresh every 15s when tab visible
+            setInterval(() => {
+                if (!document.hidden && !this.selectedOrder) this.loadOrders();
+            }, 15000);
         },
 
         async loadOrders() {

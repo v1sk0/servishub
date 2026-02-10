@@ -799,8 +799,10 @@ function tenantApp() {
                 this.loadCreditBalance(),
                 this.loadActionableOrders()
             ]);
-            // Poll for new actionable orders every 60s
-            setInterval(() => this.loadActionableOrders(), 60000);
+            // Poll for actionable orders every 15s (only when tab visible)
+            setInterval(() => {
+                if (!document.hidden) this.loadActionableOrders();
+            }, 15000);
         },
 
         async loadUser() {

@@ -700,7 +700,10 @@ function supplierApp() {
                 this.loadCreditBalance()
             ]);
             this.loadPendingOrders();
-            setInterval(() => this.loadPendingOrders(), 60000);
+            // Poll for pending orders every 15s (only when tab visible)
+            setInterval(() => {
+                if (!document.hidden) this.loadPendingOrders();
+            }, 15000);
         },
 
         async loadCreditBalance() {
