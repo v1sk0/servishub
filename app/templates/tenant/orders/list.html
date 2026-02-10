@@ -521,6 +521,43 @@
 .status-shimmer.bg-purple-100 {
     background-image: linear-gradient(90deg, #f3e8ff 0%, #e9d5ff 25%, #d8b4fe 50%, #e9d5ff 75%, #f3e8ff 100%);
 }
+
+/* Glass theme: status badge text must override td color */
+.glass-theme .tenant-app .status-badge.text-blue-900 { color: #93c5fd !important; }
+.glass-theme .tenant-app .status-badge.text-amber-900 { color: #fcd34d !important; }
+.glass-theme .tenant-app .status-badge.text-purple-900 { color: #c4b5fd !important; }
+.glass-theme .tenant-app .status-badge.text-green-800 { color: #4ade80 !important; }
+.glass-theme .tenant-app .status-badge.text-emerald-800 { color: #34d399 !important; }
+.glass-theme .tenant-app .status-badge.text-red-800 { color: #f87171 !important; }
+.glass-theme .tenant-app .status-badge.text-gray-700 { color: #9ca3af !important; }
+.glass-theme .tenant-app .status-badge.text-gray-600 { color: #9ca3af !important; }
+.glass-theme .tenant-app .status-badge.text-orange-800 { color: #fb923c !important; }
+
+/* Glass theme: status badge backgrounds */
+.glass-theme .tenant-app .status-badge.bg-blue-100 { background: rgba(59, 130, 246, 0.25) !important; }
+.glass-theme .tenant-app .status-badge.bg-amber-100 { background: rgba(245, 158, 11, 0.25) !important; }
+.glass-theme .tenant-app .status-badge.bg-purple-100 { background: rgba(139, 92, 246, 0.25) !important; }
+.glass-theme .tenant-app .status-badge.bg-green-100 { background: rgba(34, 197, 94, 0.25) !important; }
+.glass-theme .tenant-app .status-badge.bg-emerald-100 { background: rgba(16, 185, 129, 0.25) !important; }
+.glass-theme .tenant-app .status-badge.bg-red-100 { background: rgba(239, 68, 68, 0.25) !important; }
+.glass-theme .tenant-app .status-badge.bg-gray-100 { background: rgba(107, 114, 128, 0.25) !important; }
+.glass-theme .tenant-app .status-badge.bg-orange-100 { background: rgba(249, 115, 22, 0.25) !important; }
+
+/* Glass theme: shimmer gradients for dark bg */
+.glass-theme .tenant-app .status-shimmer.bg-blue-100 {
+    background-image: linear-gradient(90deg, rgba(59,130,246,0.2) 0%, rgba(59,130,246,0.35) 25%, rgba(96,165,250,0.45) 50%, rgba(59,130,246,0.35) 75%, rgba(59,130,246,0.2) 100%) !important;
+}
+.glass-theme .tenant-app .status-shimmer.bg-amber-100 {
+    background-image: linear-gradient(90deg, rgba(245,158,11,0.2) 0%, rgba(245,158,11,0.35) 25%, rgba(252,211,77,0.45) 50%, rgba(245,158,11,0.35) 75%, rgba(245,158,11,0.2) 100%) !important;
+}
+.glass-theme .tenant-app .status-shimmer.bg-purple-100 {
+    background-image: linear-gradient(90deg, rgba(139,92,246,0.2) 0%, rgba(139,92,246,0.35) 25%, rgba(167,139,250,0.45) 50%, rgba(139,92,246,0.35) 75%, rgba(139,92,246,0.2) 100%) !important;
+}
+
+/* Glass theme: action buttons in table */
+.glass-theme .tenant-app td .bg-red-100 { background: rgba(239, 68, 68, 0.2) !important; }
+.glass-theme .tenant-app td .text-red-700 { color: #f87171 !important; }
+.glass-theme .tenant-app td .bg-red-100:hover { background: rgba(239, 68, 68, 0.35) !important; }
 </style>
 
 <script>
