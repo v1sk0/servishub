@@ -96,23 +96,6 @@ def find_matching_listings(brand, model, part_category=None):
     normalized_brand = normalize_brand(brand)
     _log(f' brand={brand!r} -> normalized={normalized_brand!r}, model={model!r}, category={part_category!r}')
 
-    # Debug: count all active listings for this brand
-    debug_count = (
-        db.session.query(func.count(SupplierListing.id))
-        .join(Supplier, SupplierListing.supplier_id == Supplier.id)
-        .filter(SupplierListing.is_active.is_(True))
-        .scalar()
-    )
-    _log(f' Total active listings in DB: {debug_count}')
-
-    # Debug: count suppliers with ACTIVE status
-    active_suppliers = (
-        db.session.query(func.count(Supplier.id))
-        .filter(Supplier.status == SupplierStatus.ACTIVE)
-        .scalar()
-    )
-    _log(f' Active suppliers: {active_suppliers}')
-
     query = (
         db.session.query(SupplierListing)
         .join(Supplier, SupplierListing.supplier_id == Supplier.id)
@@ -128,19 +111,6 @@ def find_matching_listings(brand, model, part_category=None):
 
     # Brand filter (case-insensitive)
     if normalized_brand:
-        # Debug: check brand values in DB
-        brand_listings = (
-            db.session.query(SupplierListing.brand, func.count(SupplierListing.id))
-            .join(Supplier, SupplierListing.supplier_id == Supplier.id)
-            .filter(
-                SupplierListing.is_active.is_(True),
-                Supplier.status == SupplierStatus.ACTIVE,
-            )
-            .group_by(SupplierListing.brand)
-            .all()
-        )
-        _log(f' Brands in DB: {[(b, c) for b, c in brand_listings]}')
-
         query = query.filter(
             func.upper(SupplierListing.brand) == normalized_brand.upper()
         )
@@ -157,45 +127,62 @@ def find_matching_listings(brand, model, part_category=None):
                 func.lower(SupplierListing.part_category).in_(cats)
             )
 
-    # Debug: show what model_compatibility values exist for this brand
-    if normalized_brand:
-        compat_values = (
-            db.session.query(SupplierListing.model_compatibility, SupplierListing.part_category, SupplierListing.quality_grade)
-            .join(Supplier, SupplierListing.supplier_id == Supplier.id)
-            .filter(
-                SupplierListing.is_active.is_(True),
-                Supplier.status == SupplierStatus.ACTIVE,
-                func.upper(SupplierListing.brand) == normalized_brand.upper(),
-            )
-            .all()
-        )
-        _log(f' Listings for brand {normalized_brand}: {[(c, cat, q) for c, cat, q in compat_values]}')
-
-    # Model matching - ILIKE na model_compatibility
+    # Model matching - exact first, then ILIKE fallbacks
     if model:
+        # Level 0: Exact match (case-insensitive) - "iPhone 11" matches only "iPhone 11"
+        _log(f' Trying exact match: {model!r}')
+        exact = query.filter(
+            func.lower(SupplierListing.model_compatibility) == model.lower()
+        ).all()
+        _log(f' Exact match results: {len(exact)}')
+
+        if exact:
+            return exact
+
+        # Level 0b: model appears as a standalone entry in multi-model field
+        # e.g. "iPhone 11 / iPhone 11 Pro" or "iPhone 11, iPhone 11 Pro"
+        # Use word boundary: match "iPhone 11" but NOT "iPhone 11 Pro"
+        # PostgreSQL regex: model followed by end-of-string, comma, slash, or paren
+        boundary_pattern = f'(^|[,/\\(] ?){model}($|[,/\\)] ?)'
+        _log(f' Trying boundary match: {boundary_pattern!r}')
+        boundary = query.filter(
+            SupplierListing.model_compatibility.op('~*')(boundary_pattern)
+        ).all()
+        _log(f' Boundary match results: {len(boundary)}')
+
+        if boundary:
+            return boundary
+
+        # Level 1: ILIKE contains (broader match)
         model_pattern = f'%{model}%'
-        _log(f' Trying primary match: ILIKE {model_pattern!r}')
+        _log(f' Trying ILIKE match: {model_pattern!r}')
         primary = query.filter(
             SupplierListing.model_compatibility.ilike(model_pattern)
         ).all()
-        _log(f' Primary match results: {len(primary)}')
+        _log(f' ILIKE match results: {len(primary)}')
 
         if primary:
             return primary
 
-        # Fallback 1: strip brand prefix (Galaxy S21 -> S21)
+        # Fallback 2: strip brand prefix (Galaxy S21 -> S21)
         model_number = _extract_model_number(model, normalized_brand)
-        _log(f' Fallback 1: model_number={model_number!r} (from {model!r})')
+        _log(f' Fallback 2: model_number={model_number!r} (from {model!r})')
         if model_number != model:
+            prefix_exact = query.filter(
+                func.lower(SupplierListing.model_compatibility) == model_number.lower()
+            ).all()
+            if prefix_exact:
+                return prefix_exact
+
             prefix_pattern = f'%{model_number}%'
             result = query.filter(
                 SupplierListing.model_compatibility.ilike(prefix_pattern)
             ).all()
-            _log(f' Fallback 1 results: {len(result)}')
+            _log(f' Fallback 2 results: {len(result)}')
             if result:
                 return result
 
-        # Fallback 2: strip suffix (S21 Pro -> S21)
+        # Fallback 3: strip suffix (S21 Pro -> S21) - broader search
         stripped = strip_model_suffix(model)
         if stripped != model:
             fallback_pattern = f'%{stripped}%'
@@ -205,7 +192,7 @@ def find_matching_listings(brand, model, part_category=None):
             if result:
                 return result
 
-        # Fallback 3: strip prefix + suffix combined
+        # Fallback 4: strip prefix + suffix combined
         if model_number != model:
             stripped_number = strip_model_suffix(model_number)
             if stripped_number != model_number:
@@ -214,7 +201,7 @@ def find_matching_listings(brand, model, part_category=None):
                     SupplierListing.model_compatibility.ilike(combined_pattern)
                 ).all()
 
-        return primary  # Prazan rezultat
+        return []  # Nema rezultata
 
     return query.all()
 
