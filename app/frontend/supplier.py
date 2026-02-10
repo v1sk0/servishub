@@ -81,6 +81,14 @@ def supplier_delivery():
     return render_template('supplier/delivery.html')
 
 
+# ============== Credits ==============
+
+@bp.route('/supplier/credits')
+def supplier_credits():
+    """Pregled kredita dobavljaca."""
+    return render_template('supplier/credits.html')
+
+
 # ============== Settings ==============
 
 @bp.route('/supplier/settings')

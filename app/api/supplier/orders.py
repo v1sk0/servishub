@@ -340,6 +340,19 @@ def confirm_availability(order_id):
             'current_status': order.status.value,
         }, 409
 
+    # Proveri kredit dobavljaca (1 kredit za prihvatanje narudzbine)
+    from app.services.credit_service import deduct_credits, get_balance
+    from app.models.credits import OwnerType, CreditTransactionType
+
+    supplier_balance = get_balance(OwnerType.SUPPLIER, g.supplier_id)
+    if supplier_balance < 1:
+        return {
+            'error': 'Nemate dovoljno kredita za prihvatanje narudzbine. Potreban je 1 kredit.',
+            'code': 'INSUFFICIENT_CREDITS',
+            'credits_required': 1,
+            'credits_available': float(supplier_balance),
+        }, 402
+
     try:
         data = ConfirmAvailabilitySchema(**request.json)
     except Exception as e:
@@ -359,6 +372,24 @@ def confirm_availability(order_id):
     order.delivery_cutoff_time = cutoff_time
     if data.notes:
         order.seller_notes = data.notes
+
+    # Oduzmi 1 kredit od dobavljaca
+    txn = deduct_credits(
+        owner_type=OwnerType.SUPPLIER,
+        owner_id=g.supplier_id,
+        amount=1,
+        transaction_type=CreditTransactionType.CONNECTION_FEE,
+        description=f'Prihvatanje narudzbine {order.order_number}',
+        ref_type='part_order',
+        ref_id=order.id,
+        idempotency_key=f'supplier_confirm_{g.supplier_id}_{order.id}',
+    )
+
+    if txn is False:
+        return {
+            'error': 'Nemate dovoljno kredita za prihvatanje narudzbine.',
+            'code': 'INSUFFICIENT_CREDITS',
+        }, 402
 
     # Status -> OFFERED + expiry (tenant ima 4h)
     order.status = OrderStatus.OFFERED

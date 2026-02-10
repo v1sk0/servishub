@@ -484,6 +484,84 @@ if (!sessionStorage.getItem('supplier_access_token')) {
     .glass-theme .sidebar-badge-ping {
         background: rgba(248, 113, 113, 0.4);
     }
+
+    /* ========================================
+       CREDIT WIDGET (TOPBAR)
+       ======================================== */
+    .supplier-credit-widget {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 14px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        color: white;
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+        transition: box-shadow 0.2s;
+    }
+    .supplier-credit-widget:hover {
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+    }
+    .supplier-credit-widget .credit-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+    .supplier-credit-widget .credit-amount {
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .supplier-credit-widget .credit-label {
+        font-size: 11px;
+        opacity: 0.85;
+        font-weight: 500;
+    }
+    .supplier-credit-widget .shimmer-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        animation: shimmer 2.5s infinite;
+    }
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    .supplier-credit-widget.low-balance {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+    .supplier-credit-widget.critical-balance {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    .supplier-credit-skeleton {
+        width: 100px;
+        height: 36px;
+        background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s infinite;
+        border-radius: 10px;
+    }
+    @keyframes skeleton-loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    /* Glass theme */
+    .glass-theme .supplier-credit-widget {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.85), rgba(124, 58, 237, 0.85));
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .glass-theme .supplier-credit-widget.low-balance {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.85), rgba(217, 119, 6, 0.85));
+    }
+    .glass-theme .supplier-credit-widget.critical-balance {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.85), rgba(220, 38, 38, 0.85));
+    }
+    .glass-theme .supplier-credit-skeleton {
+        background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+        background-size: 200% 100%;
+    }
 </style>
 {% endblock %}
 
@@ -538,6 +616,29 @@ if (!sessionStorage.getItem('supplier_access_token')) {
                 <div class="flex flex-1"></div>
 
                 <div class="flex items-center gap-x-4 lg:gap-x-6" x-cloak>
+                    <!-- Credit Balance Widget -->
+                    <template x-if="creditsLoading">
+                        <div class="supplier-credit-skeleton hidden sm:block"></div>
+                    </template>
+                    <template x-if="!creditsLoading">
+                        <a href="/supplier/credits" class="supplier-credit-widget hidden sm:flex"
+                           :class="{
+                               'low-balance': creditBalance <= 5 && creditBalance > 1,
+                               'critical-balance': creditBalance <= 1
+                           }">
+                            <div class="shimmer-overlay"></div>
+                            <div class="credit-icon">
+                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+                                </svg>
+                            </div>
+                            <div class="flex flex-col items-start leading-tight">
+                                <span class="credit-amount" x-text="creditBalance.toFixed(0)"></span>
+                                <span class="credit-label">kredita</span>
+                            </div>
+                        </a>
+                    </template>
+
                     <!-- Notifications -->
                     <button type="button" class="-m-2.5 p-2.5 notification-btn">
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -589,11 +690,27 @@ function supplierApp() {
         sidebarOpen: false,
         loading: true,
         pendingOrdersCount: 0,
+        creditBalance: 0,
+        creditsLoading: true,
 
         async init() {
-            await this.loadUser();
+            await Promise.all([
+                this.loadUser(),
+                this.loadCreditBalance()
+            ]);
             this.loadPendingOrders();
             setInterval(() => this.loadPendingOrders(), 60000);
+        },
+
+        async loadCreditBalance() {
+            try {
+                const data = await supplierApi('/credits/');
+                this.creditBalance = data.balance || 0;
+            } catch (e) {
+                console.error('Failed to load credit balance:', e);
+            } finally {
+                this.creditsLoading = false;
+            }
         },
 
         async loadPendingOrders() {

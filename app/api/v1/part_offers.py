@@ -512,136 +512,145 @@ def confirm_order(order_id):
     1 kredit oduzet od tenanta + mutual reveal + stock decrement.
     Atomska transakcija: kredit + reveal + stock + status = jedan commit.
     """
-    # Row lock sprecava race condition
-    order = PartOrder.query.with_for_update().get(order_id)
-    if not order or order.buyer_tenant_id != g.tenant_id:
-        return {'error': 'Narudzbina nije pronadjena'}, 404
+    try:
+        # Row lock sprecava race condition
+        order = PartOrder.query.with_for_update().get(order_id)
+        if not order or order.buyer_tenant_id != g.tenant_id:
+            return {'error': 'Narudzbina nije pronadjena'}, 404
 
-    # Idempotent: vec CONFIRMED
-    if order.status == OrderStatus.CONFIRMED:
-        supplier = Supplier.query.get(order.seller_supplier_id)
+        # Idempotent: vec CONFIRMED
+        if order.status == OrderStatus.CONFIRMED:
+            supplier = Supplier.query.get(order.seller_supplier_id)
+            return {
+                'success': True,
+                'supplier': supplier.to_revealed_dict() if supplier else None,
+                'message': 'Narudzbina je vec potvrđena.',
+            }
+
+        if order.status != OrderStatus.OFFERED:
+            return {
+                'error': 'Narudzbina nije u statusu za potvrdu',
+                'code': 'INVALID_STATUS',
+                'current_status': order.status.value,
+            }, 409
+
+        # Proveri expiry (lazy check)
+        if order.expires_at and order.expires_at < datetime.utcnow():
+            order.status = OrderStatus.SENT
+            order.offered_at = None
+            order.expires_at = datetime.utcnow() + timedelta(hours=2)
+            order.delivery_method = None
+            order.courier_service = None
+            order.delivery_cost = None
+            order.estimated_delivery_days = None
+            order.delivery_cutoff_time = None
+            db.session.commit()
+            return {
+                'error': 'Ponuda je istekla. Dobavljac mora ponovo da potvrdi.',
+                'code': 'OFFER_EXPIRED',
+            }, 410
+
+        # 1. Stock decrement (tek na CONFIRMED, ne na OFFERED)
+        if not decrement_stock(order):
+            # Stock conflict! Revert to SENT
+            order.status = OrderStatus.SENT
+            order.offered_at = None
+            order.expires_at = datetime.utcnow() + timedelta(hours=2)
+            order.delivery_method = None
+            order.courier_service = None
+            order.delivery_cost = None
+            order.estimated_delivery_days = None
+            order.delivery_cutoff_time = None
+            order.seller_notes = None
+            db.session.commit()
+            return {
+                'error': ('Artikal vise nije na stanju kod dobavljaca. '
+                          'Narudzbina je vracena na cekanje - '
+                          'dobavljac ce ponovo proveriti stanje.'),
+                'code': 'STOCK_CONFLICT',
+            }, 409
+
+        supplier_id = order.seller_supplier_id
+
+        # 2. Proveri da li je vec revealed (besplatno ako jeste)
+        existing_reveal = SupplierReveal.query.filter_by(
+            tenant_id=g.tenant_id, supplier_id=supplier_id
+        ).first()
+
+        if not existing_reveal:
+            # 3. Oduzmi 1 kredit od TENANTA
+            from app.services.credit_service import deduct_credits
+            txn = deduct_credits(
+                owner_type=OwnerType.TENANT,
+                owner_id=g.tenant_id,
+                amount=1,
+                transaction_type=CreditTransactionType.CONNECTION_FEE,
+                description=f'Potvrda narudzbine {order.order_number}',
+                ref_type='part_order',
+                ref_id=order.id,
+                idempotency_key=f'order_confirm_{g.tenant_id}_{order.id}',
+            )
+
+            if txn is False:
+                return {
+                    'error': 'Nemate dovoljno kredita',
+                    'credits_required': 1,
+                }, 402
+
+            # 4. Mutual reveal
+            reveal = SupplierReveal(
+                tenant_id=g.tenant_id,
+                supplier_id=supplier_id,
+                credit_transaction_id=txn.id,
+            )
+            db.session.add(reveal)
+
+        # 5. Potvrdi narudzbinu
+        order.status = OrderStatus.CONFIRMED
+        order.confirmed_at = datetime.utcnow()
+        order.expires_at = None  # Nema vise expiry
+
+        # 6. Stock conflict check - revertuj ostale OFFERED za iste listinge
+        for item in order.items.all():
+            if item.supplier_listing_id:
+                check_stock_conflicts(item.supplier_listing_id)
+
+        db.session.commit()
+
+        # 7. Delivery cutoff warning
+        cutoff_warning = None
+        try:
+            if order.delivery_cutoff_time:
+                now_local = datetime.now(tz=ZoneInfo('Europe/Belgrade')).time()
+                if now_local > order.delivery_cutoff_time:
+                    cutoff_warning = (
+                        'Narudzbina je potvrđena nakon roka za slanje danas. '
+                        'Verovatno je prebacena za sledecu turu. '
+                        'Kontaktirajte dobavljaca za detalje.'
+                    )
+        except Exception:
+            pass
+
+        # 8. Email supplier-u (non-blocking)
+        try:
+            from app.services.email_service import send_supplier_order_email
+            send_supplier_order_email(order, 'confirmed')
+        except (ImportError, Exception):
+            pass
+
+        # 9. Vrati kompletne supplier podatke
+        supplier = Supplier.query.get(supplier_id)
         return {
             'success': True,
             'supplier': supplier.to_revealed_dict() if supplier else None,
-            'message': 'Narudzbina je vec potvrđena.',
+            'cutoff_warning': cutoff_warning,
+            'message': 'Narudzbina potvrđena. Podaci o dobavljacu su sada vidljivi.',
         }
 
-    if order.status != OrderStatus.OFFERED:
-        return {
-            'error': 'Narudzbina nije u statusu za potvrdu',
-            'code': 'INVALID_STATUS',
-            'current_status': order.status.value,
-        }, 409
-
-    # Proveri expiry (lazy check)
-    if order.expires_at and order.expires_at < datetime.utcnow():
-        order.status = OrderStatus.SENT
-        order.offered_at = None
-        order.expires_at = datetime.utcnow() + timedelta(hours=2)
-        order.delivery_method = None
-        order.courier_service = None
-        order.delivery_cost = None
-        order.estimated_delivery_days = None
-        order.delivery_cutoff_time = None
-        db.session.commit()
-        return {
-            'error': 'Ponuda je istekla. Dobavljac mora ponovo da potvrdi.',
-            'code': 'OFFER_EXPIRED',
-        }, 410
-
-    # 1. Stock decrement (tek na CONFIRMED, ne na OFFERED)
-    if not decrement_stock(order):
-        # Stock conflict! Revert to SENT
-        order.status = OrderStatus.SENT
-        order.offered_at = None
-        order.expires_at = datetime.utcnow() + timedelta(hours=2)
-        order.delivery_method = None
-        order.courier_service = None
-        order.delivery_cost = None
-        order.estimated_delivery_days = None
-        order.delivery_cutoff_time = None
-        order.seller_notes = None
-        db.session.commit()
-        return {
-            'error': ('Artikal vise nije na stanju kod dobavljaca. '
-                      'Narudzbina je vracena na cekanje - '
-                      'dobavljac ce ponovo proveriti stanje.'),
-            'code': 'STOCK_CONFLICT',
-        }, 409
-
-    supplier_id = order.seller_supplier_id
-
-    # 2. Proveri da li je vec revealed (besplatno ako jeste)
-    existing_reveal = SupplierReveal.query.filter_by(
-        tenant_id=g.tenant_id, supplier_id=supplier_id
-    ).first()
-
-    if not existing_reveal:
-        # 3. Oduzmi 1 kredit od TENANTA
-        from app.services.credit_service import deduct_credits
-        txn = deduct_credits(
-            owner_type=OwnerType.TENANT,
-            owner_id=g.tenant_id,
-            amount=1,
-            transaction_type=CreditTransactionType.CONNECTION_FEE,
-            description=f'Potvrda narudzbine {order.order_number}',
-            ref_type='part_order',
-            ref_id=order.id,
-            idempotency_key=f'order_confirm_{g.tenant_id}_{order.id}',
-        )
-
-        if txn is False:
-            return {
-                'error': 'Nemate dovoljno kredita',
-                'credits_required': 1,
-            }, 402
-
-        # 4. Mutual reveal
-        reveal = SupplierReveal(
-            tenant_id=g.tenant_id,
-            supplier_id=supplier_id,
-            credit_transaction_id=txn.id,
-        )
-        db.session.add(reveal)
-
-    # 5. Potvrdi narudzbinu
-    order.status = OrderStatus.CONFIRMED
-    order.confirmed_at = datetime.utcnow()
-    order.expires_at = None  # Nema vise expiry
-
-    # 6. Stock conflict check - revertuj ostale OFFERED za iste listinge
-    for item in order.items.all():
-        if item.supplier_listing_id:
-            check_stock_conflicts(item.supplier_listing_id)
-
-    db.session.commit()
-
-    # 7. Delivery cutoff warning
-    cutoff_warning = None
-    if order.delivery_cutoff_time:
-        now_local = datetime.now(tz=ZoneInfo('Europe/Belgrade')).time()
-        if now_local > order.delivery_cutoff_time:
-            cutoff_warning = (
-                'Narudzbina je potvrđena nakon roka za slanje danas. '
-                'Verovatno je prebacena za sledecu turu. '
-                'Kontaktirajte dobavljaca za detalje.'
-            )
-
-    # 8. Email supplier-u (non-blocking)
-    try:
-        from app.services.email_service import send_supplier_order_email
-        send_supplier_order_email(order, 'confirmed')
-    except (ImportError, Exception):
-        pass
-
-    # 9. Vrati kompletne supplier podatke
-    supplier = Supplier.query.get(supplier_id)
-    return {
-        'success': True,
-        'supplier': supplier.to_revealed_dict() if supplier else None,
-        'cutoff_warning': cutoff_warning,
-        'message': 'Narudzbina potvrđena. Podaci o dobavljacu su sada vidljivi.',
-    }
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.exception(f'Error in confirm_order({order_id}): {e}')
+        return {'error': f'Greska pri potvrdi: {str(e)}'}, 500
 
 
 @bp.route('/orders/<int:order_id>/cancel', methods=['POST'])
