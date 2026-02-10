@@ -148,14 +148,43 @@
                             <td class="px-4 py-3 text-center">
                                 <p class="text-sm font-semibold text-gray-900" x-text="order.total_amount ? (formatPrice(order.total_amount) + ' ' + order.currency) : '-'"></p>
                             </td>
-                            <td class="px-4 py-3">
-                                <div class="text-center">
-                                    <span :class="getStatusClass(order.status)"
-                                          class="text-xs font-semibold px-2.5 py-1 rounded-full status-badge"
-                                          :class="{ 'status-shimmer': isActiveStatus(order.status) }"
-                                          x-text="getStatusLabel(order.status)"></span>
-                                    <p class="text-[11px] text-gray-500 mt-1 leading-tight" x-text="getStatusDescription(order.status)"></p>
-                                </div>
+                            <td class="px-3 py-3">
+                                <!-- Terminal statuses: simple badge -->
+                                <template x-if="['REJECTED', 'CANCELLED'].includes(order.status)">
+                                    <div class="text-center">
+                                        <span :class="getStatusClass(order.status)"
+                                              class="text-xs font-semibold px-2.5 py-1 rounded-full status-badge"
+                                              x-text="getStatusLabel(order.status)"></span>
+                                    </div>
+                                </template>
+                                <!-- Active/completed: lifeline stepper -->
+                                <template x-if="!['REJECTED', 'CANCELLED'].includes(order.status)">
+                                    <div class="lifeline">
+                                        <div class="lifeline-track">
+                                            <div class="lifeline-fill" :style="'width:' + getLifelineProgress(order.status) + '%'"></div>
+                                        </div>
+                                        <div class="lifeline-dots">
+                                            <div class="lifeline-step">
+                                                <div class="lifeline-dot" :class="getLifelineDotClass(order.status, 1)">
+                                                    <span x-show="getLifelinePulse(order.status) === 1" class="lifeline-pulse" :class="getLifelinePulseColor(order.status)"></span>
+                                                </div>
+                                                <span class="lifeline-label" :class="getStepNum(order.status) >= 1 ? 'text-gray-700' : 'text-gray-400'">Poslato</span>
+                                            </div>
+                                            <div class="lifeline-step">
+                                                <div class="lifeline-dot" :class="getLifelineDotClass(order.status, 2)">
+                                                    <span x-show="getLifelinePulse(order.status) === 2" class="lifeline-pulse" :class="getLifelinePulseColor(order.status)"></span>
+                                                </div>
+                                                <span class="lifeline-label" :class="getStepNum(order.status) >= 2 ? 'text-gray-700' : 'text-gray-400'">Potvrdjeno</span>
+                                            </div>
+                                            <div class="lifeline-step">
+                                                <div class="lifeline-dot" :class="getLifelineDotClass(order.status, 3)">
+                                                    <span x-show="getLifelinePulse(order.status) === 3" class="lifeline-pulse" :class="getLifelinePulseColor(order.status)"></span>
+                                                </div>
+                                                <span class="lifeline-label" :class="getStepNum(order.status) >= 3 ? 'text-gray-700' : 'text-gray-400'">Isporuceno</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
                             </td>
                             <!-- Poruceno: exact time + waiting duration -->
                             <td class="px-4 py-3 text-center">
@@ -562,6 +591,55 @@
     background-image: linear-gradient(90deg, rgba(139,92,246,0.2) 0%, rgba(139,92,246,0.35) 25%, rgba(167,139,250,0.45) 50%, rgba(139,92,246,0.35) 75%, rgba(139,92,246,0.2) 100%) !important;
 }
 
+/* Lifeline stepper */
+.lifeline { position: relative; min-width: 140px; padding: 4px 0; }
+.lifeline-track {
+    position: absolute; top: 12px; left: 16px; right: 16px; height: 3px;
+    background: #e5e7eb; border-radius: 2px;
+}
+.lifeline-fill {
+    height: 100%; border-radius: 2px; transition: width 0.3s;
+    background: linear-gradient(90deg, #3b82f6, #22c55e);
+}
+.lifeline-dots {
+    position: relative; display: flex; justify-content: space-between; z-index: 1;
+}
+.lifeline-step { display: flex; flex-direction: column; align-items: center; }
+.lifeline-dot {
+    width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid #d1d5db;
+    background: white; position: relative; transition: all 0.3s;
+}
+.lifeline-dot.dot-done {
+    border-color: #22c55e; background: #22c55e;
+}
+.lifeline-dot.dot-active {
+    border-color: #3b82f6; background: #3b82f6;
+}
+.lifeline-dot.dot-active-amber {
+    border-color: #f59e0b; background: #f59e0b;
+}
+.lifeline-label { font-size: 9px; margin-top: 3px; line-height: 1; white-space: nowrap; }
+.lifeline-pulse {
+    position: absolute; inset: -4px; border-radius: 50%;
+    animation: lifeline-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+    opacity: 0.6;
+}
+.lifeline-pulse.pulse-blue { background: #3b82f6; }
+.lifeline-pulse.pulse-amber { background: #f59e0b; }
+.lifeline-pulse.pulse-purple { background: #8b5cf6; }
+@keyframes lifeline-ping {
+    0% { transform: scale(1); opacity: 0.6; }
+    75%, 100% { transform: scale(2); opacity: 0; }
+}
+
+/* Glass theme: lifeline */
+.glass-theme .tenant-app .lifeline-track { background: rgba(255,255,255,0.1); }
+.glass-theme .tenant-app .lifeline-dot { background: rgba(30,41,59,0.8); border-color: rgba(255,255,255,0.2); }
+.glass-theme .tenant-app .lifeline-dot.dot-done { border-color: #22c55e; background: #22c55e; }
+.glass-theme .tenant-app .lifeline-dot.dot-active { border-color: #3b82f6; background: #3b82f6; }
+.glass-theme .tenant-app .lifeline-dot.dot-active-amber { border-color: #f59e0b; background: #f59e0b; }
+.glass-theme .tenant-app .lifeline-label { color: #94a3b8 !important; }
+
 /* Glass theme: waiting duration */
 .glass-theme .tenant-app td .waiting-duration.text-amber-600 { color: #fbbf24 !important; }
 
@@ -856,6 +934,42 @@ function ordersPage() {
 
         isActiveStatus(status) {
             return ['SENT', 'OFFERED', 'SHIPPED'].includes(status);
+        },
+
+        // Lifeline: map status to step number (1-3)
+        getStepNum(status) {
+            const map = { 'DRAFT': 0, 'SENT': 1, 'OFFERED': 1, 'CONFIRMED': 2, 'SHIPPED': 2, 'DELIVERED': 3, 'COMPLETED': 3 };
+            return map[status] ?? 0;
+        },
+
+        // Lifeline: progress bar width %
+        getLifelineProgress(status) {
+            const map = { 'DRAFT': 0, 'SENT': 0, 'OFFERED': 25, 'CONFIRMED': 50, 'SHIPPED': 75, 'DELIVERED': 100, 'COMPLETED': 100 };
+            return map[status] ?? 0;
+        },
+
+        // Lifeline: dot CSS class for step N
+        getLifelineDotClass(status, step) {
+            const s = this.getStepNum(status);
+            if (step < s) return 'dot-done';
+            if (step === s && ['SENT', 'SHIPPED'].includes(status)) return 'dot-active';
+            if (step === s && status === 'OFFERED') return 'dot-active-amber';
+            if (step === s && ['CONFIRMED'].includes(status)) return 'dot-done';
+            if (step === s && ['DELIVERED', 'COMPLETED'].includes(status)) return 'dot-done';
+            return '';
+        },
+
+        // Lifeline: which step pulses (0 = none)
+        getLifelinePulse(status) {
+            const map = { 'SENT': 1, 'OFFERED': 1, 'SHIPPED': 3 };
+            return map[status] || 0;
+        },
+
+        // Lifeline: pulse color class
+        getLifelinePulseColor(status) {
+            if (status === 'OFFERED') return 'pulse-amber';
+            if (status === 'SHIPPED') return 'pulse-purple';
+            return 'pulse-blue';
         },
 
         getQualityLabel(grade) {
