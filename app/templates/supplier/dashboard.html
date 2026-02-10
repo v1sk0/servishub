@@ -125,16 +125,10 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Ukupan promet</p>
-                    <template x-if="Object.keys(turnover).length > 0">
-                        <div class="mt-1">
-                            <template x-for="(amount, cur) in turnover" :key="cur">
-                                <p class="text-xl font-bold text-gray-900 leading-tight" x-text="formatAmount(amount, cur)"></p>
-                            </template>
-                        </div>
-                    </template>
-                    <template x-if="Object.keys(turnover).length === 0">
-                        <p class="text-3xl font-bold text-gray-900 mt-1">0</p>
-                    </template>
+                    <div class="mt-1 space-y-0.5">
+                        <p class="text-xl font-bold text-gray-900 leading-tight" x-text="new Intl.NumberFormat('sr-RS').format(turnover.RSD || 0) + ' RSD'"></p>
+                        <p class="text-lg font-bold text-indigo-600 leading-tight" x-text="new Intl.NumberFormat('sr-RS').format(turnover.EUR || 0) + ' EUR'"></p>
+                    </div>
                 </div>
                 <div class="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">
                     <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
