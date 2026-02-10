@@ -727,6 +727,57 @@
             </div>
         </div>
     </div>
+
+    <!-- Rating Modal -->
+    <div x-show="ratingModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" x-transition>
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/50" @click="skipRating()"></div>
+            <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Ocenite kupca</h2>
+                <p class="text-gray-600 mb-6 text-sm">Kako biste ocenili saradnju za narudzbinu <strong x-text="ratingOrder?.order_number"></strong>?</p>
+
+                <!-- Thumbs up / Thumbs down -->
+                <div class="flex justify-center gap-6 mb-6">
+                    <button @click="ratingValue = 'POSITIVE'"
+                            class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all"
+                            :class="ratingValue === 'POSITIVE' ? 'border-green-500 bg-green-50 scale-105' : 'border-gray-200 hover:border-green-300 hover:bg-green-50/50'">
+                        <svg class="w-10 h-10" :class="ratingValue === 'POSITIVE' ? 'text-green-600' : 'text-gray-400'" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M2 20h2c.55 0 1-.45 1-1v-9c0-.55-.45-1-1-1H2v11zm19.83-7.12c.11-.25.17-.52.17-.8V11c0-1.1-.9-2-2-2h-5.5l.92-4.65c.05-.22.02-.46-.08-.66-.23-.45-.52-.86-.88-1.22L14 2 7.59 8.41C7.21 8.79 7 9.3 7 9.83v7.84C7 18.95 8.05 20 9.34 20h8.11c.7 0 1.36-.37 1.72-.97l2.66-6.15z"/>
+                        </svg>
+                        <span class="text-sm font-medium" :class="ratingValue === 'POSITIVE' ? 'text-green-700' : 'text-gray-500'">Pozitivna</span>
+                    </button>
+                    <button @click="ratingValue = 'NEGATIVE'"
+                            class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all"
+                            :class="ratingValue === 'NEGATIVE' ? 'border-red-500 bg-red-50 scale-105' : 'border-gray-200 hover:border-red-300 hover:bg-red-50/50'">
+                        <svg class="w-10 h-10" :class="ratingValue === 'NEGATIVE' ? 'text-red-600' : 'text-gray-400'" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/>
+                        </svg>
+                        <span class="text-sm font-medium" :class="ratingValue === 'NEGATIVE' ? 'text-red-700' : 'text-gray-500'">Negativna</span>
+                    </button>
+                </div>
+
+                <!-- Comment -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Komentar (opciono)</label>
+                    <textarea x-model="ratingComment" rows="3" maxlength="500" placeholder="Opisite vase iskustvo..."
+                              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 text-sm"></textarea>
+                    <p class="text-xs text-gray-400 mt-1" x-text="(ratingComment?.length || 0) + '/500'"></p>
+                </div>
+
+                <div class="flex gap-3">
+                    <button @click="skipRating()"
+                            class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Preskoci
+                    </button>
+                    <button @click="submitRating()" :disabled="!ratingValue || ratingSubmitting"
+                            class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                        <span x-show="!ratingSubmitting">Sacuvaj ocenu</span>
+                        <span x-show="ratingSubmitting">Cuvam...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -762,6 +813,13 @@ function ordersPage() {
         deliveryRounds: [],
         showRejectModal: false,
         rejectReason: '',
+
+        // Rating
+        ratingModal: false,
+        ratingOrder: null,
+        ratingValue: '',
+        ratingComment: '',
+        ratingSubmitting: false,
 
         async init() {
             await Promise.all([
@@ -1052,15 +1110,43 @@ function ordersPage() {
         },
 
         async completeOrder() {
-            if (!confirm('Zavrsite narudzbinu i ocenite kupca?')) return;
             try {
                 await supplierApi(`/orders/${this.selectedOrder.id}/complete`, 'POST', {});
+                const order = this.selectedOrder;
                 this.closeDetailModal();
-                showToast('Narudzbina zavrsena', 'success');
+                this.ratingOrder = order;
+                this.ratingValue = '';
+                this.ratingComment = '';
+                this.ratingModal = true;
                 await Promise.all([this.loadOrders(), this.loadStats()]);
             } catch (err) {
                 alert('Greska: ' + err.message);
             }
+        },
+
+        async submitRating() {
+            if (!this.ratingValue) {
+                showToast('Izaberite ocenu', 'error');
+                return;
+            }
+            this.ratingSubmitting = true;
+            try {
+                await supplierApi(`/orders/${this.ratingOrder.id}/rate`, 'POST', {
+                    rating: this.ratingValue,
+                    comment: this.ratingComment || ''
+                });
+                showToast('Ocena uspesno sacuvana', 'success');
+                this.ratingModal = false;
+            } catch (err) {
+                alert('Greska: ' + err.message);
+            } finally {
+                this.ratingSubmitting = false;
+            }
+        },
+
+        skipRating() {
+            this.ratingModal = false;
+            showToast('Narudzbina zavrsena', 'success');
         },
 
         // Quick actions from table (without opening modal)
@@ -1098,10 +1184,12 @@ function ordersPage() {
         },
 
         async quickComplete(order) {
-            if (!confirm('Zavrsite narudzbinu i ocenite kupca?')) return;
             try {
                 await supplierApi(`/orders/${order.id}/complete`, 'POST', {});
-                showToast('Narudzbina zavrsena', 'success');
+                this.ratingOrder = order;
+                this.ratingValue = '';
+                this.ratingComment = '';
+                this.ratingModal = true;
                 await Promise.all([this.loadOrders(), this.loadStats()]);
             } catch (err) {
                 alert('Greska: ' + err.message);
