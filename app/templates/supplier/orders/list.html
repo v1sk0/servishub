@@ -2,6 +2,69 @@
 
 {% block title %}Narudzbine - Supplier Portal{% endblock %}
 
+{% block extra_styles %}
+<style>
+/* Lifeline stepper */
+.lifeline { position: relative; min-width: 140px; padding: 4px 0; }
+.lifeline-track {
+    position: absolute; top: 12px; left: 16px; right: 16px; height: 3px;
+    background: #e5e7eb; border-radius: 2px;
+}
+.lifeline-fill {
+    height: 100%; border-radius: 2px; transition: width 0.3s;
+    background: linear-gradient(90deg, #8b5cf6, #22c55e);
+}
+.lifeline-dots {
+    position: relative; display: flex; justify-content: space-between; z-index: 1;
+}
+.lifeline-step { display: flex; flex-direction: column; align-items: center; }
+.lifeline-dot {
+    width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid #d1d5db;
+    background: white; position: relative; transition: all 0.3s;
+}
+.lifeline-dot.dot-done { border-color: #22c55e; background: #22c55e; }
+.lifeline-dot.dot-active { border-color: #8b5cf6; background: #8b5cf6; }
+.lifeline-dot.dot-active-amber { border-color: #f59e0b; background: #f59e0b; }
+.lifeline-label { font-size: 9px; margin-top: 3px; line-height: 1; white-space: nowrap; }
+.lifeline-pulse {
+    position: absolute; inset: -4px; border-radius: 50%;
+    animation: lifeline-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+    opacity: 0.6;
+}
+.lifeline-pulse.pulse-purple { background: #8b5cf6; }
+.lifeline-pulse.pulse-amber { background: #f59e0b; }
+@keyframes lifeline-ping {
+    0% { transform: scale(1); opacity: 0.6; }
+    75%, 100% { transform: scale(2); opacity: 0; }
+}
+
+/* Detail lifeline (modal) */
+.detail-lifeline-wrap { padding: 8px 0; }
+.detail-lifeline { position: relative; min-width: 340px; max-width: 520px; margin: 0 auto; padding: 6px 0; }
+.detail-lifeline-track {
+    position: absolute; top: 15px; left: 28px; right: 28px; height: 4px;
+    background: #e5e7eb; border-radius: 2px;
+}
+.detail-lifeline-fill {
+    height: 100%; border-radius: 2px; transition: width 0.3s;
+    background: linear-gradient(90deg, #8b5cf6, #22c55e);
+}
+.detail-lifeline-dots {
+    position: relative; display: flex; justify-content: space-between; z-index: 1;
+}
+.detail-lifeline-step { display: flex; flex-direction: column; align-items: center; width: 80px; }
+.detail-lifeline-dot {
+    width: 18px; height: 18px; border-radius: 50%; border: 3px solid #d1d5db;
+    background: white; position: relative; transition: all 0.3s;
+}
+.detail-lifeline-dot.dot-done { border-color: #22c55e; background: #22c55e; }
+.detail-lifeline-dot.dot-active { border-color: #8b5cf6; background: #8b5cf6; }
+.detail-lifeline-dot.dot-active-amber { border-color: #f59e0b; background: #f59e0b; }
+.detail-lifeline-label { font-size: 11px; margin-top: 6px; line-height: 1.2; white-space: nowrap; }
+.detail-lifeline-sublabel { font-size: 9px; line-height: 1; margin-top: 2px; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div x-data="ordersPage()" x-init="init()">
     <!-- Page Header -->
@@ -111,10 +174,49 @@
                             <td class="px-6 py-4">
                                 <p class="font-medium text-gray-900" x-text="formatPrice(order.total_amount, order.currency)"></p>
                             </td>
-                            <td class="px-6 py-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                                      :class="getStatusClass(order.status)"
-                                      x-text="getStatusLabel(order.status)"></span>
+                            <td class="px-3 py-4">
+                                <!-- Terminal statuses: simple badge -->
+                                <template x-if="['REJECTED', 'CANCELLED'].includes(order.status)">
+                                    <div class="text-center">
+                                        <span :class="getStatusClass(order.status)"
+                                              class="text-xs font-semibold px-2.5 py-1 rounded-full"
+                                              x-text="getStatusLabel(order.status)"></span>
+                                    </div>
+                                </template>
+                                <!-- Active/completed: lifeline stepper -->
+                                <template x-if="!['REJECTED', 'CANCELLED'].includes(order.status)">
+                                    <div class="lifeline">
+                                        <div class="lifeline-track">
+                                            <div class="lifeline-fill" :style="'width:' + getLifelineProgress(order.status) + '%'"></div>
+                                        </div>
+                                        <div class="lifeline-dots">
+                                            <div class="lifeline-step">
+                                                <div class="lifeline-dot" :class="getLifelineDotClass(order.status, 1)">
+                                                    <span x-show="getLifelinePulse(order.status) === 1" class="lifeline-pulse" :class="getLifelinePulseColor(order.status)"></span>
+                                                </div>
+                                                <span class="lifeline-label" :class="getStepNum(order.status) >= 1 ? 'text-gray-700' : 'text-gray-400'">Poslato</span>
+                                            </div>
+                                            <div class="lifeline-step">
+                                                <div class="lifeline-dot" :class="getLifelineDotClass(order.status, 2)">
+                                                    <span x-show="getLifelinePulse(order.status) === 2" class="lifeline-pulse" :class="getLifelinePulseColor(order.status)"></span>
+                                                </div>
+                                                <span class="lifeline-label" :class="getStepNum(order.status) >= 2 ? 'text-gray-700' : 'text-gray-400'">Prihvaceno</span>
+                                            </div>
+                                            <div class="lifeline-step">
+                                                <div class="lifeline-dot" :class="getLifelineDotClass(order.status, 3)">
+                                                    <span x-show="getLifelinePulse(order.status) === 3" class="lifeline-pulse" :class="getLifelinePulseColor(order.status)"></span>
+                                                </div>
+                                                <span class="lifeline-label" :class="getStepNum(order.status) >= 3 ? 'text-gray-700' : 'text-gray-400'">Potvrdjeno</span>
+                                            </div>
+                                            <div class="lifeline-step">
+                                                <div class="lifeline-dot" :class="getLifelineDotClass(order.status, 4)">
+                                                    <span x-show="getLifelinePulse(order.status) === 4" class="lifeline-pulse" :class="getLifelinePulseColor(order.status)"></span>
+                                                </div>
+                                                <span class="lifeline-label" :class="getStepNum(order.status) >= 4 ? 'text-gray-700' : 'text-gray-400'">Isporuceno</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
                             </td>
                             <td class="px-6 py-4 text-gray-500" x-text="formatDate(order.created_at)"></td>
                             <td class="px-6 py-4 text-right">
@@ -229,30 +331,49 @@
                         <div class="bg-yellow-50 rounded-lg p-4 text-sm text-yellow-800" x-text="orderDetail?.buyer_notes"></div>
                     </div>
 
-                    <!-- Timeline -->
+                    <!-- Lifeline Stepper -->
                     <div class="mb-6">
-                        <h4 class="text-sm font-medium text-gray-500 uppercase mb-2">Istorija</h4>
-                        <div class="space-y-3">
-                            <div class="flex items-center text-sm" x-show="orderDetail?.timestamps?.created_at">
-                                <span class="w-24 text-gray-500">Kreirana:</span>
-                                <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.created_at)"></span>
+                        <div class="detail-lifeline-wrap">
+                            <div class="detail-lifeline">
+                                <div class="detail-lifeline-track">
+                                    <div class="detail-lifeline-fill" :style="'width:' + getLifelineProgress(selectedOrder?.status) + '%'"></div>
+                                </div>
+                                <div class="detail-lifeline-dots">
+                                    <div class="detail-lifeline-step">
+                                        <div class="detail-lifeline-dot" :class="getLifelineDotClass(selectedOrder?.status, 1)">
+                                            <span x-show="getLifelinePulse(selectedOrder?.status) === 1" class="lifeline-pulse" :class="getLifelinePulseColor(selectedOrder?.status)"></span>
+                                        </div>
+                                        <span class="detail-lifeline-label" :class="getStepNum(selectedOrder?.status) >= 1 ? 'text-gray-800 font-medium' : 'text-gray-400'">Poslato</span>
+                                        <span class="detail-lifeline-sublabel" :class="getStepNum(selectedOrder?.status) >= 1 ? 'text-gray-500' : 'text-gray-300'">kupac poslao</span>
+                                    </div>
+                                    <div class="detail-lifeline-step">
+                                        <div class="detail-lifeline-dot" :class="getLifelineDotClass(selectedOrder?.status, 2)">
+                                            <span x-show="getLifelinePulse(selectedOrder?.status) === 2" class="lifeline-pulse" :class="getLifelinePulseColor(selectedOrder?.status)"></span>
+                                        </div>
+                                        <span class="detail-lifeline-label" :class="getStepNum(selectedOrder?.status) >= 2 ? 'text-gray-800 font-medium' : 'text-gray-400'">Prihvaceno</span>
+                                        <span class="detail-lifeline-sublabel" :class="getStepNum(selectedOrder?.status) >= 2 ? 'text-gray-500' : 'text-gray-300'">vi potvrdili</span>
+                                    </div>
+                                    <div class="detail-lifeline-step">
+                                        <div class="detail-lifeline-dot" :class="getLifelineDotClass(selectedOrder?.status, 3)">
+                                            <span x-show="getLifelinePulse(selectedOrder?.status) === 3" class="lifeline-pulse" :class="getLifelinePulseColor(selectedOrder?.status)"></span>
+                                        </div>
+                                        <span class="detail-lifeline-label" :class="getStepNum(selectedOrder?.status) >= 3 ? 'text-gray-800 font-medium' : 'text-gray-400'">Potvrdjeno</span>
+                                        <span class="detail-lifeline-sublabel" :class="getStepNum(selectedOrder?.status) >= 3 ? 'text-gray-500' : 'text-gray-300'">kupac potvrdio</span>
+                                    </div>
+                                    <div class="detail-lifeline-step">
+                                        <div class="detail-lifeline-dot" :class="getLifelineDotClass(selectedOrder?.status, 4)">
+                                            <span x-show="getLifelinePulse(selectedOrder?.status) === 4" class="lifeline-pulse" :class="getLifelinePulseColor(selectedOrder?.status)"></span>
+                                        </div>
+                                        <span class="detail-lifeline-label" :class="getStepNum(selectedOrder?.status) >= 4 ? 'text-gray-800 font-medium' : 'text-gray-400'">Isporuceno</span>
+                                        <span class="detail-lifeline-sublabel" :class="getStepNum(selectedOrder?.status) >= 4 ? 'text-gray-500' : 'text-gray-300'">posiljka primljena</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="flex items-center text-sm" x-show="orderDetail?.timestamps?.sent_at">
-                                <span class="w-24 text-gray-500">Poslata:</span>
-                                <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.sent_at)"></span>
-                            </div>
-                            <div class="flex items-center text-sm" x-show="orderDetail?.timestamps?.confirmed_at">
-                                <span class="w-24 text-gray-500">Potvrdjena:</span>
-                                <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.confirmed_at)"></span>
-                            </div>
-                            <div class="flex items-center text-sm" x-show="orderDetail?.timestamps?.shipped_at">
-                                <span class="w-24 text-gray-500">Poslata:</span>
-                                <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.shipped_at)"></span>
-                            </div>
-                            <div class="flex items-center text-sm" x-show="orderDetail?.timestamps?.delivered_at">
-                                <span class="w-24 text-gray-500">Isporucena:</span>
-                                <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.delivered_at)"></span>
-                            </div>
+                        </div>
+                        <!-- Status action message -->
+                        <div class="mt-3 text-center">
+                            <p class="text-sm" :class="isActiveStatus(selectedOrder?.status) ? 'text-purple-700 font-medium' : 'text-gray-600'"
+                               x-text="getDetailStatusAction(selectedOrder?.status)"></p>
                         </div>
                     </div>
 
@@ -324,8 +445,16 @@
                         <!-- For CONFIRMED status -->
                         <template x-if="selectedOrder?.status === 'CONFIRMED'">
                             <button @click="shipOrder()"
-                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                                Oznaci kao poslato
+                                    class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                                Posalji posiljku
+                            </button>
+                        </template>
+
+                        <!-- For SHIPPED status -->
+                        <template x-if="selectedOrder?.status === 'SHIPPED'">
+                            <button @click="deliverOrder()"
+                                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                Oznaci kao isporuceno
                             </button>
                         </template>
 
@@ -755,6 +884,67 @@ function ordersPage() {
                 'REJECTED': 'Odbijena'
             };
             return labels[status] || status;
+        },
+
+        // Lifeline: map status to step number (1-4)
+        // 1=Poslato, 2=Prihvaceno(OFFERED), 3=Potvrdjeno(CONFIRMED), 4=Isporuceno
+        getStepNum(status) {
+            const map = { 'DRAFT': 0, 'SENT': 1, 'OFFERED': 2, 'CONFIRMED': 3, 'SHIPPED': 3, 'DELIVERED': 4, 'COMPLETED': 4 };
+            return map[status] ?? 0;
+        },
+
+        getLifelineProgress(status) {
+            const map = { 'DRAFT': 0, 'SENT': 0, 'OFFERED': 33, 'CONFIRMED': 66, 'SHIPPED': 83, 'DELIVERED': 100, 'COMPLETED': 100 };
+            return map[status] ?? 0;
+        },
+
+        getLifelineDotClass(status, step) {
+            const s = this.getStepNum(status);
+            if (step < s) return 'dot-done';
+            if (step === s && ['SENT', 'SHIPPED'].includes(status)) return 'dot-active';
+            if (step === s && status === 'OFFERED') return 'dot-active-amber';
+            if (step === s && ['CONFIRMED'].includes(status)) return 'dot-done';
+            if (step === s && ['DELIVERED', 'COMPLETED'].includes(status)) return 'dot-done';
+            return '';
+        },
+
+        getLifelinePulse(status) {
+            const map = { 'SENT': 1, 'OFFERED': 2, 'SHIPPED': 4 };
+            return map[status] || 0;
+        },
+
+        getLifelinePulseColor(status) {
+            if (status === 'OFFERED') return 'pulse-amber';
+            return 'pulse-purple';
+        },
+
+        isActiveStatus(status) {
+            return ['SENT', 'OFFERED', 'SHIPPED'].includes(status);
+        },
+
+        getDetailStatusAction(status) {
+            const actions = {
+                'SENT': 'Nova narudzbina. Potvrdite dostupnost ili odbijte.',
+                'OFFERED': 'Cekanje na potvrdu kupca.',
+                'CONFIRMED': 'Kupac je potvrdio. Posaljite posiljku.',
+                'SHIPPED': 'Posiljka je na putu. Ceka se prijem.',
+                'DELIVERED': 'Posiljka primljena.',
+                'COMPLETED': 'Narudzbina je uspesno zavrsena.',
+                'REJECTED': 'Narudzbina je odbijena.',
+                'CANCELLED': 'Narudzbina je otkazana.',
+            };
+            return actions[status] || '';
+        },
+
+        async deliverOrder() {
+            try {
+                await supplierApi(`/orders/${this.selectedOrder.id}/deliver`, 'POST', {});
+                this.closeDetailModal();
+                showToast('Narudzbina oznacena kao isporucena', 'success');
+                await Promise.all([this.loadOrders(), this.loadStats()]);
+            } catch (err) {
+                alert('Greska: ' + err.message);
+            }
         },
 
         prevPage() {
