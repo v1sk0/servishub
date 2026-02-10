@@ -490,7 +490,7 @@ def cancel_order(order_id):
 @bp.route('/<int:order_id>/confirm-delivery', methods=['POST'])
 @jwt_required
 def confirm_delivery(order_id):
-    """Confirm order delivery"""
+    """Confirm order delivery + auto-complete (Isporuceno = Zavrseno)"""
     order = PartOrder.query.filter_by(
         id=order_id,
         buyer_tenant_id=g.tenant_id
@@ -499,11 +499,16 @@ def confirm_delivery(order_id):
     if not order:
         return {'error': 'Order not found'}, 404
 
+    # Idempotent
+    if order.status in (OrderStatus.DELIVERED, OrderStatus.COMPLETED):
+        return {'message': 'Already completed'}
+
     if order.status != OrderStatus.SHIPPED:
         return {'error': 'Order not shipped yet'}, 400
 
-    order.status = OrderStatus.DELIVERED
+    order.status = OrderStatus.COMPLETED
     order.delivered_at = datetime.utcnow()
+    order.completed_at = datetime.utcnow()
     order.updated_at = datetime.utcnow()
     db.session.commit()
 
@@ -513,7 +518,7 @@ def confirm_delivery(order_id):
 @bp.route('/<int:order_id>/complete', methods=['POST'])
 @jwt_required
 def complete_order(order_id):
-    """Mark order as complete (satisfied)"""
+    """Mark order as complete (satisfied). Idempotent for COMPLETED."""
     order = PartOrder.query.filter_by(
         id=order_id,
         buyer_tenant_id=g.tenant_id
@@ -522,11 +527,16 @@ def complete_order(order_id):
     if not order:
         return {'error': 'Order not found'}, 404
 
-    if order.status != OrderStatus.DELIVERED:
+    # Idempotent - already completed
+    if order.status == OrderStatus.COMPLETED:
+        return {'message': 'Order already completed'}
+
+    if order.status not in (OrderStatus.DELIVERED, OrderStatus.SHIPPED):
         return {'error': 'Order not delivered yet'}, 400
 
     order.status = OrderStatus.COMPLETED
-    order.completed_at = datetime.utcnow()
+    order.completed_at = order.completed_at or datetime.utcnow()
+    order.delivered_at = order.delivered_at or datetime.utcnow()
     order.updated_at = datetime.utcnow()
     db.session.commit()
 

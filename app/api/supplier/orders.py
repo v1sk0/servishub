@@ -519,10 +519,11 @@ def ship_order(order_id):
 @supplier_jwt_required
 def deliver_order(order_id):
     """
-    Mark order as delivered (SHIPPED -> DELIVERED).
-    Idempotent: vec DELIVERED -> 200.
+    Mark order as delivered+completed (SHIPPED -> COMPLETED).
+    Isporuceno = Zavrseno - one step.
+    Idempotent: vec DELIVERED/COMPLETED -> 200.
     """
-    order = PartOrder.query.filter_by(
+    order = PartOrder.query.with_for_update().filter_by(
         id=order_id,
         seller_type=SellerType.SUPPLIER,
         seller_supplier_id=g.supplier_id
@@ -532,8 +533,8 @@ def deliver_order(order_id):
         return {'error': 'Order not found'}, 404
 
     # Idempotent
-    if order.status == OrderStatus.DELIVERED:
-        return {'message': 'Order already delivered', 'order_id': order.id}
+    if order.status in (OrderStatus.DELIVERED, OrderStatus.COMPLETED):
+        return {'message': 'Order already completed', 'order_id': order.id}
 
     if order.status != OrderStatus.SHIPPED:
         return {
@@ -541,8 +542,14 @@ def deliver_order(order_id):
             'code': 'INVALID_STATUS',
         }, 409
 
-    order.status = OrderStatus.DELIVERED
+    # Update supplier financial totals
+    supplier = Supplier.query.with_for_update().get(g.supplier_id)
+    if supplier and order.subtotal:
+        supplier.total_sales = (supplier.total_sales or Decimal('0')) + order.subtotal
+
+    order.status = OrderStatus.COMPLETED
     order.delivered_at = datetime.utcnow()
+    order.completed_at = datetime.utcnow()
     order.updated_at = datetime.utcnow()
     db.session.commit()
 
@@ -553,7 +560,7 @@ def deliver_order(order_id):
     except (ImportError, Exception):
         pass
 
-    return {'message': 'Order delivered', 'order_id': order.id}
+    return {'message': 'Order completed', 'order_id': order.id}
 
 
 @bp.route('/<int:order_id>/complete', methods=['POST'])
