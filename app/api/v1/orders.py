@@ -87,18 +87,10 @@ def list_orders():
 
         items = PartOrderItem.query.filter_by(order_id=order.id).all()
 
-        # Build summary string: "Display Samsung S21 kopija 50 EUR"
         item_summary = None
         if items:
             first = items[0]
-            parts = []
-            if first.part_name:
-                parts.append(first.part_name)
-            if first.brand:
-                parts.append(first.brand)
-            if first.model:
-                parts.append(first.model)
-            item_summary = ' '.join(parts)
+            item_summary = first.part_name or '-'
             if len(items) > 1:
                 item_summary += f' +{len(items) - 1}'
 
