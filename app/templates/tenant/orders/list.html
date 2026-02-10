@@ -329,14 +329,6 @@
 
                     <!-- Totals -->
                     <div class="border-t border-gray-200 pt-4 mb-6">
-                        <div class="flex justify-between text-sm mb-2">
-                            <span class="text-gray-500">Medjuzbir:</span>
-                            <span class="text-gray-900" x-text="formatPrice(selectedOrder?.subtotal) + ' ' + (selectedOrder?.currency || 'RSD')"></span>
-                        </div>
-                        <div class="flex justify-between text-sm mb-2" x-show="selectedOrder?.commission_amount">
-                            <span class="text-gray-500">Provizija (5%):</span>
-                            <span class="text-gray-900" x-text="formatPrice(selectedOrder?.commission_amount) + ' ' + (selectedOrder?.currency || 'RSD')"></span>
-                        </div>
                         <div class="flex justify-between font-bold">
                             <span class="text-gray-900">Ukupno:</span>
                             <span class="text-gray-900" x-text="formatPrice(selectedOrder?.total_amount) + ' ' + (selectedOrder?.currency || 'RSD')"></span>
