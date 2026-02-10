@@ -408,8 +408,8 @@
                         <p class="text-sm text-orange-700" x-text="selectedOrder?.cancellation_reason"></p>
                     </div>
 
-                    <!-- Messages -->
-                    <div x-show="selectedOrder?.messages?.length > 0" class="mb-6">
+                    <!-- Messages (only after CONFIRMED) -->
+                    <div x-show="['CONFIRMED', 'SHIPPED', 'DELIVERED', 'COMPLETED'].includes(selectedOrder?.status) && selectedOrder?.messages?.length > 0" class="mb-6">
                         <h3 class="font-medium text-gray-900 mb-3">Poruke</h3>
                         <div class="space-y-2 max-h-40 overflow-y-auto">
                             <template x-for="msg in selectedOrder?.messages || []" :key="msg.id">
@@ -426,8 +426,8 @@
                         </div>
                     </div>
 
-                    <!-- Send Message -->
-                    <div x-show="['SENT', 'CONFIRMED', 'SHIPPED'].includes(selectedOrder?.status)" class="mb-6">
+                    <!-- Send Message (only after CONFIRMED) -->
+                    <div x-show="['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(selectedOrder?.status)" class="mb-6">
                         <h3 class="font-medium text-gray-900 mb-2">Posalji poruku</h3>
                         <div class="flex gap-2">
                             <input type="text" x-model="newMessage" placeholder="Upisite poruku..."
