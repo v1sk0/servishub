@@ -394,6 +394,33 @@
                     </select>
                 </div>
 
+                <!-- Delivery rounds (if own_delivery and rounds exist) -->
+                <div x-show="confirmData.delivery_method === 'own_delivery' && deliveryRounds.length > 0" class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Izaberite turu dostave</label>
+                    <div class="space-y-1.5 max-h-48 overflow-y-auto">
+                        <template x-for="round in deliveryRounds.filter(r => r.dayKey === 'weekday' || r.isToday)" :key="round.id">
+                            <label class="flex items-center gap-3 p-2.5 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                                   :class="confirmData.delivery_round === round.id ? 'border-purple-500 bg-purple-50' : 'border-gray-200'">
+                                <input type="radio" x-model="confirmData.delivery_round" :value="round.id" class="text-purple-600">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <p class="font-medium text-gray-900 text-sm" x-text="round.name"></p>
+                                        <span x-show="round.isToday" class="text-[10px] font-semibold px-1.5 py-0.5 bg-green-100 text-green-700 rounded">DANAS</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500">
+                                        <span x-show="round.cutoff" x-text="'Rok slanja: ' + round.cutoff"></span>
+                                        <span x-show="round.cutoff && round.delivery_time"> · </span>
+                                        <span x-show="round.delivery_time" x-text="'Isporuka: ' + round.delivery_time"></span>
+                                    </p>
+                                </div>
+                            </label>
+                        </template>
+                    </div>
+                </div>
+                <div x-show="confirmData.delivery_method === 'own_delivery' && deliveryRounds.length === 0" class="mb-4">
+                    <p class="text-xs text-gray-500 italic">Nemate definisane ture dostave. Mozete ih podesiti na stranici <a href="/supplier/delivery" class="text-purple-600 underline">Dostava</a>.</p>
+                </div>
+
                 <!-- Delivery cost & days -->
                 <div class="grid grid-cols-2 gap-3 mb-4">
                     <div>
@@ -496,8 +523,10 @@ function ordersPage() {
             courier_service: '',
             delivery_cost: '',
             estimated_delivery_days: '',
+            delivery_round: '',
             notes: ''
         },
+        deliveryRounds: [],
         showRejectModal: false,
         rejectReason: '',
 
@@ -571,33 +600,69 @@ function ordersPage() {
             this.newMessage = '';
         },
 
-        confirmOrder() {
-            this.confirmData = { delivery_method: 'courier', courier_service: '', delivery_cost: '', estimated_delivery_days: '', notes: '' };
+        async confirmOrder() {
+            this.confirmData = { delivery_method: 'courier', courier_service: '', delivery_cost: '', estimated_delivery_days: '', delivery_round: '', notes: '' };
+            this.deliveryRounds = [];
+            try {
+                const cfg = await supplierApi('/delivery/');
+                if (cfg.success && cfg.data) {
+                    const rounds = cfg.data.delivery_rounds || {};
+                    const now = new Date();
+                    const day = now.getDay();
+                    const dayKey = (day >= 1 && day <= 5) ? 'weekday' : (day === 6 ? 'saturday' : 'sunday');
+                    const dayLabels = { 'weekday': 'Radni dan', 'saturday': 'Subota', 'sunday': 'Nedelja' };
+                    let allRounds = [];
+                    for (const [key, items] of Object.entries(rounds)) {
+                        if (Array.isArray(items)) {
+                            items.forEach((r, i) => {
+                                allRounds.push({
+                                    id: key + '_' + i,
+                                    dayKey: key,
+                                    dayLabel: dayLabels[key] || key,
+                                    name: r.name || ('Tura ' + (i + 1)),
+                                    cutoff: r.cutoff || '',
+                                    delivery_time: r.delivery_time || '',
+                                    isToday: key === dayKey,
+                                });
+                            });
+                        }
+                    }
+                    this.deliveryRounds = allRounds;
+                }
+            } catch (e) {}
             this.showConfirmModal = true;
         },
 
         async submitConfirm() {
             try {
-                // Smart offer orders use confirm-availability
-                if (this.orderDetail?.service_ticket_id) {
-                    const payload = {
-                        delivery_method: this.confirmData.delivery_method,
-                        notes: this.confirmData.notes || null
-                    };
-                    if (this.confirmData.delivery_method === 'courier' && this.confirmData.courier_service) {
-                        payload.courier_service = this.confirmData.courier_service;
+                const payload = {
+                    delivery_method: this.confirmData.delivery_method,
+                    notes: this.confirmData.notes || null
+                };
+                if (this.confirmData.delivery_method === 'courier' && this.confirmData.courier_service) {
+                    payload.courier_service = this.confirmData.courier_service;
+                }
+                if (this.confirmData.delivery_cost) {
+                    payload.delivery_cost = parseFloat(this.confirmData.delivery_cost);
+                }
+                if (this.confirmData.estimated_delivery_days) {
+                    payload.estimated_delivery_days = parseInt(this.confirmData.estimated_delivery_days);
+                }
+                if (this.confirmData.delivery_method === 'own_delivery' && this.confirmData.delivery_round) {
+                    const round = this.deliveryRounds.find(r => r.id === this.confirmData.delivery_round);
+                    if (round) {
+                        payload.delivery_cutoff_time = round.cutoff || null;
+                        if (!payload.notes) {
+                            payload.notes = round.name + (round.delivery_time ? ' - ' + round.delivery_time : '');
+                        }
                     }
-                    if (this.confirmData.delivery_cost) {
-                        payload.delivery_cost = parseFloat(this.confirmData.delivery_cost);
-                    }
-                    if (this.confirmData.estimated_delivery_days) {
-                        payload.estimated_delivery_days = parseInt(this.confirmData.estimated_delivery_days);
-                    }
+                }
+
+                // Smart offer orders use confirm-availability, legacy use confirm
+                if (this.orderDetail?.is_smart_offer) {
                     await supplierApi(`/orders/${this.selectedOrder.id}/confirm-availability`, 'POST', payload);
                 } else {
-                    await supplierApi(`/orders/${this.selectedOrder.id}/confirm`, 'POST', {
-                        notes: this.confirmData.notes || null
-                    });
+                    await supplierApi(`/orders/${this.selectedOrder.id}/confirm`, 'POST', payload);
                 }
                 this.showConfirmModal = false;
                 this.closeDetailModal();
