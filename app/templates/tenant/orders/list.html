@@ -111,7 +111,6 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="py-3 w-8 text-center"></th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Narudzbina</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Servisni nalog</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Detalj</th>
@@ -124,15 +123,6 @@
                 <tbody class="divide-y divide-gray-200">
                     <template x-for="order in orders" :key="order.id">
                         <tr class="hover:bg-gray-50 cursor-pointer" @click="viewOrder(order)">
-                            <!-- Pulsing dot indicator -->
-                            <td class="py-3 w-8 align-middle">
-                                <div class="flex items-center justify-center">
-                                <span x-show="isActiveStatus(order.status)" class="relative inline-flex h-3 w-3">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" :class="getStatusDotClass(order.status)"></span>
-                                    <span class="relative inline-flex rounded-full h-3 w-3" :class="getStatusDotClass(order.status)"></span>
-                                </span>
-                                </div>
-                            </td>
                             <td class="px-4 py-3 text-center">
                                 <p class="text-sm font-medium text-gray-900" x-text="order.order_number"></p>
                             </td>
