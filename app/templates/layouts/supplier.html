@@ -529,9 +529,19 @@ function supplierApp() {
         supplier: null,
         sidebarOpen: false,
         loading: true,
+        pendingOrdersCount: 0,
 
         async init() {
             await this.loadUser();
+            this.loadPendingOrders();
+            setInterval(() => this.loadPendingOrders(), 60000);
+        },
+
+        async loadPendingOrders() {
+            try {
+                const data = await supplierApi('/orders/stats');
+                this.pendingOrdersCount = (data.pending_confirmation || 0);
+            } catch (e) {}
         },
 
         async loadUser() {
