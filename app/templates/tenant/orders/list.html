@@ -85,6 +85,31 @@
         </div>
     </div>
 
+    <!-- Action Banner -->
+    <div x-show="!loading && !actionBannerDismissed && getActionableOrders().length > 0" x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 -translate-y-2"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         class="action-banner mb-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="action-banner-icon">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-sm" x-text="getActionableOrders().length + ' narudzbina zahteva vasu akciju'"></p>
+                    <p class="text-xs opacity-80" x-text="getActionableBreakdown()"></p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button @click="filterToActionable()" class="action-banner-btn">Pogledaj</button>
+                <button @click="actionBannerDismissed = true" class="action-banner-dismiss">&times;</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Loading -->
     <div x-show="loading" class="flex justify-center py-12">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -898,6 +923,61 @@
 .glass-theme .tenant-app .trust-bronze { background: linear-gradient(135deg, rgba(180,130,50,0.3), rgba(205,127,50,0.4)); color: #fbbf24; border-color: rgba(205,127,50,0.5); }
 .glass-theme .tenant-app .trust-silver { background: linear-gradient(135deg, rgba(148,163,184,0.3), rgba(192,192,192,0.4)); color: #cbd5e1; border-color: rgba(192,192,192,0.5); }
 .glass-theme .tenant-app .trust-gold { background: linear-gradient(135deg, rgba(234,179,8,0.3), rgba(255,215,0,0.4)); color: #fde047; border-color: rgba(234,179,8,0.5); }
+
+/* Action banner */
+.action-banner {
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 1px solid #f59e0b;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+    color: #92400e;
+    animation: banner-slide 0.4s ease-out;
+}
+@keyframes banner-slide {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.action-banner-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(245, 158, 11, 0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #d97706;
+    animation: banner-bell 2s ease-in-out infinite;
+}
+@keyframes banner-bell {
+    0%, 100% { transform: rotate(0); }
+    10% { transform: rotate(12deg); }
+    20% { transform: rotate(-12deg); }
+    30% { transform: rotate(6deg); }
+    40% { transform: rotate(0); }
+}
+.action-banner-btn {
+    padding: 6px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    background: #f59e0b; color: white; border: none; cursor: pointer;
+    transition: background 0.2s;
+}
+.action-banner-btn:hover { background: #d97706; }
+.action-banner-dismiss {
+    width: 28px; height: 28px; border-radius: 50%; border: none;
+    background: transparent; color: #92400e; font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+}
+.action-banner-dismiss:hover { background: rgba(146, 64, 14, 0.1); }
+
+/* Glass theme: action banner */
+.glass-theme .tenant-app .action-banner {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.2));
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fcd34d;
+    box-shadow: 0 2px 12px rgba(245, 158, 11, 0.15);
+}
+.glass-theme .tenant-app .action-banner-icon { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.glass-theme .tenant-app .action-banner-btn { background: rgba(245, 158, 11, 0.8); }
+.glass-theme .tenant-app .action-banner-btn:hover { background: rgba(217, 119, 6, 0.9); }
+.glass-theme .tenant-app .action-banner-dismiss { color: #fcd34d; }
+.glass-theme .tenant-app .action-banner-dismiss:hover { background: rgba(245, 158, 11, 0.15); }
 </style>
 
 <script>
@@ -939,16 +1019,20 @@ function ordersPage() {
         ratingComment: '',
         ratingSubmitting: false,
 
+        // Change detection
+        previousOrderStates: {},
+        actionBannerDismissed: false,
+
         async init() {
             await this.loadOrders();
             // Auto-refresh every 15s when tab visible
             setInterval(() => {
-                if (!document.hidden && !this.selectedOrder) this.loadOrders();
+                if (!document.hidden && !this.selectedOrder) this.loadOrders(true);
             }, 15000);
         },
 
-        async loadOrders() {
-            this.loading = true;
+        async loadOrders(silent = false) {
+            if (!silent) this.loading = true;
             try {
                 const params = new URLSearchParams({
                     page: this.page,
@@ -960,7 +1044,18 @@ function ordersPage() {
                 const response = await api(`/orders?${params}`);
                 if (response.ok) {
                     const data = await response.json();
-                    this.orders = data.orders || [];
+                    const newOrders = data.orders || [];
+
+                    // Detect changes on silent refresh
+                    if (silent && Object.keys(this.previousOrderStates).length > 0) {
+                        this.detectOrderChanges(newOrders);
+                    }
+
+                    // Track states for next comparison
+                    this.previousOrderStates = {};
+                    for (const o of newOrders) this.previousOrderStates[o.id] = o.status;
+
+                    this.orders = newOrders;
                     this.total = data.total || 0;
                     this.pages = data.pages || 0;
                 }
@@ -1130,6 +1225,55 @@ function ordersPage() {
         skipRating() {
             this.ratingModal = false;
             showToast('Narudzbina zavrsena', 'success');
+        },
+
+        // --- Change detection & notifications ---
+        detectOrderChanges(newOrders) {
+            const statusLabels = {
+                'OFFERED': 'Dobavljac potvrdio dostupnost',
+                'CONFIRMED': 'Narudzbina potvrđena',
+                'SHIPPED': 'Posiljka je poslata',
+                'DELIVERED': 'Posiljka isporucena',
+                'COMPLETED': 'Narudzbina zavrsena',
+                'REJECTED': 'Dobavljac je odbio narudzbinu',
+                'CANCELLED': 'Narudzbina otkazana',
+            };
+            for (const order of newOrders) {
+                const old = this.previousOrderStates[order.id];
+                if (old && old !== order.status) {
+                    const msg = statusLabels[order.status] || `Status: ${order.status}`;
+                    showToast(`${order.order_number}: ${msg}`, 'info');
+                    this.actionBannerDismissed = false;
+                }
+            }
+            // New orders that appeared
+            for (const order of newOrders) {
+                if (!this.previousOrderStates[order.id] && order.status !== 'DRAFT') {
+                    showToast(`Nova narudzbina ${order.order_number}`, 'info');
+                }
+            }
+        },
+
+        getActionableOrders() {
+            return this.orders.filter(o => ['OFFERED', 'SHIPPED', 'DELIVERED'].includes(o.status));
+        },
+
+        getActionableBreakdown() {
+            const a = this.getActionableOrders();
+            const parts = [];
+            const offered = a.filter(o => o.status === 'OFFERED').length;
+            const shipped = a.filter(o => o.status === 'SHIPPED').length;
+            const delivered = a.filter(o => o.status === 'DELIVERED').length;
+            if (offered) parts.push(`${offered} za potvrdu`);
+            if (shipped) parts.push(`${shipped} za prijem`);
+            if (delivered) parts.push(`${delivered} za ocenu`);
+            return parts.join(', ');
+        },
+
+        filterToActionable() {
+            this.filters.status = 'OFFERED';
+            this.actionBannerDismissed = true;
+            this.loadOrders();
         },
 
         async sendMessage() {
