@@ -10,6 +10,62 @@
         <p class="text-gray-600 mt-1">Dobrodosli nazad! Evo pregleda vase aktivnosti.</p>
     </div>
 
+    <!-- Trust Tier Card (shown when supplier has a tier) -->
+    <template x-if="supplierInfo.trust_tier || supplierInfo.rating != null">
+        <div class="mb-6">
+            <div class="rounded-xl shadow-sm border p-5 flex items-center gap-5"
+                 :class="supplierInfo.trust_tier === 'gold' ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-amber-200'
+                        : supplierInfo.trust_tier === 'silver' ? 'bg-gradient-to-r from-gray-50 to-slate-100 border-slate-200'
+                        : supplierInfo.trust_tier === 'bronze' ? 'bg-gradient-to-r from-orange-50 to-amber-50 border-amber-200'
+                        : 'bg-white border-gray-100'">
+                <!-- Tier Icon -->
+                <div class="flex-shrink-0">
+                    <template x-if="supplierInfo.trust_tier">
+                        <div class="h-14 w-14 rounded-full flex items-center justify-center text-2xl"
+                             :class="supplierInfo.trust_tier === 'gold' ? 'bg-yellow-100'
+                                    : supplierInfo.trust_tier === 'silver' ? 'bg-gray-200'
+                                    : 'bg-orange-100'">
+                            <span x-text="supplierInfo.trust_tier === 'gold' ? '🏆' : supplierInfo.trust_tier === 'silver' ? '🥈' : '🥉'"></span>
+                        </div>
+                    </template>
+                    <template x-if="!supplierInfo.trust_tier">
+                        <div class="h-14 w-14 rounded-full bg-gray-100 flex items-center justify-center">
+                            <svg class="h-7 w-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                            </svg>
+                        </div>
+                    </template>
+                </div>
+                <!-- Info -->
+                <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                        <template x-if="supplierInfo.trust_tier">
+                            <span class="trust-tier-label"
+                                  :class="'tier-' + supplierInfo.trust_tier"
+                                  x-text="getTrustTierLabel(supplierInfo.trust_tier)"></span>
+                        </template>
+                        <template x-if="!supplierInfo.trust_tier">
+                            <span class="text-sm font-medium text-gray-500">Bez ranga</span>
+                        </template>
+                    </div>
+                    <template x-if="supplierInfo.rating != null">
+                        <p class="text-sm text-gray-600 mt-1">
+                            <span class="font-semibold" x-text="Math.round(supplierInfo.rating) + '%'"></span> pozitivnih ocena
+                            <span class="text-gray-400" x-text="'(' + formatRatingCount(supplierInfo.rating_count) + ')'"></span>
+                        </p>
+                    </template>
+                    <template x-if="supplierInfo.rating == null">
+                        <p class="text-sm text-gray-400 mt-1">Nema ocena jos. Zavrsavajte narudzbine da biste gradili reputaciju.</p>
+                    </template>
+                    <!-- Progress to next tier -->
+                    <template x-if="supplierInfo.trust_tier !== 'gold' && supplierInfo.rating_count > 0">
+                        <p class="text-xs text-gray-400 mt-1" x-text="getNextTierHint()"></p>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Total Listings -->
@@ -269,8 +325,58 @@ function dashboardPage() {
                 'REJECTED': 'Odbijeno'
             };
             return labels[status] || status;
+        },
+
+        getTrustTierLabel(tier) {
+            const labels = { 'bronze': 'Bronze Supplier', 'silver': 'Silver Supplier', 'gold': 'Gold Supplier' };
+            return labels[tier] || '';
+        },
+
+        formatRatingCount(count) {
+            if (!count) return '0 ocena';
+            if (count >= 100) return Math.floor(count / 100) * 100 + '+ ocena';
+            if (count >= 50) return '50+ ocena';
+            if (count >= 10) return '10+ ocena';
+            return count + ' ocena';
+        },
+
+        getNextTierHint() {
+            const count = this.supplierInfo.rating_count || 0;
+            const pct = this.supplierInfo.rating ? Math.round(this.supplierInfo.rating) : 0;
+            const tier = this.supplierInfo.trust_tier;
+
+            if (!tier) {
+                // No tier yet - hint for Bronze (10+ orders, 80%+)
+                if (count < 10) return 'Jos ' + (10 - count) + ' ocena do Bronze ranga';
+                return 'Potrebno 80%+ pozitivnih za Bronze rang';
+            }
+            if (tier === 'bronze') {
+                if (count < 30) return 'Jos ' + (30 - count) + ' ocena do Silver ranga';
+                return 'Potrebno 90%+ pozitivnih za Silver rang';
+            }
+            if (tier === 'silver') {
+                if (count < 100) return 'Jos ' + (100 - count) + ' ocena do Gold ranga';
+                return 'Potrebno 95%+ pozitivnih za Gold rang';
+            }
+            return '';
         }
     };
 }
 </script>
+
+<style>
+.trust-tier-label {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 13px; font-weight: 700; padding: 3px 12px; border-radius: 12px;
+    letter-spacing: 0.5px;
+}
+.tier-bronze { background: linear-gradient(135deg, #fef3c7, #f6e4a0); color: #92400e; border: 1px solid #d4a017; }
+.tier-silver { background: linear-gradient(135deg, #f1f5f9, #e2e8f0); color: #475569; border: 1px solid #94a3b8; }
+.tier-gold { background: linear-gradient(135deg, #fef9c3, #fde047); color: #854d0e; border: 1px solid #eab308; }
+
+/* Glass theme */
+.glass-theme .supplier-app .tier-bronze { background: linear-gradient(135deg, rgba(180,130,50,0.3), rgba(205,127,50,0.4)); color: #fbbf24; border-color: rgba(205,127,50,0.5); }
+.glass-theme .supplier-app .tier-silver { background: linear-gradient(135deg, rgba(148,163,184,0.3), rgba(192,192,192,0.4)); color: #cbd5e1; border-color: rgba(192,192,192,0.5); }
+.glass-theme .supplier-app .tier-gold { background: linear-gradient(135deg, rgba(234,179,8,0.3), rgba(255,215,0,0.4)); color: #fde047; border-color: rgba(234,179,8,0.5); }
+</style>
 {% endblock %}

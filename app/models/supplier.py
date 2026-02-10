@@ -58,9 +58,34 @@ class Supplier(db.Model):
     total_sales = db.Column(db.Numeric(12, 2), default=0)
     total_commission = db.Column(db.Numeric(12, 2), default=0)
 
-    # Rejting
-    rating = db.Column(db.Numeric(2, 1))  # 1-5 prosek
+    # Rejting (procenat pozitivnih ocena 0-100)
+    rating = db.Column(db.Numeric(5, 1))
     rating_count = db.Column(db.Integer, default=0)
+
+    @property
+    def trust_tier(self):
+        """Izracunaj trust tier na osnovu ratinga i broja ocena.
+        Gold: 100+ ocena, 95%+ pozitivnih
+        Silver: 30+ ocena, 90%+ pozitivnih
+        Bronze: 10+ ocena, 80%+ pozitivnih
+        """
+        if not self.rating_count or not self.rating:
+            return None
+        count = self.rating_count
+        pct = float(self.rating)
+        if count >= 100 and pct >= 95:
+            return 'gold'
+        elif count >= 30 and pct >= 90:
+            return 'silver'
+        elif count >= 10 and pct >= 80:
+            return 'bronze'
+        return None
+
+    @property
+    def trust_tier_label(self):
+        """Labela za prikaz."""
+        labels = {'gold': 'Gold', 'silver': 'Silver', 'bronze': 'Bronze'}
+        return labels.get(self.trust_tier)
 
     # Valutni kurs (EUR -> RSD) po dobavljacu
     eur_rate = db.Column(db.Numeric(8, 4), default=117.5)
@@ -113,6 +138,7 @@ class Supplier(db.Model):
             'is_verified': self.is_verified,
             'rating': float(self.rating) if self.rating else None,
             'rating_count': self.rating_count,
+            'trust_tier': self.trust_tier,
         }
 
     def to_anonymous_dict(self):
@@ -123,6 +149,7 @@ class Supplier(db.Model):
             'is_verified': self.is_verified,
             'rating': float(self.rating) if self.rating else None,
             'rating_count': self.rating_count,
+            'trust_tier': self.trust_tier,
             'is_revealed': False,
         }
 
@@ -141,6 +168,7 @@ class Supplier(db.Model):
             'is_verified': self.is_verified,
             'rating': float(self.rating) if self.rating else None,
             'rating_count': self.rating_count,
+            'trust_tier': self.trust_tier,
             'is_revealed': True,
         }
 

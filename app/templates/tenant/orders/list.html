@@ -325,12 +325,30 @@
                         <template x-if="selectedOrder?.seller?.type === 'anonymous'">
                             <div>
                                 <p class="text-sm text-gray-500 italic">Podaci o dobavljacu ce biti vidljivi nakon potvrde narudzbine</p>
+                                <!-- Trust tier + rating visible even anonymous -->
+                                <div class="flex items-center gap-3 mt-2" x-show="selectedOrder?.seller?.trust_tier || selectedOrder?.seller?.rating">
+                                    <template x-if="selectedOrder?.seller?.trust_tier">
+                                        <span class="trust-badge" :class="'trust-' + selectedOrder.seller.trust_tier"
+                                              x-text="getTrustLabel(selectedOrder.seller.trust_tier)"></span>
+                                    </template>
+                                    <template x-if="selectedOrder?.seller?.rating != null">
+                                        <span class="text-xs text-gray-500" x-text="Math.round(selectedOrder.seller.rating) + '% pozitivnih' + (selectedOrder.seller.rating_count ? ' (' + formatRatingCount(selectedOrder.seller.rating_count) + ')' : '')"></span>
+                                    </template>
+                                </div>
                             </div>
                         </template>
                         <template x-if="selectedOrder?.seller?.type !== 'anonymous'">
                             <div>
-                                <p class="font-medium text-gray-900" x-text="selectedOrder?.seller?.name"></p>
+                                <div class="flex items-center gap-2">
+                                    <p class="font-medium text-gray-900" x-text="selectedOrder?.seller?.name"></p>
+                                    <template x-if="selectedOrder?.seller?.trust_tier">
+                                        <span class="trust-badge" :class="'trust-' + selectedOrder.seller.trust_tier"
+                                              x-text="getTrustLabel(selectedOrder.seller.trust_tier)"></span>
+                                    </template>
+                                </div>
                                 <p class="text-sm text-gray-500" x-text="selectedOrder?.seller?.city"></p>
+                                <div x-show="selectedOrder?.seller?.rating != null" class="text-xs text-gray-500 mt-1"
+                                     x-text="Math.round(selectedOrder.seller.rating) + '% pozitivnih ocena' + (selectedOrder.seller.rating_count ? ' (' + formatRatingCount(selectedOrder.seller.rating_count) + ')' : '')"></div>
                                 <div class="flex gap-4 mt-2 text-sm" x-show="selectedOrder?.seller?.phone || selectedOrder?.seller?.email">
                                     <span x-show="selectedOrder?.seller?.phone" class="text-gray-600" x-text="selectedOrder?.seller?.phone"></span>
                                     <span x-show="selectedOrder?.seller?.email" class="text-gray-600" x-text="selectedOrder?.seller?.email"></span>
@@ -804,6 +822,20 @@
 .glass-theme .tenant-app td .bg-red-100 { background: rgba(239, 68, 68, 0.2) !important; }
 .glass-theme .tenant-app td .text-red-700 { color: #f87171 !important; }
 .glass-theme .tenant-app td .bg-red-100:hover { background: rgba(239, 68, 68, 0.35) !important; }
+
+/* Trust tier badges */
+.trust-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+    letter-spacing: 0.3px;
+}
+.trust-bronze { background: linear-gradient(135deg, #fef3c7, #f6e4a0); color: #92400e; border: 1px solid #d4a017; }
+.trust-silver { background: linear-gradient(135deg, #f1f5f9, #e2e8f0); color: #475569; border: 1px solid #94a3b8; }
+.trust-gold { background: linear-gradient(135deg, #fef9c3, #fde047); color: #854d0e; border: 1px solid #eab308; }
+/* Glass theme trust badges */
+.glass-theme .tenant-app .trust-bronze { background: linear-gradient(135deg, rgba(180,130,50,0.3), rgba(205,127,50,0.4)); color: #fbbf24; border-color: rgba(205,127,50,0.5); }
+.glass-theme .tenant-app .trust-silver { background: linear-gradient(135deg, rgba(148,163,184,0.3), rgba(192,192,192,0.4)); color: #cbd5e1; border-color: rgba(192,192,192,0.5); }
+.glass-theme .tenant-app .trust-gold { background: linear-gradient(135deg, rgba(234,179,8,0.3), rgba(255,215,0,0.4)); color: #fde047; border-color: rgba(234,179,8,0.5); }
 </style>
 
 <script>
@@ -1265,6 +1297,19 @@ function ordersPage() {
             const itemsRsd = this.isEur() ? this.toRsd(this.selectedOrder?.total_amount || 0) : (this.selectedOrder?.total_amount || 0);
             const deliveryRsd = this.selectedOrder?.delivery_cost || 0;
             return itemsRsd + deliveryRsd;
+        },
+
+        getTrustLabel(tier) {
+            const labels = { 'bronze': 'Bronze', 'silver': 'Silver', 'gold': 'Gold' };
+            return labels[tier] || '';
+        },
+
+        formatRatingCount(count) {
+            if (!count) return '';
+            if (count >= 100) return Math.floor(count / 100) * 100 + '+ ocena';
+            if (count >= 50) return '50+ ocena';
+            if (count >= 10) return '10+ ocena';
+            return count + ' ocena';
         }
     }
 }

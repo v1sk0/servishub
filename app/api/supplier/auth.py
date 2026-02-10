@@ -306,6 +306,7 @@ def get_me():
             'is_verified': supplier.is_verified,
             'rating': float(supplier.rating) if supplier.rating else None,
             'rating_count': supplier.rating_count,
+            'trust_tier': supplier.trust_tier,
             'total_sales': float(supplier.total_sales) if supplier.total_sales else 0,
             'commission_rate': float(supplier.commission_rate) if supplier.commission_rate else 5.0
         }

@@ -150,19 +150,25 @@ def get_order(order_id):
     revealed = order.status in {OrderStatus.CONFIRMED, OrderStatus.SHIPPED,
                                 OrderStatus.DELIVERED, OrderStatus.COMPLETED}
     seller_info = {}
+    # Always load supplier for trust tier (visible even when anonymous)
+    supplier_obj = None
+    if order.seller_type == SellerType.SUPPLIER and order.seller_supplier_id:
+        supplier_obj = Supplier.query.get(order.seller_supplier_id)
+
     if revealed:
-        if order.seller_type == SellerType.SUPPLIER:
-            supplier = Supplier.query.get(order.seller_supplier_id)
-            if supplier:
-                seller_info = {
-                    'type': 'supplier',
-                    'id': supplier.id,
-                    'name': supplier.name,
-                    'city': supplier.city,
-                    'phone': supplier.phone,
-                    'email': supplier.email
-                }
-        else:
+        if supplier_obj:
+            seller_info = {
+                'type': 'supplier',
+                'id': supplier_obj.id,
+                'name': supplier_obj.name,
+                'city': supplier_obj.city,
+                'phone': supplier_obj.phone,
+                'email': supplier_obj.email,
+                'rating': float(supplier_obj.rating) if supplier_obj.rating else None,
+                'rating_count': supplier_obj.rating_count,
+                'trust_tier': supplier_obj.trust_tier,
+            }
+        elif order.seller_type != SellerType.SUPPLIER:
             tenant = Tenant.query.get(order.seller_tenant_id)
             if tenant:
                 seller_info = {
@@ -173,7 +179,10 @@ def get_order(order_id):
     else:
         seller_info = {
             'type': 'anonymous',
-            'name': 'Anoniman dobavljac'
+            'name': 'Anoniman dobavljac',
+            'rating': float(supplier_obj.rating) if supplier_obj and supplier_obj.rating else None,
+            'rating_count': supplier_obj.rating_count if supplier_obj else None,
+            'trust_tier': supplier_obj.trust_tier if supplier_obj else None,
         }
 
     # Get items with quality info from linked listing
@@ -752,7 +761,7 @@ def rate_order(order_id):
             rater_type=RaterType.BUYER,
         ).count() + 1  # +1 za ovu novu
 
-        supplier.rating = Decimal(str(round(positive_count / total_count * 5, 1))) if total_count > 0 else None
+        supplier.rating = Decimal(str(round(positive_count / total_count * 100))) if total_count > 0 else None
         supplier.rating_count = total_count
 
     db.session.commit()

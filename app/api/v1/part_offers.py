@@ -243,10 +243,14 @@ def search_offers():
     for listing in top:
         supplier = Supplier.query.get(listing.supplier_id)
         sup_rating = None
+        sup_rating_count = None
+        sup_trust_tier = None
         delivery_label = None
         if supplier:
             if (supplier.rating_count or 0) > 0 and supplier.rating is not None:
                 sup_rating = round(float(supplier.rating), 1)
+            sup_rating_count = supplier.rating_count
+            sup_trust_tier = supplier.trust_tier
             delivery = _get_delivery_info(supplier, tenant_city)
             delivery_label = delivery['label']
 
@@ -258,6 +262,8 @@ def search_offers():
             'stock_hint': get_stock_hint(listing.stock_quantity),
             'part_name': listing.name,
             'supplier_rating': sup_rating,
+            'supplier_rating_count': sup_rating_count,
+            'supplier_trust_tier': sup_trust_tier,
             'delivery_label': delivery_label,
         })
 
