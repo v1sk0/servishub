@@ -920,6 +920,113 @@ def import_excel():
     }
 
 
+# ============== LCD Ponuda Import ==============
+
+@bp.route('/import-lcd-ponuda', methods=['POST'])
+@supplier_jwt_required
+def import_lcd_ponuda():
+    """Import LCD ponuda format XLS with optional preview.
+
+    Query params:
+        preview=true (default) - parse and return summary without DB insert
+        preview=false - delete existing listings and import all
+    """
+    from app.services.lcd_ponuda_parser import parse_lcd_ponuda
+
+    preview = request.args.get('preview', 'true').lower() != 'false'
+
+    # 1. Validate file
+    if 'file' not in request.files:
+        return {'error': 'Fajl nije prilozen'}, 400
+
+    file = request.files['file']
+    if not file.filename:
+        return {'error': 'Fajl nije izabran'}, 400
+
+    file_content = file.read()
+    if not file_content:
+        return {'error': 'Fajl je prazan'}, 400
+
+    if len(file_content) > MAX_IMPORT_FILE_SIZE_MB * 1024 * 1024:
+        return {'error': f'Fajl je prevelik (max {MAX_IMPORT_FILE_SIZE_MB}MB)'}, 413
+
+    # 2. Security validation
+    is_valid, error_msg, safe_filename = validate_upload(
+        file_content=file_content,
+        filename=file.filename,
+        allowed_extensions=['xlsx', 'xls'],
+        max_size_mb=MAX_IMPORT_FILE_SIZE_MB,
+        check_executable=True,
+        check_office_macros=True
+    )
+    if not is_valid:
+        return {'error': error_msg}, 400
+
+    # 3. Get supplier EUR rate
+    eur_rate = get_supplier_eur_rate()
+
+    # 4. Parse
+    try:
+        result = parse_lcd_ponuda(file_content, eur_rate=eur_rate)
+    except Exception as e:
+        logger.error(f"LCD ponuda parse error: {e}")
+        return {'error': f'Greska pri parsiranju fajla: {str(e)}'}, 400
+
+    if not result['listings']:
+        return {'error': 'Nisu pronadjeni artikli u fajlu'}, 400
+
+    # 5. Preview mode - return summary only
+    if preview:
+        return {
+            'success': True,
+            'preview': True,
+            'data': {
+                **result['summary'],
+                'sample': result['sample'],
+            }
+        }
+
+    # 6. Import mode - delete existing and insert all
+    existing = SupplierListing.query.filter_by(supplier_id=g.supplier_id).count()
+    SupplierListing.query.filter_by(supplier_id=g.supplier_id).delete()
+    db.session.flush()
+
+    created = 0
+    for item in result['listings']:
+        listing = SupplierListing(
+            supplier_id=g.supplier_id,
+            name=item['name'],
+            brand=item['brand'],
+            model_compatibility=item['model_compatibility'],
+            part_category=item['part_category'],
+            part_number=item['part_number'],
+            quality_grade=item['quality_grade'],
+            is_original=item['is_original'],
+            price=Decimal(str(item['price_eur'])),  # legacy NOT NULL
+            price_eur=Decimal(str(item['price_eur'])),
+            price_rsd=Decimal(str(item['price_rsd'])),
+            stock_status=item['stock_status'],
+            is_active=item['is_active'],
+            description=item['description'],
+            min_order_qty=item['min_order_qty'],
+            currency=item['currency'],
+        )
+        db.session.add(listing)
+        created += 1
+
+    db.session.commit()
+
+    return {
+        'success': True,
+        'preview': False,
+        'data': {
+            'deleted': existing,
+            'created': created,
+            'skipped': result['summary']['skipped'],
+        }
+    }
+
+
 # ============== Excel Export ==============
 
 @bp.route('/export-excel', methods=['GET'])
