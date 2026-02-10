@@ -122,7 +122,11 @@ def list_orders():
             'total_amount': float(order.total_amount) if order.total_amount else None,
             'currency': order.currency or 'RSD',
             'created_at': order.created_at.isoformat(),
-            'tracking_number': order.tracking_number
+            'tracking_number': order.tracking_number,
+            'delivery_method': order.delivery_method,
+            'courier_service': order.courier_service,
+            'delivery_cost': float(order.delivery_cost) if order.delivery_cost else None,
+            'estimated_delivery_days': order.estimated_delivery_days,
         })
 
     return {

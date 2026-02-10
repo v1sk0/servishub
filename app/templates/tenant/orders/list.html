@@ -115,6 +115,7 @@
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Servisni nalog</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Detalj</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Cena</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Dostava</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Poruceno</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Akcije</th>
@@ -123,7 +124,11 @@
                 <tbody class="divide-y divide-gray-200">
                     <template x-for="order in orders" :key="order.id">
                         <tr class="hover:bg-gray-50 cursor-pointer" @click="viewOrder(order)">
-                            <td class="px-4 py-3 text-center">
+                            <td class="px-4 py-3 text-center relative overflow-hidden">
+                                <!-- Diagonal ribbon for OFFERED status -->
+                                <div x-show="order.status === 'OFFERED'" class="offered-ribbon">
+                                    <span>Potvrdio</span>
+                                </div>
                                 <p class="text-sm font-medium text-gray-900" x-text="order.order_number"></p>
                             </td>
                             <td class="px-4 py-3 text-center" @click.stop>
@@ -137,6 +142,19 @@
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <p class="text-sm font-semibold text-gray-900" x-text="order.total_amount ? (formatPrice(order.total_amount) + ' ' + order.currency) : '-'"></p>
+                            </td>
+                            <td class="px-3 py-3 text-center">
+                                <template x-if="order.delivery_method">
+                                    <div class="delivery-cell">
+                                        <span class="delivery-method-tag"
+                                              :class="order.delivery_method === 'courier' ? 'tag-courier' : order.delivery_method === 'own_delivery' ? 'tag-own' : 'tag-pickup'"
+                                              x-text="order.delivery_method === 'courier' ? 'Kurir' : order.delivery_method === 'own_delivery' ? 'Dostava' : 'Preuzimanje'"></span>
+                                        <p class="text-[10px] text-gray-500 mt-0.5 leading-tight" x-show="order.courier_service" x-text="order.courier_service"></p>
+                                        <p class="text-[10px] text-gray-500 leading-tight" x-show="order.estimated_delivery_days" x-text="'~' + order.estimated_delivery_days + ' dana'"></p>
+                                        <p class="text-[10px] text-gray-400 leading-tight" x-show="order.delivery_cost" x-text="formatPrice(order.delivery_cost) + ' RSD'"></p>
+                                    </div>
+                                </template>
+                                <span x-show="!order.delivery_method" class="text-xs text-gray-300">-</span>
                             </td>
                             <td class="px-3 py-3">
                                 <!-- Terminal statuses: simple badge -->
@@ -822,6 +840,50 @@
 .glass-theme .tenant-app td .bg-red-100 { background: rgba(239, 68, 68, 0.2) !important; }
 .glass-theme .tenant-app td .text-red-700 { color: #f87171 !important; }
 .glass-theme .tenant-app td .bg-red-100:hover { background: rgba(239, 68, 68, 0.35) !important; }
+
+/* Offered ribbon (diagonal 45deg) */
+.offered-ribbon {
+    position: absolute;
+    top: -2px;
+    left: -28px;
+    width: 90px;
+    height: 18px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(-45deg);
+    transform-origin: center;
+    box-shadow: 0 1px 4px rgba(217, 119, 6, 0.4);
+    z-index: 2;
+    pointer-events: none;
+}
+.glass-theme .tenant-app .offered-ribbon {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.85), rgba(217, 119, 6, 0.85));
+    box-shadow: 0 1px 6px rgba(245, 158, 11, 0.5);
+}
+
+/* Delivery cell in table */
+.delivery-cell { line-height: 1.2; }
+.delivery-method-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+.tag-courier { background: #dbeafe; color: #1e40af; }
+.tag-own { background: #dcfce7; color: #166534; }
+.tag-pickup { background: #fef3c7; color: #92400e; }
+.glass-theme .tenant-app .tag-courier { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+.glass-theme .tenant-app .tag-own { background: rgba(34, 197, 94, 0.2); color: #86efac; }
+.glass-theme .tenant-app .tag-pickup { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
 
 /* Trust tier badges */
 .trust-badge {
