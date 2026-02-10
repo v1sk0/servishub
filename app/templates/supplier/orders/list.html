@@ -363,6 +363,67 @@
                         <div class="bg-yellow-50 rounded-lg p-4 text-sm text-yellow-800" x-text="orderDetail?.buyer_notes"></div>
                     </div>
 
+                    <!-- Istorija -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-medium text-gray-500 uppercase mb-2">Istorija</h4>
+                        <div class="space-y-2.5">
+                            <div class="flex items-center gap-3 text-sm">
+                                <div class="w-2 h-2 rounded-full bg-gray-400"></div>
+                                <span class="text-gray-500">Narudzbina kreirana:</span>
+                                <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.created_at)"></span>
+                            </div>
+                            <template x-if="orderDetail?.timestamps?.sent_at">
+                                <div class="flex items-center gap-3 text-sm">
+                                    <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                                    <span class="text-gray-500">Kupac poslao narudzbinu:</span>
+                                    <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.sent_at)"></span>
+                                </div>
+                            </template>
+                            <template x-if="orderDetail?.timestamps?.offered_at">
+                                <div class="flex items-center gap-3 text-sm">
+                                    <div class="w-2 h-2 rounded-full bg-amber-500"></div>
+                                    <span class="text-gray-500">Vi potvrdili dostupnost:</span>
+                                    <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.offered_at)"></span>
+                                </div>
+                            </template>
+                            <template x-if="orderDetail?.timestamps?.confirmed_at">
+                                <div class="flex items-center gap-3 text-sm">
+                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                    <span class="text-gray-500">Kupac potvrdio narudzbinu:</span>
+                                    <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.confirmed_at)"></span>
+                                </div>
+                            </template>
+                            <template x-if="orderDetail?.timestamps?.shipped_at">
+                                <div class="flex items-center gap-3 text-sm">
+                                    <div class="w-2 h-2 rounded-full bg-purple-500"></div>
+                                    <span class="text-gray-500">Vi poslali posiljku:</span>
+                                    <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.shipped_at)"></span>
+                                </div>
+                            </template>
+                            <template x-if="orderDetail?.timestamps?.delivered_at">
+                                <div class="flex items-center gap-3 text-sm">
+                                    <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                    <span class="text-gray-500">Posiljka isporucena:</span>
+                                    <span class="text-gray-900" x-text="formatDateTime(orderDetail?.timestamps?.delivered_at)"></span>
+                                </div>
+                            </template>
+                            <template x-if="orderDetail?.rejection_reason">
+                                <div class="flex items-center gap-3 text-sm">
+                                    <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                                    <span class="text-gray-500">Odbijena:</span>
+                                    <span class="text-gray-900" x-text="orderDetail?.rejection_reason"></span>
+                                </div>
+                            </template>
+                            <template x-if="orderDetail?.cancellation_reason">
+                                <div class="flex items-center gap-3 text-sm">
+                                    <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                                    <span class="text-gray-500">Otkazana:</span>
+                                    <span class="text-gray-900" x-text="orderDetail?.cancellation_reason"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
                     <!-- Lifeline Stepper -->
                     <div class="mb-6">
                         <div class="detail-lifeline-wrap">

@@ -437,56 +437,49 @@
                         <div class="space-y-3">
                             <div class="flex items-center gap-3 text-sm">
                                 <div class="w-2 h-2 rounded-full bg-gray-400"></div>
-                                <span class="text-gray-500">Kreirano:</span>
+                                <span class="text-gray-500">Narudzbina kreirana:</span>
                                 <span class="text-gray-900" x-text="formatDateTime(selectedOrder?.timestamps?.created_at)"></span>
                             </div>
                             <template x-if="selectedOrder?.timestamps?.sent_at">
                                 <div class="flex items-center gap-3 text-sm">
                                     <div class="w-2 h-2 rounded-full bg-blue-500"></div>
-                                    <span class="text-gray-500">Poslato:</span>
+                                    <span class="text-gray-500">Poslato dobavljacu:</span>
                                     <span class="text-gray-900" x-text="formatDateTime(selectedOrder?.timestamps?.sent_at)"></span>
                                 </div>
                             </template>
                             <template x-if="selectedOrder?.timestamps?.offered_at">
                                 <div class="flex items-center gap-3 text-sm">
                                     <div class="w-2 h-2 rounded-full bg-amber-500"></div>
-                                    <span class="text-gray-500">Ponudjeno:</span>
+                                    <span class="text-gray-500">Dobavljac potvrdio i ponudio dostavu:</span>
                                     <span class="text-gray-900" x-text="formatDateTime(selectedOrder?.timestamps?.offered_at)"></span>
                                 </div>
                             </template>
                             <template x-if="selectedOrder?.timestamps?.confirmed_at">
                                 <div class="flex items-center gap-3 text-sm">
                                     <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                                    <span class="text-gray-500">Potvrdjeno:</span>
+                                    <span class="text-gray-500">Kupac potvrdio narudzbinu:</span>
                                     <span class="text-gray-900" x-text="formatDateTime(selectedOrder?.timestamps?.confirmed_at)"></span>
                                 </div>
                             </template>
                             <template x-if="selectedOrder?.timestamps?.rejected_at">
                                 <div class="flex items-center gap-3 text-sm">
                                     <div class="w-2 h-2 rounded-full bg-red-500"></div>
-                                    <span class="text-gray-500">Odbijeno:</span>
+                                    <span class="text-gray-500">Dobavljac odbio narudzbinu:</span>
                                     <span class="text-gray-900" x-text="formatDateTime(selectedOrder?.timestamps?.rejected_at)"></span>
                                 </div>
                             </template>
                             <template x-if="selectedOrder?.timestamps?.shipped_at">
                                 <div class="flex items-center gap-3 text-sm">
                                     <div class="w-2 h-2 rounded-full bg-purple-500"></div>
-                                    <span class="text-gray-500">Poslato:</span>
+                                    <span class="text-gray-500">Dobavljac poslao posiljku:</span>
                                     <span class="text-gray-900" x-text="formatDateTime(selectedOrder?.timestamps?.shipped_at)"></span>
                                 </div>
                             </template>
                             <template x-if="selectedOrder?.timestamps?.delivered_at">
                                 <div class="flex items-center gap-3 text-sm">
                                     <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
-                                    <span class="text-gray-500">Isporuceno:</span>
+                                    <span class="text-gray-500">Posiljka isporucena:</span>
                                     <span class="text-gray-900" x-text="formatDateTime(selectedOrder?.timestamps?.delivered_at)"></span>
-                                </div>
-                            </template>
-                            <template x-if="selectedOrder?.timestamps?.completed_at">
-                                <div class="flex items-center gap-3 text-sm">
-                                    <div class="w-2 h-2 rounded-full bg-emerald-600"></div>
-                                    <span class="text-gray-500">Zavrseno:</span>
-                                    <span class="text-gray-900" x-text="formatDateTime(selectedOrder?.timestamps?.completed_at)"></span>
                                 </div>
                             </template>
                             <template x-if="selectedOrder?.timestamps?.cancelled_at">
