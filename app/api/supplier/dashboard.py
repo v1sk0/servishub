@@ -92,6 +92,20 @@ def get_dashboard():
         PartOrder.status == OrderStatus.COMPLETED
     ).scalar() or 0
 
+    # === Turnover by currency (all completed orders) ===
+    turnover_by_currency = db.session.query(
+        PartOrder.currency,
+        func.sum(PartOrder.subtotal)
+    ).filter(
+        PartOrder.seller_type == SellerType.SUPPLIER,
+        PartOrder.seller_supplier_id == g.supplier_id,
+        PartOrder.status == OrderStatus.COMPLETED
+    ).group_by(PartOrder.currency).all()
+
+    turnover = {}
+    for currency, amount in turnover_by_currency:
+        turnover[currency or 'RSD'] = float(amount or 0)
+
     # === Recent Orders ===
     recent_orders = base_orders.order_by(
         PartOrder.created_at.desc()
@@ -137,7 +151,8 @@ def get_dashboard():
             'last_30_days': float(revenue_30d),
             'total': float(total_revenue),
             'total_commission': float(total_commission),
-            'currency': 'RSD'
+            'currency': 'RSD',
+            'turnover': turnover
         },
         'recent_orders': recent_orders_list
     }

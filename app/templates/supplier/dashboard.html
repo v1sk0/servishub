@@ -120,12 +120,21 @@
             <p class="text-sm text-gray-500 mt-2">Ceka potvrdu</p>
         </div>
 
-        <!-- Total Sales -->
+        <!-- Total Turnover -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Ukupna prodaja</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-1" x-text="formatPrice(supplierInfo.total_sales || 0)"></p>
+                    <p class="text-sm font-medium text-gray-600">Ukupan promet</p>
+                    <template x-if="Object.keys(turnover).length > 0">
+                        <div class="mt-1">
+                            <template x-for="(amount, cur) in turnover" :key="cur">
+                                <p class="text-xl font-bold text-gray-900 leading-tight" x-text="formatAmount(amount, cur)"></p>
+                            </template>
+                        </div>
+                    </template>
+                    <template x-if="Object.keys(turnover).length === 0">
+                        <p class="text-3xl font-bold text-gray-900 mt-1">0</p>
+                    </template>
                 </div>
                 <div class="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">
                     <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -134,7 +143,7 @@
                 </div>
             </div>
             <p class="text-sm text-gray-500 mt-2">
-                Prihod od prodaje
+                Zavrsene narudzbine
             </p>
         </div>
     </div>
@@ -253,12 +262,14 @@ function dashboardPage() {
         orderStats: { pending: 0 },
         supplierInfo: {},
         recentOrders: [],
+        turnover: {},
 
         async init() {
             await Promise.all([
                 this.loadStats(),
                 this.loadOrders(),
-                this.loadSupplierInfo()
+                this.loadSupplierInfo(),
+                this.loadTurnover()
             ]);
         },
 
@@ -292,8 +303,21 @@ function dashboardPage() {
             }
         },
 
+        async loadTurnover() {
+            try {
+                const data = await supplierApi('/dashboard');
+                this.turnover = data.revenue?.turnover || {};
+            } catch (err) {
+                console.error('Error loading turnover:', err);
+            }
+        },
+
         formatPrice(price) {
             return new Intl.NumberFormat('sr-RS').format(price) + ' RSD';
+        },
+
+        formatAmount(price, currency) {
+            return new Intl.NumberFormat('sr-RS').format(price) + ' ' + currency;
         },
 
         formatDate(dateStr) {
