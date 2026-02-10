@@ -223,12 +223,21 @@
                     <!-- Seller Info -->
                     <div class="bg-gray-50 rounded-lg p-4 mb-6">
                         <h3 class="font-medium text-gray-900 mb-2">Prodavac</h3>
-                        <p class="font-medium text-gray-900" x-text="selectedOrder?.seller?.name"></p>
-                        <p class="text-sm text-gray-500" x-text="selectedOrder?.seller?.city"></p>
-                        <div class="flex gap-4 mt-2 text-sm" x-show="selectedOrder?.seller?.phone || selectedOrder?.seller?.email">
-                            <span x-show="selectedOrder?.seller?.phone" class="text-gray-600" x-text="selectedOrder?.seller?.phone"></span>
-                            <span x-show="selectedOrder?.seller?.email" class="text-gray-600" x-text="selectedOrder?.seller?.email"></span>
-                        </div>
+                        <template x-if="selectedOrder?.seller?.type === 'anonymous'">
+                            <div>
+                                <p class="text-sm text-gray-500 italic">Podaci o dobavljacu ce biti vidljivi nakon potvrde narudzbine</p>
+                            </div>
+                        </template>
+                        <template x-if="selectedOrder?.seller?.type !== 'anonymous'">
+                            <div>
+                                <p class="font-medium text-gray-900" x-text="selectedOrder?.seller?.name"></p>
+                                <p class="text-sm text-gray-500" x-text="selectedOrder?.seller?.city"></p>
+                                <div class="flex gap-4 mt-2 text-sm" x-show="selectedOrder?.seller?.phone || selectedOrder?.seller?.email">
+                                    <span x-show="selectedOrder?.seller?.phone" class="text-gray-600" x-text="selectedOrder?.seller?.phone"></span>
+                                    <span x-show="selectedOrder?.seller?.email" class="text-gray-600" x-text="selectedOrder?.seller?.email"></span>
+                                </div>
+                            </div>
+                        </template>
                     </div>
 
                     <!-- Items -->

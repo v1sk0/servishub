@@ -75,15 +75,23 @@ def list_orders():
     total = query.count()
     orders = query.offset((page - 1) * per_page).limit(per_page).all()
 
+    # Statuses where seller identity is revealed (after credit deduction)
+    REVEALED_STATUSES = {OrderStatus.CONFIRMED, OrderStatus.SHIPPED,
+                         OrderStatus.DELIVERED, OrderStatus.COMPLETED}
+
     result = []
     for order in orders:
-        seller_name = None
-        if order.seller_type == SellerType.SUPPLIER:
-            supplier = Supplier.query.get(order.seller_supplier_id)
-            seller_name = supplier.name if supplier else 'Unknown'
+        # Hide seller name until confirmed (mutual reveal after credit)
+        if order.status in REVEALED_STATUSES:
+            seller_name = None
+            if order.seller_type == SellerType.SUPPLIER:
+                supplier = Supplier.query.get(order.seller_supplier_id)
+                seller_name = supplier.name if supplier else 'Unknown'
+            else:
+                tenant = Tenant.query.get(order.seller_tenant_id)
+                seller_name = tenant.name if tenant else 'Unknown'
         else:
-            tenant = Tenant.query.get(order.seller_tenant_id)
-            seller_name = tenant.name if tenant else 'Unknown'
+            seller_name = 'Anoniman dobavljac'
 
         items = PartOrderItem.query.filter_by(order_id=order.id).all()
 
@@ -129,27 +137,35 @@ def get_order(order_id):
     if not order:
         return {'error': 'Order not found'}, 404
 
-    # Get seller info
+    # Get seller info - hidden until CONFIRMED (mutual reveal after credit)
+    revealed = order.status in {OrderStatus.CONFIRMED, OrderStatus.SHIPPED,
+                                OrderStatus.DELIVERED, OrderStatus.COMPLETED}
     seller_info = {}
-    if order.seller_type == SellerType.SUPPLIER:
-        supplier = Supplier.query.get(order.seller_supplier_id)
-        if supplier:
-            seller_info = {
-                'type': 'supplier',
-                'id': supplier.id,
-                'name': supplier.name,
-                'city': supplier.city,
-                'phone': supplier.phone,
-                'email': supplier.email
-            }
+    if revealed:
+        if order.seller_type == SellerType.SUPPLIER:
+            supplier = Supplier.query.get(order.seller_supplier_id)
+            if supplier:
+                seller_info = {
+                    'type': 'supplier',
+                    'id': supplier.id,
+                    'name': supplier.name,
+                    'city': supplier.city,
+                    'phone': supplier.phone,
+                    'email': supplier.email
+                }
+        else:
+            tenant = Tenant.query.get(order.seller_tenant_id)
+            if tenant:
+                seller_info = {
+                    'type': 'tenant',
+                    'id': tenant.id,
+                    'name': tenant.name
+                }
     else:
-        tenant = Tenant.query.get(order.seller_tenant_id)
-        if tenant:
-            seller_info = {
-                'type': 'tenant',
-                'id': tenant.id,
-                'name': tenant.name
-            }
+        seller_info = {
+            'type': 'anonymous',
+            'name': 'Anoniman dobavljac'
+        }
 
     # Get items
     items = PartOrderItem.query.filter_by(order_id=order.id).all()
