@@ -1008,6 +1008,7 @@ def import_lcd_ponuda():
             stock_status=item['stock_status'],
             is_active=item['is_active'],
             description=item['description'],
+            color=item.get('color'),
             min_order_qty=item['min_order_qty'],
             currency=item['currency'],
         )

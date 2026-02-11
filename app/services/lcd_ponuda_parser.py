@@ -90,7 +90,14 @@ def parse_lcd_ponuda(file_content, eur_rate=118.0):
         price_rsd = (price_eur * rate).quantize(Decimal('0.01'))
         chip = _has_chip(b) if brand == 'Apple' else None
         frame = _get_frame(sec_header, c, desc)
-        name = _build_name(brand, model, qg, frame, chip, is_tablet, mfr_brand)
+
+        # Extract color from column C (e.g. BLACK, WHITE, GREEN, NO FRAME)
+        raw_color = str(c).strip().upper() if c else None
+        color = None
+        if raw_color and raw_color != 'NONE' and raw_color != 'NO FRAME':
+            color = raw_color
+
+        name = _build_name(brand, model, qg, frame, chip, is_tablet, mfr_brand, color)
 
         listings.append({
             'name': name[:200],
@@ -105,6 +112,7 @@ def parse_lcd_ponuda(file_content, eur_rate=118.0):
             'stock_status': 'IN_STOCK',
             'is_active': True,
             'description': desc,
+            'color': color,
             'min_order_qty': 1,
             'currency': 'EUR',
             'mfr_brand': mfr_brand,
@@ -257,13 +265,17 @@ def _get_frame(header_full, color, desc):
     return None
 
 
-def _build_name(brand, model, qg, frame, chip, tablet, mfr_brand=None):
+def _build_name(brand, model, qg, frame, chip, tablet, mfr_brand=None, color=None):
     """Build listing name from components."""
     parts = ['Display Tablet' if tablet else 'Display']
     if brand:
         parts.append(brand)
     if model:
         parts.append(model)
+
+    # Color (e.g., BLACK, GREEN, CREAM)
+    if color:
+        parts.append(color.title())
 
     labels = {
         'service_pack': 'SP',

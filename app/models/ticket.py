@@ -94,6 +94,7 @@ class ServiceTicket(db.Model):
     brand = db.Column(db.String(50))           # Marka: Apple, Samsung, Xiaomi...
     model = db.Column(db.String(100))          # Model: iPhone 14, Galaxy S24...
     imei = db.Column(db.String(20))            # IMEI/serijski broj
+    device_color = db.Column(db.String(50))     # Boja uredjaja (Black, White, Green...)
     device_condition = db.Column(db.Text)      # Stanje pri prijemu (ostecenja, itd.)
     device_password = db.Column(db.String(50)) # Sifra uredjaja (enkriptovati u produkciji)
 
@@ -382,6 +383,7 @@ class ServiceTicket(db.Model):
             'brand': self.brand,
             'model': self.model,
             'imei': self.imei,
+            'device_color': self.device_color,
             'service_section': self.service_section,
             'device_condition_grade': self.device_condition_grade,
             'device_condition_notes': self.device_condition_notes,

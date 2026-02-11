@@ -262,6 +262,7 @@ def search_offers():
             'stock_hint': get_stock_hint(listing.stock_quantity),
             'part_name': listing.name,
             'description': listing.description,
+            'color': listing.color,
             'supplier_rating': sup_rating,
             'supplier_rating_count': sup_rating_count,
             'supplier_trust_tier': sup_trust_tier,
@@ -409,6 +410,7 @@ def get_ticket_offers(ticket_id):
             'stock_hint': get_stock_hint(listing.stock_quantity),
             'part_name': listing.name,
             'description': listing.description,
+            'color': listing.color,
             'delivery_label': delivery_label,
         })
 

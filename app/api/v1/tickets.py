@@ -207,6 +207,7 @@ def create_ticket():
         brand=brand,
         model=model,
         imei=data.get('imei'),
+        device_color=data.get('device_color'),
         device_condition=data.get('device_condition'),
         device_password=data.get('device_password'),
         # Dolce Vita stil - kategorija i stanje
@@ -298,7 +299,7 @@ def update_ticket(ticket_id):
         'customer_name', 'customer_phone', 'customer_email',
         'customer_company_name', 'customer_pib',
         # Uredjaj
-        'device_type', 'brand', 'model', 'imei', 'device_condition', 'device_password',
+        'device_type', 'brand', 'model', 'imei', 'device_color', 'device_condition', 'device_password',
         # Dolce Vita stil
         'service_section', 'device_condition_grade', 'device_condition_notes',
         'device_not_working',

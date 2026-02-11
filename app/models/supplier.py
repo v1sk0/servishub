@@ -199,6 +199,7 @@ class SupplierListing(db.Model):
     part_category = db.Column(db.String(50))
     part_number = db.Column(db.String(50))
     description = db.Column(db.Text)
+    color = db.Column(db.String(50))                      # Boja okvira/dela (BLACK, WHITE, GREEN...)
     is_original = db.Column(db.Boolean, default=False)
     quality_grade = db.Column(db.String(20))
 
