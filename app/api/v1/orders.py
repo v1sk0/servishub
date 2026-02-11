@@ -530,7 +530,7 @@ def confirm_delivery(order_id):
 @bp.route('/<int:order_id>/complete', methods=['POST'])
 @jwt_required
 def complete_order(order_id):
-    """Mark order as complete (DELIVERED -> COMPLETED)"""
+    """Mark order as complete (DELIVERED -> COMPLETED). Updates supplier totals."""
     order = PartOrder.query.filter_by(
         id=order_id,
         buyer_tenant_id=g.tenant_id
@@ -539,8 +539,18 @@ def complete_order(order_id):
     if not order:
         return {'error': 'Order not found'}, 404
 
+    # Idempotent
+    if order.status == OrderStatus.COMPLETED:
+        return {'message': 'Order already completed'}
+
     if order.status != OrderStatus.DELIVERED:
         return {'error': 'Order not delivered yet'}, 400
+
+    # Update supplier financial totals
+    if order.seller_type == SellerType.SUPPLIER and order.seller_supplier_id:
+        supplier = Supplier.query.get(order.seller_supplier_id)
+        if supplier and order.subtotal:
+            supplier.total_sales = (supplier.total_sales or Decimal('0')) + order.subtotal
 
     order.status = OrderStatus.COMPLETED
     order.completed_at = datetime.utcnow()

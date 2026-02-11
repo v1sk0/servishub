@@ -519,82 +519,26 @@ def ship_order(order_id):
 @supplier_jwt_required
 def deliver_order(order_id):
     """
-    Mark order as delivered (SHIPPED -> DELIVERED).
-    Idempotent: vec DELIVERED -> 200.
+    DISABLED: Prijem robe potvrdjuje kupac (tenant), ne dobavljac.
+    Tenant koristi POST /api/v1/orders/<id>/confirm-delivery.
     """
-    order = PartOrder.query.filter_by(
-        id=order_id,
-        seller_type=SellerType.SUPPLIER,
-        seller_supplier_id=g.supplier_id
-    ).first()
-
-    if not order:
-        return {'error': 'Order not found'}, 404
-
-    # Idempotent
-    if order.status == OrderStatus.DELIVERED:
-        return {'message': 'Order already delivered', 'order_id': order.id}
-
-    if order.status != OrderStatus.SHIPPED:
-        return {
-            'error': 'Narudzbina mora biti u statusu SHIPPED pre isporuke',
-            'code': 'INVALID_STATUS',
-        }, 409
-
-    order.status = OrderStatus.DELIVERED
-    order.delivered_at = datetime.utcnow()
-    order.updated_at = datetime.utcnow()
-    db.session.commit()
-
-    # Email (non-blocking)
-    try:
-        from app.services.email_service import send_supplier_order_email
-        send_supplier_order_email(order, 'delivered')
-    except (ImportError, Exception):
-        pass
-
-    return {'message': 'Order delivered', 'order_id': order.id}
+    return {
+        'error': 'Prijem robe potvrdjuje kupac. Sacekajte da kupac potvrdi da je primio posiljku.',
+        'code': 'BUYER_CONFIRMS_DELIVERY',
+    }, 403
 
 
 @bp.route('/<int:order_id>/complete', methods=['POST'])
 @supplier_jwt_required
 def complete_order(order_id):
     """
-    Mark order as completed (DELIVERED -> COMPLETED).
-    Updates supplier totals (total_sales, total_commission).
-    Idempotent: vec COMPLETED -> 200.
+    DISABLED: Kupac (tenant) zavrsava narudzbinu i ocenjuje.
+    Tenant koristi POST /api/v1/orders/<id>/complete.
     """
-    order = PartOrder.query.with_for_update().filter_by(
-        id=order_id,
-        seller_type=SellerType.SUPPLIER,
-        seller_supplier_id=g.supplier_id
-    ).first()
-
-    if not order:
-        return {'error': 'Order not found'}, 404
-
-    # Idempotent
-    if order.status == OrderStatus.COMPLETED:
-        return {'message': 'Order already completed', 'order_id': order.id}
-
-    if order.status != OrderStatus.DELIVERED:
-        return {
-            'error': 'Narudzbina mora biti u statusu DELIVERED pre zavrsetka',
-            'code': 'INVALID_STATUS',
-        }, 409
-
-    # Update supplier financial totals
-    supplier = Supplier.query.with_for_update().get(g.supplier_id)
-    if supplier:
-        if order.subtotal:
-            supplier.total_sales = (supplier.total_sales or Decimal('0')) + order.subtotal
-
-    order.status = OrderStatus.COMPLETED
-    order.completed_at = datetime.utcnow()
-    order.updated_at = datetime.utcnow()
-    db.session.commit()
-
-    return {'message': 'Order completed', 'order_id': order.id}
+    return {
+        'error': 'Narudzbinu zavrsava kupac nakon prijema robe.',
+        'code': 'BUYER_COMPLETES_ORDER',
+    }, 403
 
 
 # ============== Paket D: rate ==============

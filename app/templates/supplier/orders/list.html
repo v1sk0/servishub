@@ -333,10 +333,13 @@
                                         <button @click="quickShip(order)" class="px-2.5 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700">Posalji</button>
                                     </template>
                                     <template x-if="order.status === 'SHIPPED'">
-                                        <button @click="quickDeliver(order)" class="px-2.5 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Isporuceno</button>
+                                        <span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded text-xs">Ceka prijem</span>
                                     </template>
                                     <template x-if="order.status === 'DELIVERED'">
-                                        <button @click="quickComplete(order)" class="px-2.5 py-1 bg-emerald-600 text-white rounded text-xs hover:bg-emerald-700">Oceni</button>
+                                        <span class="px-2.5 py-1 bg-green-50 text-green-600 rounded text-xs">Primljeno</span>
+                                    </template>
+                                    <template x-if="order.status === 'COMPLETED'">
+                                        <button @click="viewOrder(order)" class="px-2.5 py-1 bg-amber-500 text-white rounded text-xs hover:bg-amber-600">Oceni</button>
                                     </template>
                                     <button @click="viewOrder(order)" class="px-2.5 py-1 text-purple-600 hover:text-purple-900 text-xs">Detalji</button>
                                 </div>
@@ -627,19 +630,31 @@
                             </button>
                         </template>
 
-                        <!-- For SHIPPED status -->
+                        <!-- For SHIPPED status - waiting for buyer to confirm receipt -->
                         <template x-if="selectedOrder?.status === 'SHIPPED'">
-                            <button @click="deliverOrder()"
-                                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                                Oznaci kao isporuceno
-                            </button>
+                            <span class="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 rounded-lg text-sm">
+                                <svg class="w-4 h-4 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                </svg>
+                                Ceka se prijem od kupca
+                            </span>
                         </template>
 
-                        <!-- For DELIVERED status -->
+                        <!-- For DELIVERED status - waiting for buyer to complete + rate -->
                         <template x-if="selectedOrder?.status === 'DELIVERED'">
-                            <button @click="completeOrder()"
-                                    class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
-                                Oceni narudzbinu
+                            <span class="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg text-sm">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                                Kupac primio robu - ceka se ocena
+                            </span>
+                        </template>
+
+                        <!-- For COMPLETED status - supplier can rate -->
+                        <template x-if="selectedOrder?.status === 'COMPLETED'">
+                            <button @click="rateOrder()"
+                                    class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600">
+                                Oceni kupca
                             </button>
                         </template>
 
@@ -1191,10 +1206,10 @@ function ordersPage() {
             const actions = {
                 'SENT': 'Nova narudzbina. Potvrdite dostupnost ili odbijte.',
                 'OFFERED': 'Cekanje na potvrdu kupca.',
-                'CONFIRMED': 'Kupac je potvrdio. Posaljite posiljku.',
-                'SHIPPED': 'Posiljka je na putu. Ceka se prijem.',
-                'DELIVERED': 'Posiljka isporucena. Ocenite narudzbinu.',
-                'COMPLETED': 'Narudzbina je uspesno zavrsena.',
+                'CONFIRMED': 'Kupac je potvrdio. Pripremite i posaljite posiljku.',
+                'SHIPPED': 'Posiljka je na putu. Ceka se potvrda prijema od kupca.',
+                'DELIVERED': 'Kupac primio robu. Ceka se ocena i zavrsetak.',
+                'COMPLETED': 'Narudzbina je zavrsena. Mozete oceniti kupca.',
                 'REJECTED': 'Narudzbina je odbijena.',
                 'CANCELLED': 'Narudzbina je otkazana.',
             };
@@ -1212,19 +1227,13 @@ function ordersPage() {
             }
         },
 
-        async completeOrder() {
-            try {
-                await supplierApi(`/orders/${this.selectedOrder.id}/complete`, 'POST', {});
-                const order = this.selectedOrder;
-                this.closeDetailModal();
-                this.ratingOrder = order;
-                this.ratingValue = '';
-                this.ratingComment = '';
-                this.ratingModal = true;
-                await Promise.all([this.loadOrders(), this.loadStats()]);
-            } catch (err) {
-                alert('Greska: ' + err.message);
-            }
+        rateOrder() {
+            const order = this.selectedOrder;
+            this.closeDetailModal();
+            this.ratingOrder = order;
+            this.ratingValue = '';
+            this.ratingComment = '';
+            this.ratingModal = true;
         },
 
         async submitRating() {
@@ -1280,16 +1289,16 @@ function ordersPage() {
         },
 
         getActionableOrders() {
-            return this.orders.filter(o => ['SENT', 'DELIVERED'].includes(o.status));
+            return this.orders.filter(o => ['SENT', 'COMPLETED'].includes(o.status));
         },
 
         getActionableBreakdown() {
             const a = this.getActionableOrders();
             const parts = [];
             const sent = a.filter(o => o.status === 'SENT').length;
-            const delivered = a.filter(o => o.status === 'DELIVERED').length;
+            const completed = a.filter(o => o.status === 'COMPLETED').length;
             if (sent) parts.push(`${sent} za potvrdu`);
-            if (delivered) parts.push(`${delivered} za ocenu`);
+            if (completed) parts.push(`${completed} za ocenu`);
             return parts.join(', ');
         },
 
@@ -1322,27 +1331,11 @@ function ordersPage() {
             }
         },
 
-        async quickDeliver(order) {
-            try {
-                await supplierApi(`/orders/${order.id}/deliver`, 'POST', {});
-                showToast('Narudzbina oznacena kao isporucena', 'success');
-                await Promise.all([this.loadOrders(), this.loadStats()]);
-            } catch (err) {
-                alert('Greska: ' + err.message);
-            }
-        },
-
-        async quickComplete(order) {
-            try {
-                await supplierApi(`/orders/${order.id}/complete`, 'POST', {});
-                this.ratingOrder = order;
-                this.ratingValue = '';
-                this.ratingComment = '';
-                this.ratingModal = true;
-                await Promise.all([this.loadOrders(), this.loadStats()]);
-            } catch (err) {
-                alert('Greska: ' + err.message);
-            }
+        quickRate(order) {
+            this.ratingOrder = order;
+            this.ratingValue = '';
+            this.ratingComment = '';
+            this.ratingModal = true;
         },
 
         prevPage() {

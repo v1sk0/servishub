@@ -3,7 +3,7 @@
 {% block title %}Narudzbina #{{ order_id }} - ServisHub{% endblock %}
 
 {% block page_content %}
-<div x-data="orderDetailPage({{ order_id }})" x-init="loadOrder()">
+<div x-data="orderDetailPage({{ order_id }})" x-init="init()">
     <!-- Loading -->
     <div x-show="loading" class="flex justify-center items-center h-64">
         <svg class="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
@@ -128,27 +128,48 @@
                 <div class="bg-white shadow rounded-lg p-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Akcije</h3>
                     <div class="space-y-3">
-                        <!-- Buyer actions -->
+                        <!-- OFFERED: Potvrdi ponudu (1 kredit) -->
+                        <button x-show="order.status === 'OFFERED'"
+                                @click="confirmOfferedOrder()"
+                                :disabled="updating"
+                                class="w-full px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-500 disabled:opacity-50">
+                            Potvrdi ponudu (1 kredit)
+                        </button>
+
+                        <!-- SHIPPED: Potvrdi prijem -->
                         <button x-show="order.status === 'SHIPPED'"
-                                @click="updateStatus('DELIVERED')"
+                                @click="confirmDelivery()"
                                 :disabled="updating"
                                 class="w-full px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-500 disabled:opacity-50">
-                            Oznaci kao primljeno
+                            Potvrdi prijem robe
                         </button>
+
+                        <!-- DELIVERED: Zavrsi i oceni -->
                         <button x-show="order.status === 'DELIVERED'"
-                                @click="updateStatus('COMPLETED')"
+                                @click="completeAndRate()"
                                 :disabled="updating"
-                                class="w-full px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-500 disabled:opacity-50">
-                            Zavrsi narudzbinu
+                                class="w-full px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-500 disabled:opacity-50">
+                            Zavrsi i oceni
                         </button>
-                        <button x-show="['DRAFT', 'SENT'].includes(order.status)"
-                                @click="updateStatus('CANCELLED')"
+
+                        <!-- COMPLETED: Oceni (ako jos nema ocenu) -->
+                        <button x-show="order.status === 'COMPLETED' && !hasRated"
+                                @click="showRatingModal = true"
+                                class="w-full px-4 py-2 text-sm font-medium text-white bg-amber-500 rounded-md hover:bg-amber-400">
+                            Oceni dobavljaca
+                        </button>
+
+                        <!-- DRAFT/SENT: Otkazi -->
+                        <button x-show="['DRAFT', 'SENT', 'OFFERED'].includes(order.status)"
+                                @click="cancelOrder()"
                                 :disabled="updating"
                                 class="w-full px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 disabled:opacity-50">
                             Otkazi narudzbinu
                         </button>
+
+                        <!-- DELIVERED: Prijavi problem -->
                         <button x-show="order.status === 'DELIVERED'"
-                                @click="updateStatus('DISPUTED')"
+                                @click="disputeOrder()"
                                 :disabled="updating"
                                 class="w-full px-4 py-2 text-sm font-medium text-yellow-600 bg-yellow-50 rounded-md hover:bg-yellow-100 disabled:opacity-50">
                             Prijavi problem
@@ -177,43 +198,111 @@
                 <div class="bg-white shadow rounded-lg p-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Istorija</h3>
                     <ol class="relative border-l border-gray-200 ml-3 space-y-4">
-                        <li x-show="order.created_at" class="ml-6">
+                        <li x-show="order.timestamps?.created_at" class="ml-6">
                             <span class="absolute flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full -left-3">
                                 <svg class="w-3 h-3 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
                                 </svg>
                             </span>
                             <p class="text-sm text-gray-900">Narudzbina kreirana</p>
-                            <p class="text-xs text-gray-500" x-text="formatDate(order.created_at)"></p>
+                            <p class="text-xs text-gray-500" x-text="formatDate(order.timestamps.created_at)"></p>
                         </li>
-                        <li x-show="order.confirmed_at" class="ml-6">
+                        <li x-show="order.timestamps?.sent_at" class="ml-6">
+                            <span class="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -left-3">
+                                <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                </svg>
+                            </span>
+                            <p class="text-sm text-gray-900">Poslato dobavljacu</p>
+                            <p class="text-xs text-gray-500" x-text="formatDate(order.timestamps.sent_at)"></p>
+                        </li>
+                        <li x-show="order.timestamps?.offered_at" class="ml-6">
+                            <span class="absolute flex items-center justify-center w-6 h-6 bg-amber-100 rounded-full -left-3">
+                                <svg class="w-3 h-3 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                            </span>
+                            <p class="text-sm text-gray-900">Dobavljac potvrdio dostupnost</p>
+                            <p class="text-xs text-gray-500" x-text="formatDate(order.timestamps.offered_at)"></p>
+                        </li>
+                        <li x-show="order.timestamps?.confirmed_at" class="ml-6">
                             <span class="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -left-3">
                                 <svg class="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
                             </span>
-                            <p class="text-sm text-gray-900">Potvrdjena</p>
-                            <p class="text-xs text-gray-500" x-text="formatDate(order.confirmed_at)"></p>
+                            <p class="text-sm text-gray-900">Narudzbina potvrdjena</p>
+                            <p class="text-xs text-gray-500" x-text="formatDate(order.timestamps.confirmed_at)"></p>
                         </li>
-                        <li x-show="order.shipped_at" class="ml-6">
+                        <li x-show="order.timestamps?.shipped_at" class="ml-6">
                             <span class="absolute flex items-center justify-center w-6 h-6 bg-purple-100 rounded-full -left-3">
                                 <svg class="w-3 h-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
                                 </svg>
                             </span>
-                            <p class="text-sm text-gray-900">Poslato</p>
-                            <p class="text-xs text-gray-500" x-text="formatDate(order.shipped_at)"></p>
+                            <p class="text-sm text-gray-900">Poslato kuriru</p>
+                            <p class="text-xs text-gray-500" x-text="formatDate(order.timestamps.shipped_at)"></p>
                         </li>
-                        <li x-show="order.delivered_at" class="ml-6">
+                        <li x-show="order.timestamps?.delivered_at" class="ml-6">
                             <span class="absolute flex items-center justify-center w-6 h-6 bg-green-100 rounded-full -left-3">
                                 <svg class="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
                             </span>
-                            <p class="text-sm text-gray-900">Primljeno</p>
-                            <p class="text-xs text-gray-500" x-text="formatDate(order.delivered_at)"></p>
+                            <p class="text-sm text-gray-900">Roba primljena</p>
+                            <p class="text-xs text-gray-500" x-text="formatDate(order.timestamps.delivered_at)"></p>
+                        </li>
+                        <li x-show="order.timestamps?.completed_at" class="ml-6">
+                            <span class="absolute flex items-center justify-center w-6 h-6 bg-emerald-100 rounded-full -left-3">
+                                <svg class="w-3 h-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd"/>
+                                </svg>
+                            </span>
+                            <p class="text-sm text-gray-900">Narudzbina zavrsena</p>
+                            <p class="text-xs text-gray-500" x-text="formatDate(order.timestamps.completed_at)"></p>
                         </li>
                     </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rating Modal -->
+    <div x-show="showRatingModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto"
+         @keydown.escape.window="showRatingModal = false">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/50" @click="showRatingModal = false"></div>
+            <div class="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Ocenite dobavljaca</h3>
+                <p class="text-sm text-gray-600 mb-4">Kako biste ocenili ovu transakciju?</p>
+
+                <div class="flex gap-4 mb-4">
+                    <button @click="ratingValue = 'POSITIVE'"
+                            :class="ratingValue === 'POSITIVE' ? 'ring-2 ring-green-500 bg-green-50' : 'bg-gray-50 hover:bg-green-50'"
+                            class="flex-1 py-4 rounded-xl border text-center transition">
+                        <span class="text-3xl">👍</span>
+                        <p class="text-sm font-medium mt-1 text-green-700">Pozitivna</p>
+                    </button>
+                    <button @click="ratingValue = 'NEGATIVE'"
+                            :class="ratingValue === 'NEGATIVE' ? 'ring-2 ring-red-500 bg-red-50' : 'bg-gray-50 hover:bg-red-50'"
+                            class="flex-1 py-4 rounded-xl border text-center transition">
+                        <span class="text-3xl">👎</span>
+                        <p class="text-sm font-medium mt-1 text-red-700">Negativna</p>
+                    </button>
+                </div>
+
+                <textarea x-model="ratingComment" rows="2" placeholder="Komentar (opciono)..."
+                          class="w-full rounded-lg border-gray-300 text-sm mb-4"></textarea>
+
+                <div class="flex gap-3">
+                    <button @click="submitRating()" :disabled="!ratingValue || ratingSubmitting"
+                            class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-medium">
+                        Sacuvaj ocenu
+                    </button>
+                    <button @click="showRatingModal = false"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm">
+                        Preskoci
+                    </button>
                 </div>
             </div>
         </div>
@@ -229,17 +318,34 @@ function orderDetailPage(orderId) {
         updating: false,
         sending: false,
         newMessage: '',
+        previousStatus: null,
+
+        // Rating
+        showRatingModal: false,
+        ratingValue: '',
+        ratingComment: '',
+        ratingSubmitting: false,
+        hasRated: false,
 
         statusLabels: {
             'DRAFT': 'Nacrt',
             'SENT': 'Poslato',
+            'OFFERED': 'Ponudjeno',
             'CONFIRMED': 'Potvrdeno',
             'REJECTED': 'Odbijeno',
-            'SHIPPED': 'Isporuceno',
+            'SHIPPED': 'Poslato kuriru',
             'DELIVERED': 'Primljeno',
             'COMPLETED': 'Zavrseno',
             'CANCELLED': 'Otkazano',
             'DISPUTED': 'Spor'
+        },
+
+        async init() {
+            await this.loadOrder();
+            // Auto-refresh every 10s
+            setInterval(() => {
+                if (!document.hidden && !this.showRatingModal) this.silentRefresh();
+            }, 10000);
         },
 
         async loadOrder() {
@@ -247,6 +353,7 @@ function orderDetailPage(orderId) {
                 const response = await api('/api/v1/orders/' + this.orderId);
                 if (response.ok) {
                     this.order = await response.json();
+                    this.previousStatus = this.order.status;
                 }
             } catch (e) {
                 console.error('Failed to load order:', e);
@@ -255,17 +362,153 @@ function orderDetailPage(orderId) {
             }
         },
 
-        async updateStatus(status) {
+        async silentRefresh() {
+            try {
+                const response = await api('/api/v1/orders/' + this.orderId);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (this.previousStatus && data.status !== this.previousStatus) {
+                        const label = this.statusLabels[data.status] || data.status;
+                        showToast('Status promenjen: ' + label, 'info');
+                    }
+                    this.previousStatus = data.status;
+                    this.order = data;
+                }
+            } catch (e) {
+                // Silent fail
+            }
+        },
+
+        // === Actions ===
+
+        async confirmOfferedOrder() {
+            if (!confirm('Potvrdite narudzbinu? 1 kredit ce biti iskoriscen.')) return;
             this.updating = true;
             try {
-                const response = await api('/api/v1/orders/' + this.orderId + '/' + status.toLowerCase(), {
-                    method: 'PUT'
+                const response = await api('/api/v1/part-offers/orders/' + this.orderId + '/confirm', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showToast(data.message || 'Narudzbina potvrdjena', 'success');
+                    if (data.cutoff_warning) {
+                        setTimeout(() => showToast(data.cutoff_warning, 'warning'), 1000);
+                    }
+                    await this.loadOrder();
+                } else {
+                    showToast(data.error || 'Greska pri potvrdi', 'error');
+                }
+            } catch (e) {
+                showToast('Greska', 'error');
+            } finally {
+                this.updating = false;
+            }
+        },
+
+        async confirmDelivery() {
+            if (!confirm('Potvrdite da ste primili posiljku?')) return;
+            this.updating = true;
+            try {
+                const response = await api('/api/v1/orders/' + this.orderId + '/confirm-delivery', {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    showToast('Prijem potvrdjen', 'success');
+                    await this.loadOrder();
+                } else {
+                    const data = await response.json();
+                    showToast(data.error || 'Greska', 'error');
+                }
+            } catch (e) {
+                showToast('Greska pri potvrdi prijema', 'error');
+            } finally {
+                this.updating = false;
+            }
+        },
+
+        async completeAndRate() {
+            this.updating = true;
+            try {
+                const response = await api('/api/v1/orders/' + this.orderId + '/complete', {
+                    method: 'POST'
                 });
                 if (response.ok) {
                     await this.loadOrder();
-                    showToast('Status azuriran', 'success');
+                    this.ratingValue = '';
+                    this.ratingComment = '';
+                    this.showRatingModal = true;
                 } else {
-                    showToast('Greska pri azuriranju', 'error');
+                    const data = await response.json();
+                    showToast(data.error || 'Greska', 'error');
+                }
+            } catch (e) {
+                showToast('Greska pri zavrsavanju', 'error');
+            } finally {
+                this.updating = false;
+            }
+        },
+
+        async submitRating() {
+            if (!this.ratingValue) return;
+            this.ratingSubmitting = true;
+            try {
+                const response = await api('/api/v1/orders/' + this.orderId + '/rate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        rating: this.ratingValue,
+                        comment: this.ratingComment || ''
+                    })
+                });
+                if (response.ok) {
+                    showToast('Ocena sacuvana', 'success');
+                    this.showRatingModal = false;
+                    this.hasRated = true;
+                    await this.loadOrder();
+                } else {
+                    const data = await response.json();
+                    showToast(data.error || 'Greska pri ocenjivanju', 'error');
+                }
+            } catch (e) {
+                showToast('Greska', 'error');
+            } finally {
+                this.ratingSubmitting = false;
+            }
+        },
+
+        async cancelOrder() {
+            if (!confirm('Da li ste sigurni da zelite da otkazete?')) return;
+            this.updating = true;
+            try {
+                const response = await api('/api/v1/orders/' + this.orderId + '/cancel', {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    showToast('Narudzbina otkazana', 'success');
+                    await this.loadOrder();
+                } else {
+                    const data = await response.json();
+                    showToast(data.error || 'Greska', 'error');
+                }
+            } catch (e) {
+                showToast('Greska', 'error');
+            } finally {
+                this.updating = false;
+            }
+        },
+
+        async disputeOrder() {
+            if (!confirm('Prijavite problem sa ovom narudzbinom?')) return;
+            this.updating = true;
+            try {
+                const response = await api('/api/v1/orders/' + this.orderId + '/dispute', {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    showToast('Problem prijavljen', 'success');
+                    await this.loadOrder();
+                } else {
+                    showToast('Greska', 'error');
                 }
             } catch (e) {
                 showToast('Greska', 'error');
@@ -281,7 +524,7 @@ function orderDetailPage(orderId) {
                 const response = await api('/api/v1/orders/' + this.orderId + '/messages', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message_text: this.newMessage })
+                    body: JSON.stringify({ message: this.newMessage })
                 });
                 if (response.ok) {
                     this.newMessage = '';
@@ -298,6 +541,7 @@ function orderDetailPage(orderId) {
             const classes = {
                 'DRAFT': 'bg-gray-100 text-gray-800',
                 'SENT': 'bg-blue-100 text-blue-800',
+                'OFFERED': 'bg-amber-100 text-amber-800',
                 'CONFIRMED': 'bg-blue-100 text-blue-800',
                 'REJECTED': 'bg-red-100 text-red-800',
                 'SHIPPED': 'bg-purple-100 text-purple-800',
