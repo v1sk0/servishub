@@ -847,14 +847,14 @@
     100% { left: 150%; }
 }
 .order-needs-action {
-    background: linear-gradient(90deg,
+    background-image: linear-gradient(90deg,
         transparent 0%,
         rgba(245, 158, 11, 0.04) 20%,
         rgba(245, 158, 11, 0.08) 50%,
         rgba(245, 158, 11, 0.04) 80%,
         transparent 100%
     ) !important;
-    background-size: 200% 100%;
+    background-size: 200% 100% !important;
     animation: row-bg-pulse 3s ease-in-out infinite;
 }
 @keyframes row-bg-pulse {
@@ -862,7 +862,9 @@
     50% { background-position: 0% 0; }
 }
 .order-needs-action:hover {
-    background: rgba(245, 158, 11, 0.1) !important;
+    background-image: none !important;
+    background-color: rgba(245, 158, 11, 0.1) !important;
+    animation: none;
 }
 /* Shimmer border-left indicator */
 .order-needs-action td:first-child {
@@ -1072,17 +1074,19 @@
 
 /* Glass theme: row shimmer */
 .glass-theme .tenant-app .order-needs-action {
-    background: linear-gradient(90deg,
+    background-image: linear-gradient(90deg,
         transparent 0%,
         rgba(245, 158, 11, 0.06) 20%,
         rgba(245, 158, 11, 0.12) 50%,
         rgba(245, 158, 11, 0.06) 80%,
         transparent 100%
     ) !important;
-    background-size: 200% 100%;
+    background-size: 200% 100% !important;
 }
 .glass-theme .tenant-app .order-needs-action:hover {
-    background: rgba(245, 158, 11, 0.15) !important;
+    background-image: none !important;
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    animation: none;
 }
 .glass-theme .tenant-app .order-needs-action td:first-child {
     border-left-color: #fbbf24;
