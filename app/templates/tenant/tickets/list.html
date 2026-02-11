@@ -2005,7 +2005,7 @@
                         <template x-for="c in getDeviceColors()" :key="c.name">
                             <span class="color-chip"
                                   :class="{'selected': newTicket.device_color === c.name}"
-                                  @click="newTicket.device_color = newTicket.device_color === c.name ? '' : c.name">
+                                  @click="newTicket.device_color = newTicket.device_color === c.name ? '' : c.name; refreshPartOffersForColor()">
                                 <span class="color-chip-dot" :style="'background:' + c.hex"></span>
                                 <span x-text="c.name"></span>
                             </span>
@@ -5033,6 +5033,16 @@ function ticketsPage() {
                 console.error('Part offers load failed:', e);
             } finally {
                 this.partOffers.offersLoading = false;
+            }
+        },
+
+        refreshPartOffersForColor() {
+            // Kad se promeni boja, refreshuj expandovane ponude
+            const expanded = this.partOffers.expandedKey;
+            if (expanded) {
+                const [cat, qual] = expanded.split('_');
+                this.partOffers.expandedKey = null;
+                this.$nextTick(() => this.loadPartOffers(cat, qual));
             }
         },
 
