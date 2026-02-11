@@ -147,7 +147,12 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200">
                     <template x-for="order in orders" :key="order.id">
-                        <tr class="hover:bg-gray-50 cursor-pointer" @click="viewOrder(order)">
+                        <tr class="hover:bg-gray-50 cursor-pointer"
+                            :class="{
+                                'order-needs-action': ['OFFERED', 'SHIPPED'].includes(order.status),
+                                'order-completed-rate': order.status === 'COMPLETED' && !order.has_buyer_rating
+                            }"
+                            @click="viewOrder(order)">
                             <td class="px-4 py-3 text-center relative overflow-hidden">
                                 <!-- Diagonal ribbon for OFFERED status -->
                                 <div x-show="order.status === 'OFFERED'" class="offered-ribbon">
@@ -775,8 +780,21 @@
     background: #e5e7eb; border-radius: 2px;
 }
 .lifeline-fill {
-    height: 100%; border-radius: 2px; transition: width 0.3s;
+    height: 100%; border-radius: 2px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     background: linear-gradient(90deg, #3b82f6, #22c55e);
+    position: relative; overflow: hidden;
+}
+/* Sweeping light on lifeline fill */
+.lifeline-fill::after {
+    content: '';
+    position: absolute; top: 0; left: -40%; width: 40%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+    animation: lifeline-sweep 2.5s ease-in-out infinite;
+}
+@keyframes lifeline-sweep {
+    0% { left: -40%; }
+    100% { left: 140%; }
 }
 .lifeline-dots {
     position: relative; display: flex; justify-content: space-between; z-index: 1;
@@ -784,16 +802,30 @@
 .lifeline-step { display: flex; flex-direction: column; align-items: center; }
 .lifeline-dot {
     width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid #d1d5db;
-    background: white; position: relative; transition: all 0.3s;
+    background: white; position: relative;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .lifeline-dot.dot-done {
     border-color: #22c55e; background: #22c55e;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
 }
 .lifeline-dot.dot-active {
     border-color: #3b82f6; background: #3b82f6;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+    animation: dot-glow-blue 2s ease-in-out infinite;
 }
 .lifeline-dot.dot-active-amber {
     border-color: #f59e0b; background: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+    animation: dot-glow-amber 2s ease-in-out infinite;
+}
+@keyframes dot-glow-blue {
+    0%, 100% { box-shadow: 0 0 6px rgba(59, 130, 246, 0.4); }
+    50% { box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); }
+}
+@keyframes dot-glow-amber {
+    0%, 100% { box-shadow: 0 0 6px rgba(245, 158, 11, 0.4); }
+    50% { box-shadow: 0 0 14px rgba(245, 158, 11, 0.7); }
 }
 .lifeline-label { font-size: 9px; margin-top: 3px; line-height: 1; white-space: nowrap; }
 .lifeline-pulse {
@@ -809,6 +841,48 @@
     75%, 100% { transform: scale(2); opacity: 0; }
 }
 
+/* === Order row shimmer for actionable orders === */
+@keyframes row-shimmer-sweep {
+    0% { left: -50%; }
+    100% { left: 150%; }
+}
+.order-needs-action {
+    position: relative;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(245, 158, 11, 0.04) 20%,
+        rgba(245, 158, 11, 0.08) 50%,
+        rgba(245, 158, 11, 0.04) 80%,
+        transparent 100%
+    ) !important;
+    background-size: 200% 100%;
+    animation: row-bg-pulse 3s ease-in-out infinite;
+}
+@keyframes row-bg-pulse {
+    0%, 100% { background-position: 200% 0; }
+    50% { background-position: 0% 0; }
+}
+.order-needs-action::after {
+    content: '';
+    position: absolute; top: 0; left: -50%; width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.08), transparent);
+    animation: row-shimmer-sweep 4s ease-in-out infinite;
+    pointer-events: none;
+}
+.order-needs-action:hover {
+    background: rgba(245, 158, 11, 0.1) !important;
+}
+/* Shimmer border-left indicator */
+.order-needs-action td:first-child {
+    border-left: 3px solid #f59e0b;
+}
+.order-completed-rate {
+    position: relative;
+}
+.order-completed-rate td:first-child {
+    border-left: 3px solid #22c55e;
+}
+
 /* Detail lifeline (modal) */
 .detail-lifeline-wrap { padding: 8px 0; }
 .detail-lifeline { position: relative; min-width: 340px; max-width: 520px; margin: 0 auto; padding: 6px 0; }
@@ -817,8 +891,16 @@
     background: #e5e7eb; border-radius: 2px;
 }
 .detail-lifeline-fill {
-    height: 100%; border-radius: 2px; transition: width 0.3s;
+    height: 100%; border-radius: 2px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     background: linear-gradient(90deg, #3b82f6, #22c55e);
+    position: relative; overflow: hidden;
+}
+.detail-lifeline-fill::after {
+    content: '';
+    position: absolute; top: 0; left: -40%; width: 40%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+    animation: lifeline-sweep 2.5s ease-in-out infinite;
 }
 .detail-lifeline-dots {
     position: relative; display: flex; justify-content: space-between; z-index: 1;
@@ -826,11 +908,12 @@
 .detail-lifeline-step { display: flex; flex-direction: column; align-items: center; width: 80px; }
 .detail-lifeline-dot {
     width: 18px; height: 18px; border-radius: 50%; border: 3px solid #d1d5db;
-    background: white; position: relative; transition: all 0.3s;
+    background: white; position: relative;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.detail-lifeline-dot.dot-done { border-color: #22c55e; background: #22c55e; }
-.detail-lifeline-dot.dot-active { border-color: #3b82f6; background: #3b82f6; }
-.detail-lifeline-dot.dot-active-amber { border-color: #f59e0b; background: #f59e0b; }
+.detail-lifeline-dot.dot-done { border-color: #22c55e; background: #22c55e; box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); }
+.detail-lifeline-dot.dot-active { border-color: #3b82f6; background: #3b82f6; animation: dot-glow-blue 2s ease-in-out infinite; }
+.detail-lifeline-dot.dot-active-amber { border-color: #f59e0b; background: #f59e0b; animation: dot-glow-amber 2s ease-in-out infinite; }
 .detail-lifeline-label { font-size: 11px; margin-top: 6px; line-height: 1.2; white-space: nowrap; }
 .detail-lifeline-sublabel { font-size: 9px; line-height: 1.1; white-space: nowrap; }
 .detail-status-action {
@@ -932,6 +1015,20 @@
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
     color: #92400e;
     animation: banner-slide 0.4s ease-out;
+    position: relative;
+    overflow: hidden;
+}
+.action-banner::before {
+    content: '';
+    position: absolute; top: 0; left: -60%; width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: banner-shimmer 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+@keyframes banner-shimmer {
+    0% { left: -60%; }
+    100% { left: 160%; }
 }
 @keyframes banner-slide {
     from { opacity: 0; transform: translateY(-8px); }
@@ -977,6 +1074,33 @@
 .glass-theme .tenant-app .action-banner-btn:hover { background: rgba(217, 119, 6, 0.9); }
 .glass-theme .tenant-app .action-banner-dismiss { color: #fcd34d; }
 .glass-theme .tenant-app .action-banner-dismiss:hover { background: rgba(245, 158, 11, 0.15); }
+.glass-theme .tenant-app .action-banner::before {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+}
+
+/* Glass theme: row shimmer */
+.glass-theme .tenant-app .order-needs-action {
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(245, 158, 11, 0.06) 20%,
+        rgba(245, 158, 11, 0.12) 50%,
+        rgba(245, 158, 11, 0.06) 80%,
+        transparent 100%
+    ) !important;
+    background-size: 200% 100%;
+}
+.glass-theme .tenant-app .order-needs-action::after {
+    background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.1), transparent);
+}
+.glass-theme .tenant-app .order-needs-action:hover {
+    background: rgba(245, 158, 11, 0.15) !important;
+}
+.glass-theme .tenant-app .order-needs-action td:first-child {
+    border-left-color: #fbbf24;
+}
+.glass-theme .tenant-app .order-completed-rate td:first-child {
+    border-left-color: #4ade80;
+}
 </style>
 
 <script>
@@ -1227,6 +1351,7 @@ function ordersPage() {
         // --- Change detection & notifications ---
         detectOrderChanges(newOrders) {
             const statusLabels = {
+                'SENT': 'Narudzbina poslata dobavljacu',
                 'OFFERED': 'Dobavljac potvrdio dostupnost',
                 'CONFIRMED': 'Narudzbina potvrđena',
                 'SHIPPED': 'Posiljka je poslata',
