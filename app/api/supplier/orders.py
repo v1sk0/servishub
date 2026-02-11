@@ -156,6 +156,9 @@ def list_orders():
             'sent_at': order.sent_at.isoformat() if order.sent_at else None,
             'expires_at': order.expires_at.isoformat() if order.expires_at else None,
             'is_smart_offer': order.service_ticket_id is not None,
+            'has_seller_rating': OrderRating.query.filter_by(
+                order_id=order.id, rater_type=RaterType.SELLER, rater_id=g.supplier_id
+            ).first() is not None if order.status == OrderStatus.COMPLETED else False,
         })
 
     return {
@@ -272,6 +275,9 @@ def get_order(order_id):
         'rejection_reason': order.rejection_reason,
         'cancellation_reason': order.cancellation_reason,
         'is_smart_offer': order.service_ticket_id is not None,
+        'has_seller_rating': OrderRating.query.filter_by(
+            order_id=order.id, rater_type=RaterType.SELLER, rater_id=g.supplier_id
+        ).first() is not None,
     }
 
     return resp

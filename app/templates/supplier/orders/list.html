@@ -442,8 +442,8 @@
                                     <template x-if="order.status === 'SHIPPED'">
                                         <span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded text-xs">Ceka prijem</span>
                                     </template>
-                                    <template x-if="order.status === 'COMPLETED'">
-                                        <button @click="viewOrder(order)" class="px-2.5 py-1 bg-amber-500 text-white rounded text-xs hover:bg-amber-600">Oceni</button>
+                                    <template x-if="order.status === 'COMPLETED' && !order.has_seller_rating">
+                                        <button @click="quickRate(order)" class="px-2.5 py-1 bg-amber-500 text-white rounded text-xs hover:bg-amber-600">Oceni</button>
                                     </template>
                                     <button @click="viewOrder(order)" class="px-2.5 py-1 text-purple-600 hover:text-purple-900 text-xs">Detalji</button>
                                 </div>
@@ -745,7 +745,7 @@
                         </template>
 
                         <!-- For COMPLETED status - supplier can rate -->
-                        <template x-if="selectedOrder?.status === 'COMPLETED'">
+                        <template x-if="selectedOrder?.status === 'COMPLETED' && !orderDetail?.has_seller_rating">
                             <button @click="rateOrder()"
                                     class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600">
                                 Oceni kupca
@@ -1340,6 +1340,8 @@ function ordersPage() {
                 });
                 showToast('Ocena uspesno sacuvana', 'success');
                 this.ratingModal = false;
+                // Refresh orders so the rate button hides
+                await this.loadOrders(true);
             } catch (err) {
                 alert('Greska: ' + err.message);
             } finally {
@@ -1380,14 +1382,14 @@ function ordersPage() {
         },
 
         getActionableOrders() {
-            return this.orders.filter(o => ['SENT', 'COMPLETED'].includes(o.status));
+            return this.orders.filter(o => o.status === 'SENT' || (o.status === 'COMPLETED' && !o.has_seller_rating));
         },
 
         getActionableBreakdown() {
             const a = this.getActionableOrders();
             const parts = [];
             const sent = a.filter(o => o.status === 'SENT').length;
-            const completed = a.filter(o => o.status === 'COMPLETED').length;
+            const completed = a.filter(o => o.status === 'COMPLETED' && !o.has_seller_rating).length;
             if (sent) parts.push(`${sent} za potvrdu`);
             if (completed) parts.push(`${completed} za ocenu`);
             return parts.join(', ');

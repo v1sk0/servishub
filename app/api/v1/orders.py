@@ -130,6 +130,9 @@ def list_orders():
             'courier_service': order.courier_service,
             'delivery_cost': float(order.delivery_cost) if order.delivery_cost else None,
             'estimated_delivery_days': order.estimated_delivery_days,
+            'has_buyer_rating': OrderRating.query.filter_by(
+                order_id=order.id, rater_type=RaterType.BUYER, rater_id=g.tenant_id
+            ).first() is not None if order.status == OrderStatus.COMPLETED else False,
         })
 
     return {
