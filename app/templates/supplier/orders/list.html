@@ -149,8 +149,6 @@
     50% { background-position: 0% 0; }
 }
 .order-needs-action {
-    position: relative;
-    overflow: hidden;
     background: linear-gradient(90deg,
         transparent 0%,
         rgba(245, 158, 11, 0.04) 20%,
@@ -160,13 +158,6 @@
     ) !important;
     background-size: 200% 100%;
     animation: row-bg-pulse 3s ease-in-out infinite;
-}
-.order-needs-action::after {
-    content: '';
-    position: absolute; top: 0; left: -50%; width: 50%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.08), transparent);
-    animation: row-shimmer-sweep 4s ease-in-out infinite;
-    pointer-events: none;
 }
 .order-needs-action:hover {
     background: rgba(245, 158, 11, 0.1) !important;
@@ -238,9 +229,6 @@
         transparent 100%
     ) !important;
     background-size: 200% 100%;
-}
-.glass-theme .supplier-app .order-needs-action::after {
-    background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.1), transparent);
 }
 .glass-theme .supplier-app .order-needs-action:hover {
     background: rgba(245, 158, 11, 0.15) !important;
