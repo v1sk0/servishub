@@ -5022,6 +5022,8 @@ function ticketsPage() {
                     '&category=' + encodeURIComponent(category) +
                     '&quality=' + encodeURIComponent(quality);
                 if (model) url += '&model=' + encodeURIComponent(model);
+                const deviceColor = (this.newTicket.device_color || '').trim();
+                if (deviceColor) url += '&color=' + encodeURIComponent(deviceColor);
                 const resp = await api(url);
                 if (resp.ok) {
                     const data = await resp.json();

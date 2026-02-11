@@ -208,6 +208,7 @@ def search_offers():
     model = request.args.get('model')
     category = request.args.get('category')
     quality = request.args.get('quality')
+    color = (request.args.get('color') or '').strip().upper()
 
     if not brand or not category or not quality:
         return {'error': 'brand, category i quality su obavezni'}, 400
@@ -223,6 +224,13 @@ def search_offers():
         l for l in listings
         if l.quality_grade and l.quality_grade.lower() in quality_grades
     ]
+
+    # Filter po boji - ako je definisana, prikazi samo listinge sa tom bojom ili bez boje (NULL)
+    if color:
+        filtered = [
+            l for l in filtered
+            if not l.color or l.color.strip().upper() == color
+        ]
 
     # Sort po ceni (EUR prioritet, pa RSD)
     def sort_key(l):
@@ -375,6 +383,15 @@ def get_ticket_offers(ticket_id):
         l for l in listings
         if l.quality_grade and l.quality_grade.lower() in quality_grades
     ]
+
+    # Filter po boji uredjaja iz servisnog naloga
+    # Ako je tenant definisao boju, prikazi samo listinge sa tom bojom ili bez boje (NULL)
+    device_color = (ticket.device_color or '').strip().upper()
+    if device_color:
+        filtered = [
+            l for l in filtered
+            if not l.color or l.color.strip().upper() == device_color
+        ]
 
     # Sort po ceni (EUR prioritet, pa RSD)
     def sort_key(l):
