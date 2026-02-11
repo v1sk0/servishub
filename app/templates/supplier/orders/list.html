@@ -381,7 +381,7 @@
                                 <p class="text-gray-900" x-text="order.buyer_name"></p>
                             </td>
                             <td class="px-6 py-4">
-                                <span class="text-gray-600" x-text="order.items_count + ' artikala'"></span>
+                                <p class="text-sm text-gray-900" x-text="order.item_summary || '-'"></p>
                             </td>
                             <td class="px-6 py-4">
                                 <p class="font-medium text-gray-900" x-text="formatPrice(order.total_amount, order.currency)"></p>

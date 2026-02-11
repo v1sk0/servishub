@@ -129,7 +129,13 @@ def list_orders():
     result = []
     for order in orders:
         buyer = Tenant.query.get(order.buyer_tenant_id)
-        items_count = PartOrderItem.query.filter_by(order_id=order.id).count()
+        items = PartOrderItem.query.filter_by(order_id=order.id).all()
+        items_count = len(items)
+        item_summary = None
+        if items:
+            item_summary = items[0].part_name or '-'
+            if len(items) > 1:
+                item_summary += f' +{len(items) - 1}'
         buyer_info = _get_buyer_info(order, buyer)
 
         result.append({
@@ -139,6 +145,7 @@ def list_orders():
             'buyer_city': None,
             'status': order.status.value,
             'items_count': items_count,
+            'item_summary': item_summary,
             'subtotal': float(order.subtotal) if order.subtotal else None,
             'total_amount': float(order.total_amount) if order.total_amount else None,
             'currency': order.currency or 'RSD',
