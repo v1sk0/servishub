@@ -330,6 +330,7 @@ function orderDetailPage(orderId) {
                 if (response.ok) {
                     this.order = await response.json();
                     this.previousStatus = this.order.status;
+                    if (this.order.has_rated) this.hasRated = true;
                 }
             } catch (e) {
                 console.error('Failed to load order:', e);
@@ -349,6 +350,7 @@ function orderDetailPage(orderId) {
                     }
                     this.previousStatus = data.status;
                     this.order = data;
+                    if (data.has_rated) this.hasRated = true;
                 }
             } catch (e) {
                 // Silent fail

@@ -271,6 +271,9 @@ def get_order(order_id):
         'estimated_delivery_days': order.estimated_delivery_days,
         'seller_notes': order.seller_notes,
         'expires_at': order.expires_at.isoformat() if order.expires_at else None,
+        'has_rated': OrderRating.query.filter_by(
+            order_id=order.id, rater_type=RaterType.BUYER, rater_id=g.tenant_id
+        ).first() is not None,
     }
 
 
