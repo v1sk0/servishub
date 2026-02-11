@@ -4160,8 +4160,22 @@ function ticketsPage() {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('openModal') === 'true') {
                 this.showAddModal = true;
-                // Clean up URL
                 window.history.replaceState({}, '', window.location.pathname);
+            }
+
+            // Check if we should open a specific ticket (from orders page link)
+            const openTicketId = urlParams.get('openTicket');
+            if (openTicketId) {
+                window.history.replaceState({}, '', window.location.pathname);
+                try {
+                    const r = await api('/api/v1/tickets/' + openTicketId);
+                    if (r.ok) {
+                        const ticket = await r.json();
+                        this.viewTicket(ticket);
+                    }
+                } catch (e) {
+                    console.error('Failed to open ticket:', e);
+                }
             }
         },
 

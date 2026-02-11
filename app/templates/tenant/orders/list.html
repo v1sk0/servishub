@@ -162,7 +162,7 @@
                             </td>
                             <td class="px-4 py-3 text-center" @click.stop>
                                 <template x-if="order.ticket_label">
-                                    <a :href="'/tickets/' + order.service_ticket_id" class="text-sm text-blue-600 hover:text-blue-800 hover:underline" x-text="order.ticket_label"></a>
+                                    <a :href="'/tickets?openTicket=' + order.service_ticket_id" class="text-sm text-blue-600 hover:text-blue-800 hover:underline" x-text="order.ticket_label"></a>
                                 </template>
                                 <span x-show="!order.ticket_label" class="text-sm text-gray-400">-</span>
                             </td>
