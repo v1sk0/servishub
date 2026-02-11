@@ -1141,6 +1141,8 @@ function ordersPage() {
             setInterval(() => {
                 if (!document.hidden && !this.selectedOrder) this.loadOrders(true);
             }, 15000);
+            // Instant refresh when sidebar badge detects change
+            window.addEventListener('orders-changed', () => this.loadOrders(true));
         },
 
         async loadOrders(silent = false) {

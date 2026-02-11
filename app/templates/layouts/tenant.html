@@ -857,7 +857,12 @@ function tenantApp() {
                         total += (data.total || 0);
                     }
                 }
-                this.actionableOrdersCount = total;
+                if (total !== this.actionableOrdersCount) {
+                    this.actionableOrdersCount = total;
+                    window.dispatchEvent(new CustomEvent('orders-changed'));
+                } else {
+                    this.actionableOrdersCount = total;
+                }
             } catch (e) {
                 // silent - badge just won't show
             }
