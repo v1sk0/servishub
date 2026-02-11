@@ -503,34 +503,10 @@ def cancel_order(order_id):
 @bp.route('/<int:order_id>/confirm-delivery', methods=['POST'])
 @jwt_required
 def confirm_delivery(order_id):
-    """Confirm order delivery (SHIPPED -> DELIVERED)"""
-    order = PartOrder.query.filter_by(
-        id=order_id,
-        buyer_tenant_id=g.tenant_id
-    ).first()
-
-    if not order:
-        return {'error': 'Order not found'}, 404
-
-    # Idempotent
-    if order.status == OrderStatus.DELIVERED:
-        return {'message': 'Already delivered'}
-
-    if order.status != OrderStatus.SHIPPED:
-        return {'error': 'Order not shipped yet'}, 400
-
-    order.status = OrderStatus.DELIVERED
-    order.delivered_at = datetime.utcnow()
-    order.updated_at = datetime.utcnow()
-    db.session.commit()
-
-    return {'message': 'Delivery confirmed'}
-
-
-@bp.route('/<int:order_id>/complete', methods=['POST'])
-@jwt_required
-def complete_order(order_id):
-    """Mark order as complete (DELIVERED -> COMPLETED). Updates supplier totals."""
+    """Confirm receipt and complete order (SHIPPED -> COMPLETED).
+    Single step: tenant confirms receipt = order completed.
+    Also handles DELIVERED status for backward compatibility.
+    """
     order = PartOrder.query.filter_by(
         id=order_id,
         buyer_tenant_id=g.tenant_id
@@ -543,8 +519,8 @@ def complete_order(order_id):
     if order.status == OrderStatus.COMPLETED:
         return {'message': 'Order already completed'}
 
-    if order.status != OrderStatus.DELIVERED:
-        return {'error': 'Order not delivered yet'}, 400
+    if order.status not in (OrderStatus.SHIPPED, OrderStatus.DELIVERED):
+        return {'error': 'Order not shipped yet'}, 400
 
     # Update supplier financial totals
     if order.seller_type == SellerType.SUPPLIER and order.seller_supplier_id:
@@ -553,6 +529,45 @@ def complete_order(order_id):
             supplier.total_sales = (supplier.total_sales or Decimal('0')) + order.subtotal
 
     order.status = OrderStatus.COMPLETED
+    if not order.delivered_at:
+        order.delivered_at = datetime.utcnow()
+    order.completed_at = datetime.utcnow()
+    order.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    return {'message': 'Roba primljena, narudzbina zavrsena'}
+
+
+@bp.route('/<int:order_id>/complete', methods=['POST'])
+@jwt_required
+def complete_order(order_id):
+    """Mark order as complete. Accepts SHIPPED or DELIVERED status.
+    Updates supplier totals. Kept for backward compatibility.
+    """
+    order = PartOrder.query.filter_by(
+        id=order_id,
+        buyer_tenant_id=g.tenant_id
+    ).first()
+
+    if not order:
+        return {'error': 'Order not found'}, 404
+
+    # Idempotent
+    if order.status == OrderStatus.COMPLETED:
+        return {'message': 'Order already completed'}
+
+    if order.status not in (OrderStatus.DELIVERED, OrderStatus.SHIPPED):
+        return {'error': 'Order not shipped/delivered yet'}, 400
+
+    # Update supplier financial totals
+    if order.seller_type == SellerType.SUPPLIER and order.seller_supplier_id:
+        supplier = Supplier.query.get(order.seller_supplier_id)
+        if supplier and order.subtotal:
+            supplier.total_sales = (supplier.total_sales or Decimal('0')) + order.subtotal
+
+    order.status = OrderStatus.COMPLETED
+    if not order.delivered_at:
+        order.delivered_at = datetime.utcnow()
     order.completed_at = datetime.utcnow()
     order.updated_at = datetime.utcnow()
     db.session.commit()

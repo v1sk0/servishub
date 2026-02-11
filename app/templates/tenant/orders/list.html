@@ -42,8 +42,8 @@
             <p class="text-2xl font-bold text-green-600" x-text="stats.confirmed || 0"></p>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <p class="text-sm text-gray-500 mb-1">Isporuceno</p>
-            <p class="text-2xl font-bold text-purple-600" x-text="stats.delivered || 0"></p>
+            <p class="text-sm text-gray-500 mb-1">Na putu</p>
+            <p class="text-2xl font-bold text-purple-600" x-text="stats.shipped || 0"></p>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <p class="text-sm text-gray-500 mb-1">Zavrseno</p>
@@ -77,7 +77,6 @@
                     <option value="CONFIRMED">Potvrdjeno</option>
                     <option value="REJECTED">Odbijeno</option>
                     <option value="SHIPPED">Na putu</option>
-                    <option value="DELIVERED">Isporuceno</option>
                     <option value="COMPLETED">Zavrseno</option>
                     <option value="CANCELLED">Otkazano</option>
                 </select>
@@ -219,7 +218,7 @@
                                                 <div class="lifeline-dot" :class="getLifelineDotClass(order.status, 4)">
                                                     <span x-show="getLifelinePulse(order.status) === 4" class="lifeline-pulse" :class="getLifelinePulseColor(order.status)"></span>
                                                 </div>
-                                                <span class="lifeline-label" :class="getStepNum(order.status) >= 4 ? 'text-gray-700' : 'text-gray-400'">Isporuceno</span>
+                                                <span class="lifeline-label" :class="getStepNum(order.status) >= 4 ? 'text-gray-700' : 'text-gray-400'">Zavrseno</span>
                                             </div>
                                         </div>
                                     </div>
@@ -252,8 +251,8 @@
                                     <template x-if="order.status === 'SHIPPED'">
                                         <button @click="confirmDelivery(order)" class="px-2.5 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Potvrdi prijem</button>
                                     </template>
-                                    <template x-if="order.status === 'DELIVERED'">
-                                        <button @click="completeOrder(order)" class="px-2.5 py-1 bg-emerald-600 text-white rounded text-xs hover:bg-emerald-700">Oceni</button>
+                                    <template x-if="order.status === 'COMPLETED' && !order.has_buyer_rating">
+                                        <button @click="openRating(order)" class="px-2.5 py-1 bg-amber-500 text-white rounded text-xs hover:bg-amber-600">Oceni</button>
                                     </template>
                                 </div>
                             </td>
@@ -349,8 +348,8 @@
                                         <div class="detail-lifeline-dot" :class="getLifelineDotClass(selectedOrder?.status, 4)">
                                             <span x-show="getLifelinePulse(selectedOrder?.status) === 4" class="lifeline-pulse" :class="getLifelinePulseColor(selectedOrder?.status)"></span>
                                         </div>
-                                        <span class="detail-lifeline-label" :class="getStepNum(selectedOrder?.status) >= 4 ? 'text-gray-800 font-medium' : 'text-gray-400'">Isporuceno</span>
-                                        <span class="detail-lifeline-sublabel" :class="getStepNum(selectedOrder?.status) >= 4 ? 'text-gray-500' : 'text-gray-300'">posiljka primljena</span>
+                                        <span class="detail-lifeline-label" :class="getStepNum(selectedOrder?.status) >= 4 ? 'text-gray-800 font-medium' : 'text-gray-400'">Zavrseno</span>
+                                        <span class="detail-lifeline-sublabel" :class="getStepNum(selectedOrder?.status) >= 4 ? 'text-gray-500' : 'text-gray-300'">prijem potvrdjen</span>
                                     </div>
                                 </div>
                             </div>
@@ -572,7 +571,7 @@
                     </div>
 
                     <!-- Messages (only after CONFIRMED) -->
-                    <div x-show="['CONFIRMED', 'SHIPPED', 'DELIVERED', 'COMPLETED'].includes(selectedOrder?.status) && selectedOrder?.messages?.length > 0" class="mb-6">
+                    <div x-show="['CONFIRMED', 'SHIPPED', 'COMPLETED'].includes(selectedOrder?.status) && selectedOrder?.messages?.length > 0" class="mb-6">
                         <h3 class="font-medium text-gray-900 mb-3">Poruke</h3>
                         <div class="space-y-2 max-h-40 overflow-y-auto">
                             <template x-for="msg in selectedOrder?.messages || []" :key="msg.id">
@@ -590,7 +589,7 @@
                     </div>
 
                     <!-- Send Message (only after CONFIRMED) -->
-                    <div x-show="['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(selectedOrder?.status)" class="mb-6">
+                    <div x-show="['CONFIRMED', 'SHIPPED'].includes(selectedOrder?.status)" class="mb-6">
                         <h3 class="font-medium text-gray-900 mb-2">Posalji poruku</h3>
                         <div class="flex gap-2">
                             <input type="text" x-model="newMessage" placeholder="Upisite poruku..."
@@ -619,14 +618,14 @@
                             Potvrdi narudzbinu
                         </button>
 
-                        <button x-show="selectedOrder?.status === 'SHIPPED'" @click="confirmDelivery(selectedOrder); detailsModal = false"
+                        <button x-show="selectedOrder?.status === 'SHIPPED'" @click="confirmDelivery(selectedOrder)"
                                 class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
                             Potvrdi prijem
                         </button>
 
-                        <button x-show="selectedOrder?.status === 'DELIVERED'" @click="completeOrder(selectedOrder)"
-                                class="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
-                            Oceni narudzbinu
+                        <button x-show="selectedOrder?.status === 'COMPLETED' && !selectedOrder?.has_buyer_rating" @click="openRating(selectedOrder)"
+                                class="flex-1 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600">
+                            Oceni dobavljaca
                         </button>
                     </div>
                 </div>
@@ -1084,7 +1083,7 @@ function ordersPage() {
                         sent: orders.filter(o => o.status === 'SENT').length,
                         offered: orders.filter(o => o.status === 'OFFERED').length,
                         confirmed: orders.filter(o => o.status === 'CONFIRMED').length,
-                        delivered: orders.filter(o => o.status === 'DELIVERED').length,
+                        shipped: orders.filter(o => o.status === 'SHIPPED').length,
                         completed: orders.filter(o => o.status === 'COMPLETED').length
                     };
                 }
@@ -1173,21 +1172,11 @@ function ordersPage() {
         },
 
         async confirmDelivery(order) {
-            if (!confirm('Potvrdite da ste primili posiljku?')) return;
+            if (!confirm('Potvrdite da ste primili posiljku? Narudzbina ce biti zavrsena.')) return;
 
             try {
                 await api(`/orders/${order.id}/confirm-delivery`, 'POST');
-                showToast('Prijem potvrdjen', 'success');
-                this.loadOrders();
-            } catch (e) {
-                console.error('Failed to confirm delivery:', e);
-                showToast('Greska pri potvrdi prijema', 'error');
-            }
-        },
-
-        async completeOrder(order) {
-            try {
-                await api(`/orders/${order.id}/complete`, 'POST');
+                showToast('Prijem potvrdjen, narudzbina zavrsena', 'success');
                 this.detailsModal = false;
                 this.ratingOrder = order;
                 this.ratingValue = '';
@@ -1195,9 +1184,17 @@ function ordersPage() {
                 this.ratingModal = true;
                 this.loadOrders();
             } catch (e) {
-                console.error('Failed to complete order:', e);
-                showToast('Greska pri zavrsavanju', 'error');
+                console.error('Failed to confirm delivery:', e);
+                showToast('Greska pri potvrdi prijema', 'error');
             }
+        },
+
+        openRating(order) {
+            this.detailsModal = false;
+            this.ratingOrder = order;
+            this.ratingValue = '';
+            this.ratingComment = '';
+            this.ratingModal = true;
         },
 
         async submitRating() {
@@ -1233,7 +1230,6 @@ function ordersPage() {
                 'OFFERED': 'Dobavljac potvrdio dostupnost',
                 'CONFIRMED': 'Narudzbina potvrđena',
                 'SHIPPED': 'Posiljka je poslata',
-                'DELIVERED': 'Posiljka isporucena',
                 'COMPLETED': 'Narudzbina zavrsena',
                 'REJECTED': 'Dobavljac je odbio narudzbinu',
                 'CANCELLED': 'Narudzbina otkazana',
@@ -1255,7 +1251,7 @@ function ordersPage() {
         },
 
         getActionableOrders() {
-            return this.orders.filter(o => ['OFFERED', 'SHIPPED', 'DELIVERED'].includes(o.status));
+            return this.orders.filter(o => ['OFFERED', 'SHIPPED'].includes(o.status));
         },
 
         getActionableBreakdown() {
@@ -1263,10 +1259,8 @@ function ordersPage() {
             const parts = [];
             const offered = a.filter(o => o.status === 'OFFERED').length;
             const shipped = a.filter(o => o.status === 'SHIPPED').length;
-            const delivered = a.filter(o => o.status === 'DELIVERED').length;
             if (offered) parts.push(`${offered} za potvrdu`);
             if (shipped) parts.push(`${shipped} za prijem`);
-            if (delivered) parts.push(`${delivered} za ocenu`);
             return parts.join(', ');
         },
 
@@ -1350,8 +1344,7 @@ function ordersPage() {
                 'OFFERED': 'Potvrdite ili otkazite',
                 'CONFIRMED': 'Ceka se slanje',
                 'REJECTED': 'Dobavljac je odbio narudzbinu',
-                'SHIPPED': 'Posiljka je na putu',
-                'DELIVERED': 'Posiljka primljena',
+                'SHIPPED': 'Potvrdite prijem',
                 'COMPLETED': 'Transakcija zavrsena',
                 'CANCELLED': 'Narudzbina otkazana',
             };
@@ -1372,15 +1365,15 @@ function ordersPage() {
         },
 
         // Lifeline: map status to step number (1-4)
-        // 1=Poslato, 2=Prihvaceno(OFFERED), 3=Potvrdjeno(CONFIRMED), 4=Isporuceno
+        // 1=Poslato, 2=Prihvaceno(OFFERED), 3=Potvrdjeno(CONFIRMED), 4=Zavrseno
         getStepNum(status) {
-            const map = { 'DRAFT': 0, 'SENT': 1, 'OFFERED': 2, 'CONFIRMED': 3, 'SHIPPED': 3, 'DELIVERED': 4, 'COMPLETED': 4 };
+            const map = { 'DRAFT': 0, 'SENT': 1, 'OFFERED': 2, 'CONFIRMED': 3, 'SHIPPED': 3, 'COMPLETED': 4 };
             return map[status] ?? 0;
         },
 
         // Lifeline: progress bar width %
         getLifelineProgress(status) {
-            const map = { 'DRAFT': 0, 'SENT': 0, 'OFFERED': 33, 'CONFIRMED': 66, 'SHIPPED': 83, 'DELIVERED': 100, 'COMPLETED': 100 };
+            const map = { 'DRAFT': 0, 'SENT': 0, 'OFFERED': 33, 'CONFIRMED': 66, 'SHIPPED': 83, 'COMPLETED': 100 };
             return map[status] ?? 0;
         },
 
@@ -1391,7 +1384,7 @@ function ordersPage() {
             if (step === s && ['SENT', 'SHIPPED'].includes(status)) return 'dot-active';
             if (step === s && status === 'OFFERED') return 'dot-active-amber';
             if (step === s && ['CONFIRMED'].includes(status)) return 'dot-done';
-            if (step === s && ['DELIVERED', 'COMPLETED'].includes(status)) return 'dot-done';
+            if (step === s && ['COMPLETED'].includes(status)) return 'dot-done';
             return '';
         },
 
@@ -1409,8 +1402,7 @@ function ordersPage() {
                 'OFFERED': 'Dobavljac je potvrdio dostupnost. Potvrdite narudzbinu ili otkazite.',
                 'CONFIRMED': 'Narudzbina je potvrđena. Ceka se slanje od strane dobavljaca.',
                 'SHIPPED': 'Posiljka je na putu. Potvrdite prijem kada stigne.',
-                'DELIVERED': 'Posiljka je isporucena. Ocenite narudzbinu.',
-                'COMPLETED': 'Narudzbina je zavrsena.',
+                'COMPLETED': 'Narudzbina je zavrsena. Ocenite dobavljaca.',
                 'REJECTED': 'Dobavljac je odbio narudzbinu.',
                 'CANCELLED': 'Narudzbina je otkazana.',
             };
