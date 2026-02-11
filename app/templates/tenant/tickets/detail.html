@@ -233,16 +233,16 @@
                                             <td class="px-4 py-3 text-center">
                                                 <button x-show="cat.quality_groups.original"
                                                         @click="loadOffers(cat.category, 'original')"
-                                                        class="text-sm font-medium text-primary-600 hover:text-primary-800 hover:underline">
-                                                    ~<span x-text="cat.quality_groups.original?.avg_eur?.toFixed(0)"></span> EUR
+                                                        class="text-sm font-medium text-primary-600 hover:text-primary-800 hover:underline"
+                                                        x-text="priceRangeText(cat.quality_groups.original)">
                                                 </button>
                                                 <span x-show="!cat.quality_groups.original" class="text-gray-400 text-sm">—</span>
                                             </td>
                                             <td class="px-4 py-3 text-center">
                                                 <button x-show="cat.quality_groups.kopija"
                                                         @click="loadOffers(cat.category, 'kopija')"
-                                                        class="text-sm font-medium text-primary-600 hover:text-primary-800 hover:underline">
-                                                    ~<span x-text="cat.quality_groups.kopija?.avg_eur?.toFixed(0)"></span> EUR
+                                                        class="text-sm font-medium text-primary-600 hover:text-primary-800 hover:underline"
+                                                        x-text="priceRangeText(cat.quality_groups.kopija)">
                                                 </button>
                                                 <span x-show="!cat.quality_groups.kopija" class="text-gray-400 text-sm">—</span>
                                             </td>
@@ -1082,6 +1082,19 @@ function ticketDetailPage(ticketId) {
         stockHintLabel(hint) {
             const labels = { 'available': 'Na stanju', 'low': 'Malo na stanju', 'last_one': 'Poslednji kom!' };
             return labels[hint] || '';
+        },
+
+        priceRangeText(g) {
+            if (!g) return '';
+            if (g.min_eur != null && g.max_eur != null) {
+                const mn = Math.round(g.min_eur), mx = Math.round(g.max_eur);
+                return mn === mx ? (mn + ' EUR') : (mn + ' - ' + mx + ' EUR');
+            }
+            if (g.min_rsd != null && g.max_rsd != null) {
+                const mn = Math.round(g.min_rsd), mx = Math.round(g.max_rsd);
+                return mn === mx ? (mn + ' RSD') : (mn + ' - ' + mx + ' RSD');
+            }
+            return 'N/A';
         },
 
         totalSupplierCount(cat) {

@@ -2067,7 +2067,7 @@
                                              @click="loadPartOffers(cat.category, key)">
                                             <div class="part-offers-quality-label" x-text="group.label"></div>
                                             <div class="part-offers-quality-price"
-                                                 x-text="group.avg_eur ? ('~' + group.avg_eur.toFixed(0) + ' EUR') : (group.avg_rsd ? ('~' + Math.round(group.avg_rsd) + ' RSD') : 'N/A')">
+                                                 x-text="formatPriceRange(group)">
                                             </div>
                                             <div class="part-offers-quality-count"
                                                  x-text="group.count + (group.count === 1 ? ' ponuda' : ' ponude')"></div>
@@ -4888,6 +4888,20 @@ function ticketsPage() {
 
         getCatLabel(cat) { return this._catLabels[cat] || (cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : ''); },
         getGrLabel(grade) { return (grade && this._gradeLabels[grade.toLowerCase()]) || grade || ''; },
+
+        formatPriceRange(g) {
+            if (g.min_eur != null && g.max_eur != null) {
+                const mn = Math.round(g.min_eur);
+                const mx = Math.round(g.max_eur);
+                return mn === mx ? (mn + ' EUR') : (mn + ' - ' + mx + ' EUR');
+            }
+            if (g.min_rsd != null && g.max_rsd != null) {
+                const mn = Math.round(g.min_rsd);
+                const mx = Math.round(g.max_rsd);
+                return mn === mx ? (mn + ' RSD') : (mn + ' - ' + mx + ' RSD');
+            }
+            return 'N/A';
+        },
 
         // Device color options per brand (from LCD ponuda analysis)
         _brandColors: {

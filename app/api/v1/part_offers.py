@@ -191,8 +191,10 @@ def search_parts():
             for group_key, group_data in summary.items():
                 cat_data['quality_groups'][group_key] = {
                     'label': group_data['label'],
-                    'avg_eur': float(group_data['avg_eur']) if group_data['avg_eur'] else None,
-                    'avg_rsd': float(group_data['avg_rsd']) if group_data['avg_rsd'] else None,
+                    'min_eur': group_data['min_eur'],
+                    'max_eur': group_data['max_eur'],
+                    'min_rsd': group_data['min_rsd'],
+                    'max_rsd': group_data['max_rsd'],
                     'count': group_data['count'],
                     'supplier_count': group_data['supplier_count'],
                 }
@@ -345,8 +347,10 @@ def get_ticket_summary(ticket_id):
             for group_key, group_data in summary.items():
                 cat_data['quality_groups'][group_key] = {
                     'label': group_data['label'],
-                    'avg_eur': float(group_data['avg_eur']) if group_data['avg_eur'] else None,
-                    'avg_rsd': float(group_data['avg_rsd']) if group_data['avg_rsd'] else None,
+                    'min_eur': group_data['min_eur'],
+                    'max_eur': group_data['max_eur'],
+                    'min_rsd': group_data['min_rsd'],
+                    'max_rsd': group_data['max_rsd'],
                     'count': group_data['count'],
                     'supplier_count': group_data['supplier_count'],
                 }

@@ -272,14 +272,10 @@ def build_summary(listings):
     for key, g in groups.items():
         result[key] = {
             'label': g['label'],
-            'avg_eur': (
-                sum(g['prices_eur']) / len(g['prices_eur'])
-                if g['prices_eur'] else None
-            ),
-            'avg_rsd': (
-                sum(g['prices_rsd']) / len(g['prices_rsd'])
-                if g['prices_rsd'] else None
-            ),
+            'min_eur': float(min(g['prices_eur'])) if g['prices_eur'] else None,
+            'max_eur': float(max(g['prices_eur'])) if g['prices_eur'] else None,
+            'min_rsd': float(min(g['prices_rsd'])) if g['prices_rsd'] else None,
+            'max_rsd': float(max(g['prices_rsd'])) if g['prices_rsd'] else None,
             'count': g['count'],
             'supplier_count': len(g['suppliers']),
         }
