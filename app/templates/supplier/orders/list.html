@@ -139,16 +139,19 @@
     100% { left: 160%; }
 }
 
-/* Row subtle glow for orders needing action */
-@keyframes row-breathe {
-    0%, 100% { background-color: rgba(251, 191, 36, 0.03); }
-    50% { background-color: rgba(251, 191, 36, 0.07); }
+/* Row shimmer for orders needing action (same as notification banner) */
+@keyframes row-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
 }
 .order-needs-action {
-    animation: row-breathe 4s ease-in-out infinite;
+    background-image: linear-gradient(90deg, rgba(251,191,36,0.03) 0%, rgba(251,191,36,0.03) 35%, rgba(251,191,36,0.12) 50%, rgba(251,191,36,0.03) 65%, rgba(251,191,36,0.03) 100%) !important;
+    background-size: 200% 100% !important;
+    animation: row-shimmer 3s ease-in-out infinite;
 }
 .order-needs-action:hover {
     animation: none;
+    background-image: none !important;
     background-color: rgba(251, 191, 36, 0.08) !important;
 }
 .order-needs-action td:first-child {
@@ -212,16 +215,13 @@
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
 }
 
-/* Glass theme: row glow */
-@keyframes row-breathe-glass {
-    0%, 100% { background-color: rgba(251, 191, 36, 0.04); }
-    50% { background-color: rgba(251, 191, 36, 0.1); }
-}
+/* Glass theme: row shimmer */
 .glass-theme .supplier-app .order-needs-action {
-    animation: row-breathe-glass 4s ease-in-out infinite;
+    background-image: linear-gradient(90deg, rgba(251,191,36,0.04) 0%, rgba(251,191,36,0.04) 35%, rgba(251,191,36,0.18) 50%, rgba(251,191,36,0.04) 65%, rgba(251,191,36,0.04) 100%) !important;
 }
 .glass-theme .supplier-app .order-needs-action:hover {
     animation: none;
+    background-image: none !important;
     background-color: rgba(251, 191, 36, 0.12) !important;
 }
 .glass-theme .supplier-app .order-needs-action td:first-child {
