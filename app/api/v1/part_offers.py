@@ -147,13 +147,21 @@ def search_parts():
     brand = request.args.get('brand')
     model = request.args.get('model')
     category = request.args.get('category')
+    color = (request.args.get('color') or '').strip().upper()
 
     if not brand:
         return {'error': 'Brand je obavezan'}, 400
 
-    print(f'[PartOffers] Search: brand={brand!r}, model={model!r}, category={category!r}', flush=True)
+    print(f'[PartOffers] Search: brand={brand!r}, model={model!r}, category={category!r}, color={color!r}', flush=True)
 
     all_listings = find_matching_listings(brand, model, part_category=category)
+
+    # Filter po boji - samo listinge sa tom bojom ili bez boje (NULL)
+    if color:
+        all_listings = [
+            l for l in all_listings
+            if not l.color or l.color.strip().upper() == color
+        ]
 
     print(f'[PartOffers] Search found {len(all_listings)} listings', flush=True)
 

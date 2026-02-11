@@ -4951,11 +4951,12 @@ function ticketsPage() {
             const brand = this.newTicket.brand?.trim();
             const model = this.newTicket.model?.trim();
             const categories = this.detectPartCategories(this.newTicket.problem_description);
+            const color = (this.newTicket.device_color || '').trim();
 
             const hasEnoughInfo = brand && brand.length >= 2 && model && model.length >= 1 && categories.length > 0;
 
             if (hasEnoughInfo) {
-                const searchKey = brand + '|' + (model || '') + '|' + categories.join(',');
+                const searchKey = brand + '|' + (model || '') + '|' + categories.join(',') + '|' + color;
                 if (searchKey === this._lastPartSearchKey) return;
                 this._partSearchTimer = setTimeout(() => this.checkPartOffers(), 800);
             } else {
@@ -4973,10 +4974,11 @@ function ticketsPage() {
             const brand = this.newTicket.brand?.trim();
             const model = this.newTicket.model?.trim();
             const categories = this.detectPartCategories(this.newTicket.problem_description);
+            const color = (this.newTicket.device_color || '').trim();
             if (!brand || categories.length === 0) return;
 
             const catStr = categories.join(',');
-            this._lastPartSearchKey = brand + '|' + (model || '') + '|' + catStr;
+            this._lastPartSearchKey = brand + '|' + (model || '') + '|' + catStr + '|' + color;
             this.partOffers.loading = true;
             this.partOffers.loaded = false;
             this.partOffers.expandedKey = null;
@@ -4988,6 +4990,7 @@ function ticketsPage() {
                 let url = '/api/v1/part-offers/search?brand=' + encodeURIComponent(brand);
                 if (model) url += '&model=' + encodeURIComponent(model);
                 url += '&category=' + encodeURIComponent(catStr);
+                if (color) url += '&color=' + encodeURIComponent(color);
                 console.log('[PartOffers] Searching:', url);
                 const resp = await api(url);
                 if (resp.ok) {
@@ -5037,13 +5040,9 @@ function ticketsPage() {
         },
 
         refreshPartOffersForColor() {
-            // Kad se promeni boja, refreshuj expandovane ponude
-            const expanded = this.partOffers.expandedKey;
-            if (expanded) {
-                const [cat, qual] = expanded.split('_');
-                this.partOffers.expandedKey = null;
-                this.$nextTick(() => this.loadPartOffers(cat, qual));
-            }
+            // Kad se promeni boja, refreshuj summary i expandovane ponude
+            this._lastPartSearchKey = null;  // Force refetch
+            this.debouncedPartSearch();
         },
 
         selectPartOffer(offer) {
