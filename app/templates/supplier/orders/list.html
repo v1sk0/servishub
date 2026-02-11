@@ -436,7 +436,7 @@
                                     <template x-if="order.status === 'SENT'">
                                         <div class="flex gap-1">
                                             <button @click="quickConfirm(order)" class="px-2.5 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">Potvrdi</button>
-                                            <button @click="quickReject(order)" class="px-2.5 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200">Odbij</button>
+                                            <button @click="quickReject(order)" class="px-2.5 py-1 rounded text-xs" style="background:#dc2626;color:#fff;">Odbij</button>
                                         </div>
                                     </template>
                                     <template x-if="order.status === 'CONFIRMED'">
@@ -1402,11 +1402,13 @@ function ordersPage() {
         },
 
         // Quick actions from table (without opening modal)
-        quickConfirm(order) {
-            // Open modal flow - need to load order detail first
-            this.viewOrder(order).then(() => {
-                this.confirmOrder();
-            });
+        async quickConfirm(order) {
+            this.selectedOrder = order;
+            try {
+                const data = await supplierApi(`/orders/${order.id}`);
+                this.orderDetail = data;
+            } catch (err) {}
+            this.confirmOrder();
         },
 
         quickReject(order) {
