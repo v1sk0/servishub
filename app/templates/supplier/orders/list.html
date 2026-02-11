@@ -381,7 +381,15 @@
                                 <p class="text-gray-900" x-text="order.buyer_name"></p>
                             </td>
                             <td class="px-6 py-4">
-                                <p class="text-sm text-gray-900" x-text="order.item_summary || '-'"></p>
+                                <template x-if="order.items_preview && order.items_preview.length">
+                                    <div>
+                                        <template x-for="(name, idx) in order.items_preview" :key="idx">
+                                            <p class="text-sm leading-tight" :class="idx === 0 ? 'font-medium text-gray-900' : 'mt-0.5 text-gray-600'" x-text="name"></p>
+                                        </template>
+                                        <p x-show="order.items_count > 3" class="text-xs text-gray-400 mt-0.5" x-text="'+' + (order.items_count - 3) + ' jos'"></p>
+                                    </div>
+                                </template>
+                                <span x-show="!order.items_preview || !order.items_preview.length" class="text-sm text-gray-400">-</span>
                             </td>
                             <td class="px-6 py-4">
                                 <p class="font-medium text-gray-900" x-text="formatPrice(order.total_amount, order.currency)"></p>

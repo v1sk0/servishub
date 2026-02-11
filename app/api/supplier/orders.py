@@ -132,10 +132,12 @@ def list_orders():
         items = PartOrderItem.query.filter_by(order_id=order.id).all()
         items_count = len(items)
         item_summary = None
+        items_preview = []
         if items:
             item_summary = items[0].part_name or '-'
             if len(items) > 1:
                 item_summary += f' +{len(items) - 1}'
+            items_preview = [i.part_name or '-' for i in items[:3]]
         buyer_info = _get_buyer_info(order, buyer)
 
         result.append({
@@ -146,6 +148,7 @@ def list_orders():
             'status': order.status.value,
             'items_count': items_count,
             'item_summary': item_summary,
+            'items_preview': items_preview,
             'subtotal': float(order.subtotal) if order.subtotal else None,
             'total_amount': float(order.total_amount) if order.total_amount else None,
             'currency': order.currency or 'RSD',

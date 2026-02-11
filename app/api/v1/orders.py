@@ -96,11 +96,13 @@ def list_orders():
         items = PartOrderItem.query.filter_by(order_id=order.id).all()
 
         item_summary = None
+        items_preview = []
         if items:
             first = items[0]
             item_summary = first.part_name or '-'
             if len(items) > 1:
                 item_summary += f' +{len(items) - 1}'
+            items_preview = [i.part_name or '-' for i in items[:3]]
 
         # Get linked ticket number
         ticket_label = None
@@ -117,6 +119,7 @@ def list_orders():
             'status': order.status.value,
             'items_count': len(items),
             'item_summary': item_summary,
+            'items_preview': items_preview,
             'ticket_label': ticket_label,
             'service_ticket_id': order.service_ticket_id,
             'total_amount': float(order.total_amount) if order.total_amount else None,
