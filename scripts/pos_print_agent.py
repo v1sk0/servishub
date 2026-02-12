@@ -45,14 +45,19 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 # Price formatting helper
 # ---------------------------------------------------------------------------
 
+def _f(val):
+    """Safe float conversion: None/empty → 0.0"""
+    if val is None:
+        return 0.0
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def fmt(val):
     """Format number as Serbian price: 1.234,56"""
-    if val is None:
-        return '0,00'
-    try:
-        val = float(val)
-    except (TypeError, ValueError):
-        return '0,00'
+    val = _f(val)
     # Format with 2 decimals, then convert to Serbian style
     s = f'{val:,.2f}'
     # Swap , and . for Serbian format
@@ -151,7 +156,7 @@ def format_receipt(p, data):
         discount = item.get('discount_pct', 0)
 
         detail = f"  {qty} x {unit}"
-        if discount and float(discount) > 0:
+        if _f(discount) > 0:
             detail += f" (-{discount}%)"
 
         pad = width - len(detail) - len(total)
@@ -160,13 +165,13 @@ def format_receipt(p, data):
         p.text(f"{detail}{' ' * pad}{total}\n")
 
         # Accumulate tax (assuming 20% PDV included in price)
-        line_total = float(item.get('line_total', 0))
+        line_total = _f(item.get('line_total'))
         total_tax += line_total - (line_total / 1.20)
 
     p.text(sep + '\n')
 
     # --- Totals ---
-    discount_amount = float(receipt.get('discount_amount', 0))
+    discount_amount = _f(receipt.get('discount_amount'))
     if discount_amount > 0:
         sub = fmt(receipt.get('subtotal', 0))
         p.text(f"{'Medjuzbir:':<{width-len(sub)}s}{sub}\n")
@@ -183,16 +188,16 @@ def format_receipt(p, data):
     # --- Payment ---
     p.set(align='left')
     pm = receipt.get('payment_method', 'CASH')
-    total_amount = float(receipt.get('total_amount', 0))
+    total_amount = _f(receipt.get('total_amount'))
 
     if pm == 'CASH':
         val = fmt(total_amount)
         p.text(f"{'Gotovina:':<{width-len(val)}s}{val}\n")
-        cash_recv = receipt.get('cash_received')
-        if cash_recv and float(cash_recv) > total_amount:
+        cash_recv = _f(receipt.get('cash_received'))
+        if cash_recv > total_amount:
             rv = fmt(cash_recv)
             p.text(f"{'Primljeno:':<{width-len(rv)}s}{rv}\n")
-        cash_change = float(receipt.get('cash_change', 0))
+        cash_change = _f(receipt.get('cash_change'))
         if cash_change > 0:
             cv = fmt(cash_change)
             p.text(f"{'Povracaj:':<{width-len(cv)}s}{cv}\n")
@@ -203,8 +208,8 @@ def format_receipt(p, data):
         val = fmt(total_amount)
         p.text(f"{'Prenos na racun:':<{width-len(val)}s}{val}\n")
     elif pm == 'MIXED':
-        cash_recv = float(receipt.get('cash_received', 0))
-        cash_change = float(receipt.get('cash_change', 0))
+        cash_recv = _f(receipt.get('cash_received'))
+        cash_change = _f(receipt.get('cash_change'))
         cash_part = cash_recv - cash_change
         if cash_part > 0:
             cv = fmt(cash_part)

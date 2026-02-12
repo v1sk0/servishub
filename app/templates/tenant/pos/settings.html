@@ -319,19 +319,27 @@
 
             <!-- Printer Tips -->
             <div class="bg-white shadow rounded-lg p-6 mt-6">
-                <h3 class="text-sm font-semibold text-gray-900 mb-3">Napomene za stampace</h3>
-                <ul class="space-y-2 text-xs text-gray-500">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Uputstvo za ESC/POS Agent</h3>
+                <ul class="space-y-3 text-xs text-gray-500">
+                    <li class="flex items-start gap-2">
+                        <svg class="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span><b>macOS (preporuceno):</b> Stampac treba biti instaliran u System Preferences &rarr; Printers. Zatim pokrenite agenta sa CUPS modom:<br>
+                        <code class="bg-gray-100 px-1 rounded mt-1 inline-block">python3 pos_print_agent.py --cups IME_STAMPACA</code><br>
+                        <span class="text-gray-400">Koristite <code class="bg-gray-100 px-1 rounded">python3 pos_print_agent.py --list-printers</code> da vidite ime stampaca.</span></span>
+                    </li>
                     <li class="flex items-start gap-2">
                         <svg class="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span><b>ESC/POS Agent:</b> Za direktnu stampu bez dijaloga, pokrenite Print Agent na racunaru gde je stampac povezan: <code class="bg-gray-100 px-1 rounded">python pos_print_agent.py --vendor 0x0483 --product 0x5720</code>. Posle pokretanja, proverite konekciju na <code class="bg-gray-100 px-1 rounded">http://localhost:9100</code>.</span>
+                        <span><b>Windows/Linux (USB):</b> Pokrenite agenta sa Vendor i Product ID stampaca:<br>
+                        <code class="bg-gray-100 px-1 rounded mt-1 inline-block">python pos_print_agent.py --vendor 0x0483 --product 0x5720</code><br>
+                        <span class="text-gray-400">Vendor/Product ID: macOS: System Information &rarr; USB | Windows: Device Manager &rarr; USB | Linux: <code class="bg-gray-100 px-1 rounded">lsusb</code></span></span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <span><b>Instalacija:</b> Agent zahteva <code class="bg-gray-100 px-1 rounded">pip install python-escpos</code> (jednom). Za macOS CUPS mod ne treba nista dodatno.</span>
                     </li>
                     <li class="flex items-start gap-2">
                         <svg class="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span><b>Browser mod:</b> Chrome otvara print dijalog — stampac mora biti instaliran u sistemu</span>
-                    </li>
-                    <li class="flex items-start gap-2">
-                        <svg class="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span><b>Vendor/Product ID:</b> macOS: System Information → USB | Windows: Device Manager → USB | Linux: <code class="bg-gray-100 px-1 rounded">lsusb</code></span>
+                        <span><b>Browser mod:</b> Otvara print dijalog u browseru &mdash; stampac mora biti instaliran u sistemu. Radi bez agenta.</span>
                     </li>
                 </ul>
             </div>
