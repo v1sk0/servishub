@@ -2,7 +2,7 @@
 """
 ServisHub POS Print Agent
 =========================
-Standalone HTTP server that receives receipt data from the web app
+Standalone HTTPS server that receives receipt data from the web app
 and prints directly to a thermal POS printer via ESC/POS commands.
 
 Usage:
@@ -16,16 +16,24 @@ Usage:
     python pos_print_agent.py --vendor 0x0483 --product 0x5720 --agent-port 9200
 
 Requirements:
-    pip install python-escpos flask flask-cors
+    pip install python-escpos
 
 Finding Vendor/Product ID:
     macOS:   System Information → USB → Your Printer
     Windows: Device Manager → USB → Properties → Hardware IDs
     Linux:   lsusb
+
+NOTE: Agent runs on HTTPS (self-signed cert) so that Chrome allows
+      requests from HTTPS sites (shub.rs) to localhost.
+      On first use, visit https://localhost:9100 in your browser
+      and accept the certificate warning.
 """
 
 import argparse
 import json
+import os
+import ssl
+import subprocess
 import sys
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -388,6 +396,99 @@ def get_printer():
 
 
 # ---------------------------------------------------------------------------
+# SSL Certificate generation
+# ---------------------------------------------------------------------------
+
+def get_cert_dir():
+    """Get or create the certificate storage directory."""
+    home = os.path.expanduser('~')
+    cert_dir = os.path.join(home, '.servishub-agent')
+    os.makedirs(cert_dir, exist_ok=True)
+    return cert_dir
+
+
+def ensure_ssl_cert():
+    """Generate a self-signed SSL cert for localhost if not exists.
+    Returns (cert_path, key_path) tuple.
+    """
+    cert_dir = get_cert_dir()
+    cert_path = os.path.join(cert_dir, 'localhost.pem')
+    key_path = os.path.join(cert_dir, 'localhost-key.pem')
+
+    if os.path.exists(cert_path) and os.path.exists(key_path):
+        return cert_path, key_path
+
+    print("Generating self-signed SSL certificate for localhost...")
+    try:
+        subprocess.run([
+            'openssl', 'req', '-x509', '-newkey', 'rsa:2048',
+            '-keyout', key_path, '-out', cert_path,
+            '-days', '3650', '-nodes',
+            '-subj', '/CN=localhost',
+            '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1',
+        ], check=True, capture_output=True, text=True)
+        print(f"Certificate saved to: {cert_dir}")
+        return cert_path, key_path
+    except FileNotFoundError:
+        print("WARNING: openssl not found. Trying Python fallback...")
+        return _generate_cert_python(cert_path, key_path)
+    except subprocess.CalledProcessError as e:
+        print(f"WARNING: openssl failed: {e.stderr}")
+        print("Trying Python fallback...")
+        return _generate_cert_python(cert_path, key_path)
+
+
+def _generate_cert_python(cert_path, key_path):
+    """Fallback: generate self-signed cert using Python cryptography lib."""
+    try:
+        from cryptography import x509
+        from cryptography.x509.oid import NameOID
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from datetime import timedelta, timezone
+        import ipaddress
+
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        now = datetime.now(timezone.utc)
+        subject = issuer = x509.Name([
+            x509.NameAttribute(NameOID.COMMON_NAME, 'localhost'),
+        ])
+        cert = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(issuer)
+            .public_key(key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(now)
+            .not_valid_after(now + timedelta(days=3650))
+            .add_extension(
+                x509.SubjectAlternativeName([
+                    x509.DNSName('localhost'),
+                    x509.IPAddress(ipaddress.IPv4Address('127.0.0.1')),
+                ]),
+                critical=False,
+            )
+            .sign(key, hashes.SHA256())
+        )
+
+        with open(key_path, 'wb') as f:
+            f.write(key.private_bytes(
+                serialization.Encoding.PEM,
+                serialization.PrivateFormat.TraditionalOpenSSL,
+                serialization.NoEncryption(),
+            ))
+        with open(cert_path, 'wb') as f:
+            f.write(cert.public_bytes(serialization.Encoding.PEM))
+
+        print(f"Certificate generated (Python fallback)")
+        return cert_path, key_path
+    except ImportError:
+        print("ERROR: Cannot generate SSL cert.")
+        print("Install openssl or: pip install cryptography")
+        sys.exit(1)
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -413,7 +514,9 @@ Examples:
     parser.add_argument('--printer-port', type=int, default=9100,
                         help='Network printer port (default: 9100)')
     parser.add_argument('--agent-port', type=int, default=9100,
-                        help='HTTP agent port (default: 9100)')
+                        help='HTTPS agent port (default: 9100)')
+    parser.add_argument('--no-ssl', action='store_true',
+                        help='Run without SSL (HTTP only, for local testing)')
 
     args = parser.parse_args()
 
@@ -444,7 +547,7 @@ Examples:
         print(f"WARNING: Printer not available: {e}")
         print("Agent will start anyway - printer may become available later")
 
-    # Start HTTP server
+    # Start HTTPS server
     port = args.agent_port
     # If USB printer uses default 9100, use 9101 for agent
     if printer_config['type'] == 'network' and port == args.printer_port:
@@ -452,10 +555,22 @@ Examples:
         print(f"Agent port changed to {port} (avoiding conflict with printer port)")
 
     server = HTTPServer(('127.0.0.1', port), PrintAgentHandler)
-    print(f"\nServisHub POS Print Agent running on http://localhost:{port}")
+
+    protocol = 'http'
+    if not args.no_ssl:
+        cert_path, key_path = ensure_ssl_cert()
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ctx.load_cert_chain(cert_path, key_path)
+        server.socket = ctx.wrap_socket(server.socket, server_side=True)
+        protocol = 'https'
+
+    print(f"\nServisHub POS Print Agent running on {protocol}://localhost:{port}")
     print(f"  GET  /status  - Health check")
     print(f"  POST /print   - Print receipt")
     print(f"  POST /test    - Test print")
+    if protocol == 'https':
+        print(f"\n*** IMPORTANT: Open {protocol}://localhost:{port} in your browser ***")
+        print(f"*** and accept the certificate warning (one time only).    ***")
     print(f"\nPress Ctrl+C to stop\n")
 
     try:
