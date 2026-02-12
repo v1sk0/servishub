@@ -22,6 +22,7 @@
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
     animation: lifeline-sweep 2.5s ease-in-out infinite;
 }
+.lifeline-fill.lifeline-complete::after { animation: none; display: none; }
 @keyframes lifeline-sweep {
     0% { left: -40%; }
     100% { left: 140%; }
@@ -78,6 +79,7 @@
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
     animation: lifeline-sweep 2.5s ease-in-out infinite;
 }
+.detail-lifeline-fill.lifeline-complete::after { animation: none; display: none; }
 .detail-lifeline-dots {
     position: relative; display: flex; justify-content: space-between; z-index: 1;
 }
@@ -396,7 +398,7 @@
                                 <template x-if="!['REJECTED', 'CANCELLED'].includes(order.status)">
                                     <div class="lifeline">
                                         <div class="lifeline-track">
-                                            <div class="lifeline-fill" :style="'width:' + getLifelineProgress(order.status) + '%'"></div>
+                                            <div class="lifeline-fill" :class="{'lifeline-complete': order.status === 'COMPLETED'}" :style="'width:' + getLifelineProgress(order.status) + '%'"></div>
                                         </div>
                                         <div class="lifeline-dots">
                                             <div class="lifeline-step">
@@ -620,7 +622,7 @@
                         <div class="detail-lifeline-wrap">
                             <div class="detail-lifeline">
                                 <div class="detail-lifeline-track">
-                                    <div class="detail-lifeline-fill" :style="'width:' + getLifelineProgress(selectedOrder?.status) + '%'"></div>
+                                    <div class="detail-lifeline-fill" :class="{'lifeline-complete': selectedOrder?.status === 'COMPLETED'}" :style="'width:' + getLifelineProgress(selectedOrder?.status) + '%'"></div>
                                 </div>
                                 <div class="detail-lifeline-dots">
                                     <div class="detail-lifeline-step">
