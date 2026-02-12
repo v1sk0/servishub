@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POS Racun</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <style>
         /* Reset */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -59,6 +60,9 @@
 
         /* Footer */
         .footer { text-align: center; font-size: 10px; margin-top: 8px; color: #333; }
+        .qr-section { text-align: center; margin: 6px 0 2px; }
+        .qr-section img, .qr-section canvas { display: inline-block; }
+        .qr-label { font-size: 8px; color: #666; margin-top: 2px; }
 
         /* Badge */
         .badge-void { text-align: center; font-size: 18px; font-weight: bold; color: #dc2626; border: 2px solid #dc2626; padding: 4px; margin: 8px 0; }
@@ -171,6 +175,7 @@
             const td = await tenantRes.json();
             tenant = {
                 name: td.name,
+                slug: td.slug,
                 address: td.adresa_sedista,
                 phone: td.telefon,
                 pib: td.pib
@@ -297,10 +302,32 @@
         html += '<hr class="divider">';
         html += '<div class="footer">';
         html += `<div>${customFooter}</div>`;
-        html += '<div style="margin-top:4px; font-size:9px; color:#666;">shub.rs</div>';
+
+        // QR code placeholder
+        if (tenant.slug) {
+            html += '<div class="qr-section"><div id="qrcode"></div>';
+            html += `<div class="qr-label">${tenant.slug}.shub.rs</div>`;
+            html += '</div>';
+        } else {
+            html += '<div style="margin-top:4px; font-size:9px; color:#666;">shub.rs</div>';
+        }
+
         html += '</div>';
 
         el.innerHTML = html;
+
+        // Generate QR code after DOM is updated
+        if (tenant.slug && typeof qrcode !== 'undefined') {
+            const qrUrl = `https://${tenant.slug}.shub.rs`;
+            const qr = qrcode(0, 'L');
+            qr.addData(qrUrl);
+            qr.make();
+            const qrEl = document.getElementById('qrcode');
+            if (qrEl) {
+                const size = paperSize === '58' ? 3 : 4;
+                qrEl.innerHTML = qr.createImgTag(size, 0);
+            }
+        }
     }
 
     loadAndRender();
