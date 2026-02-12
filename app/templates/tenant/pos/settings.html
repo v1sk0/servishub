@@ -414,7 +414,12 @@ function posSettings() {
         },
 
         savePrinter() {
-            if (!this.form.name.trim()) return;
+            if (!this.form.name.trim()) {
+                // Highlight the name field
+                const nameInput = this.$root.querySelector('input[x-model="form.name"]');
+                if (nameInput) { nameInput.focus(); nameInput.classList.add('ring-2', 'ring-red-500'); setTimeout(() => nameInput.classList.remove('ring-2', 'ring-red-500'), 2000); }
+                return;
+            }
 
             if (this.editingPrinterId) {
                 // Update existing
