@@ -215,7 +215,7 @@
       color: #999;
     }
 
-    /* Cut line */
+    /* Cut line - 3 parallel fold lines */
     .cut-line {
       height: 10mm;
       display: flex;
@@ -224,13 +224,30 @@
       position: relative;
     }
 
-    .cut-line::before {
+    .cut-line::before,
+    .cut-line::after {
       content: '';
       position: absolute;
       left: 6mm;
       right: 6mm;
+    }
+
+    .cut-line::before {
+      top: calc(50% - 1.8mm);
+      border-top: 0.4pt dashed #ddd;
+    }
+
+    .cut-line::after {
+      top: calc(50% + 1.8mm);
+      border-top: 0.4pt dashed #ddd;
+    }
+
+    .cut-line .cut-main {
+      position: absolute;
+      left: 6mm;
+      right: 6mm;
       top: 50%;
-      border-top: 1pt dashed #ccc;
+      border-top: 0.75pt dashed #bbb;
     }
 
     .cut-line span {
@@ -428,7 +445,7 @@
     </div>
 
     <!-- CUT LINE -->
-    <div class="cut-line"><span>&#9986; isecite ovde</span></div>
+    <div class="cut-line"><div class="cut-main"></div><span>&#9986; isecite ovde</span></div>
 
     <!-- ====== COPY 2 - KORISNIK ====== -->
     <div class="ticket-container">
