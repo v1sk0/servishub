@@ -33,7 +33,11 @@
         .receipt-58 .header .company-name { font-size: 12px; }
         .header .company-info { font-size: 10px; color: #333; }
 
-        /* Divider */
+        /* Fiscal separators - === style */
+        .sep { text-align: center; font-size: 12px; margin: 4px 0; letter-spacing: 0; overflow: hidden; }
+        .receipt-58 .sep { font-size: 10px; }
+
+        /* Legacy divider (kept for compatibility) */
         .divider { border: none; border-top: 1px dashed #000; margin: 6px 0; }
         .divider-double { border-top: 2px solid #000; }
 
@@ -47,7 +51,16 @@
         .items .item-name { font-weight: bold; }
         .items .item-detail { padding-left: 8px; font-size: 11px; color: #333; }
         .items .item-total { text-align: right; font-weight: bold; }
+        .items .tax-label { font-size: 10px; color: #555; }
         .receipt-58 .items { font-size: 9px; }
+
+        /* Tax breakdown table */
+        .tax-table { width: 100%; border-collapse: collapse; margin: 4px 0; font-size: 10px; }
+        .tax-table th { text-align: left; font-weight: bold; padding: 2px 4px; border-bottom: 1px solid #000; }
+        .tax-table th:last-child, .tax-table td:last-child { text-align: right; }
+        .tax-table th:nth-child(3), .tax-table td:nth-child(3) { text-align: right; }
+        .tax-table td { padding: 2px 4px; }
+        .receipt-58 .tax-table { font-size: 8px; }
 
         /* Totals */
         .totals { margin: 4px 0; }
@@ -60,6 +73,13 @@
 
         /* Footer */
         .footer { text-align: center; font-size: 10px; margin-top: 8px; color: #333; }
+
+        /* Fiscal QR - larger, centered, 40-50mm per spec */
+        .fiscal-qr { text-align: center; margin: 8px 0 4px; }
+        .fiscal-qr img, .fiscal-qr canvas { display: inline-block; }
+        .fiscal-qr-label { font-size: 9px; color: #333; margin-top: 2px; }
+
+        /* Tenant QR - smaller, in footer */
         .qr-section { text-align: center; margin: 6px 0 2px; }
         .qr-section img, .qr-section canvas { display: inline-block; }
         .qr-label { font-size: 8px; color: #666; margin-top: 2px; }
@@ -67,6 +87,22 @@
         /* Badge */
         .badge-void { text-align: center; font-size: 18px; font-weight: bold; color: #dc2626; border: 2px solid #dc2626; padding: 4px; margin: 8px 0; }
         .badge-refund { text-align: center; font-size: 14px; font-weight: bold; color: #2563eb; border: 2px solid #2563eb; padding: 4px; margin: 8px 0; }
+
+        /* Non-fiscal warning banner */
+        .non-fiscal-banner {
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #dc2626;
+            border: 2px dashed #dc2626;
+            padding: 4px 2px;
+            margin: 6px 0;
+        }
+
+        /* Fiscal meta info */
+        .fiscal-meta { font-size: 10px; text-align: center; margin: 4px 0; }
+        .fiscal-meta .label { color: #555; }
+        .receipt-58 .fiscal-meta { font-size: 8px; }
 
         /* Screen-only controls */
         .print-controls {
@@ -109,6 +145,84 @@
     </div>
 
     <script>
+    /*
+    ================================================================
+    SRPSKI FISKALNI RACUN - LAYOUT REFERENCA
+    ================================================================
+
+    Zakon o fiskalizaciji (2021), Pravilnik o vrsti i nacinu dostavljanja
+    podataka o poslovnim prostorijama i PFR.
+
+    OBAVEZAN REDOSLED ELEMENATA:
+    ─────────────────────────────────────────
+    1. Naziv i adresa obveznika (kompanija)
+    2. PIB obveznika
+    3. Naziv i adresa poslovnog prostora (lokacija)
+    4. ========================================
+    5. NON-FISCAL BANER (ako nema PFR)
+    6. ========================================
+    7. Tip racuna: Promet / Avans
+    8. Tip transakcije: Prodaja / Refundacija
+    9. ========================================
+    10. Stavke:
+        - Naziv artikla (poreska oznaka /Đ, /E itd.)
+        - Kolicina x Jed.cena = Ukupno
+    11. ========================================
+    12. Ukupan iznos (sa PDV)
+    13. Nacin placanja + iznos
+    14. ========================================
+    15. PDV tabela:
+        Oznaka | Naziv | Stopa | Porez
+        Đ      | O-PDV | 20.00%| 1234,56
+        E      | O-PDV | 10.00%|  567,89
+    16. Ukupan iznos poreza
+    17. ========================================
+    18. PFR vreme (dd.mm.yyyy. HH:mm:ss)
+    19. PFR brojac (ПП/1234-ПР za Promet-Prodaja)
+    20. Brojac po tipu (1234 od ukupno XXXX)
+    21. ========================================
+    22. Fiskalni QR kod (40-50mm, M error correction)
+    23. ========================================
+
+    PORESKE OZNAKE (dodeljuje Poreska uprava kroz SUF):
+    Đ = PDV 20% (standardna stopa)
+    E = PDV 10% (snizena stopa)
+    A = 0%      (za neobveznike PDV-a)
+    G = 0%      (oslobodjeno)
+
+    TIPOVI RACUNA:
+    - Promet (prodaja robe/usluga)
+    - Avans (avansna uplata)
+
+    TIPOVI TRANSAKCIJA:
+    - Prodaja
+    - Refundacija
+
+    NACINI PLACANJA (fiskalni kodovi):
+    - "gotovina"
+    - "instant placanje" (QR kod)
+    - "platna kartica"
+    - "cek"
+    - "prenos na racun"
+    - "vaucer"
+    - "drugo bezgotovinsko placanje"
+
+    BROJAC FORMAT: TT/BBBB-VV
+    TT = tip poslovnog prostora (ПП=prodajno mesto)
+    BBBB = redni broj racuna tog tipa
+    VV = vrsta racuna + tip transakcije
+      ПР = Промет-Продаја
+      ПР = Промет-Рефундација  (разликује се контекстом)
+      АП = Аванс-Продаја
+      АР = Аванс-Рефундација
+
+    PFR = Procesor Fiskalnih Racuna (lokalni ili VPFR)
+    ESIR = Elektronski sistem za izdavanje racuna
+    SUF = Sistem za upravljanje fiskalizacijom
+
+    ================================================================
+    */
+
     const receiptId = new URLSearchParams(window.location.search).get('id');
     const paperSize = localStorage.getItem('pos-paper-size') || '80';
     const autoPrint = new URLSearchParams(window.location.search).get('auto') === '1';
@@ -119,6 +233,12 @@
     if (paperSize === '58') {
         document.getElementById('receipt').classList.add('receipt-58');
     }
+
+    // Separator character count based on paper size
+    const SEP_CHAR = '=';
+    const SEP_LEN = paperSize === '58' ? 28 : 40;
+    const SEP_LINE = SEP_CHAR.repeat(SEP_LEN);
+    const DASH_LINE = '-'.repeat(SEP_LEN);
 
     async function loadAndRender() {
         if (!receiptId || receiptId === 'preview') {
@@ -194,18 +314,75 @@
         return Number(val).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    function fmtDate(iso) {
+    function fmtDateFiscal(iso) {
+        // Fiscal format: dd.mm.yyyy. HH:mm:ss (with seconds)
         if (!iso) return '';
         const d = new Date(iso);
-        return d.toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' })
-            + ' ' + d.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' });
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mi = String(d.getMinutes()).padStart(2, '0');
+        const ss = String(d.getSeconds()).padStart(2, '0');
+        return `${dd}.${mm}.${yyyy}. ${hh}:${mi}:${ss}`;
+    }
+
+    /**
+     * Determine tax label for an item.
+     * In production, this comes from PFR/SUF system.
+     * For now: simulate based on common Serbian tax setup.
+     *   Đ = 20% PDV (default for goods)
+     *   E = 10% PDV (food, newspapers, etc.)
+     *   A = 0% (non-VAT registered)
+     */
+    function getTaxLabel(item) {
+        // TODO: Read from item.tax_label when PFR integration is done
+        // For development preview, all items use Đ (20% PDV)
+        return 'Đ';
+    }
+
+    function getTaxRate(label) {
+        const rates = { 'Đ': 20, 'E': 10, 'A': 0, 'G': 0 };
+        return rates[label] || 20;
+    }
+
+    function getTaxName(label) {
+        const names = { 'Đ': 'O-PDV', 'E': 'O-PDV', 'A': 'Bez PDV', 'G': 'Oslobodjeno' };
+        return names[label] || 'O-PDV';
+    }
+
+    /**
+     * Map our payment method to fiscal payment label
+     */
+    function fiscalPaymentLabel(pm) {
+        const map = {
+            'CASH': 'Gotovina',
+            'CARD': 'Platna kartica',
+            'TRANSFER': 'Prenos na racun',
+            'MIXED': null // handled separately
+        };
+        return map[pm] || pm;
+    }
+
+    /**
+     * Generate fiscal receipt counter.
+     * Format: ПП/XXXX-ПР (Prodajno Prostor / broj - Promet Prodaja)
+     */
+    function fiscalCounter(receiptNumber, receiptType) {
+        // Extract number from receipt_number (e.g. "R-00042" → 42)
+        const num = parseInt(receiptNumber.replace(/\D/g, ''), 10) || 1;
+        const suffix = receiptType === 'REFUND' ? 'РФ' : 'ПР';
+        return `ПП/${num}-${suffix}`;
     }
 
     function renderReceipt(r, tenant) {
         const el = document.getElementById('receipt');
+        const isFiscal = r.fiscal_status === 'signed';
         let html = '';
 
-        // Header
+        // =============================================
+        // 1. HEADER - Company info
+        // =============================================
         html += '<div class="header">';
         html += `<div class="company-name">${customCompanyName || tenant.name || 'ServisHub'}</div>`;
         if (tenant.address) html += `<div class="company-info">${tenant.address}</div>`;
@@ -213,9 +390,19 @@
         if (tenant.pib) html += `<div class="company-info">PIB: ${tenant.pib}</div>`;
         html += '</div>';
 
-        html += '<hr class="divider divider-double">';
+        html += `<div class="sep">${SEP_LINE}</div>`;
 
-        // Status badges
+        // =============================================
+        // 2. NON-FISCAL WARNING (if no PFR signature)
+        // =============================================
+        if (!isFiscal) {
+            html += '<div class="non-fiscal-banner">OVO NIJE FISKALNI RACUN</div>';
+            html += `<div class="sep">${SEP_LINE}</div>`;
+        }
+
+        // =============================================
+        // 3. STATUS BADGES (void/refund)
+        // =============================================
         if (r.status === 'VOIDED') {
             html += '<div class="badge-void">STORNIRANO</div>';
         }
@@ -223,30 +410,68 @@
             html += '<div class="badge-refund">POVRACAJ</div>';
         }
 
-        // Receipt info
+        // =============================================
+        // 4. RECEIPT TYPE + TRANSACTION TYPE (fiscal)
+        // =============================================
+        const receiptTypeLabel = r.receipt_type === 'REFUND' ? 'Промет' : 'Промет';
+        const transactionType = r.receipt_type === 'REFUND' ? 'Рефундација' : 'Продаја';
+        html += '<div class="fiscal-meta">';
+        html += `<div>Врста рачуна: <b>${receiptTypeLabel}</b></div>`;
+        html += `<div>Тип трансакције: <b>${transactionType}</b></div>`;
+        html += '</div>';
+
+        html += `<div class="sep">${SEP_LINE}</div>`;
+
+        // =============================================
+        // 5. RECEIPT INFO
+        // =============================================
         html += '<div class="info-row"><span>Racun br:</span><span>' + r.receipt_number + '</span></div>';
-        html += '<div class="info-row"><span>Datum:</span><span>' + fmtDate(r.issued_at) + '</span></div>';
+        html += '<div class="info-row"><span>Datum:</span><span>' + fmtDateFiscal(r.issued_at) + '</span></div>';
         if (r.issued_by) {
             html += '<div class="info-row"><span>Kasir:</span><span>' + r.issued_by + '</span></div>';
         }
 
         // B2B buyer info
         if (r.buyer_pib) {
-            html += '<hr class="divider">';
+            html += `<div class="sep">${DASH_LINE}</div>`;
             html += '<div class="info-row"><span>Kupac PIB:</span><span>' + r.buyer_pib + '</span></div>';
             if (r.buyer_name) {
                 html += '<div class="info-row"><span>Kupac:</span><span>' + r.buyer_name + '</span></div>';
             }
         }
 
-        html += '<hr class="divider">';
+        html += `<div class="sep">${SEP_LINE}</div>`;
 
-        // Items
+        // =============================================
+        // 6. ITEMS - with tax labels
+        // =============================================
+        // Collect tax totals as we iterate
+        const taxTotals = {};
+
         html += '<table class="items">';
         r.items.forEach((item, idx) => {
+            const taxLabel = getTaxLabel(item);
+            const taxRate = getTaxRate(taxLabel);
+
+            // Calculate tax for this line
+            // line_total includes VAT, so tax = total - (total / (1 + rate/100))
+            const lineTotal = item.line_total || 0;
+            const taxAmount = taxRate > 0 ? lineTotal - (lineTotal / (1 + taxRate / 100)) : 0;
+
+            // Accumulate tax totals by label
+            if (!taxTotals[taxLabel]) {
+                taxTotals[taxLabel] = { name: getTaxName(taxLabel), rate: taxRate, tax: 0, base: 0, total: 0 };
+            }
+            taxTotals[taxLabel].tax += taxAmount;
+            taxTotals[taxLabel].base += (lineTotal - taxAmount);
+            taxTotals[taxLabel].total += lineTotal;
+
+            // Item name row with tax label
             html += '<tr>';
-            html += `<td class="item-name" colspan="2">${idx + 1}. ${item.item_name}</td>`;
+            html += `<td class="item-name" colspan="2">${idx + 1}. ${item.item_name} /${taxLabel}</td>`;
             html += '</tr>';
+
+            // Quantity x unit price = total
             let detail = `${item.quantity} x ${fmtPrice(item.unit_price)}`;
             if (item.discount_pct > 0) detail += ` (-${item.discount_pct}%)`;
             html += '<tr>';
@@ -256,54 +481,117 @@
         });
         html += '</table>';
 
-        html += '<hr class="divider divider-double">';
+        html += `<div class="sep">${SEP_LINE}</div>`;
 
-        // Totals
+        // =============================================
+        // 7. TOTALS
+        // =============================================
         html += '<div class="totals">';
         if (r.discount_amount > 0) {
             html += '<div class="total-row"><span>Medjuzbir:</span><span>' + fmtPrice(r.subtotal) + '</span></div>';
             html += '<div class="total-row"><span>Popust:</span><span>-' + fmtPrice(r.discount_amount) + '</span></div>';
         }
-        html += '<div class="total-row grand"><span>UKUPNO:</span><span>' + fmtPrice(r.total_amount) + ' RSD</span></div>';
+        html += '<div class="total-row grand"><span>Укупан износ:</span><span>' + fmtPrice(r.total_amount) + '</span></div>';
         html += '</div>';
 
-        html += '<hr class="divider">';
+        html += `<div class="sep">${DASH_LINE}</div>`;
 
-        // Payment
+        // =============================================
+        // 8. PAYMENT METHOD (fiscal labels)
+        // =============================================
         html += '<div class="payment">';
         const pm = r.payment_method;
-        if (pm === 'CASH' || pm === 'MIXED') {
-            if (r.cash_received) {
-                html += '<div class="total-row"><span>Primljeno:</span><span>' + fmtPrice(r.cash_received) + '</span></div>';
+        if (pm === 'CASH') {
+            html += '<div class="total-row"><span>Готовина:</span><span>' + fmtPrice(r.total_amount) + '</span></div>';
+            if (r.cash_received && r.cash_received > r.total_amount) {
+                html += '<div class="total-row"><span>Примљено:</span><span>' + fmtPrice(r.cash_received) + '</span></div>';
             }
             if (r.cash_change > 0) {
-                html += '<div class="total-row"><span>Povracaj:</span><span>' + fmtPrice(r.cash_change) + '</span></div>';
+                html += '<div class="total-row"><span>Повраћај:</span><span>' + fmtPrice(r.cash_change) + '</span></div>';
+            }
+        } else if (pm === 'CARD') {
+            html += '<div class="total-row"><span>Платна картица:</span><span>' + fmtPrice(r.total_amount) + '</span></div>';
+        } else if (pm === 'TRANSFER') {
+            html += '<div class="total-row"><span>Пренос на рачун:</span><span>' + fmtPrice(r.total_amount) + '</span></div>';
+        } else if (pm === 'MIXED') {
+            // Show each component
+            const cashPart = (r.cash_received || 0) - (r.cash_change || 0);
+            if (cashPart > 0) {
+                html += '<div class="total-row"><span>Готовина:</span><span>' + fmtPrice(cashPart) + '</span></div>';
+            }
+            if (r.card_amount) {
+                html += '<div class="total-row"><span>Платна картица:</span><span>' + fmtPrice(r.card_amount) + '</span></div>';
+            }
+            if (r.transfer_amount) {
+                html += '<div class="total-row"><span>Пренос на рачун:</span><span>' + fmtPrice(r.transfer_amount) + '</span></div>';
+            }
+            if (r.cash_received && r.cash_change > 0) {
+                html += '<div class="total-row"><span>Повраћај:</span><span>' + fmtPrice(r.cash_change) + '</span></div>';
             }
         }
-        if (pm === 'CARD') {
-            html += '<div class="total-row"><span>Placanje:</span><span>Kartica</span></div>';
+        html += '</div>';
+
+        html += `<div class="sep">${SEP_LINE}</div>`;
+
+        // =============================================
+        // 9. TAX BREAKDOWN TABLE
+        // =============================================
+        html += '<table class="tax-table">';
+        html += '<tr><th>Ознака</th><th>Име</th><th>Стопа</th><th>Порез</th></tr>';
+        let totalTax = 0;
+        for (const [label, data] of Object.entries(taxTotals)) {
+            totalTax += data.tax;
+            html += `<tr>`;
+            html += `<td>${label}</td>`;
+            html += `<td>${data.name}</td>`;
+            html += `<td>${data.rate.toFixed(2)}%</td>`;
+            html += `<td>${fmtPrice(data.tax)}</td>`;
+            html += `</tr>`;
         }
-        if (pm === 'TRANSFER') {
-            html += '<div class="total-row"><span>Placanje:</span><span>Prenos</span></div>';
-        }
-        if (pm === 'MIXED') {
-            if (r.card_amount) html += '<div class="total-row"><span>Kartica:</span><span>' + fmtPrice(r.card_amount) + '</span></div>';
-            if (r.transfer_amount) html += '<div class="total-row"><span>Prenos:</span><span>' + fmtPrice(r.transfer_amount) + '</span></div>';
-        }
+        html += '</table>';
+
+        html += `<div class="sep">${DASH_LINE}</div>`;
+        html += '<div class="total-row" style="font-size:11px;"><span>Укупан износ пореза:</span><span>' + fmtPrice(totalTax) + '</span></div>';
+
+        html += `<div class="sep">${SEP_LINE}</div>`;
+
+        // =============================================
+        // 10. FISCAL METADATA
+        // =============================================
+        html += '<div class="fiscal-meta">';
+        html += `<div>ПФР време: ${fmtDateFiscal(r.issued_at)}</div>`;
+        html += `<div>ПФР бројач рачуна: ${fiscalCounter(r.receipt_number, r.receipt_type)}</div>`;
         html += '</div>';
 
         // Void info
         if (r.status === 'VOIDED' && r.void_reason) {
-            html += '<hr class="divider">';
-            html += '<div style="font-size:10px; text-align:center;">Razlog: ' + r.void_reason + '</div>';
+            html += `<div class="sep">${DASH_LINE}</div>`;
+            html += '<div style="font-size:10px; text-align:center;">Razlog storna: ' + r.void_reason + '</div>';
         }
 
-        // Footer
-        html += '<hr class="divider">';
+        html += `<div class="sep">${SEP_LINE}</div>`;
+
+        // =============================================
+        // 11. FISCAL QR CODE (40-50mm)
+        // =============================================
+        html += '<div class="fiscal-qr">';
+        html += '<div id="fiscal-qr"></div>';
+        if (isFiscal) {
+            html += '<div class="fiscal-qr-label">Проверите рачун на suf.purs.gov.rs</div>';
+        } else {
+            html += '<div class="fiscal-qr-label" style="color:#999;">Fiskalni QR kod (placeholder)</div>';
+        }
+        html += '</div>';
+
+        html += `<div class="sep">${SEP_LINE}</div>`;
+
+        // =============================================
+        // 12. FOOTER + TENANT QR
+        // =============================================
         html += '<div class="footer">';
         html += `<div>${customFooter}</div>`;
 
-        // QR code placeholder
+        // Tenant public page QR
         if (tenant.slug) {
             html += '<div class="qr-section"><div id="qrcode"></div>';
             html += `<div class="qr-label">${tenant.slug}.shub.rs</div>`;
@@ -314,9 +602,29 @@
 
         html += '</div>';
 
+        // =============================================
+        // RENDER
+        // =============================================
         el.innerHTML = html;
 
-        // Generate QR code after DOM is updated
+        // Generate Fiscal QR code (placeholder URL for development)
+        if (typeof qrcode !== 'undefined') {
+            const fiscalQrEl = document.getElementById('fiscal-qr');
+            if (fiscalQrEl) {
+                // In production: r.fiscal_qr_code contains the PFR-signed URL
+                // For dev: generate placeholder with receipt info
+                const fiscalUrl = r.fiscal_qr_code
+                    || `https://suf.purs.gov.rs/v/?vl=placeholder&tin=${tenant.pib || '000000000'}&rn=${r.receipt_number}`;
+                const qr = qrcode(0, 'M'); // M = medium error correction (fiscal spec)
+                qr.addData(fiscalUrl);
+                qr.make();
+                // Fiscal QR must be 40-50mm → cell size 6 for 80mm, 5 for 58mm
+                const cellSize = paperSize === '58' ? 5 : 6;
+                fiscalQrEl.innerHTML = qr.createImgTag(cellSize, 0);
+            }
+        }
+
+        // Generate Tenant QR code (smaller, in footer)
         if (tenant.slug && typeof qrcode !== 'undefined') {
             const qrUrl = `https://${tenant.slug}.shub.rs`;
             const qr = qrcode(0, 'L');
