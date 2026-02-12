@@ -385,7 +385,7 @@
             <td colspan="3" id="location-1"></td>
           </tr>
           <tr id="imei-row-1" style="display: none;">
-            <th>IMEI:</th>
+            <th id="imei-label-1">IMEI:</th>
             <td colspan="5" id="imei-1"></td>
           </tr>
         </tbody>
@@ -488,7 +488,7 @@
             <td colspan="3" id="location-2"></td>
           </tr>
           <tr id="imei-row-2" style="display: none;">
-            <th>IMEI:</th>
+            <th id="imei-label-2">IMEI:</th>
             <td colspan="5" id="imei-2"></td>
           </tr>
         </tbody>
@@ -590,6 +590,22 @@
       document.getElementById('error-message').textContent = message;
     }
 
+    // Device type label mapping
+    const DEVICE_TYPE_LABELS = {
+      'phone': 'Telefon', 'tablet': 'Tablet', 'laptop': 'Laptop',
+      'console': 'Konzola', 'scooter': 'Trotinet', 'other': 'Ostalo',
+      'PHONE': 'Telefon', 'TABLET': 'Tablet', 'LAPTOP': 'Laptop',
+      'COMPUTER': 'Desktop', 'SCOOTER': 'Trotinet', 'OTHER': 'Ostalo'
+    };
+
+    // Identifier label per device type
+    const IDENTIFIER_LABELS = {
+      'phone': 'IMEI', 'tablet': 'IMEI / S/N', 'laptop': 'Serijski broj',
+      'console': 'Serijski broj', 'scooter': 'Serijski broj', 'other': 'Serijski broj',
+      'PHONE': 'IMEI', 'TABLET': 'IMEI / S/N', 'LAPTOP': 'Serijski broj',
+      'COMPUTER': 'Serijski broj', 'SCOOTER': 'Serijski broj', 'OTHER': 'Serijski broj'
+    };
+
     // Fill both copies with data
     function fillTicketData(ticket, tenant, location, qr_code_base64) {
       for (let i = 1; i <= 2; i++) {
@@ -616,7 +632,8 @@
         document.getElementById(`customer-name-${i}`).textContent = ticket.customer_name || '-';
 
         // Ticket details
-        document.getElementById(`service-section-${i}`).textContent = ticket.service_section || 'Telefoni';
+        const deviceLabel = DEVICE_TYPE_LABELS[ticket.device_type] || ticket.service_section || 'Telefon';
+        document.getElementById(`service-section-${i}`).textContent = deviceLabel;
         document.getElementById(`brand-model-${i}`).textContent =
           [ticket.brand, ticket.model].filter(Boolean).join(' ') || '-';
         document.getElementById(`customer-full-${i}`).textContent = ticket.customer_name || '-';
@@ -639,9 +656,10 @@
         document.getElementById(`technician-${i}`).textContent = ticket.created_by_name || '-';
         document.getElementById(`location-${i}`).textContent = location?.name || '-';
 
-        // IMEI
+        // IMEI / Serial number
         if (ticket.imei) {
           document.getElementById(`imei-row-${i}`).style.display = '';
+          document.getElementById(`imei-label-${i}`).textContent = IDENTIFIER_LABELS[ticket.device_type] || 'IMEI';
           document.getElementById(`imei-${i}`).textContent = ticket.imei;
         }
 
