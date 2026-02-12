@@ -8,7 +8,7 @@
     <div class="md:flex md:items-center md:justify-between mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-900">POS Podesavanja</h2>
-            <p class="mt-1 text-sm text-gray-500">Stampac, format racuna, audit</p>
+            <p class="mt-1 text-sm text-gray-500">Stampaci, format racuna, audit</p>
         </div>
         <div class="mt-4 flex gap-2 md:mt-0">
             <a href="/pos" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">Nazad na kasu</a>
@@ -20,23 +20,131 @@
         <!-- Left: Settings -->
         <div class="space-y-6">
 
-            <!-- Printer Settings -->
+            <!-- Printers List -->
             <div class="bg-white shadow rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Stampac</h3>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Sirina papira</label>
-                        <select x-model="paperSize" @change="saveSettings()"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
-                            <option value="80">80mm (standardni termalni)</option>
-                            <option value="58">58mm (mali termalni)</option>
-                        </select>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Stampaci</h3>
+                    <button @click="showAddPrinter = !showAddPrinter; if(showAddPrinter) resetForm()"
+                            class="inline-flex items-center rounded-md bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-primary-500">
+                        <svg class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                        Dodaj stampac
+                    </button>
+                </div>
+
+                <!-- Add/Edit Printer Form -->
+                <div x-show="showAddPrinter" x-transition class="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Naziv stampaca</label>
+                            <input type="text" x-model="form.name" placeholder="npr. SPRT POS891"
+                                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Sirina papira</label>
+                            <select x-model="form.paperSize"
+                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                                <option value="80">80mm (standardni)</option>
+                                <option value="58">58mm (mali)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Konekcija</label>
+                            <select x-model="form.connection"
+                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                                <option value="USB">USB</option>
+                                <option value="LAN">LAN / Ethernet</option>
+                                <option value="Bluetooth">Bluetooth</option>
+                                <option value="WiFi">WiFi</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2 flex items-center gap-3">
+                            <input type="checkbox" x-model="form.autoCut" id="auto-cut"
+                                   class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                            <label for="auto-cut" class="text-sm text-gray-700">Automatsko secenje papira</label>
+                        </div>
                     </div>
+                    <div class="flex gap-2 mt-3">
+                        <button @click="savePrinter()"
+                                class="inline-flex items-center rounded-md bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-primary-500">
+                            <span x-text="editingPrinterId ? 'Sacuvaj' : 'Dodaj'"></span>
+                        </button>
+                        <button @click="showAddPrinter = false; editingPrinterId = null"
+                                class="inline-flex items-center rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            Otkazi
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Printers List -->
+                <div class="space-y-2">
+                    <template x-for="printer in printers" :key="printer.id">
+                        <div class="flex items-center justify-between p-3 rounded-lg border transition-all"
+                             :class="printer.isDefault ? 'border-primary-300 bg-primary-50' : 'border-gray-200 bg-white'">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <!-- Printer icon -->
+                                <div class="flex-shrink-0">
+                                    <svg class="w-8 h-8" :class="printer.isDefault ? 'text-primary-600' : 'text-gray-400'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                    </svg>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="font-medium text-sm text-gray-900 truncate" x-text="printer.name"></div>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <span class="text-xs text-gray-500" x-text="printer.paperSize + 'mm'"></span>
+                                        <span class="text-xs text-gray-400">|</span>
+                                        <span class="text-xs text-gray-500" x-text="printer.connection"></span>
+                                        <template x-if="printer.autoCut">
+                                            <span class="text-xs text-gray-400">| Auto-cut</span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 flex-shrink-0 ml-2">
+                                <!-- Default badge -->
+                                <template x-if="printer.isDefault">
+                                    <span class="inline-flex items-center rounded-full bg-primary-100 px-2 py-0.5 text-[10px] font-semibold text-primary-700 mr-1">PODRAZUMEVANI</span>
+                                </template>
+                                <!-- Set as default -->
+                                <button x-show="!printer.isDefault" @click="setDefaultPrinter(printer.id)"
+                                        title="Postavi kao podrazumevani"
+                                        class="p-1.5 rounded text-gray-400 hover:text-primary-600 hover:bg-primary-50">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                </button>
+                                <!-- Test print -->
+                                <button @click="testPrint(printer)" title="Test stampe"
+                                        class="p-1.5 rounded text-gray-400 hover:text-green-600 hover:bg-green-50">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                </button>
+                                <!-- Edit -->
+                                <button @click="editPrinter(printer)" title="Izmeni"
+                                        class="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                </button>
+                                <!-- Delete -->
+                                <button @click="deletePrinter(printer.id)" title="Obrisi"
+                                        class="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Empty state -->
+                    <div x-show="printers.length === 0" class="text-center py-6 text-gray-400">
+                        <svg class="mx-auto h-10 w-10 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <p class="text-sm">Nema konfigurisanih stampaca</p>
+                        <p class="text-xs mt-1">Kliknite "Dodaj stampac" da dodate POS stampac</p>
+                    </div>
+                </div>
+
+                <!-- Auto-print setting -->
+                <div class="mt-4 pt-4 border-t border-gray-100">
                     <div class="flex items-center gap-3">
                         <input type="checkbox" x-model="autoPrint" @change="saveSettings()"
                                id="auto-print" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
                         <label for="auto-print" class="text-sm text-gray-700">Automatski stampaj posle svakog racuna</label>
                     </div>
+                    <p class="mt-1 text-xs text-gray-400 ml-7">Koristi podrazumevani stampac za auto-stampu</p>
                 </div>
             </div>
 
@@ -99,10 +207,15 @@
             <div class="bg-white shadow rounded-lg p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-gray-900">Preview racuna</h3>
-                    <button @click="printPreview()" class="text-sm text-primary-600 hover:text-primary-500 font-medium">Test stampe</button>
+                    <div class="flex items-center gap-2">
+                        <template x-if="defaultPrinter">
+                            <span class="text-xs text-gray-400" x-text="defaultPrinter.name + ' (' + defaultPrinter.paperSize + 'mm)'"></span>
+                        </template>
+                        <button @click="testPrint(defaultPrinter)" class="text-sm text-primary-600 hover:text-primary-500 font-medium">Test stampe</button>
+                    </div>
                 </div>
                 <div class="flex justify-center">
-                    <div :class="paperSize === '58' ? 'w-[58mm]' : 'w-[80mm]'"
+                    <div :class="currentPaperSize === '58' ? 'w-[58mm]' : 'w-[80mm]'"
                          class="bg-white border border-gray-200 shadow-inner p-3 font-mono text-xs leading-relaxed transition-all duration-300"
                          style="min-height: 300px;">
                         <!-- Preview header -->
@@ -156,6 +269,25 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Printer Tips -->
+            <div class="bg-white shadow rounded-lg p-6 mt-6">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Napomene za stampace</h3>
+                <ul class="space-y-2 text-xs text-gray-500">
+                    <li class="flex items-start gap-2">
+                        <svg class="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>POS stampac (npr. SPRT POS891) mora biti instaliran kao Windows stampac sa odgovarajucim drajverom</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <svg class="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Prilikom stampe, Chrome otvara dijalog gde birate stampac — browser pamti poslednji izbor</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <svg class="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Za brzu stampu bez dijaloga, postavite POS stampac kao podrazumevani Windows stampac i koristite Ctrl+P</span>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
@@ -163,7 +295,7 @@
 <script>
 function posSettings() {
     return {
-        paperSize: '80',
+        printers: [],
         autoPrint: false,
         companyName: '',
         footerMessage: '',
@@ -172,9 +304,42 @@ function posSettings() {
         tenantPib: '',
         auditLogs: [],
 
+        // Form
+        showAddPrinter: false,
+        editingPrinterId: null,
+        form: { name: '', paperSize: '80', connection: 'USB', autoCut: true },
+
+        get defaultPrinter() {
+            return this.printers.find(p => p.isDefault) || this.printers[0] || null;
+        },
+
+        get currentPaperSize() {
+            return this.defaultPrinter?.paperSize || '80';
+        },
+
         async init() {
-            // Load settings from localStorage
-            this.paperSize = localStorage.getItem('pos-paper-size') || '80';
+            // Load printers
+            const stored = localStorage.getItem('pos-printers');
+            if (stored) {
+                try { this.printers = JSON.parse(stored); } catch (e) { this.printers = []; }
+            }
+
+            // Migrate from old single paper-size setting
+            if (this.printers.length === 0) {
+                const oldPaperSize = localStorage.getItem('pos-paper-size');
+                if (oldPaperSize) {
+                    this.printers = [{
+                        id: 'p_' + Date.now(),
+                        name: 'POS Stampac',
+                        paperSize: oldPaperSize,
+                        connection: 'USB',
+                        autoCut: true,
+                        isDefault: true,
+                    }];
+                    this.savePrinters();
+                }
+            }
+
             this.autoPrint = localStorage.getItem('pos-auto-print') === '1';
             this.companyName = localStorage.getItem('pos-company-name') || '';
             this.footerMessage = localStorage.getItem('pos-footer-message') || '';
@@ -191,12 +356,89 @@ function posSettings() {
                 }
             } catch (e) {}
 
-            // Load audit logs
             this.loadAudit();
         },
 
+        resetForm() {
+            this.form = { name: '', paperSize: '80', connection: 'USB', autoCut: true };
+            this.editingPrinterId = null;
+        },
+
+        savePrinter() {
+            if (!this.form.name.trim()) return;
+
+            if (this.editingPrinterId) {
+                // Update existing
+                const idx = this.printers.findIndex(p => p.id === this.editingPrinterId);
+                if (idx >= 0) {
+                    this.printers[idx].name = this.form.name.trim();
+                    this.printers[idx].paperSize = this.form.paperSize;
+                    this.printers[idx].connection = this.form.connection;
+                    this.printers[idx].autoCut = this.form.autoCut;
+                }
+            } else {
+                // Add new
+                const isFirst = this.printers.length === 0;
+                this.printers.push({
+                    id: 'p_' + Date.now(),
+                    name: this.form.name.trim(),
+                    paperSize: this.form.paperSize,
+                    connection: this.form.connection,
+                    autoCut: this.form.autoCut,
+                    isDefault: isFirst,
+                });
+            }
+
+            this.savePrinters();
+            this.showAddPrinter = false;
+            this.editingPrinterId = null;
+        },
+
+        editPrinter(printer) {
+            this.editingPrinterId = printer.id;
+            this.form = {
+                name: printer.name,
+                paperSize: printer.paperSize,
+                connection: printer.connection,
+                autoCut: printer.autoCut,
+            };
+            this.showAddPrinter = true;
+        },
+
+        deletePrinter(id) {
+            const printer = this.printers.find(p => p.id === id);
+            if (!confirm(`Obrisati stampac "${printer?.name}"?`)) return;
+
+            this.printers = this.printers.filter(p => p.id !== id);
+            // If deleted printer was default, set first remaining as default
+            if (printer?.isDefault && this.printers.length > 0) {
+                this.printers[0].isDefault = true;
+            }
+            this.savePrinters();
+        },
+
+        setDefaultPrinter(id) {
+            this.printers.forEach(p => p.isDefault = (p.id === id));
+            this.savePrinters();
+        },
+
+        testPrint(printer) {
+            const ps = printer?.paperSize || this.currentPaperSize || '80';
+            // Temporarily set paper size for the print page
+            localStorage.setItem('pos-paper-size', ps);
+            window.open('/pos/receipts/print?id=preview', '_blank', 'width=400,height=600');
+        },
+
+        savePrinters() {
+            localStorage.setItem('pos-printers', JSON.stringify(this.printers));
+            // Sync paper size for print page compatibility
+            const def = this.defaultPrinter;
+            if (def) {
+                localStorage.setItem('pos-paper-size', def.paperSize);
+            }
+        },
+
         saveSettings() {
-            localStorage.setItem('pos-paper-size', this.paperSize);
             localStorage.setItem('pos-auto-print', this.autoPrint ? '1' : '0');
             localStorage.setItem('pos-company-name', this.companyName);
             localStorage.setItem('pos-footer-message', this.footerMessage);
@@ -210,10 +452,6 @@ function posSettings() {
                     this.auditLogs = data.logs || [];
                 }
             } catch (e) {}
-        },
-
-        printPreview() {
-            window.open('/pos/receipts/print?id=preview', '_blank', 'width=400,height=600');
         },
 
         formatAction(log) {
