@@ -292,6 +292,8 @@ class PrintAgentHandler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        # Chrome Private Network Access (HTTPS → localhost)
+        self.send_header('Access-Control-Allow-Private-Network', 'true')
 
     def _json_response(self, status, data):
         self.send_response(status)
