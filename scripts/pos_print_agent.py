@@ -509,9 +509,9 @@ Examples:
     parser.add_argument('--printer-port', type=int, default=9100,
                         help='Network printer port (default: 9100)')
     parser.add_argument('--agent-port', type=int, default=9100,
-                        help='HTTPS agent port (default: 9100)')
-    parser.add_argument('--no-ssl', action='store_true',
-                        help='Run without SSL (HTTP only, for local testing)')
+                        help='Agent HTTP port (default: 9100)')
+    parser.add_argument('--ssl', action='store_true',
+                        help='Enable HTTPS (self-signed cert). Usually not needed - localhost is secure context.')
 
     args = parser.parse_args()
 
@@ -552,7 +552,7 @@ Examples:
     server = HTTPServer(('127.0.0.1', port), PrintAgentHandler)
 
     protocol = 'http'
-    if not args.no_ssl:
+    if args.ssl:
         cert_path, key_path = ensure_ssl_cert()
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ctx.load_cert_chain(cert_path, key_path)
