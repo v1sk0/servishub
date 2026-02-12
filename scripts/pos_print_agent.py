@@ -305,8 +305,14 @@ class PrintAgentHandler(BaseHTTPRequestHandler):
         self._cors_headers()
         self.end_headers()
 
+    def _clean_path(self):
+        """Strip query string and trailing slash for clean matching."""
+        path = self.path.split('?')[0].split('#')[0].rstrip('/')
+        return path or '/'
+
     def do_GET(self):
-        if self.path == '/status':
+        path = self._clean_path()
+        if path == '/status' or path == '':
             self._json_response(200, {
                 'status': 'ok',
                 'printer_type': printer_config.get('type', 'unknown'),
@@ -316,9 +322,10 @@ class PrintAgentHandler(BaseHTTPRequestHandler):
                 'agent_version': '1.0.0',
             })
         else:
-            self._json_response(404, {'error': 'Not found'})
+            self._json_response(404, {'error': 'Not found', 'path': path})
 
     def do_POST(self):
+        path = self._clean_path()
         content_length = int(self.headers.get('Content-Length', 0))
         body = self.rfile.read(content_length) if content_length > 0 else b'{}'
 
@@ -328,12 +335,12 @@ class PrintAgentHandler(BaseHTTPRequestHandler):
             self._json_response(400, {'error': 'Invalid JSON'})
             return
 
-        if self.path == '/print':
+        if path == '/print':
             self._handle_print(data)
-        elif self.path == '/test':
+        elif path == '/test':
             self._handle_test(data)
         else:
-            self._json_response(404, {'error': 'Not found'})
+            self._json_response(404, {'error': 'Not found', 'path': path})
 
     def _handle_print(self, data):
         global printer_instance
@@ -357,7 +364,7 @@ class PrintAgentHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
         """Custom log format."""
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] {args[0]}")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] {self.command} {self.path} → {args[0]}")
 
 
 def get_printer():
