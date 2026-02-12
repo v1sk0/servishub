@@ -163,7 +163,8 @@ function receiptsPage() {
         },
 
         printReceipt(id) {
-            window.open(`/pos/receipts/print?id=${id}`, '_blank', 'width=400,height=700');
+            const _t = sessionStorage.getItem('access_token') || '';
+            window.open(`/pos/receipts/print?id=${id}#t=${_t}`, '_blank', 'width=400,height=700');
         }
     };
 }

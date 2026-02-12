@@ -117,29 +117,51 @@
     }
 
     async function loadAndRender() {
-        if (!receiptId) {
-            document.getElementById('loading').textContent = 'Nema ID racuna';
+        if (!receiptId || receiptId === 'preview') {
+            document.getElementById('loading').textContent = receiptId === 'preview'
+                ? 'Preview — kucajte racun za pravu stampu'
+                : 'Nema ID racuna';
             return;
         }
 
-        const token = sessionStorage.getItem('access_token');
+        // Try multiple sources for auth token
+        let token = sessionStorage.getItem('access_token');
+        if (!token && window.opener) {
+            try { token = window.opener.sessionStorage.getItem('access_token'); } catch(e) {}
+        }
+        if (!token && window.location.hash) {
+            try {
+                const hp = new URLSearchParams(window.location.hash.substring(1));
+                token = hp.get('t');
+                if (token) sessionStorage.setItem('access_token', token);
+            } catch(e) {}
+        }
         if (!token) {
-            document.getElementById('loading').textContent = 'Niste prijavljeni';
+            document.getElementById('loading').textContent = 'Niste prijavljeni — otvorite kasu ponovo';
             return;
         }
+
+        const headers = { 'Authorization': 'Bearer ' + token };
 
         // Fetch receipt + tenant info in parallel
-        const [receiptRes, tenantRes] = await Promise.all([
-            fetch(`/api/v1/pos/receipts/${receiptId}`, {
-                headers: { 'Authorization': 'Bearer ' + token }
-            }),
-            fetch('/api/v1/tenant/', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            })
-        ]);
+        let receiptRes, tenantRes;
+        try {
+            [receiptRes, tenantRes] = await Promise.all([
+                fetch(`/api/v1/pos/receipts/${receiptId}`, { headers }),
+                fetch('/api/v1/tenant/', { headers })
+            ]);
+        } catch (e) {
+            document.getElementById('loading').textContent = 'Greska mreze: ' + e.message;
+            return;
+        }
 
         if (!receiptRes.ok) {
-            document.getElementById('loading').textContent = 'Racun nije pronadjen';
+            let errMsg = 'Racun nije pronadjen';
+            try {
+                const err = await receiptRes.json();
+                errMsg = err.error || errMsg;
+            } catch(e) {}
+            document.getElementById('loading').textContent = errMsg + ` (${receiptRes.status})`;
             return;
         }
 
