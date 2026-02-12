@@ -1499,6 +1499,36 @@
         font-size: 0.8rem; font-weight: 600; color: #1e293b;
     }
 
+    .ordered-part-delivery {
+        display: flex; align-items: center; gap: 6px;
+        margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed #e2e8f0;
+        font-size: 0.75rem; color: #6b7280;
+    }
+    .ordered-part-delivery svg { flex-shrink: 0; color: #9ca3af; }
+    .ordered-part-tracking {
+        font-family: monospace; font-size: 0.7rem;
+        background: #f1f5f9; padding: 1px 5px; border-radius: 3px; color: #475569;
+    }
+    .ordered-part-supplier {
+        margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed #e2e8f0;
+    }
+    .ordered-part-supplier-name {
+        display: flex; align-items: center; gap: 6px;
+        font-size: 0.8rem; font-weight: 600; color: #1e293b;
+    }
+    .ordered-part-supplier-name svg { flex-shrink: 0; color: #3b82f6; }
+    .ordered-part-supplier-city {
+        font-weight: 400; color: #6b7280; font-size: 0.75rem;
+    }
+    .ordered-part-supplier-city::before { content: '·'; margin: 0 2px; }
+    .ordered-part-supplier-contact {
+        display: flex; gap: 12px; margin-top: 4px; padding-left: 22px;
+    }
+    .ordered-part-supplier-link {
+        font-size: 0.75rem; color: #3b82f6; text-decoration: none;
+    }
+    .ordered-part-supplier-link:hover { text-decoration: underline; }
+
     /* Glass theme ordered parts */
     .glass-theme .ordered-part-card {
         background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08);
@@ -1508,6 +1538,14 @@
     .glass-theme .ordered-part-name { color: #e2e8f0; }
     .glass-theme .ordered-part-price { color: #94a3b8; }
     .glass-theme .ordered-part-total { border-top-color: rgba(255,255,255,0.06); color: #f1f5f9; }
+    .glass-theme .ordered-part-delivery { border-top-color: rgba(255,255,255,0.06); color: #94a3b8; }
+    .glass-theme .ordered-part-delivery svg { color: #64748b; }
+    .glass-theme .ordered-part-tracking { background: rgba(255,255,255,0.08); color: #cbd5e1; }
+    .glass-theme .ordered-part-supplier { border-top-color: rgba(255,255,255,0.06); }
+    .glass-theme .ordered-part-supplier-name { color: #f1f5f9; }
+    .glass-theme .ordered-part-supplier-name svg { color: #60a5fa; }
+    .glass-theme .ordered-part-supplier-city { color: #94a3b8; }
+    .glass-theme .ordered-part-supplier-link { color: #60a5fa; }
 
     /* Glass theme detail modal */
     .glass-theme .detail-modal-overlay { background: rgba(0, 0, 0, 0.7); }
@@ -3943,6 +3981,36 @@
                                 <span>Ukupno:</span>
                                 <span x-text="(po.total_amount ? po.total_amount.toLocaleString('sr-RS') : '0') + ' ' + (po.currency || 'RSD')"></span>
                             </div>
+                            <!-- Delivery info -->
+                            <template x-if="po.delivery_method">
+                                <div class="ordered-part-delivery">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+                                    <span x-text="po.delivery_method === 'courier' ? (po.courier_service || 'Kurirska sluzba') : po.delivery_method === 'own_delivery' ? 'Licna dostava' : 'Licno preuzimanje'"></span>
+                                    <template x-if="po.tracking_number">
+                                        <span class="ordered-part-tracking" x-text="'#' + po.tracking_number"></span>
+                                    </template>
+                                </div>
+                            </template>
+                            <!-- Supplier info (only after reveal/CONFIRMED+) -->
+                            <template x-if="po.supplier">
+                                <div class="ordered-part-supplier">
+                                    <div class="ordered-part-supplier-name">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                        <span x-text="po.supplier.name"></span>
+                                        <template x-if="po.supplier.city">
+                                            <span class="ordered-part-supplier-city" x-text="po.supplier.city"></span>
+                                        </template>
+                                    </div>
+                                    <div class="ordered-part-supplier-contact">
+                                        <template x-if="po.supplier.phone">
+                                            <a :href="'tel:' + po.supplier.phone" class="ordered-part-supplier-link" x-text="po.supplier.phone"></a>
+                                        </template>
+                                        <template x-if="po.supplier.email">
+                                            <a :href="'mailto:' + po.supplier.email" class="ordered-part-supplier-link" x-text="po.supplier.email"></a>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
                     </template>
                 </div>

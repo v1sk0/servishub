@@ -17,7 +17,7 @@ from ...models import (
     ServiceTicket, TicketStatus, TicketPriority, TicketNotificationLog,
     get_next_ticket_number, AuditLog, AuditAction, TenantUser,
     SparePart, SparePartUsage, SparePartLog, StockActionType,
-    PartOrder, PartOrderItem, OrderStatus, SellerType,
+    PartOrder, PartOrderItem, OrderStatus, SellerType, Supplier,
 )
 from ...services.pos_service import POSService
 from ...services.sms_service import sms_service
@@ -133,22 +133,38 @@ def get_ticket(ticket_id):
     ).order_by(PartOrder.created_at.desc()).all()
 
     if orders:
+        REVEALED = {OrderStatus.CONFIRMED, OrderStatus.SHIPPED,
+                     OrderStatus.DELIVERED, OrderStatus.COMPLETED}
         orders_data = []
         for order in orders:
             items = PartOrderItem.query.filter_by(order_id=order.id).all()
-            orders_data.append({
+            od = {
                 'id': order.id,
                 'order_number': order.order_number,
                 'status': order.status.value,
                 'total_amount': float(order.total_amount) if order.total_amount else None,
                 'currency': order.currency or 'RSD',
                 'created_at': order.created_at.isoformat(),
+                'delivery_method': order.delivery_method,
+                'courier_service': order.courier_service,
+                'tracking_number': order.tracking_number,
                 'items': [{
                     'part_name': item.part_name,
                     'quantity': item.quantity,
                     'unit_price': float(item.unit_price) if item.unit_price else None,
                 } for item in items],
-            })
+            }
+            # Supplier info visible only after mutual reveal
+            if order.status in REVEALED and order.seller_type == SellerType.SUPPLIER:
+                supplier = Supplier.query.get(order.seller_supplier_id)
+                if supplier:
+                    od['supplier'] = {
+                        'name': supplier.name,
+                        'city': supplier.city,
+                        'phone': supplier.phone,
+                        'email': supplier.email,
+                    }
+            orders_data.append(od)
         result['part_orders'] = orders_data
 
     return jsonify(result), 200
