@@ -2,239 +2,223 @@
 <html lang="sr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Servisni nalog</title>
   <style>
-    /* Reset */
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      font-size: 10.5pt;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      font-size: 9.5pt;
       line-height: 1.3;
       color: #1a1a1a;
     }
 
-    /* Page wrapper - A4 */
     .page-wrapper {
       width: 210mm;
-      height: 297mm;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
     }
 
-    /* Ticket container - polovina A4 */
+    /* --- Ticket half --- */
     .ticket-container {
       width: 100%;
-      height: 140mm;
-      padding: 5mm 10mm;
-      box-sizing: border-box;
+      padding: 4mm 8mm 3mm;
       overflow: hidden;
-      position: relative;
     }
 
     /* Company header */
     .company-header {
       text-align: center;
-      margin-bottom: 3mm;
-      padding-bottom: 2mm;
-      border-bottom: 1.5pt solid #333;
+      padding-bottom: 1.5mm;
+      margin-bottom: 2mm;
+      border-bottom: 1pt solid #444;
     }
 
-    .company-logo {
-      margin-bottom: 1mm;
-    }
-
-    .company-logo img {
+    .company-header img {
       display: block;
-      margin: 0 auto;
-      width: 70px;
-      height: auto;
+      margin: 0 auto 1mm;
+      height: 32px;
       filter: grayscale(100%);
     }
 
-    .company-logo .logo-text {
-      font-size: 16pt;
+    .company-header .name {
+      font-size: 13pt;
       font-weight: 700;
       color: #111;
-      letter-spacing: 0.5px;
-    }
-
-    .company-info p {
-      font-size: 8.5pt;
-      color: #444;
-      margin: 0;
-      letter-spacing: 0.2px;
-    }
-
-    /* Ticket header */
-    .ticket-header {
-      text-align: center;
-      margin-bottom: 2.5mm;
-      padding: 2mm 3mm;
-      background: #f0f0f0;
-      border: 1pt solid #555;
-      border-radius: 1mm;
-    }
-
-    .ticket-header p {
-      font-weight: 700;
-      font-size: 10.5pt;
-      margin: 0;
       letter-spacing: 0.3px;
     }
 
-    /* Main data table */
+    .company-header .info {
+      font-size: 7.5pt;
+      color: #555;
+      margin-top: 0.5mm;
+    }
+
+    /* Ticket number bar */
+    .ticket-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f0f0f0;
+      border: 0.5pt solid #666;
+      border-radius: 1mm;
+      padding: 1.5mm 3mm;
+      margin-bottom: 2mm;
+    }
+
+    .ticket-bar .num {
+      font-weight: 700;
+      font-size: 10pt;
+      color: #111;
+    }
+
+    .ticket-bar .date {
+      font-size: 9pt;
+      color: #444;
+    }
+
+    /* --- 4-column data table --- */
     .data-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 2mm;
+      table-layout: fixed;
+      margin-bottom: 1.5mm;
     }
 
     .data-table th,
     .data-table td {
-      border: 0.5pt solid #999;
-      padding: 1.5mm 2.5mm;
-      font-size: 9.5pt;
+      border: 0.5pt solid #aaa;
+      padding: 1.2mm 2mm;
+      font-size: 9pt;
       vertical-align: middle;
     }
 
     .data-table th {
-      background: #f7f7f7;
-      text-align: left;
+      background: #f5f5f5;
       font-weight: 600;
       color: #333;
       white-space: nowrap;
-      width: 16%;
+      text-align: left;
     }
 
     .data-table td {
       color: #111;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    /* Priority badge */
-    .priority-badge {
+    .data-table td.wrap {
+      white-space: normal;
+      word-wrap: break-word;
+      line-height: 1.35;
+    }
+
+    /* Priority badges */
+    .badge {
       display: inline-block;
-      padding: 0.5mm 2.5mm;
+      padding: 0.3mm 2mm;
       border-radius: 2px;
-      font-size: 8.5pt;
+      font-size: 8pt;
       font-weight: 600;
     }
-    .priority-normal { background: #e8e8e8; color: #444; }
-    .priority-urgent { background: #fee2e2; color: #b91c1c; border: 0.5pt solid #fca5a5; }
-    .priority-high { background: #fef3c7; color: #92400e; border: 0.5pt solid #fcd34d; }
-    .priority-low { background: #e8e8e8; color: #666; }
+    .badge-normal { background: #e8e8e8; color: #444; }
+    .badge-urgent { background: #fee2e2; color: #b91c1c; border: 0.5pt solid #fca5a5; }
+    .badge-high   { background: #fef3c7; color: #92400e; border: 0.5pt solid #fcd34d; }
+    .badge-low    { background: #e8e8e8; color: #666; }
 
-    /* Clause text */
-    .clause-text {
-      font-size: 7pt;
-      color: #333;
-      margin: 2mm 0 1mm;
-      padding: 1.5mm 3mm;
-      border: 0.5pt solid #bbb;
+    /* Clause */
+    .clause {
+      font-size: 6.5pt;
+      color: #444;
+      padding: 1.2mm 2.5mm;
+      border: 0.5pt solid #ccc;
       background: #fafafa;
+      border-radius: 0.5mm;
       line-height: 1.4;
-      border-radius: 1mm;
+      margin-bottom: 1mm;
     }
 
-    /* SMS clause */
-    .sms-clause {
+    .sms-line {
       font-size: 7.5pt;
       color: #555;
-      padding: 1mm 3mm;
-      display: flex;
-      align-items: center;
-      gap: 1mm;
+      padding-left: 2.5mm;
+      margin-bottom: 1.5mm;
     }
 
-    .sms-clause strong {
-      font-weight: 700;
-    }
-
-    /* Signatures + QR wrapper */
-    .bottom-section {
+    /* Signatures + QR row */
+    .bottom-row {
       display: flex;
       align-items: flex-start;
-      gap: 4mm;
-      margin-top: 1.5mm;
+      gap: 3mm;
     }
 
-    /* Signatures */
-    .signatures-table {
+    .sigs {
       flex: 1;
-      border-collapse: collapse;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1mm 5mm;
     }
 
-    .signatures-table td {
-      border: none;
-      width: 50%;
-      padding: 0.5mm 1.5mm;
-      vertical-align: top;
-    }
-
-    .signatures-table small {
-      font-size: 8pt;
+    .sig-block small {
+      font-size: 7.5pt;
       color: #555;
     }
 
-    .signature-line {
-      border-bottom: 0.5pt solid #333;
-      height: 7mm;
-      margin-top: 1mm;
-      width: 90%;
+    .sig-line {
+      border-bottom: 0.5pt solid #444;
+      height: 6mm;
+      margin-top: 0.5mm;
+      width: 92%;
     }
 
-    /* QR section */
-    .qr-section {
+    .qr-box {
       text-align: center;
       flex-shrink: 0;
-      padding-top: 1mm;
     }
 
-    .qr-section img,
-    .qr-section canvas {
-      width: 20mm;
-      height: 20mm;
+    .qr-box img {
+      width: 18mm;
+      height: 18mm;
     }
 
-    .qr-section p {
-      font-size: 6.5pt;
-      color: #888;
-      margin-top: 0.5mm;
+    .qr-box p {
+      font-size: 6pt;
+      color: #999;
+      margin-top: 0.3mm;
     }
 
-    /* Footer row: copy label + powered by */
+    /* Footer */
     .ticket-footer {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
       margin-top: 1mm;
-      padding-top: 1mm;
+      padding-top: 0.5mm;
       border-top: 0.25pt solid #ddd;
     }
 
     .copy-label {
-      font-size: 8pt;
-      color: #999;
+      font-size: 7.5pt;
+      color: #aaa;
       font-style: italic;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.4px;
       text-transform: uppercase;
     }
 
-    .powered-by {
-      font-size: 6pt;
-      color: #bbb;
+    .powered {
+      font-size: 5.5pt;
+      color: #ccc;
     }
-    .powered-by span {
-      font-size: 6.5pt;
-      font-weight: 700;
-      color: #888;
+    .powered b {
+      font-size: 6pt;
+      color: #999;
     }
 
     /* Cut line */
     .cut-line {
-      height: 12mm;
+      height: 10mm;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -244,49 +228,46 @@
     .cut-line::before {
       content: '';
       position: absolute;
-      left: 8mm;
-      right: 8mm;
+      left: 6mm;
+      right: 6mm;
       top: 50%;
       border-top: 1pt dashed #ccc;
     }
 
     .cut-line span {
       background: #fff;
-      padding: 0 4mm;
+      padding: 0 3mm;
       position: relative;
       z-index: 1;
       color: #bbb;
-      font-size: 7pt;
-      letter-spacing: 3px;
+      font-size: 6.5pt;
+      letter-spacing: 2px;
       text-transform: uppercase;
     }
 
-    /* Loading state */
+    /* Loading & Error */
     .loading {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
-      font-size: 14pt;
       color: #666;
+      font-size: 12pt;
     }
 
-    .loading .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #e5e7eb;
+    .spinner {
+      width: 34px;
+      height: 34px;
+      border: 3px solid #e5e7eb;
       border-top-color: #7c3aed;
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin-bottom: 10mm;
+      margin-bottom: 8mm;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Error state */
     .error {
       display: flex;
       flex-direction: column;
@@ -298,146 +279,122 @@
       padding: 20mm;
     }
 
-    .error h2 {
-      margin-bottom: 5mm;
-    }
+    .error h2 { margin-bottom: 4mm; }
 
-    /* Print styles */
+    /* Print */
     @media print {
-      @page {
-        size: A4;
-        margin: 5mm;
-      }
-
-      html, body {
-        width: 210mm;
-        height: 297mm;
-      }
-
-      body {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-
-      .page-wrapper {
-        page-break-after: avoid;
-        page-break-inside: avoid;
-      }
-
-      .no-print {
-        display: none !important;
-      }
-
-      .cut-line span {
-        background: #fff;
-      }
+      @page { size: A4; margin: 4mm; }
+      html, body { width: 210mm; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-print { display: none !important; }
+      .cut-line span { background: #fff; }
     }
 
     /* Screen preview */
     @media screen {
-      body {
-        background: #e2e2e2;
-        padding: 10mm;
-      }
-      .page-wrapper {
-        background: #fff;
-        box-shadow: 0 2px 20px rgba(0,0,0,0.15);
-      }
+      body { background: #e2e2e2; padding: 8mm; }
+      .page-wrapper { background: #fff; box-shadow: 0 2px 16px rgba(0,0,0,0.12); }
     }
 
     /* Print button */
-    .print-button {
+    .print-btn {
       position: fixed;
-      top: 10mm;
-      right: 10mm;
-      padding: 10px 20px;
+      top: 8mm;
+      right: 8mm;
+      padding: 8px 18px;
       background: #7c3aed;
-      color: white;
+      color: #fff;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 11pt;
+      font-size: 10pt;
       font-weight: 600;
       z-index: 1000;
-      box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+      box-shadow: 0 2px 8px rgba(124,58,237,0.3);
       transition: all 0.15s;
     }
 
-    .print-button:hover {
+    .print-btn:hover {
       background: #6d28d9;
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+      box-shadow: 0 4px 12px rgba(124,58,237,0.4);
     }
   </style>
 </head>
 <body>
-  <!-- Print button (hidden on print) -->
-  <button class="print-button no-print" onclick="window.print()">Stampaj</button>
 
-  <!-- Loading state -->
+  <button class="print-btn no-print" onclick="window.print()">Stampaj</button>
+
+  <!-- Loading -->
   <div id="loading" class="loading">
     <div class="spinner"></div>
     <p>Ucitavam nalog...</p>
   </div>
 
-  <!-- Error state -->
-  <div id="error" class="error" style="display: none;">
+  <!-- Error -->
+  <div id="error" class="error" style="display:none;">
     <h2>Greska</h2>
     <p id="error-message">Nalog nije pronadjen.</p>
-    <button onclick="window.close()" style="margin-top: 10mm; padding: 8px 16px; cursor: pointer;">Zatvori</button>
+    <button onclick="window.close()" style="margin-top:8mm;padding:6px 14px;cursor:pointer;">Zatvori</button>
   </div>
 
-  <!-- Content (hidden until loaded) -->
-  <div id="content" class="page-wrapper" style="display: none;">
-    <!-- First copy - for service -->
+  <!-- Content -->
+  <div id="content" class="page-wrapper" style="display:none;">
+
+    <!-- ====== COPY 1 - SERVIS ====== -->
     <div class="ticket-container">
       <header class="company-header">
-        <div class="company-logo">
-          <img id="logo-img-1" style="display: none;" alt="Logo">
-          <span class="logo-text" id="logo-text-1"></span>
-        </div>
-        <div class="company-info">
-          <p id="tenant-info-1"></p>
-        </div>
+        <img id="logo-img-1" style="display:none;" alt="">
+        <div class="name" id="logo-text-1"></div>
+        <div class="info" id="tenant-info-1"></div>
       </header>
 
-      <div class="ticket-header">
-        <p>SERVISNI NALOG br: <span id="ticket-number-1"></span> &nbsp;&middot;&nbsp; <span id="ticket-date-1"></span> &nbsp;&middot;&nbsp; <span id="customer-name-1"></span></p>
+      <div class="ticket-bar">
+        <span class="num">SERVISNI NALOG br: <span id="ticket-number-1"></span></span>
+        <span class="date" id="ticket-date-1"></span>
       </div>
 
       <table class="data-table">
+        <colgroup>
+          <col style="width:13%">
+          <col style="width:37%">
+          <col style="width:13%">
+          <col style="width:37%">
+        </colgroup>
         <tbody>
+          <tr>
+            <th>Korisnik</th>
+            <td id="customer-name-1"></td>
+            <th>Telefon</th>
+            <td id="customer-phone-1"></td>
+          </tr>
+          <tr id="company-row-1" style="display:none;">
+            <th>Firma</th>
+            <td id="company-name-1"></td>
+            <th>PIB</th>
+            <td id="company-pib-1"></td>
+          </tr>
           <tr>
             <th>Uredjaj</th>
             <td id="service-section-1"></td>
             <th>Marka / Model</th>
-            <td colspan="3" id="brand-model-1"></td>
+            <td id="brand-model-1"></td>
           </tr>
-          <tr>
-            <th>Korisnik</th>
-            <td id="customer-full-1"></td>
-            <th>Telefon</th>
-            <td id="customer-phone-1"></td>
-            <th>Prioritet</th>
-            <td id="priority-1"></td>
-          </tr>
-          <tr id="company-row-1" style="display: none;">
-            <th>Firma</th>
-            <td colspan="3" id="company-name-1"></td>
-            <th>PIB</th>
-            <td id="company-pib-1"></td>
-          </tr>
-          <tr id="imei-row-1" style="display: none;">
+          <tr id="imei-row-1" style="display:none;">
             <th id="imei-label-1">IMEI</th>
-            <td colspan="5" id="imei-1"></td>
+            <td colspan="3" id="imei-1"></td>
           </tr>
           <tr>
             <th>Opis kvara</th>
-            <td colspan="5" id="problem-1"></td>
+            <td colspan="3" class="wrap" id="problem-1"></td>
           </tr>
           <tr>
             <th>Cena</th>
             <td id="price-1"></td>
+            <th>Prioritet</th>
+            <td id="priority-1"></td>
+          </tr>
+          <tr>
             <th>Serviser</th>
             <td id="technician-1"></td>
             <th>Lokacija</th>
@@ -446,103 +403,88 @@
         </tbody>
       </table>
 
-      <div class="clause-text" id="clause-1">
+      <div class="clause" id="clause-1">
         Opremu ostavljate na servis na sopstvenu odgovornost. Servis ne snosi odgovornost za gubitak podataka.
         Garancija vazi samo uz ovaj nalog. Maksimalno vreme cuvanja opreme je 30 dana od obavestenja o zavrsetku servisa.
       </div>
-      <div class="sms-clause" id="sms-clause-1">
-        SMS obavestenja: <strong id="sms-status-1">DA</strong>
-      </div>
+      <div class="sms-line" id="sms-clause-1">SMS obavestenja: <strong id="sms-status-1">DA</strong></div>
 
-      <div class="bottom-section">
-        <table class="signatures-table">
-          <tr>
-            <td>
-              <small>Primio na servis:</small>
-              <div class="signature-line"></div>
-            </td>
-            <td>
-              <small>Saglasan sa stanjem:</small>
-              <div class="signature-line"></div>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <small>Predao uredjaj:</small>
-              <div class="signature-line"></div>
-            </td>
-            <td>
-              <small>Preuzeo sa servisa:</small>
-              <div class="signature-line"></div>
-            </td>
-          </tr>
-        </table>
-        <div class="qr-section">
-          <img id="qr-code-1" src="" alt="QR" style="width: 75px; height: 75px;">
+      <div class="bottom-row">
+        <div class="sigs">
+          <div class="sig-block"><small>Primio na servis:</small><div class="sig-line"></div></div>
+          <div class="sig-block"><small>Saglasan sa stanjem:</small><div class="sig-line"></div></div>
+          <div class="sig-block"><small>Predao uredjaj:</small><div class="sig-line"></div></div>
+          <div class="sig-block"><small>Preuzeo sa servisa:</small><div class="sig-line"></div></div>
+        </div>
+        <div class="qr-box">
+          <img id="qr-code-1" src="" alt="QR">
           <p>Pracenje naloga</p>
         </div>
       </div>
 
       <div class="ticket-footer">
         <span class="copy-label">Primerak za servis</span>
-        <span class="powered-by">powered by <span>ServisHub</span></span>
+        <span class="powered">powered by <b>ServisHub</b></span>
       </div>
     </div>
 
-    <!-- Cut line -->
-    <div class="cut-line">
-      <span>isecite ovde</span>
-    </div>
+    <!-- CUT LINE -->
+    <div class="cut-line"><span>&#9986; isecite ovde</span></div>
 
-    <!-- Second copy - for customer -->
+    <!-- ====== COPY 2 - KORISNIK ====== -->
     <div class="ticket-container">
       <header class="company-header">
-        <div class="company-logo">
-          <img id="logo-img-2" style="display: none;" alt="Logo">
-          <span class="logo-text" id="logo-text-2"></span>
-        </div>
-        <div class="company-info">
-          <p id="tenant-info-2"></p>
-        </div>
+        <img id="logo-img-2" style="display:none;" alt="">
+        <div class="name" id="logo-text-2"></div>
+        <div class="info" id="tenant-info-2"></div>
       </header>
 
-      <div class="ticket-header">
-        <p>SERVISNI NALOG br: <span id="ticket-number-2"></span> &nbsp;&middot;&nbsp; <span id="ticket-date-2"></span> &nbsp;&middot;&nbsp; <span id="customer-name-2"></span></p>
+      <div class="ticket-bar">
+        <span class="num">SERVISNI NALOG br: <span id="ticket-number-2"></span></span>
+        <span class="date" id="ticket-date-2"></span>
       </div>
 
       <table class="data-table">
+        <colgroup>
+          <col style="width:13%">
+          <col style="width:37%">
+          <col style="width:13%">
+          <col style="width:37%">
+        </colgroup>
         <tbody>
+          <tr>
+            <th>Korisnik</th>
+            <td id="customer-name-2"></td>
+            <th>Telefon</th>
+            <td id="customer-phone-2"></td>
+          </tr>
+          <tr id="company-row-2" style="display:none;">
+            <th>Firma</th>
+            <td id="company-name-2"></td>
+            <th>PIB</th>
+            <td id="company-pib-2"></td>
+          </tr>
           <tr>
             <th>Uredjaj</th>
             <td id="service-section-2"></td>
             <th>Marka / Model</th>
-            <td colspan="3" id="brand-model-2"></td>
+            <td id="brand-model-2"></td>
           </tr>
-          <tr>
-            <th>Korisnik</th>
-            <td id="customer-full-2"></td>
-            <th>Telefon</th>
-            <td id="customer-phone-2"></td>
-            <th>Prioritet</th>
-            <td id="priority-2"></td>
-          </tr>
-          <tr id="company-row-2" style="display: none;">
-            <th>Firma</th>
-            <td colspan="3" id="company-name-2"></td>
-            <th>PIB</th>
-            <td id="company-pib-2"></td>
-          </tr>
-          <tr id="imei-row-2" style="display: none;">
+          <tr id="imei-row-2" style="display:none;">
             <th id="imei-label-2">IMEI</th>
-            <td colspan="5" id="imei-2"></td>
+            <td colspan="3" id="imei-2"></td>
           </tr>
           <tr>
             <th>Opis kvara</th>
-            <td colspan="5" id="problem-2"></td>
+            <td colspan="3" class="wrap" id="problem-2"></td>
           </tr>
           <tr>
             <th>Cena</th>
             <td id="price-2"></td>
+            <th>Prioritet</th>
+            <td id="priority-2"></td>
+          </tr>
+          <tr>
             <th>Serviser</th>
             <td id="technician-2"></td>
             <th>Lokacija</th>
@@ -551,101 +493,64 @@
         </tbody>
       </table>
 
-      <div class="clause-text" id="clause-2">
+      <div class="clause" id="clause-2">
         Opremu ostavljate na servis na sopstvenu odgovornost. Servis ne snosi odgovornost za gubitak podataka.
         Garancija vazi samo uz ovaj nalog. Maksimalno vreme cuvanja opreme je 30 dana od obavestenja o zavrsetku servisa.
       </div>
-      <div class="sms-clause" id="sms-clause-2">
-        SMS obavestenja: <strong id="sms-status-2">DA</strong>
-      </div>
+      <div class="sms-line" id="sms-clause-2">SMS obavestenja: <strong id="sms-status-2">DA</strong></div>
 
-      <div class="bottom-section">
-        <table class="signatures-table">
-          <tr>
-            <td>
-              <small>Primio na servis:</small>
-              <div class="signature-line"></div>
-            </td>
-            <td>
-              <small>Saglasan sa stanjem:</small>
-              <div class="signature-line"></div>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <small>Predao uredjaj:</small>
-              <div class="signature-line"></div>
-            </td>
-            <td>
-              <small>Preuzeo sa servisa:</small>
-              <div class="signature-line"></div>
-            </td>
-          </tr>
-        </table>
-        <div class="qr-section">
-          <img id="qr-code-2" src="" alt="QR" style="width: 75px; height: 75px;">
+      <div class="bottom-row">
+        <div class="sigs">
+          <div class="sig-block"><small>Primio na servis:</small><div class="sig-line"></div></div>
+          <div class="sig-block"><small>Saglasan sa stanjem:</small><div class="sig-line"></div></div>
+          <div class="sig-block"><small>Predao uredjaj:</small><div class="sig-line"></div></div>
+          <div class="sig-block"><small>Preuzeo sa servisa:</small><div class="sig-line"></div></div>
+        </div>
+        <div class="qr-box">
+          <img id="qr-code-2" src="" alt="QR">
           <p>Pracenje naloga</p>
         </div>
       </div>
 
       <div class="ticket-footer">
         <span class="copy-label">Primerak za korisnika</span>
-        <span class="powered-by">powered by <span>ServisHub</span></span>
+        <span class="powered">powered by <b>ServisHub</b></span>
       </div>
     </div>
   </div>
 
   <script>
-    // Ticket ID from URL
     const ticketId = {{ ticket_id }};
 
-    // Get tokens from localStorage
     function getAccessToken() {
-      const directToken = sessionStorage.getItem('access_token');
-      if (directToken) return directToken;
-
-      const tokenData = localStorage.getItem('servishub_token');
-      if (tokenData) {
-        try {
-          const parsed = JSON.parse(tokenData);
-          return parsed.access_token;
-        } catch (e) {
-          return tokenData;
-        }
-      }
+      const t = sessionStorage.getItem('access_token');
+      if (t) return t;
+      const d = localStorage.getItem('servishub_token');
+      if (d) { try { return JSON.parse(d).access_token; } catch(e) { return d; } }
       return null;
     }
 
-    // Format date
-    function formatDate(dateString) {
-      if (!dateString) return '-';
-      const date = new Date(dateString);
-      return date.toLocaleDateString('sr-RS', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
+    function formatDate(s) {
+      if (!s) return '-';
+      return new Date(s).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' });
     }
 
-    // Format priority badge
-    function formatPriority(priority) {
-      const map = {
-        'LOW': '<span class="priority-badge priority-low">Nizak</span>',
-        'NORMAL': '<span class="priority-badge priority-normal">Normalan</span>',
-        'HIGH': '<span class="priority-badge priority-high">Visok</span>',
-        'URGENT': '<span class="priority-badge priority-urgent">Hitan</span>'
+    function formatPriority(p) {
+      const m = {
+        'LOW':    '<span class="badge badge-low">Nizak</span>',
+        'NORMAL': '<span class="badge badge-normal">Normalan</span>',
+        'HIGH':   '<span class="badge badge-high">Visok</span>',
+        'URGENT': '<span class="badge badge-urgent">Hitan</span>'
       };
-      return map[priority] || priority || '-';
+      return m[p] || p || '-';
     }
 
-    // Show error
-    function showError(message) {
+    function showError(msg) {
       document.getElementById('loading').style.display = 'none';
       document.getElementById('error').style.display = 'flex';
-      document.getElementById('error-message').textContent = message;
+      document.getElementById('error-message').textContent = msg;
     }
 
-    // Device type label mapping
     const DEVICE_TYPE_LABELS = {
       'phone': 'Telefon', 'tablet': 'Tablet', 'laptop': 'Laptop',
       'console': 'Konzola', 'scooter': 'Trotinet', 'other': 'Ostalo',
@@ -653,7 +558,6 @@
       'COMPUTER': 'Desktop', 'SCOOTER': 'Trotinet', 'OTHER': 'Ostalo'
     };
 
-    // Identifier label per device type
     const IDENTIFIER_LABELS = {
       'phone': 'IMEI', 'tablet': 'IMEI / S/N', 'laptop': 'Serijski broj',
       'console': 'Serijski broj', 'scooter': 'Serijski broj', 'other': 'Serijski broj',
@@ -661,13 +565,11 @@
       'COMPUTER': 'Serijski broj', 'SCOOTER': 'Serijski broj', 'OTHER': 'Serijski broj'
     };
 
-    // Fill both copies with data
     function fillTicketData(ticket, tenant, location, qr_code_base64) {
       for (let i = 1; i <= 2; i++) {
-        // Tenant logo
+        // Logo
         const logoImg = document.getElementById(`logo-img-${i}`);
         const logoText = document.getElementById(`logo-text-${i}`);
-
         if (tenant?.logo_url) {
           logoImg.src = tenant.logo_url;
           logoImg.style.display = 'block';
@@ -678,109 +580,98 @@
           logoText.textContent = tenant?.name || 'Servis';
         }
 
-        // Tenant info line
+        // Tenant info
         document.getElementById(`tenant-info-${i}`).textContent =
           [tenant?.address, tenant?.phone ? `Tel: ${tenant.phone}` : ''].filter(Boolean).join('  |  ') || '';
 
-        // Ticket header
+        // Ticket bar
         document.getElementById(`ticket-number-${i}`).textContent = ticket.ticket_number || ticket.id;
         document.getElementById(`ticket-date-${i}`).textContent = formatDate(ticket.created_at);
-        document.getElementById(`customer-name-${i}`).textContent = ticket.customer_name || '-';
-
-        // Device type
-        const deviceLabel = DEVICE_TYPE_LABELS[ticket.device_type] || ticket.service_section || 'Telefon';
-        document.getElementById(`service-section-${i}`).textContent = deviceLabel;
-
-        // Brand / Model
-        document.getElementById(`brand-model-${i}`).textContent =
-          [ticket.brand, ticket.model].filter(Boolean).join(' ') || '-';
 
         // Customer
-        document.getElementById(`customer-full-${i}`).textContent = ticket.customer_name || '-';
+        document.getElementById(`customer-name-${i}`).textContent = ticket.customer_name || '-';
         document.getElementById(`customer-phone-${i}`).textContent = ticket.customer_phone || '-';
-        document.getElementById(`priority-${i}`).innerHTML = formatPriority(ticket.priority);
 
-        // Company info (B2B)
+        // Company (B2B)
         if (ticket.customer_company_name) {
           document.getElementById(`company-row-${i}`).style.display = '';
           document.getElementById(`company-name-${i}`).textContent = ticket.customer_company_name;
           document.getElementById(`company-pib-${i}`).textContent = ticket.customer_pib || '-';
         }
 
+        // Device type
+        document.getElementById(`service-section-${i}`).textContent =
+          DEVICE_TYPE_LABELS[ticket.device_type] || ticket.service_section || 'Telefon';
+
+        // Brand / Model
+        document.getElementById(`brand-model-${i}`).textContent =
+          [ticket.brand, ticket.model].filter(Boolean).join(' ') || '-';
+
         // IMEI / Serial
         if (ticket.imei) {
           document.getElementById(`imei-row-${i}`).style.display = '';
-          document.getElementById(`imei-label-${i}`).textContent = IDENTIFIER_LABELS[ticket.device_type] || 'IMEI';
+          document.getElementById(`imei-label-${i}`).textContent =
+            IDENTIFIER_LABELS[ticket.device_type] || 'IMEI';
           document.getElementById(`imei-${i}`).textContent = ticket.imei;
         }
 
-        // Problem and price
+        // Problem
         document.getElementById(`problem-${i}`).textContent = ticket.problem_description || '-';
+
+        // Price
         document.getElementById(`price-${i}`).textContent =
           ticket.estimated_price ? `${ticket.estimated_price} ${ticket.currency || 'RSD'}` : '-';
 
-        // Technician and location
+        // Priority
+        document.getElementById(`priority-${i}`).innerHTML = formatPriority(ticket.priority);
+
+        // Technician & Location
         document.getElementById(`technician-${i}`).textContent = ticket.created_by_name || '-';
         document.getElementById(`location-${i}`).textContent = location?.name || '-';
 
-        // QR code
+        // QR
         if (qr_code_base64) {
           document.getElementById(`qr-code-${i}`).src = `data:image/png;base64,${qr_code_base64}`;
         }
 
-        // Print clause
+        // Clause
         if (tenant?.print_clause) {
           document.getElementById(`clause-${i}`).textContent = tenant.print_clause;
         }
 
-        // SMS status
-        const smsStatus = ticket.sms_opt_out ? 'NE' : 'DA';
-        document.getElementById(`sms-status-${i}`).textContent = smsStatus;
-        document.getElementById(`sms-status-${i}`).style.color = ticket.sms_opt_out ? '#dc2626' : '#16a34a';
+        // SMS
+        const smsOn = !ticket.sms_opt_out;
+        document.getElementById(`sms-status-${i}`).textContent = smsOn ? 'DA' : 'NE';
+        document.getElementById(`sms-status-${i}`).style.color = smsOn ? '#16a34a' : '#dc2626';
       }
     }
 
-    // Fetch ticket data
     async function loadTicket() {
-      const accessToken = getAccessToken();
-      if (!accessToken) {
-        showError('Niste prijavljeni. Molimo prijavite se ponovo.');
-        return;
-      }
+      const token = getAccessToken();
+      if (!token) { showError('Niste prijavljeni. Molimo prijavite se ponovo.'); return; }
 
       try {
-        const response = await fetch(`/api/v1/tickets/${ticketId}/print`, {
-          headers: { 'Authorization': `Bearer ${accessToken}` }
+        const res = await fetch(`/api/v1/tickets/${ticketId}/print`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            showError('Sesija je istekla. Molimo prijavite se ponovo.');
-            return;
-          }
-          if (response.status === 404) {
-            showError('Nalog nije pronadjen.');
-            return;
-          }
+        if (!res.ok) {
+          if (res.status === 401) { showError('Sesija je istekla. Molimo prijavite se ponovo.'); return; }
+          if (res.status === 404) { showError('Nalog nije pronadjen.'); return; }
           throw new Error('Greska pri ucitavanju naloga');
         }
 
-        const data = await response.json();
-
-        // Fill both copies
+        const data = await res.json();
         fillTicketData(data.ticket, data.tenant, data.location, data.qr_code_base64);
 
-        // Show content
         document.getElementById('loading').style.display = 'none';
         document.getElementById('content').style.display = 'flex';
-
-      } catch (error) {
-        console.error('Error loading ticket:', error);
-        showError(error.message || 'Greska pri ucitavanju naloga');
+      } catch (err) {
+        console.error('Error:', err);
+        showError(err.message || 'Greska pri ucitavanju naloga');
       }
     }
 
-    // Load on page ready
     document.addEventListener('DOMContentLoaded', loadTicket);
   </script>
 </body>
