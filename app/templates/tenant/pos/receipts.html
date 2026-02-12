@@ -162,7 +162,40 @@ function receiptsPage() {
             return new Date(iso).toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         },
 
-        printReceipt(id) {
+        async printReceipt(id) {
+            const printers = JSON.parse(localStorage.getItem('pos-printers') || '[]');
+            const printer = printers.find(p => p.isDefault) || printers[0];
+
+            if (printer && printer.printMode === 'escpos') {
+                const token = sessionStorage.getItem('access_token');
+                try {
+                    const [receiptRes, tenantRes] = await Promise.all([
+                        fetch(`/api/v1/pos/receipts/${id}`, { headers: { Authorization: 'Bearer ' + token }}),
+                        fetch('/api/v1/tenant/profile', { headers: { Authorization: 'Bearer ' + token }})
+                    ]);
+                    if (receiptRes.ok) {
+                        const receipt = await receiptRes.json();
+                        const td = tenantRes.ok ? await tenantRes.json() : {};
+                        const agentRes = await fetch(printer.agentUrl.replace(/\/$/, '') + '/print', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                receipt,
+                                tenant: { name: td.name, address: td.adresa_sedista, phone: td.telefon, pib: td.pib },
+                                footer_message: localStorage.getItem('pos-footer-message') || 'Hvala na poseti!',
+                                paper_size: printer.paperSize,
+                                auto_cut: printer.autoCut,
+                            }),
+                            signal: AbortSignal.timeout(5000),
+                        });
+                        if (agentRes.ok) return; // printed successfully
+                    }
+                } catch (e) {
+                    console.warn('ESC/POS agent fallback:', e);
+                }
+            }
+
+            // Browser fallback
             const _t = sessionStorage.getItem('access_token') || '';
             window.open(`/pos/receipts/print?id=${id}#t=${_t}`, '_blank', 'width=400,height=700');
         }

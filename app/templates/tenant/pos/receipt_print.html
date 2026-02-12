@@ -133,6 +133,7 @@
     <!-- Controls (screen only) -->
     <div class="print-controls" id="controls">
         <button class="btn-print" onclick="window.print()">Stampaj</button>
+        <button class="btn-print" id="btn-pos-print" style="display:none; background:#7c3aed;" onclick="posPrint()">POS Stampaj</button>
         <button onclick="window.close()">Zatvori</button>
     </div>
 
@@ -612,6 +613,70 @@
             }
         }
 
+    }
+
+    // Show POS print button if ESC/POS printer is configured
+    (function() {
+        const printers = JSON.parse(localStorage.getItem('pos-printers') || '[]');
+        const printer = printers.find(p => p.isDefault) || printers[0];
+        if (printer && printer.printMode === 'escpos') {
+            const btn = document.getElementById('btn-pos-print');
+            if (btn) btn.style.display = '';
+        }
+    })();
+
+    async function posPrint() {
+        const printers = JSON.parse(localStorage.getItem('pos-printers') || '[]');
+        const printer = printers.find(p => p.isDefault) || printers[0];
+        if (!printer || printer.printMode !== 'escpos') {
+            alert('Nema konfigurisan ESC/POS stampac');
+            return;
+        }
+
+        let token = sessionStorage.getItem('access_token');
+        if (!token && window.opener) {
+            try { token = window.opener.sessionStorage.getItem('access_token'); } catch(e) {}
+        }
+        if (!token && window.location.hash) {
+            try {
+                const hp = new URLSearchParams(window.location.hash.substring(1));
+                token = hp.get('t');
+            } catch(e) {}
+        }
+        if (!token || !receiptId) return;
+
+        const headers = { 'Authorization': 'Bearer ' + token };
+        try {
+            const [receiptRes, tenantRes] = await Promise.all([
+                fetch(`/api/v1/pos/receipts/${receiptId}`, { headers }),
+                fetch('/api/v1/tenant/profile', { headers })
+            ]);
+            if (!receiptRes.ok) { alert('Greska pri ucitavanju racuna'); return; }
+
+            const receipt = await receiptRes.json();
+            const td = tenantRes.ok ? await tenantRes.json() : {};
+
+            const agentRes = await fetch(printer.agentUrl.replace(/\/$/, '') + '/print', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    receipt,
+                    tenant: { name: td.name, address: td.adresa_sedista, phone: td.telefon, pib: td.pib },
+                    footer_message: localStorage.getItem('pos-footer-message') || 'Hvala na poseti!',
+                    paper_size: printer.paperSize,
+                    auto_cut: printer.autoCut,
+                }),
+                signal: AbortSignal.timeout(5000),
+            });
+
+            if (agentRes.ok) {
+                alert('Stampano na POS stampac!');
+            } else {
+                alert('Greska agenta: ' + (await agentRes.text()));
+            }
+        } catch (e) {
+            alert('ESC/POS agent nedostupan: ' + e.message);
+        }
     }
 
     loadAndRender();

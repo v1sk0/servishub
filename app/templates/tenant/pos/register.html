@@ -1109,8 +1109,7 @@ function posRegister() {
 
                     // Auto-print if enabled
                     if (localStorage.getItem('pos-auto-print') === '1' && data.receipt_id) {
-                        const _t = sessionStorage.getItem('access_token') || '';
-                        window.open(`/pos/receipts/print?id=${data.receipt_id}&auto=1#t=${_t}`, '_blank', 'width=400,height=700');
+                        await this._directPrint(data.receipt_id);
                     }
 
                     await this.loadSession();
@@ -1127,6 +1126,52 @@ function posRegister() {
             } finally {
                 this.issuing = false;
             }
+        },
+
+        // ==========================================
+        // PRINTING (ESC/POS agent + browser fallback)
+        // ==========================================
+        async _directPrint(receiptId) {
+            const printers = JSON.parse(localStorage.getItem('pos-printers') || '[]');
+            const printer = printers.find(p => p.isDefault) || printers[0];
+
+            if (!printer || printer.printMode !== 'escpos') {
+                return this._browserPrint(receiptId);
+            }
+
+            const token = sessionStorage.getItem('access_token');
+            try {
+                const [receiptRes, tenantRes] = await Promise.all([
+                    fetch(`/api/v1/pos/receipts/${receiptId}`, { headers: { Authorization: 'Bearer ' + token }}),
+                    fetch('/api/v1/tenant/profile', { headers: { Authorization: 'Bearer ' + token }})
+                ]);
+                if (!receiptRes.ok) return this._browserPrint(receiptId);
+
+                const receipt = await receiptRes.json();
+                const td = tenantRes.ok ? await tenantRes.json() : {};
+
+                const agentRes = await fetch(printer.agentUrl.replace(/\/$/, '') + '/print', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        receipt,
+                        tenant: { name: td.name, address: td.adresa_sedista, phone: td.telefon, pib: td.pib },
+                        footer_message: localStorage.getItem('pos-footer-message') || 'Hvala na poseti!',
+                        paper_size: printer.paperSize,
+                        auto_cut: printer.autoCut,
+                    }),
+                    signal: AbortSignal.timeout(5000),
+                });
+                if (!agentRes.ok) throw new Error('Agent error');
+            } catch (e) {
+                console.warn('ESC/POS agent nedostupan, fallback na browser:', e);
+                this._browserPrint(receiptId);
+            }
+        },
+
+        _browserPrint(receiptId) {
+            const _t = sessionStorage.getItem('access_token') || '';
+            window.open(`/pos/receipts/print?id=${receiptId}&auto=1#t=${_t}`, '_blank', 'width=400,height=700');
         },
 
         // ==========================================

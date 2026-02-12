@@ -57,6 +57,48 @@
                                 <option value="WiFi">WiFi</option>
                             </select>
                         </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Nacin stampe</label>
+                            <select x-model="form.printMode"
+                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                                <option value="browser">Browser (dijalog)</option>
+                                <option value="escpos">ESC/POS Agent (direktno)</option>
+                            </select>
+                        </div>
+                        <div><!-- grid spacer --></div>
+                        <div x-show="form.printMode === 'escpos'" x-transition class="sm:col-span-2 space-y-3 bg-blue-50 rounded-lg p-3 border border-blue-200">
+                            <div class="text-xs font-semibold text-blue-800 mb-2">ESC/POS Agent podesavanja</div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Agent URL</label>
+                                <input type="text" x-model="form.agentUrl" placeholder="http://localhost:9100"
+                                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm font-mono">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1">Vendor ID (hex)</label>
+                                    <input type="text" x-model="form.vendorId" placeholder="0x0483"
+                                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm font-mono">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1">Product ID (hex)</label>
+                                    <input type="text" x-model="form.productId" placeholder="0x5720"
+                                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm font-mono">
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" @click="testAgentConnection()"
+                                        class="inline-flex items-center rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-blue-500">
+                                    Test konekciju
+                                </button>
+                                <button type="button" @click="testAgentPrint()"
+                                        class="inline-flex items-center rounded-md bg-green-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-green-500">
+                                    Test stampe
+                                </button>
+                                <span x-show="agentStatus === 'ok'" class="text-xs text-green-600 font-medium">● Povezan</span>
+                                <span x-show="agentStatus === 'error'" class="text-xs text-red-600 font-medium">○ Nije dostupan</span>
+                                <span x-show="agentStatus === 'checking'" class="text-xs text-gray-400">Provera...</span>
+                            </div>
+                        </div>
                         <div class="sm:col-span-2 flex items-center gap-3">
                             <input type="checkbox" x-model="form.autoCut" id="auto-cut"
                                    class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
@@ -95,6 +137,9 @@
                                         <span class="text-xs text-gray-500" x-text="printer.connection"></span>
                                         <template x-if="printer.autoCut">
                                             <span class="text-xs text-gray-400">| Auto-cut</span>
+                                        </template>
+                                        <template x-if="printer.printMode === 'escpos'">
+                                            <span class="text-xs text-blue-600 font-medium">| ESC/POS</span>
                                         </template>
                                     </div>
                                 </div>
@@ -275,16 +320,16 @@
                 <h3 class="text-sm font-semibold text-gray-900 mb-3">Napomene za stampace</h3>
                 <ul class="space-y-2 text-xs text-gray-500">
                     <li class="flex items-start gap-2">
-                        <svg class="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>POS stampac (npr. SPRT POS891) mora biti instaliran kao Windows stampac sa odgovarajucim drajverom</span>
+                        <svg class="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span><b>ESC/POS Agent:</b> Za direktnu stampu bez dijaloga, pokrenite Print Agent na racunaru gde je stampac povezan: <code class="bg-gray-100 px-1 rounded">python pos_print_agent.py --vendor 0x0483 --product 0x5720</code></span>
                     </li>
                     <li class="flex items-start gap-2">
                         <svg class="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>Prilikom stampe, Chrome otvara dijalog gde birate stampac — browser pamti poslednji izbor</span>
+                        <span><b>Browser mod:</b> Chrome otvara print dijalog — stampac mora biti instaliran u sistemu</span>
                     </li>
                     <li class="flex items-start gap-2">
                         <svg class="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>Za brzu stampu bez dijaloga, postavite POS stampac kao podrazumevani Windows stampac i koristite Ctrl+P</span>
+                        <span><b>Vendor/Product ID:</b> macOS: System Information → USB | Windows: Device Manager → USB | Linux: <code class="bg-gray-100 px-1 rounded">lsusb</code></span>
                     </li>
                 </ul>
             </div>
@@ -307,7 +352,8 @@ function posSettings() {
         // Form
         showAddPrinter: false,
         editingPrinterId: null,
-        form: { name: '', paperSize: '80', connection: 'USB', autoCut: true },
+        agentStatus: '',
+        form: { name: '', paperSize: '80', connection: 'USB', autoCut: true, printMode: 'browser', agentUrl: 'http://localhost:9100', vendorId: '', productId: '' },
 
         get defaultPrinter() {
             return this.printers.find(p => p.isDefault) || this.printers[0] || null;
@@ -360,8 +406,9 @@ function posSettings() {
         },
 
         resetForm() {
-            this.form = { name: '', paperSize: '80', connection: 'USB', autoCut: true };
+            this.form = { name: '', paperSize: '80', connection: 'USB', autoCut: true, printMode: 'browser', agentUrl: 'http://localhost:9100', vendorId: '', productId: '' };
             this.editingPrinterId = null;
+            this.agentStatus = '';
         },
 
         savePrinter() {
@@ -375,6 +422,10 @@ function posSettings() {
                     this.printers[idx].paperSize = this.form.paperSize;
                     this.printers[idx].connection = this.form.connection;
                     this.printers[idx].autoCut = this.form.autoCut;
+                    this.printers[idx].printMode = this.form.printMode;
+                    this.printers[idx].agentUrl = this.form.agentUrl;
+                    this.printers[idx].vendorId = this.form.vendorId;
+                    this.printers[idx].productId = this.form.productId;
                 }
             } else {
                 // Add new
@@ -385,6 +436,10 @@ function posSettings() {
                     paperSize: this.form.paperSize,
                     connection: this.form.connection,
                     autoCut: this.form.autoCut,
+                    printMode: this.form.printMode,
+                    agentUrl: this.form.agentUrl,
+                    vendorId: this.form.vendorId,
+                    productId: this.form.productId,
                     isDefault: isFirst,
                 });
             }
@@ -401,7 +456,12 @@ function posSettings() {
                 paperSize: printer.paperSize,
                 connection: printer.connection,
                 autoCut: printer.autoCut,
+                printMode: printer.printMode || 'browser',
+                agentUrl: printer.agentUrl || 'http://localhost:9100',
+                vendorId: printer.vendorId || '',
+                productId: printer.productId || '',
             };
+            this.agentStatus = '';
             this.showAddPrinter = true;
         },
 
@@ -422,7 +482,53 @@ function posSettings() {
             this.savePrinters();
         },
 
+        async testAgentConnection() {
+            const url = (this.form.agentUrl || 'http://localhost:9100').replace(/\/$/, '');
+            this.agentStatus = 'checking';
+            try {
+                const res = await fetch(url + '/status', { signal: AbortSignal.timeout(3000) });
+                if (res.ok) {
+                    this.agentStatus = 'ok';
+                } else {
+                    this.agentStatus = 'error';
+                }
+            } catch (e) {
+                this.agentStatus = 'error';
+            }
+        },
+
+        async testAgentPrint() {
+            const url = (this.form.agentUrl || 'http://localhost:9100').replace(/\/$/, '');
+            this.agentStatus = 'checking';
+            try {
+                const res = await fetch(url + '/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ company_name: this.companyName || this.tenantName || 'ServisHub' }),
+                    signal: AbortSignal.timeout(5000),
+                });
+                if (res.ok) {
+                    this.agentStatus = 'ok';
+                    alert('Test stranica poslata na stampac!');
+                } else {
+                    this.agentStatus = 'error';
+                    const err = await res.json().catch(() => ({}));
+                    alert('Greska: ' + (err.error || 'Nepoznata greska'));
+                }
+            } catch (e) {
+                this.agentStatus = 'error';
+                alert('Agent nije dostupan na ' + url);
+            }
+        },
+
         testPrint(printer) {
+            // ESC/POS mode: send to agent
+            if (printer?.printMode === 'escpos' && printer?.agentUrl) {
+                this.form.agentUrl = printer.agentUrl;
+                this.testAgentPrint();
+                return;
+            }
+            // Browser mode
             const ps = printer?.paperSize || this.currentPaperSize || '80';
             // Temporarily set paper size for the print page
             localStorage.setItem('pos-paper-size', ps);
