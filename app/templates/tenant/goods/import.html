@@ -149,7 +149,7 @@
                                 </td>
                                 <td class="px-1 py-2 text-gray-500 font-mono text-xs" x-text="item.supplier_code"></td>
                                 <td class="px-1 py-2">
-                                    <div class="font-medium text-gray-900 truncate max-w-xs" x-text="item.name" :title="item.name"></div>
+                                    <div class="font-medium text-gray-900" x-text="item.name"></div>
                                     <div x-show="item.existing_item" class="text-xs text-gray-400 mt-0.5">
                                         Na stanju: <span x-text="item.existing_item?.current_stock"></span> kom,
                                         prodajna: <span x-text="formatPrice(item.existing_item?.selling_price)"></span> RSD
