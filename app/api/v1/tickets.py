@@ -1108,6 +1108,7 @@ def get_ticket_print_data(ticket_id):
             'email': tenant.email,
             'phone': tenant.telefon,
             'logo_url': tenant.logo_url,
+            'website': tenant.public_profile.website_url if tenant.public_profile and tenant.public_profile.website_url else None,
             'print_clause': clause
         },
         'location': {

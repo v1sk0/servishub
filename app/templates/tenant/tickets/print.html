@@ -19,14 +19,17 @@
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      justify-content: center;
     }
 
     /* --- Ticket half --- */
     .ticket-container {
+      flex: 1;
       width: 100%;
       padding: 4mm 8mm 3mm;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     /* Company header */
@@ -40,12 +43,12 @@
     .company-header img {
       display: block;
       margin: 0 auto 0.5mm;
-      height: 28px;
+      height: 42px;
       filter: grayscale(100%);
     }
 
     .company-header .name {
-      font-size: 11pt;
+      font-size: 12pt;
       font-weight: 700;
       color: #111;
       letter-spacing: 0.2px;
@@ -55,6 +58,7 @@
       font-size: 7pt;
       color: #555;
       margin-top: 0.3mm;
+      line-height: 1.5;
     }
 
     /* Ticket number bar */
@@ -342,6 +346,7 @@
         <img id="logo-img-1" style="display:none;" alt="">
         <div class="name" id="logo-text-1"></div>
         <div class="info" id="tenant-info-1"></div>
+        <div class="info" id="tenant-info-extra-1"></div>
       </header>
 
       <div class="ticket-bar">
@@ -431,6 +436,7 @@
         <img id="logo-img-2" style="display:none;" alt="">
         <div class="name" id="logo-text-2"></div>
         <div class="info" id="tenant-info-2"></div>
+        <div class="info" id="tenant-info-extra-2"></div>
       </header>
 
       <div class="ticket-bar">
@@ -573,9 +579,16 @@
           logoText.textContent = tenant?.name || 'Servis';
         }
 
-        // Tenant info
+        // Tenant info - line 1: address + phone
         document.getElementById(`tenant-info-${i}`).textContent =
           [tenant?.address, tenant?.phone ? `Tel: ${tenant.phone}` : ''].filter(Boolean).join('  |  ') || '';
+
+        // Tenant info - line 2: PIB + email/website
+        const extraParts = [];
+        if (tenant?.pib) extraParts.push(`PIB: ${tenant.pib}`);
+        if (tenant?.email) extraParts.push(tenant.email);
+        if (tenant?.website) extraParts.push(tenant.website);
+        document.getElementById(`tenant-info-extra-${i}`).textContent = extraParts.join('  |  ');
 
         // Ticket bar
         document.getElementById(`ticket-number-${i}`).textContent = ticket.ticket_number || ticket.id;
