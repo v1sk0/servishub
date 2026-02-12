@@ -314,7 +314,7 @@ class PrintAgentHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = self._clean_path()
-        if path == '/status' or path == '':
+        if path in ('/status', '/', ''):
             self._json_response(200, {
                 'status': 'ok',
                 'printer_type': printer_config.get('type', 'unknown'),
