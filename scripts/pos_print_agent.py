@@ -2,38 +2,42 @@
 """
 ServisHub POS Print Agent
 =========================
-Standalone HTTPS server that receives receipt data from the web app
+Standalone HTTP server that receives receipt data from the web app
 and prints directly to a thermal POS printer via ESC/POS commands.
 
 Usage:
-    # USB printer (need Vendor ID and Product ID from System Info):
+    # CUPS printer (macOS/Linux - RECOMMENDED, no extra deps):
+    python pos_print_agent.py --cups "SPRT_POS891"
+
+    # USB printer (needs pyusb + libusb):
     python pos_print_agent.py --vendor 0x0483 --product 0x5720
 
     # Network printer:
     python pos_print_agent.py --network 192.168.1.100
 
-    # Custom port for the HTTP agent:
-    python pos_print_agent.py --vendor 0x0483 --product 0x5720 --agent-port 9200
+    # List available CUPS printers:
+    python pos_print_agent.py --list-printers
 
 Requirements:
     pip install python-escpos
 
-Finding Vendor/Product ID:
+Finding CUPS printer name:
+    macOS/Linux: lpstat -p
+    Or use:      python pos_print_agent.py --list-printers
+
+Finding Vendor/Product ID (for USB mode):
     macOS:   System Information → USB → Your Printer
     Windows: Device Manager → USB → Properties → Hardware IDs
     Linux:   lsusb
-
-NOTE: Agent runs on HTTPS (self-signed cert) so that Chrome allows
-      requests from HTTPS sites (shub.rs) to localhost.
-      On first use, visit https://localhost:9100 in your browser
-      and accept the certificate warning.
 """
 
 import argparse
 import json
 import os
 import ssl
+import subprocess
 import sys
+import tempfile
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
@@ -325,10 +329,11 @@ class PrintAgentHandler(BaseHTTPRequestHandler):
             self._json_response(200, {
                 'status': 'ok',
                 'printer_type': printer_config.get('type', 'unknown'),
+                'cups_name': printer_config.get('name', ''),
                 'vendor_id': printer_config.get('vendor', ''),
                 'product_id': printer_config.get('product', ''),
                 'network_host': printer_config.get('host', ''),
-                'agent_version': '1.0.0',
+                'agent_version': '1.1.0',
             })
         else:
             self._json_response(404, {'error': 'Not found', 'path': path})
@@ -352,20 +357,20 @@ class PrintAgentHandler(BaseHTTPRequestHandler):
             self._json_response(404, {'error': 'Not found', 'path': path})
 
     def _handle_print(self, data):
-        global printer_instance
         try:
             p = get_printer()
             format_receipt(p, data)
+            flush_printer(p)
             self._json_response(200, {'success': True, 'message': 'Receipt printed'})
         except Exception as e:
             print(f"[ERROR] Print failed: {e}", file=sys.stderr)
             self._json_response(500, {'success': False, 'error': str(e)})
 
     def _handle_test(self, data):
-        global printer_instance
         try:
             p = get_printer()
             print_test_page(p, data)
+            flush_printer(p)
             self._json_response(200, {'success': True, 'message': 'Test page printed'})
         except Exception as e:
             print(f"[ERROR] Test print failed: {e}", file=sys.stderr)
@@ -377,11 +382,17 @@ class PrintAgentHandler(BaseHTTPRequestHandler):
 
 
 def get_printer():
-    """Get or create printer connection."""
+    """Get or create printer connection.
+    For CUPS mode, returns a Dummy printer that buffers ESC/POS commands.
+    Call flush_printer(p) after formatting to send buffered data via lp.
+    """
     global printer_instance
     ptype = printer_config.get('type')
 
-    if ptype == 'usb':
+    if ptype == 'cups':
+        from escpos.printer import Dummy
+        return Dummy()
+    elif ptype == 'usb':
         from escpos.printer import Usb
         vendor = printer_config['vendor']
         product = printer_config['product']
@@ -392,6 +403,38 @@ def get_printer():
         return Network(printer_config['host'], port=printer_config.get('port', 9100))
     else:
         raise RuntimeError('No printer configured')
+
+
+def flush_printer(p):
+    """For CUPS mode: send accumulated ESC/POS bytes to printer via lp command.
+    For USB/Network: no-op (data is already sent directly).
+    """
+    if printer_config.get('type') != 'cups':
+        return
+
+    raw = p.output
+    if not raw:
+        return
+
+    cups_name = printer_config['name']
+
+    # Write raw bytes to temp file and send via lp
+    fd, temp_path = tempfile.mkstemp(suffix='.bin', prefix='pos_receipt_')
+    try:
+        os.write(fd, raw)
+        os.close(fd)
+        result = subprocess.run(
+            ['lp', '-d', cups_name, '-o', 'raw', temp_path],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"lp failed: {result.stderr.strip()}")
+        print(f"  CUPS: sent {len(raw)} bytes to '{cups_name}'")
+    finally:
+        try:
+            os.unlink(temp_path)
+        except OSError:
+            pass
 
 
 # ---------------------------------------------------------------------------
@@ -495,11 +538,16 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  USB printer:      python pos_print_agent.py --vendor 0x0483 --product 0x5720
-  Network printer:  python pos_print_agent.py --network 192.168.1.100
-  Custom agent port: python pos_print_agent.py --vendor 0x0483 --product 0x5720 --agent-port 9200
+  CUPS (recommended): python pos_print_agent.py --cups POS891
+  List printers:      python pos_print_agent.py --list-printers
+  USB printer:        python pos_print_agent.py --vendor 0x0483 --product 0x5720
+  Network printer:    python pos_print_agent.py --network 192.168.1.100
         """
     )
+    parser.add_argument('--cups', type=str, metavar='PRINTER_NAME',
+                        help='CUPS printer name (use --list-printers to see available)')
+    parser.add_argument('--list-printers', action='store_true',
+                        help='List available CUPS printers and exit')
     parser.add_argument('--vendor', type=lambda x: int(x, 0),
                         help='USB Vendor ID (hex, e.g. 0x0483)')
     parser.add_argument('--product', type=lambda x: int(x, 0),
@@ -511,11 +559,39 @@ Examples:
     parser.add_argument('--agent-port', type=int, default=9100,
                         help='Agent HTTP port (default: 9100)')
     parser.add_argument('--ssl', action='store_true',
-                        help='Enable HTTPS (self-signed cert). Usually not needed - localhost is secure context.')
+                        help='Enable HTTPS (self-signed cert). Usually not needed.')
 
     args = parser.parse_args()
 
-    if args.network:
+    # List printers and exit
+    if args.list_printers:
+        print("Available CUPS printers:")
+        print("-" * 40)
+        try:
+            result = subprocess.run(['lpstat', '-p'], capture_output=True, text=True)
+            if result.stdout.strip():
+                for line in result.stdout.strip().split('\n'):
+                    # Parse "printer NAME is ..." format
+                    parts = line.split()
+                    if len(parts) >= 2 and parts[0] == 'printer':
+                        name = parts[1]
+                        status = ' '.join(parts[2:])
+                        print(f"  {name}  ({status})")
+            else:
+                print("  No printers found. Add a printer in System Preferences.")
+        except FileNotFoundError:
+            print("  lpstat command not found. CUPS may not be installed.")
+        print()
+        print("Usage: python pos_print_agent.py --cups PRINTER_NAME")
+        sys.exit(0)
+
+    if args.cups:
+        printer_config = {
+            'type': 'cups',
+            'name': args.cups,
+        }
+        print(f"Printer: CUPS '{args.cups}' (via lp -o raw)")
+    elif args.network:
         printer_config = {
             'type': 'network',
             'host': args.network,
@@ -530,17 +606,31 @@ Examples:
         }
         print(f"Printer: USB vendor=0x{args.vendor:04x} product=0x{args.product:04x}")
     else:
-        print("ERROR: Specify --vendor + --product (USB) or --network (LAN)")
+        print("ERROR: Specify --cups (recommended), --vendor + --product (USB), or --network (LAN)")
+        print("Run with --list-printers to see available CUPS printers")
         print("Run with --help for usage examples")
         sys.exit(1)
 
     # Test printer connection
-    try:
-        p = get_printer()
-        print("Printer connection: OK")
-    except Exception as e:
-        print(f"WARNING: Printer not available: {e}")
-        print("Agent will start anyway - printer may become available later")
+    if printer_config['type'] == 'cups':
+        # Verify CUPS printer exists
+        try:
+            result = subprocess.run(['lpstat', '-p', printer_config['name']],
+                                    capture_output=True, text=True)
+            if result.returncode == 0:
+                print(f"CUPS printer '{printer_config['name']}': OK")
+            else:
+                print(f"WARNING: CUPS printer '{printer_config['name']}' not found!")
+                print(f"  Available: run --list-printers to see options")
+        except FileNotFoundError:
+            print("WARNING: lpstat not found - CUPS may not be installed")
+    else:
+        try:
+            p = get_printer()
+            print("Printer connection: OK")
+        except Exception as e:
+            print(f"WARNING: Printer not available: {e}")
+            print("Agent will start anyway - printer may become available later")
 
     # Start HTTPS server
     port = args.agent_port
