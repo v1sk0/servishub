@@ -79,10 +79,6 @@
         .fiscal-qr img, .fiscal-qr canvas { display: inline-block; }
         .fiscal-qr-label { font-size: 9px; color: #333; margin-top: 2px; }
 
-        /* Tenant QR - smaller, in footer */
-        .qr-section { text-align: center; margin: 6px 0 2px; }
-        .qr-section img, .qr-section canvas { display: inline-block; }
-        .qr-label { font-size: 8px; color: #666; margin-top: 2px; }
 
         /* Badge */
         .badge-void { text-align: center; font-size: 18px; font-weight: bold; color: #dc2626; border: 2px solid #dc2626; padding: 4px; margin: 8px 0; }
@@ -591,14 +587,6 @@
         html += '<div class="footer">';
         html += `<div>${customFooter}</div>`;
 
-        // Tenant public page QR
-        if (tenant.slug) {
-            html += '<div class="qr-section"><div id="qrcode"></div>';
-            html += `<div class="qr-label">${tenant.slug}.shub.rs</div>`;
-            html += '</div>';
-        } else {
-            html += '<div style="margin-top:4px; font-size:9px; color:#666;">shub.rs</div>';
-        }
 
         html += '</div>';
 
@@ -624,18 +612,6 @@
             }
         }
 
-        // Generate Tenant QR code (smaller, in footer)
-        if (tenant.slug && typeof qrcode !== 'undefined') {
-            const qrUrl = `https://${tenant.slug}.shub.rs`;
-            const qr = qrcode(0, 'L');
-            qr.addData(qrUrl);
-            qr.make();
-            const qrEl = document.getElementById('qrcode');
-            if (qrEl) {
-                const size = paperSize === '58' ? 3 : 4;
-                qrEl.innerHTML = qr.createImgTag(size, 0);
-            }
-        }
     }
 
     loadAndRender();
