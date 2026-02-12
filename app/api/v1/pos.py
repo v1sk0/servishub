@@ -332,7 +332,7 @@ def get_receipt(receipt_id):
     # Get issuer name
     issued_by_name = None
     if receipt.issued_by_id:
-        from app.models.tenant import TenantUser
+        from app.models.user import TenantUser
         issuer = TenantUser.query.get(receipt.issued_by_id)
         if issuer:
             issued_by_name = issuer.full_name or issuer.email

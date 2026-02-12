@@ -148,7 +148,7 @@
         try {
             [receiptRes, tenantRes] = await Promise.all([
                 fetch(`/api/v1/pos/receipts/${receiptId}`, { headers }),
-                fetch('/api/v1/tenant/', { headers })
+                fetch('/api/v1/tenant/profile', { headers })
             ]);
         } catch (e) {
             document.getElementById('loading').textContent = 'Greska mreze: ' + e.message;
@@ -166,7 +166,16 @@
         }
 
         const r = await receiptRes.json();
-        const tenant = tenantRes.ok ? (await tenantRes.json()).tenant || {} : {};
+        let tenant = {};
+        if (tenantRes.ok) {
+            const td = await tenantRes.json();
+            tenant = {
+                name: td.name,
+                address: td.adresa_sedista,
+                phone: td.telefon,
+                pib: td.pib
+            };
+        }
 
         renderReceipt(r, tenant);
 
