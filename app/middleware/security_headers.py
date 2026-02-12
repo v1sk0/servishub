@@ -103,7 +103,8 @@ def _get_csp_policy() -> str:
 
         # connect-src: AJAX/Fetch zahtevi
         # Nas API, Google OAuth, Cloudinary upload, Google Maps, Places API
-        "connect-src": "'self' https://oauth2.googleapis.com https://api.cloudinary.com https://www.googleapis.com https://maps.googleapis.com https://places.googleapis.com",
+        # http(s)://localhost:* - POS print agent (lokalni ESC/POS stampac)
+        "connect-src": "'self' https://oauth2.googleapis.com https://api.cloudinary.com https://www.googleapis.com https://maps.googleapis.com https://places.googleapis.com http://localhost:* https://localhost:* http://127.0.0.1:* https://127.0.0.1:*",
 
         # frame-src: iframe izvori
         # Google reCAPTCHA i OAuth popups
