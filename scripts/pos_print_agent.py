@@ -33,7 +33,6 @@ import argparse
 import json
 import os
 import ssl
-import subprocess
 import sys
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -407,85 +406,81 @@ def get_cert_dir():
     return cert_dir
 
 
+# Embedded self-signed certificate for localhost (valid 10 years, no external deps)
+EMBEDDED_CERT = """\
+-----BEGIN CERTIFICATE-----
+MIIDCTCCAfGgAwIBAgIUZtr9KwNUSDtxVU/nQb8oh5u2Yf4wDQYJKoZIhvcNAQEL
+BQAwFDESMBAGA1UEAwwJbG9jYWxob3N0MB4XDTI2MDIxMjE2NDAzMFoXDTM2MDIx
+MDE2NDAzMFowFDESMBAGA1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG9w0BAQEF
+AAOCAQ8AMIIBCgKCAQEArGKOzGxgKKuOKxnuM0KUwsX1R65SaSfS973rHWAXnHOf
+f9nFyT+5SfdqNwSaVeeQ2JkFJNlNTnnqyxd03Wde7IgVxaNClwBqIJJuIO+BooyA
+UCvuqW5UXkNVZCkBVXOkOuNJreWjyPOxd4C/30nfWRVdiyIpeIf2CqYt2kQfRrnV
+1MmgmgCoy5E1taBaGtwZ3wgToYaAnc8ya3MVCNJk6NxYgzKzQx9ZDdqjiqE5Q8E5
+mlTIGrLHIq9JZ7y9y7GTGN3rpqTT4FK/zb2vVcDfP7/+q8ww69YLek1lVopUiV7k
+O1L7et3n3ZCmkuXCykieH73oThZUl+xiViY3IeGuEwIDAQABo1MwUTAdBgNVHQ4E
+FgQUqwfpr//PvD7w1CuoBqDlbez/DG8wHwYDVR0jBBgwFoAUqwfpr//PvD7w1Cuo
+BqDlbez/DG8wDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAWw91
+m7FQ2Yyq79fajR3M9YAul8/7Y9/1sDO9QW6HY4UaUEQxI23OvDHQa4ofb8tjahYX
+PKsEBFYxY4z/FWUMmlJXBpB3C2ApBT2hWX8pd1gtu4O2VM9oy8YdQLlDALU/FFs9
+7mc9D/p/DWd8Z4TRX0XfFwdBdCKkcxNvsTAy7D/E8cbDHqT2xqMN/5nxlCzDfNSg
+be64nSN4GbTpUKMYeNOlA6nAoGRu0si6xZu2nC+yCAgVjfQOCge7pFC9kGDMLhuZ
+VCyBmfLZMXUC/U7Ommq9a0RabE9Rla6+JjMbXCpVZwXwp7c/uIv8/eznAdGsC7CZ
+7Fl6r2gyj/yZ/rU1xA==
+-----END CERTIFICATE-----
+"""
+
+EMBEDDED_KEY = """\
+-----BEGIN PRIVATE KEY-----
+MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQCsYo7MbGAoq44r
+Ge4zQpTCxfVHrlJpJ9L3vesdYBecc59/2cXJP7lJ92o3BJpV55DYmQUk2U1OeerL
+F3TdZ17siBXFo0KXAGogkm4g74GijIBQK+6pblReQ1VkKQFVc6Q640mt5aPI87F3
+gL/fSd9ZFV2LIil4h/YKpi3aRB9GudXUyaCaAKjLkTW1oFoa3BnfCBOhhoCdzzJr
+cxUI0mTo3FiDMrNDH1kN2qOKoTlDwTmaVMgasscir0lnvL3LsZMY3eumpNPgUr/N
+va9VwN8/v/6rzDDr1gt6TWVWilSJXuQ7Uvt63efdkKaS5cLKSJ4fvehOFlSX7GJW
+Jjch4a4TAgMBAAECggEAJTR2Tm97h3uTSQElNGID2k/AQvLALZrfQQH32xSws98O
+hxj4w5khw/GGto4jQzQhwmWwQwY1VaEhiCitW9WiGpm6XTgBuLZpsVL5OtmGWI9L
+aEI7Fc1OnzOYG/BvrcIyKVWBwurjoQzbegfLIYV/k2n1kQBUBAQQGbdJASkfuPMq
+zFnev2xtdib7jgJR7g+NEuBHUsAPb1wNuoLHK/shqoSm7BF+qQaWEeseM5Mbs9J3
+9Tmu2VC4gBM3WKuXUGa4TDbDM/mHa+UVXMQM+MsM6b8Nt8TGa6lI2DXqObA1Blzr
+mX7mE+LZsVrTq3rwvOXb4rJeftABqT375SWKazSXBQKBgQDk6ufu8QPmAKUuhe8W
+Xo9em2OKV66axFbejCmiLVJ3F2RDXre6iKFBehPQjMf2CtINmFJkWbDdD/WaESfE
+QJLMI6xGnfcx9VSkjOvPqkOBUrioKPUtqvBR5k6oqyFeQRAz+MkTyftYkQVjZ+eq
+BPHp45lsAv6MqjxIqTU7LQIWHQKBgQDAx3tJ4CrxPff82hrfcU6oFvovjbUSe5v7
+Gt5PEjmvOG/ihmD8ibYm1/X83nWmdcCnE7B9oqnUjqdX1QEB57/0Eg0x6VhHqPoM
+Mph8oF4Wl7z4XSGFwb+y8efVf9jfbmpmC/9m3ehHEAMIDSU9odhQchKZrsN3uksd
+bcALJ7jd7wKBgQCwPYpDE5uEwIprvwHLnxGSLN/96nOrA+49eHu1OF99AK1YkNuy
+6O39kxceQMTSUJJXlSYZzFO2XksgSoTrOyvJrs07sPJXrCF2bmg+gT9nmWBBVwcs
+Gabb5ww4H0iZYE4xNSDZ829nSH91gNGCvDvjbi74UXXYplezOVKaNJSeoQKBgQCz
+i5bKEVwtXxfOiZwpqzAk4XGWRJb2ZeW6kyWl40WSai/afGlsCx55Qv45yz8sD9Ok
+SHRCLvOZols9NIdBrQRcX0umxruP0lNAdQcMW5gF1sELWEHWf8L4+NCBShdE0WOL
+M3Vl6xtgxAruvr+GjWwYUIX+WIR4yCsZd5Q7T32gRQKBgQCIFGWzBg54ikaMCSYa
+vZzPUVzHcgfjdrarPvIIAcjXbnX0+72fgjNXLK94PVkAu5Pnt8nRSR1diaBY50Sr
+LSHjyJRMLdEqnv1vkWuk9NF70a3EGGhAms8E4ZvNmbi2Na6ZXzZ+lLshO6SabsgC
+6bw6rcK75Zb4Td5Beaz1zksjrg==
+-----END PRIVATE KEY-----
+"""
+
+
 def ensure_ssl_cert():
-    """Generate a self-signed SSL cert for localhost if not exists.
+    """Write embedded SSL cert/key to disk if not already present.
     Returns (cert_path, key_path) tuple.
+    No external dependencies needed (no openssl, no cryptography library).
     """
     cert_dir = get_cert_dir()
     cert_path = os.path.join(cert_dir, 'localhost.pem')
     key_path = os.path.join(cert_dir, 'localhost-key.pem')
 
-    if os.path.exists(cert_path) and os.path.exists(key_path):
-        return cert_path, key_path
+    if not os.path.exists(cert_path):
+        with open(cert_path, 'w') as f:
+            f.write(EMBEDDED_CERT)
+        print(f"Certificate written to: {cert_path}")
 
-    print("Generating self-signed SSL certificate for localhost...")
-    try:
-        # Simplest possible openssl command (works with any LibreSSL/OpenSSL)
-        subprocess.run([
-            'openssl', 'req', '-x509', '-newkey', 'rsa:2048',
-            '-keyout', key_path, '-out', cert_path,
-            '-days', '3650', '-nodes',
-            '-subj', '/CN=localhost',
-        ], check=True, capture_output=True, text=True)
-        print(f"Certificate saved to: {cert_dir}")
-        return cert_path, key_path
-    except FileNotFoundError:
-        print("WARNING: openssl not found. Trying Python fallback...")
-        return _generate_cert_python(cert_path, key_path)
-    except subprocess.CalledProcessError as e:
-        print(f"WARNING: openssl failed: {e.stderr}")
-        print("Trying Python fallback...")
-        return _generate_cert_python(cert_path, key_path)
+    if not os.path.exists(key_path):
+        with open(key_path, 'w') as f:
+            f.write(EMBEDDED_KEY)
+        print(f"Key written to: {key_path}")
 
-
-def _generate_cert_python(cert_path, key_path):
-    """Fallback: generate self-signed cert using Python cryptography lib."""
-    try:
-        from cryptography import x509
-        from cryptography.x509.oid import NameOID
-        from cryptography.hazmat.primitives import hashes, serialization
-        from cryptography.hazmat.primitives.asymmetric import rsa
-        from datetime import timedelta, timezone
-        import ipaddress
-
-        key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-        now = datetime.now(timezone.utc)
-        subject = issuer = x509.Name([
-            x509.NameAttribute(NameOID.COMMON_NAME, 'localhost'),
-        ])
-        cert = (
-            x509.CertificateBuilder()
-            .subject_name(subject)
-            .issuer_name(issuer)
-            .public_key(key.public_key())
-            .serial_number(x509.random_serial_number())
-            .not_valid_before(now)
-            .not_valid_after(now + timedelta(days=3650))
-            .add_extension(
-                x509.SubjectAlternativeName([
-                    x509.DNSName('localhost'),
-                    x509.IPAddress(ipaddress.IPv4Address('127.0.0.1')),
-                ]),
-                critical=False,
-            )
-            .sign(key, hashes.SHA256())
-        )
-
-        with open(key_path, 'wb') as f:
-            f.write(key.private_bytes(
-                serialization.Encoding.PEM,
-                serialization.PrivateFormat.TraditionalOpenSSL,
-                serialization.NoEncryption(),
-            ))
-        with open(cert_path, 'wb') as f:
-            f.write(cert.public_bytes(serialization.Encoding.PEM))
-
-        print(f"Certificate generated (Python fallback)")
-        return cert_path, key_path
-    except ImportError:
-        print("ERROR: Cannot generate SSL cert.")
-        print("Install openssl or: pip install cryptography")
-        sys.exit(1)
+    return cert_path, key_path
 
 
 # ---------------------------------------------------------------------------
