@@ -347,6 +347,7 @@ function efakturaImport() {
                     items: this.items.map(item => ({
                         name: item.name,
                         supplier_code: item.supplier_code,
+                        barcode: item.barcode || '',
                         quantity: item.quantity,
                         purchase_price: item.purchase_price,
                         selling_price: item.selling_price,

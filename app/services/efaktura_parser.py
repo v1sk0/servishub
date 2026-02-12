@@ -129,6 +129,7 @@ def parse_efaktura_xml(file_content: bytes) -> dict:
         item_elem = _find_deep(line, 'Item')
         name = ''
         supplier_code = ''
+        barcode = ''
         tax_percent = Decimal('20')
 
         if item_elem:
@@ -137,6 +138,10 @@ def parse_efaktura_xml(file_content: bytes) -> dict:
             sellers_id = _find_deep(item_elem, 'SellersItemIdentification')
             if sellers_id:
                 supplier_code = _text(_find_element(sellers_id, 'ID'))
+
+            standard_id = _find_deep(item_elem, 'StandardItemIdentification')
+            if standard_id:
+                barcode = _text(_find_element(standard_id, 'ID'))
 
             tax_cat = _find_deep(item_elem, 'ClassifiedTaxCategory')
             if tax_cat:
@@ -156,6 +161,7 @@ def parse_efaktura_xml(file_content: bytes) -> dict:
         items.append({
             'name': name,
             'supplier_code': supplier_code,
+            'barcode': barcode,
             'quantity': quantity,
             'unit_price': unit_price,
             'line_total': line_total,

@@ -69,14 +69,21 @@ def parse_xml():
     for idx, item in enumerate(parsed['items']):
         existing = None
 
-        # Primary match: by SKU (supplier_code)
-        if item['supplier_code']:
+        # Primary match: by barcode
+        if item.get('barcode'):
+            existing = GoodsItem.query.filter_by(
+                tenant_id=g.tenant_id,
+                barcode=item['barcode']
+            ).first()
+
+        # Secondary match: by SKU (supplier_code)
+        if not existing and item['supplier_code']:
             existing = GoodsItem.query.filter_by(
                 tenant_id=g.tenant_id,
                 sku=item['supplier_code']
             ).first()
 
-        # Secondary match: by exact name
+        # Tertiary match: by exact name
         if not existing:
             existing = GoodsItem.query.filter_by(
                 tenant_id=g.tenant_id
@@ -113,6 +120,7 @@ def parse_xml():
             'index': idx,
             'name': item['name'],
             'supplier_code': item['supplier_code'],
+            'barcode': item.get('barcode', ''),
             'quantity': item['quantity'],
             'purchase_price': purchase_price,
             'tax_percent': tax_pct,
@@ -187,6 +195,7 @@ def confirm_import():
         for item_data in items:
             name = item_data.get('name', '')
             supplier_code = item_data.get('supplier_code', '')
+            barcode = item_data.get('barcode', '')
             quantity = int(item_data.get('quantity', 1))
             purchase_price = Decimal(str(item_data.get('purchase_price', 0)))
             selling_price = Decimal(str(item_data.get('selling_price', 0)))
@@ -206,6 +215,8 @@ def confirm_import():
                     goods_item.current_stock += quantity
                     if supplier_code and not goods_item.sku:
                         goods_item.sku = supplier_code
+                    if barcode and not goods_item.barcode:
+                        goods_item.barcode = barcode
                     update_count += 1
             else:
                 # Create new item
@@ -213,6 +224,7 @@ def confirm_import():
                     tenant_id=g.tenant_id,
                     name=name,
                     sku=supplier_code or None,
+                    barcode=barcode or None,
                     category=item_data.get('category', ''),
                     purchase_price=purchase_price,
                     selling_price=selling_price,
