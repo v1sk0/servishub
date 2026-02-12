@@ -364,10 +364,10 @@ def get_receipt(receipt_id):
             'item_type': i.item_type.value,
             'item_name': i.item_name,
             'quantity': i.quantity,
-            'unit_price': float(i.unit_price),
+            'unit_price': float(i.unit_price or 0),
             'discount_pct': float(i.discount_pct or 0),
-            'line_total': float(i.line_total),
-            'line_profit': float(i.line_profit),
+            'line_total': float(i.line_total or 0),
+            'line_profit': float(i.line_profit or 0),
         } for i in items],
     }, 200
 
