@@ -419,14 +419,27 @@ def ensure_ssl_cert():
         return cert_path, key_path
 
     print("Generating self-signed SSL certificate for localhost...")
+
+    # Create OpenSSL config with SAN (works with both OpenSSL and LibreSSL)
+    conf_path = os.path.join(cert_dir, 'openssl.cnf')
+    with open(conf_path, 'w') as f:
+        f.write('[req]\n')
+        f.write('distinguished_name = req_dn\n')
+        f.write('x509_extensions = v3_req\n')
+        f.write('prompt = no\n')
+        f.write('[req_dn]\n')
+        f.write('CN = localhost\n')
+        f.write('[v3_req]\n')
+        f.write('subjectAltName = DNS:localhost,IP:127.0.0.1\n')
+
     try:
         subprocess.run([
             'openssl', 'req', '-x509', '-newkey', 'rsa:2048',
             '-keyout', key_path, '-out', cert_path,
             '-days', '3650', '-nodes',
-            '-subj', '/CN=localhost',
-            '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1',
+            '-config', conf_path,
         ], check=True, capture_output=True, text=True)
+        os.remove(conf_path)
         print(f"Certificate saved to: {cert_dir}")
         return cert_path, key_path
     except FileNotFoundError:
