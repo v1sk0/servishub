@@ -220,6 +220,12 @@ def goods_invoices():
     return render_template('tenant/goods/invoice_list.html')
 
 
+@bp.route('/goods/invoices/import')
+def goods_invoice_import():
+    """Import eFaktura XML."""
+    return render_template('tenant/goods/import.html')
+
+
 @bp.route('/goods/invoices/new')
 def goods_invoice_new():
     """Unos nove ulazne fakture."""
