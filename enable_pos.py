@@ -1,12 +1,13 @@
-"""Enable POS feature flag for Xphone tenant."""
+"""Add 9999 credits for Xphone tenant (ID=133)."""
+from decimal import Decimal
 from app import create_app
 from app.extensions import db
 from app.models.tenant import Tenant
-from app.models.feature_flag import FeatureFlag
+from app.models.credits import OwnerType, CreditTransactionType
+from app.services.credit_service import add_credits
 
 app = create_app()
 with app.app_context():
-    # Find Xphone tenant
     t = Tenant.query.filter(Tenant.name.ilike('%xphone%')).first()
     if not t:
         print('Tenant Xphone not found!')
@@ -14,22 +15,15 @@ with app.app_context():
 
     print(f'Found tenant: ID={t.id}, Name={t.name}')
 
-    # Check if flag already exists
-    existing = FeatureFlag.query.filter_by(feature_key='pos_enabled', tenant_id=t.id).first()
-    if existing:
-        if existing.enabled:
-            print('POS already enabled for this tenant.')
-        else:
-            existing.enabled = True
-            db.session.commit()
-            print('POS flag updated to enabled.')
-    else:
-        flag = FeatureFlag(feature_key='pos_enabled', tenant_id=t.id, enabled=True)
-        db.session.add(flag)
-        db.session.commit()
-        print('POS flag created and enabled.')
+    txn = add_credits(
+        owner_type=OwnerType.TENANT,
+        owner_id=t.id,
+        amount=Decimal('9999'),
+        transaction_type=CreditTransactionType.ADMIN,
+        description='Admin: 9999 credits for XPhone tenant',
+        ref_type='admin_adjust',
+    )
+    db.session.commit()
 
-    # Verify
-    flags = FeatureFlag.query.filter_by(tenant_id=t.id).all()
-    for f in flags:
-        print(f'  {f.feature_key} = {f.enabled}')
+    print(f'Added 9999 credits. Transaction ID: {txn.id}')
+    print(f'Balance after: {txn.balance_after}')
