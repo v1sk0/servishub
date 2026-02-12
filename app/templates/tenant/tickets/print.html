@@ -9,10 +9,10 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: Arial, sans-serif;
-      font-size: 11pt;
-      line-height: 1.2;
-      color: #000;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.3;
+      color: #1a1a1a;
     }
 
     /* Page wrapper - A4 */
@@ -24,19 +24,22 @@
       flex-direction: column;
     }
 
-    /* Ticket container - tacno polovina A4 */
+    /* Ticket container - polovina A4 */
     .ticket-container {
       width: 100%;
       height: 140mm;
-      padding: 4mm 8mm;
+      padding: 5mm 10mm;
       box-sizing: border-box;
       overflow: hidden;
+      position: relative;
     }
 
     /* Company header */
     .company-header {
       text-align: center;
-      margin-bottom: 2mm;
+      margin-bottom: 3mm;
+      padding-bottom: 2mm;
+      border-bottom: 1.5pt solid #333;
     }
 
     .company-logo {
@@ -46,134 +49,147 @@
     .company-logo img {
       display: block;
       margin: 0 auto;
-      width: 75px;
+      width: 70px;
       height: auto;
       filter: grayscale(100%);
     }
 
     .company-logo .logo-text {
-      font-size: 20pt;
-      font-weight: bold;
-      color: #000;
-    }
-
-    .company-info h3 {
-      font-size: 13pt;
-      margin: 0;
+      font-size: 16pt;
+      font-weight: 700;
+      color: #111;
+      letter-spacing: 0.5px;
     }
 
     .company-info p {
-      font-size: 9pt;
-      color: #333;
+      font-size: 8.5pt;
+      color: #444;
       margin: 0;
+      letter-spacing: 0.2px;
     }
 
     /* Ticket header */
     .ticket-header {
       text-align: center;
-      margin-bottom: 2mm;
-      padding: 1.5mm;
+      margin-bottom: 2.5mm;
+      padding: 2mm 3mm;
       background: #f0f0f0;
-      border: 1px solid #000;
+      border: 1pt solid #555;
+      border-radius: 1mm;
     }
 
     .ticket-header p {
-      font-weight: bold;
-      font-size: 11pt;
+      font-weight: 700;
+      font-size: 10.5pt;
       margin: 0;
+      letter-spacing: 0.3px;
     }
 
-    /* Tables */
-    table {
+    /* Main data table */
+    .data-table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 2mm;
     }
 
-    th, td {
-      border: 1px solid #000;
-      padding: 1mm 1.5mm;
-      font-size: 10pt;
-      vertical-align: top;
+    .data-table th,
+    .data-table td {
+      border: 0.5pt solid #999;
+      padding: 1.5mm 2.5mm;
+      font-size: 9.5pt;
+      vertical-align: middle;
     }
 
-    th {
-      background: #f5f5f5;
+    .data-table th {
+      background: #f7f7f7;
       text-align: left;
-      width: 14%;
-      font-weight: bold;
+      font-weight: 600;
+      color: #333;
+      white-space: nowrap;
+      width: 16%;
+    }
+
+    .data-table td {
+      color: #111;
     }
 
     /* Priority badge */
     .priority-badge {
       display: inline-block;
-      padding: 1mm 3mm;
-      border-radius: 3px;
-      font-size: 9pt;
+      padding: 0.5mm 2.5mm;
+      border-radius: 2px;
+      font-size: 8.5pt;
+      font-weight: 600;
     }
-    .priority-normal { background: #e5e7eb; color: #374151; }
-    .priority-urgent { background: #fef2f2; color: #b91c1c; }
-    .priority-high { background: #fef3c7; color: #92400e; }
+    .priority-normal { background: #e8e8e8; color: #444; }
+    .priority-urgent { background: #fee2e2; color: #b91c1c; border: 0.5pt solid #fca5a5; }
+    .priority-high { background: #fef3c7; color: #92400e; border: 0.5pt solid #fcd34d; }
+    .priority-low { background: #e8e8e8; color: #666; }
 
     /* Clause text */
     .clause-text {
       font-size: 7pt;
-      color: #000;
-      margin: 2mm 0;
-      padding: 2mm 3mm;
-      border: 1px solid #000;
-      background: #f9f9f9;
-      line-height: 1.3;
+      color: #333;
+      margin: 2mm 0 1mm;
+      padding: 1.5mm 3mm;
+      border: 0.5pt solid #bbb;
+      background: #fafafa;
+      line-height: 1.4;
+      border-radius: 1mm;
     }
 
-    /* Powered by */
-    .powered-by {
-      text-align: center;
-      font-size: 6pt;
-      color: #999;
-      margin-top: 2mm;
+    /* SMS clause */
+    .sms-clause {
+      font-size: 7.5pt;
+      color: #555;
+      padding: 1mm 3mm;
+      display: flex;
+      align-items: center;
+      gap: 1mm;
     }
-    .powered-by span {
-      font-size: 7pt;
-      font-weight: bold;
-      color: #000;
+
+    .sms-clause strong {
+      font-weight: 700;
     }
 
     /* Signatures + QR wrapper */
     .bottom-section {
       display: flex;
       align-items: flex-start;
-      gap: 3mm;
+      gap: 4mm;
+      margin-top: 1.5mm;
     }
 
     /* Signatures */
     .signatures-table {
       flex: 1;
+      border-collapse: collapse;
     }
 
     .signatures-table td {
       border: none;
       width: 50%;
-      padding: 1mm 2mm;
+      padding: 0.5mm 1.5mm;
       vertical-align: top;
     }
 
     .signatures-table small {
-      font-size: 9pt;
-      color: #333;
+      font-size: 8pt;
+      color: #555;
     }
 
     .signature-line {
-      border-bottom: 1px solid #000;
-      height: 8mm;
+      border-bottom: 0.5pt solid #333;
+      height: 7mm;
       margin-top: 1mm;
-      width: 85%;
+      width: 90%;
     }
 
     /* QR section */
     .qr-section {
       text-align: center;
       flex-shrink: 0;
+      padding-top: 1mm;
     }
 
     .qr-section img,
@@ -183,35 +199,66 @@
     }
 
     .qr-section p {
-      font-size: 8pt;
-      color: #666;
-      margin-top: 1mm;
+      font-size: 6.5pt;
+      color: #888;
+      margin-top: 0.5mm;
     }
 
-    /* Copy label */
+    /* Footer row: copy label + powered by */
+    .ticket-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: 1mm;
+      padding-top: 1mm;
+      border-top: 0.25pt solid #ddd;
+    }
+
     .copy-label {
-      text-align: right;
-      font-size: 9pt;
+      font-size: 8pt;
       color: #999;
       font-style: italic;
-      margin-top: 1mm;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
 
-    /* Cut line - TACNO NA SREDINI */
+    .powered-by {
+      font-size: 6pt;
+      color: #bbb;
+    }
+    .powered-by span {
+      font-size: 6.5pt;
+      font-weight: 700;
+      color: #888;
+    }
+
+    /* Cut line */
     .cut-line {
       height: 12mm;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-top: 1px dashed #888;
-      border-bottom: 1px dashed #888;
-      margin: 0;
+      position: relative;
+    }
+
+    .cut-line::before {
+      content: '';
+      position: absolute;
+      left: 8mm;
+      right: 8mm;
+      top: 50%;
+      border-top: 1pt dashed #ccc;
     }
 
     .cut-line span {
-      color: #888;
-      font-size: 10pt;
-      letter-spacing: 2px;
+      background: #fff;
+      padding: 0 4mm;
+      position: relative;
+      z-index: 1;
+      color: #bbb;
+      font-size: 7pt;
+      letter-spacing: 3px;
+      text-transform: uppercase;
     }
 
     /* Loading state */
@@ -280,17 +327,21 @@
       .no-print {
         display: none !important;
       }
+
+      .cut-line span {
+        background: #fff;
+      }
     }
 
     /* Screen preview */
     @media screen {
       body {
-        background: #ccc;
+        background: #e2e2e2;
         padding: 10mm;
       }
       .page-wrapper {
         background: #fff;
-        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        box-shadow: 0 2px 20px rgba(0,0,0,0.15);
       }
     }
 
@@ -299,21 +350,25 @@
       position: fixed;
       top: 10mm;
       right: 10mm;
-      padding: 8px 16px;
+      padding: 10px 20px;
       background: #7c3aed;
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 12pt;
+      font-size: 11pt;
+      font-weight: 600;
       z-index: 1000;
+      box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+      transition: all 0.15s;
     }
 
     .print-button:hover {
       background: #6d28d9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
     }
   </style>
-  <!-- QR Code is generated server-side as base64 -->
 </head>
 <body>
   <!-- Print button (hidden on print) -->
@@ -347,46 +402,46 @@
       </header>
 
       <div class="ticket-header">
-        <p>SERVISNI NALOG br: <span id="ticket-number-1"></span> | Datum: <span id="ticket-date-1"></span> | <span id="customer-name-1"></span></p>
+        <p>SERVISNI NALOG br: <span id="ticket-number-1"></span> &nbsp;&middot;&nbsp; <span id="ticket-date-1"></span> &nbsp;&middot;&nbsp; <span id="customer-name-1"></span></p>
       </div>
 
-      <table>
+      <table class="data-table">
         <tbody>
           <tr>
-            <th>Uredjaj:</th>
+            <th>Uredjaj</th>
             <td id="service-section-1"></td>
-            <th>Brand/Model:</th>
+            <th>Marka / Model</th>
             <td colspan="3" id="brand-model-1"></td>
           </tr>
           <tr>
-            <th>Korisnik:</th>
+            <th>Korisnik</th>
             <td id="customer-full-1"></td>
-            <th>Telefon:</th>
+            <th>Telefon</th>
             <td id="customer-phone-1"></td>
-            <th>Prioritet:</th>
+            <th>Prioritet</th>
             <td id="priority-1"></td>
           </tr>
           <tr id="company-row-1" style="display: none;">
-            <th>Firma:</th>
+            <th>Firma</th>
             <td colspan="3" id="company-name-1"></td>
-            <th>PIB:</th>
+            <th>PIB</th>
             <td id="company-pib-1"></td>
           </tr>
-          <tr>
-            <th>Opis kvara:</th>
-            <td colspan="3" id="problem-1"></td>
-            <th>Cena:</th>
-            <td id="price-1"></td>
-          </tr>
-          <tr>
-            <th>Serviser:</th>
-            <td id="technician-1"></td>
-            <th>Lokacija:</th>
-            <td colspan="3" id="location-1"></td>
-          </tr>
           <tr id="imei-row-1" style="display: none;">
-            <th id="imei-label-1">IMEI:</th>
+            <th id="imei-label-1">IMEI</th>
             <td colspan="5" id="imei-1"></td>
+          </tr>
+          <tr>
+            <th>Opis kvara</th>
+            <td colspan="5" id="problem-1"></td>
+          </tr>
+          <tr>
+            <th>Cena</th>
+            <td id="price-1"></td>
+            <th>Serviser</th>
+            <td id="technician-1"></td>
+            <th>Lokacija</th>
+            <td id="location-1"></td>
           </tr>
         </tbody>
       </table>
@@ -395,7 +450,7 @@
         Opremu ostavljate na servis na sopstvenu odgovornost. Servis ne snosi odgovornost za gubitak podataka.
         Garancija vazi samo uz ovaj nalog. Maksimalno vreme cuvanja opreme je 30 dana od obavestenja o zavrsetku servisa.
       </div>
-      <div class="sms-clause" id="sms-clause-1" style="font-size: 10px; margin-top: 5px; padding: 3px 5px; background: #f5f5f5; border-radius: 3px;">
+      <div class="sms-clause" id="sms-clause-1">
         SMS obavestenja: <strong id="sms-status-1">DA</strong>
       </div>
 
@@ -428,13 +483,15 @@
         </div>
       </div>
 
-      <div class="copy-label">PRIMERAK ZA SERVIS</div>
-      <div class="powered-by">powered by <span>ServisHub</span></div>
+      <div class="ticket-footer">
+        <span class="copy-label">Primerak za servis</span>
+        <span class="powered-by">powered by <span>ServisHub</span></span>
+      </div>
     </div>
 
-    <!-- Cut line - NA SREDINI -->
+    <!-- Cut line -->
     <div class="cut-line">
-      <span>- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</span>
+      <span>isecite ovde</span>
     </div>
 
     <!-- Second copy - for customer -->
@@ -450,46 +507,46 @@
       </header>
 
       <div class="ticket-header">
-        <p>SERVISNI NALOG br: <span id="ticket-number-2"></span> | Datum: <span id="ticket-date-2"></span> | <span id="customer-name-2"></span></p>
+        <p>SERVISNI NALOG br: <span id="ticket-number-2"></span> &nbsp;&middot;&nbsp; <span id="ticket-date-2"></span> &nbsp;&middot;&nbsp; <span id="customer-name-2"></span></p>
       </div>
 
-      <table>
+      <table class="data-table">
         <tbody>
           <tr>
-            <th>Uredjaj:</th>
+            <th>Uredjaj</th>
             <td id="service-section-2"></td>
-            <th>Brand/Model:</th>
+            <th>Marka / Model</th>
             <td colspan="3" id="brand-model-2"></td>
           </tr>
           <tr>
-            <th>Korisnik:</th>
+            <th>Korisnik</th>
             <td id="customer-full-2"></td>
-            <th>Telefon:</th>
+            <th>Telefon</th>
             <td id="customer-phone-2"></td>
-            <th>Prioritet:</th>
+            <th>Prioritet</th>
             <td id="priority-2"></td>
           </tr>
           <tr id="company-row-2" style="display: none;">
-            <th>Firma:</th>
+            <th>Firma</th>
             <td colspan="3" id="company-name-2"></td>
-            <th>PIB:</th>
+            <th>PIB</th>
             <td id="company-pib-2"></td>
           </tr>
-          <tr>
-            <th>Opis kvara:</th>
-            <td colspan="3" id="problem-2"></td>
-            <th>Cena:</th>
-            <td id="price-2"></td>
-          </tr>
-          <tr>
-            <th>Serviser:</th>
-            <td id="technician-2"></td>
-            <th>Lokacija:</th>
-            <td colspan="3" id="location-2"></td>
-          </tr>
           <tr id="imei-row-2" style="display: none;">
-            <th id="imei-label-2">IMEI:</th>
+            <th id="imei-label-2">IMEI</th>
             <td colspan="5" id="imei-2"></td>
+          </tr>
+          <tr>
+            <th>Opis kvara</th>
+            <td colspan="5" id="problem-2"></td>
+          </tr>
+          <tr>
+            <th>Cena</th>
+            <td id="price-2"></td>
+            <th>Serviser</th>
+            <td id="technician-2"></td>
+            <th>Lokacija</th>
+            <td id="location-2"></td>
           </tr>
         </tbody>
       </table>
@@ -498,7 +555,7 @@
         Opremu ostavljate na servis na sopstvenu odgovornost. Servis ne snosi odgovornost za gubitak podataka.
         Garancija vazi samo uz ovaj nalog. Maksimalno vreme cuvanja opreme je 30 dana od obavestenja o zavrsetku servisa.
       </div>
-      <div class="sms-clause" id="sms-clause-2" style="font-size: 10px; margin-top: 5px; padding: 3px 5px; background: #f5f5f5; border-radius: 3px;">
+      <div class="sms-clause" id="sms-clause-2">
         SMS obavestenja: <strong id="sms-status-2">DA</strong>
       </div>
 
@@ -531,8 +588,10 @@
         </div>
       </div>
 
-      <div class="copy-label">PRIMERAK ZA KORISNIKA</div>
-      <div class="powered-by">powered by <span>ServisHub</span></div>
+      <div class="ticket-footer">
+        <span class="copy-label">Primerak za korisnika</span>
+        <span class="powered-by">powered by <span>ServisHub</span></span>
+      </div>
     </div>
   </div>
 
@@ -542,13 +601,9 @@
 
     // Get tokens from localStorage
     function getAccessToken() {
-      // Try 'access_token' first (used by tenant login)
       const directToken = sessionStorage.getItem('access_token');
-      if (directToken) {
-        return directToken;
-      }
+      if (directToken) return directToken;
 
-      // Fallback to 'servishub_token' (legacy format)
       const tokenData = localStorage.getItem('servishub_token');
       if (tokenData) {
         try {
@@ -574,13 +629,13 @@
 
     // Format priority badge
     function formatPriority(priority) {
-      const priorityMap = {
-        'LOW': '<span class="priority-badge priority-normal">Nizak</span>',
+      const map = {
+        'LOW': '<span class="priority-badge priority-low">Nizak</span>',
         'NORMAL': '<span class="priority-badge priority-normal">Normalan</span>',
         'HIGH': '<span class="priority-badge priority-high">Visok</span>',
         'URGENT': '<span class="priority-badge priority-urgent">Hitan</span>'
       };
-      return priorityMap[priority] || priority || '-';
+      return map[priority] || priority || '-';
     }
 
     // Show error
@@ -609,7 +664,7 @@
     // Fill both copies with data
     function fillTicketData(ticket, tenant, location, qr_code_base64) {
       for (let i = 1; i <= 2; i++) {
-        // Tenant info - show logo image if available, otherwise text
+        // Tenant logo
         const logoImg = document.getElementById(`logo-img-${i}`);
         const logoText = document.getElementById(`logo-text-${i}`);
 
@@ -623,28 +678,40 @@
           logoText.textContent = tenant?.name || 'Servis';
         }
 
+        // Tenant info line
         document.getElementById(`tenant-info-${i}`).textContent =
-          [tenant?.address, tenant?.phone ? `Tel: ${tenant.phone}` : ''].filter(Boolean).join(' | ') || '';
+          [tenant?.address, tenant?.phone ? `Tel: ${tenant.phone}` : ''].filter(Boolean).join('  |  ') || '';
 
         // Ticket header
         document.getElementById(`ticket-number-${i}`).textContent = ticket.ticket_number || ticket.id;
         document.getElementById(`ticket-date-${i}`).textContent = formatDate(ticket.created_at);
         document.getElementById(`customer-name-${i}`).textContent = ticket.customer_name || '-';
 
-        // Ticket details
+        // Device type
         const deviceLabel = DEVICE_TYPE_LABELS[ticket.device_type] || ticket.service_section || 'Telefon';
         document.getElementById(`service-section-${i}`).textContent = deviceLabel;
+
+        // Brand / Model
         document.getElementById(`brand-model-${i}`).textContent =
           [ticket.brand, ticket.model].filter(Boolean).join(' ') || '-';
+
+        // Customer
         document.getElementById(`customer-full-${i}`).textContent = ticket.customer_name || '-';
         document.getElementById(`customer-phone-${i}`).textContent = ticket.customer_phone || '-';
         document.getElementById(`priority-${i}`).innerHTML = formatPriority(ticket.priority);
 
-        // Company info (if B2B)
+        // Company info (B2B)
         if (ticket.customer_company_name) {
           document.getElementById(`company-row-${i}`).style.display = '';
           document.getElementById(`company-name-${i}`).textContent = ticket.customer_company_name;
           document.getElementById(`company-pib-${i}`).textContent = ticket.customer_pib || '-';
+        }
+
+        // IMEI / Serial
+        if (ticket.imei) {
+          document.getElementById(`imei-row-${i}`).style.display = '';
+          document.getElementById(`imei-label-${i}`).textContent = IDENTIFIER_LABELS[ticket.device_type] || 'IMEI';
+          document.getElementById(`imei-${i}`).textContent = ticket.imei;
         }
 
         // Problem and price
@@ -652,35 +719,24 @@
         document.getElementById(`price-${i}`).textContent =
           ticket.estimated_price ? `${ticket.estimated_price} ${ticket.currency || 'RSD'}` : '-';
 
-        // Technician (who created the ticket) and location
+        // Technician and location
         document.getElementById(`technician-${i}`).textContent = ticket.created_by_name || '-';
         document.getElementById(`location-${i}`).textContent = location?.name || '-';
 
-        // IMEI / Serial number
-        if (ticket.imei) {
-          document.getElementById(`imei-row-${i}`).style.display = '';
-          document.getElementById(`imei-label-${i}`).textContent = IDENTIFIER_LABELS[ticket.device_type] || 'IMEI';
-          document.getElementById(`imei-${i}`).textContent = ticket.imei;
-        }
-
-        // Set QR code image (server-generated base64)
+        // QR code
         if (qr_code_base64) {
           document.getElementById(`qr-code-${i}`).src = `data:image/png;base64,${qr_code_base64}`;
         }
 
-        // Set print clause from tenant settings
+        // Print clause
         if (tenant?.print_clause) {
           document.getElementById(`clause-${i}`).textContent = tenant.print_clause;
         }
 
-        // SMS status clause
+        // SMS status
         const smsStatus = ticket.sms_opt_out ? 'NE' : 'DA';
         document.getElementById(`sms-status-${i}`).textContent = smsStatus;
-        if (ticket.sms_opt_out) {
-          document.getElementById(`sms-status-${i}`).style.color = '#dc2626';
-        } else {
-          document.getElementById(`sms-status-${i}`).style.color = '#16a34a';
-        }
+        document.getElementById(`sms-status-${i}`).style.color = ticket.sms_opt_out ? '#dc2626' : '#16a34a';
       }
     }
 
@@ -693,7 +749,6 @@
       }
 
       try {
-        // Fetch ticket with print data
         const response = await fetch(`/api/v1/tickets/${ticketId}/print`, {
           headers: { 'Authorization': `Bearer ${accessToken}` }
         });
@@ -718,12 +773,6 @@
         // Show content
         document.getElementById('loading').style.display = 'none';
         document.getElementById('content').style.display = 'flex';
-
-        // Auto print after short delay
-        setTimeout(() => {
-          // Uncomment to auto-print:
-          // window.print();
-        }, 500);
 
       } catch (error) {
         console.error('Error loading ticket:', error);
