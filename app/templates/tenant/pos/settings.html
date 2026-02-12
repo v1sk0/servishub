@@ -1,0 +1,248 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}POS Podesavanja{% endblock %}
+
+{% block page_content %}
+<div x-data="posSettings()" x-init="init()">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">POS Podesavanja</h2>
+            <p class="mt-1 text-sm text-gray-500">Stampac, format racuna, audit</p>
+        </div>
+        <div class="mt-4 flex gap-2 md:mt-0">
+            <a href="/pos" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">Nazad na kasu</a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Left: Settings -->
+        <div class="space-y-6">
+
+            <!-- Printer Settings -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Stampac</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sirina papira</label>
+                        <select x-model="paperSize" @change="saveSettings()"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                            <option value="80">80mm (standardni termalni)</option>
+                            <option value="58">58mm (mali termalni)</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" x-model="autoPrint" @change="saveSettings()"
+                               id="auto-print" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                        <label for="auto-print" class="text-sm text-gray-700">Automatski stampaj posle svakog racuna</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Receipt Format -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Format racuna</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Naziv firme na racunu</label>
+                        <input type="text" x-model="companyName" @change="saveSettings()" placeholder="Iz profila servisa"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                        <p class="mt-1 text-xs text-gray-400">Ostavite prazno za naziv iz profila</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Poruka na dnu racuna</label>
+                        <input type="text" x-model="footerMessage" @change="saveSettings()" placeholder="Hvala na poseti!"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Log -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Poslednje akcije (Audit)</h3>
+                <div class="space-y-2 max-h-80 overflow-y-auto">
+                    <template x-for="log in auditLogs" :key="log.id">
+                        <div class="border-b border-gray-100 pb-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="font-medium text-gray-900" x-text="formatAction(log)"></span>
+                                <span class="text-xs text-gray-400" x-text="formatDate(log.created_at)"></span>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-0.5">
+                                <span x-text="log.user_email || 'Sistem'"></span>
+                                <template x-if="log.changes?.receipt_number">
+                                    <span> — Racun <span class="font-mono" x-text="log.changes.receipt_number"></span></span>
+                                </template>
+                                <template x-if="log.changes?.total">
+                                    <span> — <span x-text="fmtPrice(log.changes.total)"></span> RSD</span>
+                                </template>
+                                <template x-if="log.changes?.payment_method">
+                                    <span class="ml-1 text-gray-400" x-text="'(' + log.changes.payment_method + ')'"></span>
+                                </template>
+                            </div>
+                            <template x-if="log.changes?.items_detail">
+                                <div class="text-xs text-gray-400 mt-1 pl-2">
+                                    <template x-for="it in log.changes.items_detail" :key="it.name">
+                                        <div x-text="it.qty + 'x ' + it.name"></div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                    <div x-show="auditLogs.length === 0" class="text-center text-gray-400 py-4">Nema zapisa</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Receipt Preview -->
+        <div>
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Preview racuna</h3>
+                    <button @click="printPreview()" class="text-sm text-primary-600 hover:text-primary-500 font-medium">Test stampe</button>
+                </div>
+                <div class="flex justify-center">
+                    <div :class="paperSize === '58' ? 'w-[58mm]' : 'w-[80mm]'"
+                         class="bg-white border border-gray-200 shadow-inner p-3 font-mono text-xs leading-relaxed transition-all duration-300"
+                         style="min-height: 300px;">
+                        <!-- Preview header -->
+                        <div class="text-center mb-2">
+                            <div class="font-bold text-sm" x-text="companyName || tenantName || 'Naziv firme'"></div>
+                            <div class="text-[10px] text-gray-500" x-text="tenantAddress || 'Adresa firme'"></div>
+                            <div class="text-[10px] text-gray-500" x-text="tenantPib ? 'PIB: ' + tenantPib : ''"></div>
+                        </div>
+                        <div class="border-t-2 border-black my-1"></div>
+                        <div class="flex justify-between text-[10px]">
+                            <span>Racun br:</span><span class="font-mono">20260212-001</span>
+                        </div>
+                        <div class="flex justify-between text-[10px]">
+                            <span>Datum:</span><span>12.02.2026 14:30</span>
+                        </div>
+                        <div class="flex justify-between text-[10px]">
+                            <span>Kasir:</span><span>Darko</span>
+                        </div>
+                        <div class="border-t border-dashed border-black my-1"></div>
+
+                        <!-- Preview items -->
+                        <div class="mb-1">
+                            <div class="font-bold">1. USB kabal Type-C 1m</div>
+                            <div class="flex justify-between pl-2 text-[10px] text-gray-600">
+                                <span>2 x 350,00</span><span class="font-bold text-black">700,00</span>
+                            </div>
+                        </div>
+                        <div class="mb-1">
+                            <div class="font-bold">2. Futrola iPhone 15</div>
+                            <div class="flex justify-between pl-2 text-[10px] text-gray-600">
+                                <span>1 x 1.500,00</span><span class="font-bold text-black">1.500,00</span>
+                            </div>
+                        </div>
+                        <div class="mb-1">
+                            <div class="font-bold">3. Zastitno staklo</div>
+                            <div class="flex justify-between pl-2 text-[10px] text-gray-600">
+                                <span>1 x 800,00 (-10%)</span><span class="font-bold text-black">720,00</span>
+                            </div>
+                        </div>
+
+                        <div class="border-t-2 border-black my-1"></div>
+                        <div class="flex justify-between font-bold text-base my-1">
+                            <span>UKUPNO:</span><span>2.920,00 RSD</span>
+                        </div>
+                        <div class="border-t border-dashed border-black my-1"></div>
+                        <div class="flex justify-between text-[10px]"><span>Primljeno:</span><span>3.000,00</span></div>
+                        <div class="flex justify-between text-[10px]"><span>Povracaj:</span><span>80,00</span></div>
+                        <div class="border-t border-dashed border-black my-1"></div>
+                        <div class="text-center text-[10px] text-gray-500 mt-2" x-text="footerMessage || 'Hvala na poseti!'"></div>
+                        <div class="text-center text-[9px] text-gray-300 mt-1">shub.rs</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function posSettings() {
+    return {
+        paperSize: '80',
+        autoPrint: false,
+        companyName: '',
+        footerMessage: '',
+        tenantName: '',
+        tenantAddress: '',
+        tenantPib: '',
+        auditLogs: [],
+
+        async init() {
+            // Load settings from localStorage
+            this.paperSize = localStorage.getItem('pos-paper-size') || '80';
+            this.autoPrint = localStorage.getItem('pos-auto-print') === '1';
+            this.companyName = localStorage.getItem('pos-company-name') || '';
+            this.footerMessage = localStorage.getItem('pos-footer-message') || '';
+
+            // Load tenant info
+            try {
+                const res = await api('/api/v1/tenant/');
+                if (res.ok) {
+                    const data = await res.json();
+                    const t = data.tenant || {};
+                    this.tenantName = t.name || '';
+                    this.tenantAddress = t.address || '';
+                    this.tenantPib = t.pib || '';
+                }
+            } catch (e) {}
+
+            // Load audit logs
+            this.loadAudit();
+        },
+
+        saveSettings() {
+            localStorage.setItem('pos-paper-size', this.paperSize);
+            localStorage.setItem('pos-auto-print', this.autoPrint ? '1' : '0');
+            localStorage.setItem('pos-company-name', this.companyName);
+            localStorage.setItem('pos-footer-message', this.footerMessage);
+        },
+
+        async loadAudit() {
+            try {
+                const res = await api('/api/v1/pos/audit?limit=30');
+                if (res.ok) {
+                    const data = await res.json();
+                    this.auditLogs = data.logs || [];
+                }
+            } catch (e) {}
+        },
+
+        printPreview() {
+            window.open('/pos/receipts/print?id=preview', '_blank', 'width=400,height=600');
+        },
+
+        formatAction(log) {
+            const action = log.changes?.action || log.action || '';
+            const map = {
+                'QUICK_ISSUE': 'Izdat racun',
+                'VOID': 'Storniran racun',
+                'REFUND': 'Refundiran racun',
+                'REGISTER_OPEN': 'Otvorena kasa',
+                'REGISTER_CLOSE': 'Zatvorena kasa',
+                'CREATE': 'Kreiran zapis',
+                'AUTO_DAILY_CLOSE': 'Auto zatvaranje kase',
+            };
+            return map[action] || action;
+        },
+
+        formatDate(iso) {
+            if (!iso) return '';
+            return new Date(iso).toLocaleDateString('sr-RS', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        },
+
+        fmtPrice(val) {
+            if (val == null) return '0';
+            return Number(val).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+    };
+}
+</script>
+{% endblock %}

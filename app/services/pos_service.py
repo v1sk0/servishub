@@ -228,7 +228,23 @@ class POSService:
             entity_type='receipt',
             entity_id=receipt.id,
             action=AuditAction.CREATE,
-            changes={'action': 'QUICK_ISSUE', 'total': float(receipt.total_amount), 'items': len(items)},
+            changes={
+                'action': 'QUICK_ISSUE',
+                'receipt_number': receipt.receipt_number,
+                'total': float(receipt.total_amount or 0),
+                'payment_method': payment_method,
+                'cash_received': float(cash_received) if cash_received else None,
+                'card_amount': float(card_amount) if card_amount else None,
+                'transfer_amount': float(transfer_amount) if transfer_amount else None,
+                'discount_pct': float(discount_pct) if discount_pct else None,
+                'buyer_pib': buyer_pib,
+                'items_count': len(items),
+                'items_detail': [
+                    {'name': it.get('item_name', ''), 'type': it.get('type', 'CUSTOM'),
+                     'qty': it.get('quantity', 1), 'price': float(it.get('unit_price', 0))}
+                    for it in items
+                ],
+            },
             tenant_id=tenant_id,
             user_id=user_id,
         )

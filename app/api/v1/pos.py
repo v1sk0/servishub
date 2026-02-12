@@ -329,6 +329,14 @@ def get_receipt(receipt_id):
 
     items = ReceiptItem.query.filter_by(receipt_id=receipt_id).all()
 
+    # Get issuer name
+    issued_by_name = None
+    if receipt.issued_by_id:
+        from app.models.tenant import TenantUser
+        issuer = TenantUser.query.get(receipt.issued_by_id)
+        if issuer:
+            issued_by_name = issuer.full_name or issuer.email
+
     return {
         'id': receipt.id,
         'receipt_number': receipt.receipt_number,
@@ -343,7 +351,14 @@ def get_receipt(receipt_id):
         'payment_method': receipt.payment_method.value if receipt.payment_method else None,
         'cash_received': float(receipt.cash_received) if receipt.cash_received else None,
         'cash_change': float(receipt.cash_change) if receipt.cash_change else None,
+        'card_amount': float(receipt.card_amount) if receipt.card_amount else None,
+        'transfer_amount': float(receipt.transfer_amount) if receipt.transfer_amount else None,
+        'buyer_pib': receipt.buyer_pib,
+        'buyer_name': receipt.buyer_name,
         'issued_at': receipt.issued_at.isoformat() if receipt.issued_at else None,
+        'issued_by': issued_by_name,
+        'voided_at': receipt.voided_at.isoformat() if receipt.voided_at else None,
+        'void_reason': receipt.void_reason,
         'items': [{
             'id': i.id,
             'item_type': i.item_type.value,
@@ -783,3 +798,36 @@ def fiscal_retry():
         'retried_count': len(retried),
         'receipt_ids': retried,
     }, 200
+
+
+# ─────────────── AUDIT LOG ───────────────
+
+@bp.route('/audit', methods=['GET'])
+@jwt_required
+def get_audit_logs():
+    """Get POS audit logs (receipt actions)."""
+    check = _check_pos_enabled()
+    if check:
+        return check
+
+    from app.models.audit import AuditLog
+
+    limit = request.args.get('limit', 30, type=int)
+    limit = min(limit, 100)
+
+    logs = AuditLog.query.filter_by(
+        tenant_id=g.tenant_id,
+        entity_type='receipt',
+    ).order_by(AuditLog.created_at.desc()).limit(limit).all()
+
+    result = []
+    for log in logs:
+        result.append({
+            'id': log.id,
+            'action': log.action.value if hasattr(log.action, 'value') else str(log.action),
+            'changes': log.changes,
+            'user_email': log.user_email,
+            'created_at': log.created_at.isoformat() if log.created_at else None,
+        })
+
+    return {'logs': result}, 200

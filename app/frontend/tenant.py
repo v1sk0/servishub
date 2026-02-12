@@ -206,6 +206,18 @@ def pos_daily_report():
     return render_template('tenant/pos/daily_report.html')
 
 
+@bp.route('/pos/receipts/print')
+def pos_receipt_print():
+    """Stampa racuna - termalni format."""
+    return render_template('tenant/pos/receipt_print.html')
+
+
+@bp.route('/pos/settings')
+def pos_settings():
+    """POS podesavanja - stampac, format racuna."""
+    return render_template('tenant/pos/settings.html')
+
+
 # ============== Magacin / Goods ==============
 
 @bp.route('/goods')

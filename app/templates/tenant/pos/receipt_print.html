@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Racun</title>
+    <style>
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #000;
+            background: #f3f4f6;
+        }
+
+        .receipt {
+            width: 80mm;
+            margin: 10px auto;
+            padding: 8mm 5mm;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .receipt-58 { width: 58mm; font-size: 10px; padding: 5mm 3mm; }
+
+        /* Header */
+        .header { text-align: center; margin-bottom: 8px; }
+        .header .company-name { font-size: 14px; font-weight: bold; }
+        .receipt-58 .header .company-name { font-size: 12px; }
+        .header .company-info { font-size: 10px; color: #333; }
+
+        /* Divider */
+        .divider { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+        .divider-double { border-top: 2px solid #000; }
+
+        /* Receipt info */
+        .info-row { display: flex; justify-content: space-between; font-size: 11px; }
+        .receipt-58 .info-row { font-size: 9px; }
+
+        /* Items table */
+        .items { width: 100%; border-collapse: collapse; margin: 4px 0; }
+        .items td { padding: 2px 0; vertical-align: top; }
+        .items .item-name { font-weight: bold; }
+        .items .item-detail { padding-left: 8px; font-size: 11px; color: #333; }
+        .items .item-total { text-align: right; font-weight: bold; }
+        .receipt-58 .items { font-size: 9px; }
+
+        /* Totals */
+        .totals { margin: 4px 0; }
+        .total-row { display: flex; justify-content: space-between; padding: 1px 0; }
+        .total-row.grand { font-size: 16px; font-weight: bold; margin: 4px 0; }
+        .receipt-58 .total-row.grand { font-size: 13px; }
+
+        /* Payment */
+        .payment { font-size: 11px; }
+
+        /* Footer */
+        .footer { text-align: center; font-size: 10px; margin-top: 8px; color: #333; }
+
+        /* Badge */
+        .badge-void { text-align: center; font-size: 18px; font-weight: bold; color: #dc2626; border: 2px solid #dc2626; padding: 4px; margin: 8px 0; }
+        .badge-refund { text-align: center; font-size: 14px; font-weight: bold; color: #2563eb; border: 2px solid #2563eb; padding: 4px; margin: 8px 0; }
+
+        /* Screen-only controls */
+        .print-controls {
+            width: 80mm;
+            margin: 10px auto;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        .print-controls button {
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .print-controls button:hover { background: #f3f4f6; }
+        .print-controls .btn-print { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .print-controls .btn-print:hover { background: #1d4ed8; }
+
+        /* Print styles */
+        @media print {
+            body { background: #fff; }
+            .receipt { margin: 0; padding: 2mm; box-shadow: none; width: 100%; }
+            .print-controls { display: none; }
+            @page { margin: 0; size: 80mm auto; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Controls (screen only) -->
+    <div class="print-controls" id="controls">
+        <button class="btn-print" onclick="window.print()">Stampaj</button>
+        <button onclick="window.close()">Zatvori</button>
+    </div>
+
+    <div class="receipt" id="receipt">
+        <div id="loading" style="text-align:center; padding: 20px; color: #666;">Ucitavanje...</div>
+    </div>
+
+    <script>
+    const receiptId = new URLSearchParams(window.location.search).get('id');
+    const paperSize = localStorage.getItem('pos-paper-size') || '80';
+    const autoPrint = new URLSearchParams(window.location.search).get('auto') === '1';
+    const showProfit = localStorage.getItem('pos-show-profit') === '1';
+    const customCompanyName = localStorage.getItem('pos-company-name') || '';
+    const customFooter = localStorage.getItem('pos-footer-message') || 'Hvala na poseti!';
+
+    if (paperSize === '58') {
+        document.getElementById('receipt').classList.add('receipt-58');
+    }
+
+    async function loadAndRender() {
+        if (!receiptId) {
+            document.getElementById('loading').textContent = 'Nema ID racuna';
+            return;
+        }
+
+        const token = sessionStorage.getItem('access_token');
+        if (!token) {
+            document.getElementById('loading').textContent = 'Niste prijavljeni';
+            return;
+        }
+
+        // Fetch receipt + tenant info in parallel
+        const [receiptRes, tenantRes] = await Promise.all([
+            fetch(`/api/v1/pos/receipts/${receiptId}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            }),
+            fetch('/api/v1/tenant/', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            })
+        ]);
+
+        if (!receiptRes.ok) {
+            document.getElementById('loading').textContent = 'Racun nije pronadjen';
+            return;
+        }
+
+        const r = await receiptRes.json();
+        const tenant = tenantRes.ok ? (await tenantRes.json()).tenant || {} : {};
+
+        renderReceipt(r, tenant);
+
+        if (autoPrint) {
+            setTimeout(() => window.print(), 400);
+        }
+    }
+
+    function fmtPrice(val) {
+        if (val == null || isNaN(val)) return '0,00';
+        return Number(val).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function fmtDate(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        return d.toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' })
+            + ' ' + d.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderReceipt(r, tenant) {
+        const el = document.getElementById('receipt');
+        let html = '';
+
+        // Header
+        html += '<div class="header">';
+        html += `<div class="company-name">${customCompanyName || tenant.name || 'ServisHub'}</div>`;
+        if (tenant.address) html += `<div class="company-info">${tenant.address}</div>`;
+        if (tenant.phone) html += `<div class="company-info">Tel: ${tenant.phone}</div>`;
+        if (tenant.pib) html += `<div class="company-info">PIB: ${tenant.pib}</div>`;
+        html += '</div>';
+
+        html += '<hr class="divider divider-double">';
+
+        // Status badges
+        if (r.status === 'VOIDED') {
+            html += '<div class="badge-void">STORNIRANO</div>';
+        }
+        if (r.receipt_type === 'REFUND') {
+            html += '<div class="badge-refund">POVRACAJ</div>';
+        }
+
+        // Receipt info
+        html += '<div class="info-row"><span>Racun br:</span><span>' + r.receipt_number + '</span></div>';
+        html += '<div class="info-row"><span>Datum:</span><span>' + fmtDate(r.issued_at) + '</span></div>';
+        if (r.issued_by) {
+            html += '<div class="info-row"><span>Kasir:</span><span>' + r.issued_by + '</span></div>';
+        }
+
+        // B2B buyer info
+        if (r.buyer_pib) {
+            html += '<hr class="divider">';
+            html += '<div class="info-row"><span>Kupac PIB:</span><span>' + r.buyer_pib + '</span></div>';
+            if (r.buyer_name) {
+                html += '<div class="info-row"><span>Kupac:</span><span>' + r.buyer_name + '</span></div>';
+            }
+        }
+
+        html += '<hr class="divider">';
+
+        // Items
+        html += '<table class="items">';
+        r.items.forEach((item, idx) => {
+            html += '<tr>';
+            html += `<td class="item-name" colspan="2">${idx + 1}. ${item.item_name}</td>`;
+            html += '</tr>';
+            let detail = `${item.quantity} x ${fmtPrice(item.unit_price)}`;
+            if (item.discount_pct > 0) detail += ` (-${item.discount_pct}%)`;
+            html += '<tr>';
+            html += `<td class="item-detail">${detail}</td>`;
+            html += `<td class="item-total">${fmtPrice(item.line_total)}</td>`;
+            html += '</tr>';
+        });
+        html += '</table>';
+
+        html += '<hr class="divider divider-double">';
+
+        // Totals
+        html += '<div class="totals">';
+        if (r.discount_amount > 0) {
+            html += '<div class="total-row"><span>Medjuzbir:</span><span>' + fmtPrice(r.subtotal) + '</span></div>';
+            html += '<div class="total-row"><span>Popust:</span><span>-' + fmtPrice(r.discount_amount) + '</span></div>';
+        }
+        html += '<div class="total-row grand"><span>UKUPNO:</span><span>' + fmtPrice(r.total_amount) + ' RSD</span></div>';
+        html += '</div>';
+
+        html += '<hr class="divider">';
+
+        // Payment
+        html += '<div class="payment">';
+        const pm = r.payment_method;
+        if (pm === 'CASH' || pm === 'MIXED') {
+            if (r.cash_received) {
+                html += '<div class="total-row"><span>Primljeno:</span><span>' + fmtPrice(r.cash_received) + '</span></div>';
+            }
+            if (r.cash_change > 0) {
+                html += '<div class="total-row"><span>Povracaj:</span><span>' + fmtPrice(r.cash_change) + '</span></div>';
+            }
+        }
+        if (pm === 'CARD') {
+            html += '<div class="total-row"><span>Placanje:</span><span>Kartica</span></div>';
+        }
+        if (pm === 'TRANSFER') {
+            html += '<div class="total-row"><span>Placanje:</span><span>Prenos</span></div>';
+        }
+        if (pm === 'MIXED') {
+            if (r.card_amount) html += '<div class="total-row"><span>Kartica:</span><span>' + fmtPrice(r.card_amount) + '</span></div>';
+            if (r.transfer_amount) html += '<div class="total-row"><span>Prenos:</span><span>' + fmtPrice(r.transfer_amount) + '</span></div>';
+        }
+        html += '</div>';
+
+        // Void info
+        if (r.status === 'VOIDED' && r.void_reason) {
+            html += '<hr class="divider">';
+            html += '<div style="font-size:10px; text-align:center;">Razlog: ' + r.void_reason + '</div>';
+        }
+
+        // Footer
+        html += '<hr class="divider">';
+        html += '<div class="footer">';
+        html += `<div>${customFooter}</div>`;
+        html += '<div style="margin-top:4px; font-size:9px; color:#666;">shub.rs</div>';
+        html += '</div>';
+
+        el.innerHTML = html;
+    }
+
+    loadAndRender();
+    </script>
+</body>
+</html>
