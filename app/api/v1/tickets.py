@@ -16,7 +16,8 @@ from ...extensions import db
 from ...models import (
     ServiceTicket, TicketStatus, TicketPriority, TicketNotificationLog,
     get_next_ticket_number, AuditLog, AuditAction, TenantUser,
-    SparePart, SparePartUsage, SparePartLog, StockActionType
+    SparePart, SparePartUsage, SparePartLog, StockActionType,
+    PartOrder, PartOrderItem, OrderStatus, SellerType,
 )
 from ...services.pos_service import POSService
 from ...services.sms_service import sms_service
@@ -123,7 +124,34 @@ def get_ticket(ticket_id):
     if not user.has_location_access(ticket.location_id):
         return jsonify({'error': 'Forbidden', 'message': 'Nemate pristup ovoj lokaciji'}), 403
 
-    return jsonify(ticket.to_dict(include_sensitive=True)), 200
+    result = ticket.to_dict(include_sensitive=True)
+
+    # Include linked part orders
+    orders = PartOrder.query.filter_by(
+        service_ticket_id=ticket.id,
+        buyer_tenant_id=tenant.id
+    ).order_by(PartOrder.created_at.desc()).all()
+
+    if orders:
+        orders_data = []
+        for order in orders:
+            items = PartOrderItem.query.filter_by(order_id=order.id).all()
+            orders_data.append({
+                'id': order.id,
+                'order_number': order.order_number,
+                'status': order.status.value,
+                'total_amount': float(order.total_amount) if order.total_amount else None,
+                'currency': order.currency or 'RSD',
+                'created_at': order.created_at.isoformat(),
+                'items': [{
+                    'part_name': item.part_name,
+                    'quantity': item.quantity,
+                    'unit_price': float(item.unit_price) if item.unit_price else None,
+                } for item in items],
+            })
+        result['part_orders'] = orders_data
+
+    return jsonify(result), 200
 
 
 @bp.route('', methods=['POST'])
