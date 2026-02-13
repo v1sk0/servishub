@@ -151,8 +151,157 @@
                     </dl>
                 </div>
             </div>
+
+            <!-- Racuni tog dana -->
+            <div class="bg-white shadow rounded-lg overflow-hidden mt-6">
+                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-gray-900">Racuni</h3>
+                    <span class="text-xs text-gray-500" x-text="receipts.length + ' racun(a)'"></span>
+                </div>
+                <div class="overflow-x-auto" x-show="receipts.length > 0">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Br. racuna</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vreme</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tip</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kupac</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Iznos</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Placanje</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <template x-for="r in receipts" :key="r.id">
+                                <tr class="hover:bg-gray-50 cursor-pointer transition-colors" @click="openReceipt(r.id)">
+                                    <td class="px-4 py-3 text-sm font-medium text-primary-600 whitespace-nowrap" x-text="r.receipt_number"></td>
+                                    <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap" x-text="formatTime(r.issued_at || r.created_at)"></td>
+                                    <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                                        <span x-show="r.receipt_type === 'SALE'">Prodaja</span>
+                                        <span x-show="r.receipt_type === 'REFUND'" class="text-blue-600">Povrat</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap" x-text="r.customer_name || '-'"></td>
+                                    <td class="px-4 py-3 text-sm text-right font-semibold whitespace-nowrap"
+                                        :class="r.status === 'VOIDED' ? 'text-gray-400 line-through' : 'text-gray-900'"
+                                        x-text="formatPrice(r.total_amount) + ' RSD'"></td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                                              :class="{
+                                                  'bg-green-50 text-green-700': r.payment_method === 'CASH',
+                                                  'bg-blue-50 text-blue-700': r.payment_method === 'CARD',
+                                                  'bg-purple-50 text-purple-700': r.payment_method === 'TRANSFER',
+                                                  'bg-amber-50 text-amber-700': r.payment_method === 'MIXED',
+                                              }"
+                                              x-text="paymentLabel(r.payment_method)"></span>
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                                              :class="{
+                                                  'bg-green-50 text-green-700': r.status === 'ISSUED',
+                                                  'bg-red-50 text-red-700': r.status === 'VOIDED',
+                                              }"
+                                              x-text="r.status === 'ISSUED' ? 'Izdat' : r.status === 'VOIDED' ? 'Storniran' : r.status"></span>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                <div x-show="receipts.length === 0" class="text-center py-8 text-gray-400 text-sm">
+                    Nema racuna za ovaj datum
+                </div>
+            </div>
         </div>
     </template>
+
+    <!-- Receipt detail modal -->
+    <div x-show="receiptModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="receiptModal = false">
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="fixed inset-0 bg-gray-500/75" @click="receiptModal = false"></div>
+            <div class="relative bg-white rounded-lg shadow-xl w-full max-w-lg p-6" @click.stop>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900" x-text="'Racun ' + (receiptDetail?.receipt_number || '')"></h3>
+                    <button @click="receiptModal = false" class="text-gray-400 hover:text-gray-500">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <template x-if="receiptDetail">
+                    <div>
+                        <!-- Receipt info -->
+                        <div class="grid grid-cols-2 gap-3 text-sm mb-4">
+                            <div>
+                                <span class="text-gray-500">Vreme:</span>
+                                <span class="font-medium" x-text="formatTime(receiptDetail.issued_at)"></span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Izdao:</span>
+                                <span class="font-medium" x-text="receiptDetail.issued_by || '-'"></span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Placanje:</span>
+                                <span class="font-medium" x-text="paymentLabel(receiptDetail.payment_method)"></span>
+                            </div>
+                            <div x-show="receiptDetail.customer_name">
+                                <span class="text-gray-500">Kupac:</span>
+                                <span class="font-medium" x-text="receiptDetail.customer_name"></span>
+                            </div>
+                        </div>
+                        <!-- Void badge -->
+                        <div x-show="receiptDetail.status === 'VOIDED'" class="bg-red-50 border border-red-200 rounded-md px-3 py-2 mb-4 text-sm text-red-700">
+                            Storniran <span x-show="receiptDetail.void_reason" x-text="'— ' + receiptDetail.void_reason"></span>
+                        </div>
+                        <!-- Items table -->
+                        <table class="w-full text-sm mb-4">
+                            <thead>
+                                <tr class="border-b text-gray-500 text-xs uppercase">
+                                    <th class="text-left py-2">Stavka</th>
+                                    <th class="text-center py-2">Kol.</th>
+                                    <th class="text-right py-2">Cena</th>
+                                    <th class="text-right py-2">Ukupno</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="item in receiptDetail.items" :key="item.id">
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-2 text-gray-900" x-text="item.item_name"></td>
+                                        <td class="py-2 text-center text-gray-600" x-text="item.quantity"></td>
+                                        <td class="py-2 text-right text-gray-600" x-text="formatPrice(item.unit_price)"></td>
+                                        <td class="py-2 text-right font-medium text-gray-900" x-text="formatPrice(item.line_total)"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                        <!-- Totals -->
+                        <div class="border-t pt-3 space-y-1 text-sm">
+                            <div x-show="receiptDetail.discount_amount > 0" class="flex justify-between text-gray-500">
+                                <span>Popust</span>
+                                <span x-text="'-' + formatPrice(receiptDetail.discount_amount) + ' RSD'"></span>
+                            </div>
+                            <div class="flex justify-between font-bold text-base">
+                                <span>Ukupno</span>
+                                <span x-text="formatPrice(receiptDetail.total_amount) + ' RSD'"></span>
+                            </div>
+                            <div x-show="receiptDetail.payment_method === 'CASH' && receiptDetail.cash_received" class="flex justify-between text-gray-500 text-xs">
+                                <span>Primljeno</span>
+                                <span x-text="formatPrice(receiptDetail.cash_received) + ' RSD'"></span>
+                            </div>
+                            <div x-show="receiptDetail.cash_change > 0" class="flex justify-between text-gray-500 text-xs">
+                                <span>Povracaj</span>
+                                <span x-text="formatPrice(receiptDetail.cash_change) + ' RSD'"></span>
+                            </div>
+                        </div>
+                        <!-- Print button -->
+                        <div class="mt-4 pt-3 border-t flex justify-end">
+                            <button @click="printReceipt(receiptDetail.id)" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary-500">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                Stampaj
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
 
     <!-- No report -->
     <template x-if="!report && !loading">
@@ -170,8 +319,11 @@
 function dailyReportPage() {
     return {
         report: null,
+        receipts: [],
         loading: false,
         selectedDate: new URLSearchParams(window.location.search).get('date') || new Date().toISOString().split('T')[0],
+        receiptModal: false,
+        receiptDetail: null,
 
         today() {
             return new Date().toISOString().split('T')[0];
@@ -187,10 +339,18 @@ function dailyReportPage() {
         async loadReport() {
             this.loading = true;
             this.report = null;
+            this.receipts = [];
             try {
-                const res = await api(`/api/v1/pos/reports/daily?date=${this.selectedDate}`);
-                if (res.ok) {
-                    this.report = await res.json();
+                const [reportRes, receiptsRes] = await Promise.all([
+                    api(`/api/v1/pos/reports/daily?date=${this.selectedDate}`),
+                    api(`/api/v1/pos/receipts?date=${this.selectedDate}&per_page=100`),
+                ]);
+                if (reportRes.ok) {
+                    this.report = await reportRes.json();
+                }
+                if (receiptsRes.ok) {
+                    const data = await receiptsRes.json();
+                    this.receipts = data.receipts || [];
                 }
             } catch (e) {
                 console.error('Failed to load report:', e);
@@ -198,10 +358,38 @@ function dailyReportPage() {
             this.loading = false;
         },
 
+        async openReceipt(id) {
+            try {
+                const res = await api(`/api/v1/pos/receipts/${id}`);
+                if (res.ok) {
+                    this.receiptDetail = await res.json();
+                    this.receiptModal = true;
+                }
+            } catch (e) {
+                console.error('Failed to load receipt:', e);
+            }
+        },
+
+        printReceipt(id) {
+            const token = sessionStorage.getItem('access_token');
+            window.open(`/pos/receipt/${id}/print#t=${token}`, '_blank', 'width=400,height=700');
+        },
+
         formatPrice(val) {
             if (val == null) return '0';
             return Number(val).toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
+        },
+
+        formatTime(iso) {
+            if (!iso) return '-';
+            const d = new Date(iso);
+            return d.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' });
+        },
+
+        paymentLabel(method) {
+            const labels = { CASH: 'Gotovina', CARD: 'Kartica', TRANSFER: 'Transfer', MIXED: 'Kombinovano' };
+            return labels[method] || method || '-';
+        },
     };
 }
 </script>
