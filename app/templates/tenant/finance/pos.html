@@ -18,6 +18,10 @@
             <p class="mt-1 text-sm text-gray-500">Z-izvestaji po lokacijama</p>
         </div>
         <div class="mt-4 flex gap-2 md:ml-4 md:mt-0">
+            <a href="/pos/reports" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                <svg class="w-4 h-4 mr-1.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                POS Izvestaji
+            </a>
             <div class="inline-flex rounded-md shadow-sm">
                 <button @click="setPeriod(7)" :class="days == 7 ? 'bg-primary-600 text-white' : 'bg-white text-gray-700'" class="px-3 py-2 text-sm font-medium rounded-l-md border border-gray-300">7 dana</button>
                 <button @click="setPeriod(30)" :class="days == 30 ? 'bg-primary-600 text-white' : 'bg-white text-gray-700'" class="px-3 py-2 text-sm font-medium border-t border-b border-gray-300 -ml-px">30 dana</button>
@@ -30,10 +34,15 @@
     <!-- Summary RSD -->
     <div class="bg-white shadow rounded-lg p-6 mb-6">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Promet (RSD)</h3>
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <div class="grid grid-cols-2 gap-6 sm:grid-cols-5">
             <div>
                 <p class="text-sm font-medium text-gray-500">Ukupan promet</p>
                 <p class="mt-1 text-3xl font-semibold text-gray-900" x-text="formatPrice(data.total || 0)"></p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500">Profit</p>
+                <p class="mt-1 text-3xl font-semibold text-green-600" x-text="formatPrice(data.total_profit || 0)"></p>
+                <p class="text-xs text-gray-400" x-text="(data.profit_margin_pct || 0) + '% marza'"></p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-500">Gotovina</p>
@@ -42,6 +51,10 @@
             <div>
                 <p class="text-sm font-medium text-gray-500">Kartica</p>
                 <p class="mt-1 text-3xl font-semibold text-blue-600" x-text="formatPrice(data.total_card || 0)"></p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500">Transfer</p>
+                <p class="mt-1 text-3xl font-semibold text-purple-600" x-text="formatPrice(data.total_transfer || 0)"></p>
             </div>
         </div>
     </div>
@@ -72,27 +85,44 @@
                 <tr>
                     <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Datum</th>
                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Lokacija</th>
+                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Promet</th>
+                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Profit</th>
+                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Marza</th>
                     <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Gotovina</th>
                     <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Kartica</th>
-                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Ukupno</th>
                     <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Racuna</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
                 <template x-for="item in data.days || []" :key="item.date + '-' + item.location_id">
-                    <tr>
-                        <td class="py-3 pl-4 pr-3 text-sm font-medium text-gray-900" x-text="item.date"></td>
+                    <tr class="hover:bg-gray-50 cursor-pointer transition-colors" @click="openDay(item.date)">
+                        <td class="py-3 pl-4 pr-3 text-sm font-medium text-primary-600" x-text="item.date"></td>
                         <td class="px-3 py-3 text-sm text-gray-500" x-text="item.location"></td>
+                        <td class="px-3 py-3 text-right text-sm font-medium text-gray-900" x-text="formatPrice(item.total)"></td>
+                        <td class="px-3 py-3 text-right text-sm" :class="item.profit >= 0 ? 'text-green-600' : 'text-red-600'" x-text="formatPrice(item.profit)"></td>
+                        <td class="px-3 py-3 text-right text-sm text-gray-500" x-text="item.margin_pct + '%'"></td>
                         <td class="px-3 py-3 text-right text-sm text-green-600" x-text="formatPrice(item.cash)"></td>
                         <td class="px-3 py-3 text-right text-sm text-blue-600" x-text="formatPrice(item.card)"></td>
-                        <td class="px-3 py-3 text-right text-sm font-medium text-gray-900" x-text="formatPrice(item.total)"></td>
                         <td class="px-3 py-3 text-right text-sm text-gray-500" x-text="item.receipt_count"></td>
                     </tr>
                 </template>
                 <tr x-show="!data.days || data.days.length === 0">
-                    <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">Nema Z-izvestaja za izabrani period</td>
+                    <td colspan="8" class="px-6 py-12 text-center text-sm text-gray-500">Nema Z-izvestaja za izabrani period</td>
                 </tr>
             </tbody>
+            <!-- Totals footer -->
+            <tfoot class="bg-gray-50" x-show="data.days && data.days.length > 0">
+                <tr class="font-semibold">
+                    <td class="py-3 pl-4 pr-3 text-sm text-gray-900">Ukupno</td>
+                    <td class="px-3 py-3 text-sm text-gray-500" x-text="(data.days?.length || 0) + ' dana'"></td>
+                    <td class="px-3 py-3 text-right text-sm text-gray-900" x-text="formatPrice(data.total || 0)"></td>
+                    <td class="px-3 py-3 text-right text-sm text-green-600" x-text="formatPrice(data.total_profit || 0)"></td>
+                    <td class="px-3 py-3 text-right text-sm text-gray-500" x-text="(data.profit_margin_pct || 0) + '%'"></td>
+                    <td class="px-3 py-3 text-right text-sm text-gray-900" x-text="formatPrice(data.total_cash || 0)"></td>
+                    <td class="px-3 py-3 text-right text-sm text-gray-900" x-text="formatPrice(data.total_card || 0)"></td>
+                    <td class="px-3 py-3 text-right text-sm text-gray-900" x-text="data.total_receipts || 0"></td>
+                </tr>
+            </tfoot>
         </table>
     </div>
 </div>
@@ -110,6 +140,9 @@ function posReport() {
             if (res.ok) this.data = await res.json();
         },
         setPeriod(d) { this.days = d; this.loadData(); },
+        openDay(dateStr) {
+            window.location.href = '/pos/daily-report?date=' + dateStr;
+        },
         formatPrice(val) {
             return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD', maximumFractionDigits: 0 }).format(val || 0);
         },

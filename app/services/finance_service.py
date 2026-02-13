@@ -102,11 +102,20 @@ class FinanceService:
             DailyReport.date <= end_date
         ).order_by(DailyReport.date.desc()).all()
 
+        total_revenue = sum(float(r.total_revenue or 0) for r in reports)
+        total_cost = sum(float(r.total_cost or 0) for r in reports)
+        total_profit = sum(float(r.total_profit or 0) for r in reports)
+
         return {
             # RSD totali
             'total_cash': sum(float(r.total_cash or 0) for r in reports),
             'total_card': sum(float(r.total_card or 0) for r in reports),
-            'total': sum(float(r.total_revenue or 0) for r in reports),
+            'total_transfer': sum(float(r.total_transfer or 0) for r in reports),
+            'total': total_revenue,
+            'total_cost': total_cost,
+            'total_profit': total_profit,
+            'profit_margin_pct': round(total_profit / total_revenue * 100, 1) if total_revenue else 0,
+            'total_receipts': sum(r.receipt_count or 0 for r in reports),
             # EUR totali (za internu kasu)
             'total_cash_eur': sum(float(r.total_cash_eur or 0) for r in reports),
             'total_card_eur': sum(float(r.total_card_eur or 0) for r in reports),
@@ -117,7 +126,10 @@ class FinanceService:
                 'location_id': r.location_id,
                 'cash': float(r.total_cash or 0),
                 'card': float(r.total_card or 0),
+                'transfer': float(r.total_transfer or 0),
                 'total': float(r.total_revenue or 0),
+                'profit': float(r.total_profit or 0),
+                'margin_pct': float(r.profit_margin_pct or 0),
                 'cash_eur': float(r.total_cash_eur or 0) if r.total_cash_eur else 0,
                 'card_eur': float(r.total_card_eur or 0) if r.total_card_eur else 0,
                 'total_eur': float(r.total_revenue_eur or 0) if r.total_revenue_eur else 0,

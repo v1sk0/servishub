@@ -144,11 +144,7 @@
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Kasa promet</dt>
                             <dd class="text-2xl font-semibold text-gray-900" x-text="formatPrice(summary.pos?.total || 0)"></dd>
-                            <dd class="text-xs text-gray-400">
-                                <span x-text="'Gotovina: ' + formatPrice(summary.pos?.total_cash || 0)"></span>
-                                <span class="mx-1">|</span>
-                                <span x-text="'Kartica: ' + formatPrice(summary.pos?.total_card || 0)"></span>
-                            </dd>
+                            <dd class="text-xs text-green-600" x-text="'Profit: ' + formatPrice(summary.pos?.total_profit || 0)"></dd>
                         </dl>
                     </div>
                 </div>
@@ -163,10 +159,18 @@
 
     <!-- Total card -->
     <div x-show="!loading" class="bg-gradient-to-r from-primary-600 to-primary-700 shadow-lg rounded-lg overflow-hidden">
-        <div class="px-6 py-8 text-center">
-            <h3 class="text-lg font-medium text-primary-100">Ukupan promet</h3>
-            <p class="mt-2 text-4xl font-bold text-white" x-text="formatPrice(totalRevenue)"></p>
-            <p class="mt-2 text-sm text-primary-200" x-text="'Period: ' + (summary.period?.start || '') + ' - ' + (summary.period?.end || '')"></p>
+        <div class="px-6 py-8 flex items-center justify-around">
+            <div class="text-center">
+                <h3 class="text-sm font-medium text-primary-200">Ukupan promet</h3>
+                <p class="mt-1 text-3xl font-bold text-white" x-text="formatPrice(totalRevenue)"></p>
+            </div>
+            <div class="text-center">
+                <h3 class="text-sm font-medium text-primary-200">Ukupan profit</h3>
+                <p class="mt-1 text-3xl font-bold text-green-300" x-text="formatPrice(totalProfit)"></p>
+            </div>
+            <div class="text-center">
+                <p class="text-sm text-primary-200" x-text="'Period: ' + (summary.period?.start || '') + ' — ' + (summary.period?.end || '')"></p>
+            </div>
         </div>
     </div>
 </div>
@@ -181,7 +185,14 @@ function financeApp() {
         get totalRevenue() {
             return (this.summary.tickets?.total || 0) +
                    (this.summary.phones?.total || 0) +
-                   (this.summary.goods?.total || 0);
+                   (this.summary.goods?.total || 0) +
+                   (this.summary.pos?.total || 0);
+        },
+
+        get totalProfit() {
+            return (this.summary.phones?.profit || 0) +
+                   (this.summary.goods?.profit || 0) +
+                   (this.summary.pos?.total_profit || 0);
         },
 
         async loadSummary() {
