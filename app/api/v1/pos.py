@@ -628,11 +628,21 @@ def range_report():
         'total_profit': total_profit,
         'profit_margin_pct': round(total_profit / total_revenue * 100, 2) if total_revenue else 0,
         'total_receipts': sum(r.receipt_count or 0 for r in reports),
+        'total_cash': sum(float(r.total_cash or 0) for r in reports),
+        'total_card': sum(float(r.total_card or 0) for r in reports),
+        'total_transfer': sum(float(r.total_transfer or 0) for r in reports),
+        'total_voided': sum(r.voided_count or 0 for r in reports),
         'daily': [{
             'date': str(r.date),
             'revenue': float(r.total_revenue or 0),
+            'cost': float(r.total_cost or 0),
             'profit': float(r.total_profit or 0),
-            'receipts': r.receipt_count,
+            'margin_pct': float(r.profit_margin_pct or 0),
+            'receipts': r.receipt_count or 0,
+            'voided': r.voided_count or 0,
+            'cash': float(r.total_cash or 0),
+            'card': float(r.total_card or 0),
+            'transfer': float(r.total_transfer or 0),
         } for r in reports],
     }, 200
 

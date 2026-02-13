@@ -1,0 +1,226 @@
+{% extends "layouts/tenant.html" %}
+
+{% block title %}POS Izvestaji - ServisHub{% endblock %}
+
+{% block page_content %}
+<div x-data="posReports()" x-init="load()">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">Izvestaji</h2>
+            <p class="mt-1 text-sm text-gray-500">Pregled dnevnih izvestaja po periodu</p>
+        </div>
+        <div class="mt-4 flex gap-2 md:mt-0">
+            <a href="/pos" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">Nazad na kasu</a>
+        </div>
+    </div>
+
+    <!-- Period filter -->
+    <div class="bg-white shadow rounded-lg mb-6 p-4">
+        <div class="flex flex-wrap items-end gap-4">
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Od</label>
+                <input type="date" x-model="dateFrom" @change="load()"
+                       class="block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Do</label>
+                <input type="date" x-model="dateTo" @change="load()"
+                       class="block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+            </div>
+            <div class="flex gap-1.5">
+                <button @click="setRange(7)" class="rounded-md px-3 py-2 text-xs font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        :class="activeRange === 7 ? 'bg-primary-50 text-primary-700 ring-primary-300' : 'bg-white text-gray-700'">7 dana</button>
+                <button @click="setRange(30)" class="rounded-md px-3 py-2 text-xs font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        :class="activeRange === 30 ? 'bg-primary-50 text-primary-700 ring-primary-300' : 'bg-white text-gray-700'">30 dana</button>
+                <button @click="setMonth()" class="rounded-md px-3 py-2 text-xs font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        :class="activeRange === 'month' ? 'bg-primary-50 text-primary-700 ring-primary-300' : 'bg-white text-gray-700'">Ovaj mesec</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div x-show="loading" class="text-center py-12 text-gray-400">
+        <svg class="animate-spin h-8 w-8 mx-auto mb-2 text-primary-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+        <p class="text-sm">Ucitavanje...</p>
+    </div>
+
+    <template x-if="data && !loading">
+        <div>
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white shadow rounded-lg p-5">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Ukupan promet</dt>
+                    <dd class="mt-1 text-xl font-bold text-gray-900" x-text="fp(data.total_revenue) + ' RSD'"></dd>
+                </div>
+                <div class="bg-white shadow rounded-lg p-5">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Profit</dt>
+                    <dd class="mt-1 text-xl font-bold text-green-600" x-text="fp(data.total_profit) + ' RSD'"></dd>
+                    <dd class="text-xs text-gray-500" x-text="data.profit_margin_pct + '% marza'"></dd>
+                </div>
+                <div class="bg-white shadow rounded-lg p-5">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Ukupno racuna</dt>
+                    <dd class="mt-1 text-xl font-bold text-gray-900" x-text="data.total_receipts"></dd>
+                    <dd class="text-xs text-red-500" x-show="data.total_voided > 0" x-text="data.total_voided + ' stornirano'"></dd>
+                </div>
+                <div class="bg-white shadow rounded-lg p-5">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Prosek po danu</dt>
+                    <dd class="mt-1 text-xl font-bold text-gray-900" x-text="fp(data.days > 0 ? data.total_revenue / data.days : 0) + ' RSD'"></dd>
+                    <dd class="text-xs text-gray-500" x-text="data.days + ' dana sa prometom'"></dd>
+                </div>
+            </div>
+
+            <!-- Payment breakdown -->
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="bg-white shadow rounded-lg p-4 text-center">
+                    <dt class="text-xs font-medium text-gray-500">Gotovina</dt>
+                    <dd class="mt-1 text-lg font-bold text-gray-900" x-text="fp(data.total_cash)"></dd>
+                </div>
+                <div class="bg-white shadow rounded-lg p-4 text-center">
+                    <dt class="text-xs font-medium text-gray-500">Kartica</dt>
+                    <dd class="mt-1 text-lg font-bold text-gray-900" x-text="fp(data.total_card)"></dd>
+                </div>
+                <div class="bg-white shadow rounded-lg p-4 text-center">
+                    <dt class="text-xs font-medium text-gray-500">Transfer</dt>
+                    <dd class="mt-1 text-lg font-bold text-gray-900" x-text="fp(data.total_transfer)"></dd>
+                </div>
+            </div>
+
+            <!-- Daily table -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-sm font-semibold text-gray-900">Dnevni izvestaji</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datum</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Promet</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Profit</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Marza</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Racuni</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Storni</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Gotovina</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Kartica</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Transfer</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <template x-for="day in sortedDays" :key="day.date">
+                                <tr class="hover:bg-gray-50 cursor-pointer transition-colors" @click="openDay(day.date)">
+                                    <td class="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap" x-text="formatDate(day.date)"></td>
+                                    <td class="px-4 py-3 text-sm text-right text-gray-900 font-semibold whitespace-nowrap" x-text="fp(day.revenue)"></td>
+                                    <td class="px-4 py-3 text-sm text-right whitespace-nowrap"
+                                        :class="day.profit >= 0 ? 'text-green-600' : 'text-red-600'"
+                                        x-text="fp(day.profit)"></td>
+                                    <td class="px-4 py-3 text-sm text-right text-gray-500 whitespace-nowrap" x-text="day.margin_pct + '%'"></td>
+                                    <td class="px-4 py-3 text-sm text-center text-gray-900" x-text="day.receipts"></td>
+                                    <td class="px-4 py-3 text-sm text-center" :class="day.voided > 0 ? 'text-red-500 font-semibold' : 'text-gray-400'" x-text="day.voided"></td>
+                                    <td class="px-4 py-3 text-sm text-right text-gray-600 whitespace-nowrap" x-text="fp(day.cash)"></td>
+                                    <td class="px-4 py-3 text-sm text-right text-gray-600 whitespace-nowrap" x-text="fp(day.card)"></td>
+                                    <td class="px-4 py-3 text-sm text-right text-gray-600 whitespace-nowrap" x-text="fp(day.transfer)"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                        <!-- Totals row -->
+                        <tfoot class="bg-gray-50">
+                            <tr class="font-semibold">
+                                <td class="px-4 py-3 text-sm text-gray-900">Ukupno</td>
+                                <td class="px-4 py-3 text-sm text-right text-gray-900" x-text="fp(data.total_revenue)"></td>
+                                <td class="px-4 py-3 text-sm text-right text-green-600" x-text="fp(data.total_profit)"></td>
+                                <td class="px-4 py-3 text-sm text-right text-gray-500" x-text="data.profit_margin_pct + '%'"></td>
+                                <td class="px-4 py-3 text-sm text-center text-gray-900" x-text="data.total_receipts"></td>
+                                <td class="px-4 py-3 text-sm text-center text-red-500" x-text="data.total_voided"></td>
+                                <td class="px-4 py-3 text-sm text-right text-gray-900" x-text="fp(data.total_cash)"></td>
+                                <td class="px-4 py-3 text-sm text-right text-gray-900" x-text="fp(data.total_card)"></td>
+                                <td class="px-4 py-3 text-sm text-right text-gray-900" x-text="fp(data.total_transfer)"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Empty state -->
+                <div x-show="data.daily.length === 0" class="text-center py-12 text-gray-400">
+                    <svg class="mx-auto h-10 w-10 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <p class="text-sm">Nema izvestaja za izabrani period</p>
+                    <p class="text-xs mt-1">Izvestaji se kreiraju automatski pri zatvaranju kase</p>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script>
+function posReports() {
+    return {
+        data: null,
+        loading: false,
+        dateFrom: '',
+        dateTo: '',
+        activeRange: 30,
+
+        init() {
+            this.setRange(30);
+        },
+
+        get sortedDays() {
+            if (!this.data || !this.data.daily) return [];
+            return [...this.data.daily].sort((a, b) => b.date.localeCompare(a.date));
+        },
+
+        setRange(days) {
+            this.activeRange = days;
+            const to = new Date();
+            const from = new Date();
+            from.setDate(from.getDate() - days + 1);
+            this.dateTo = to.toISOString().split('T')[0];
+            this.dateFrom = from.toISOString().split('T')[0];
+            this.load();
+        },
+
+        setMonth() {
+            this.activeRange = 'month';
+            const now = new Date();
+            const from = new Date(now.getFullYear(), now.getMonth(), 1);
+            this.dateFrom = from.toISOString().split('T')[0];
+            this.dateTo = now.toISOString().split('T')[0];
+            this.load();
+        },
+
+        async load() {
+            if (!this.dateFrom || !this.dateTo) return;
+            this.loading = true;
+            try {
+                const res = await api(`/api/v1/pos/reports/range?from=${this.dateFrom}&to=${this.dateTo}`);
+                if (res.ok) {
+                    this.data = await res.json();
+                } else {
+                    this.data = { daily: [], total_revenue: 0, total_profit: 0, total_receipts: 0, days: 0, profit_margin_pct: 0, total_cash: 0, total_card: 0, total_transfer: 0, total_voided: 0 };
+                }
+            } catch (e) {
+                console.error('Failed to load reports:', e);
+            }
+            this.loading = false;
+        },
+
+        openDay(dateStr) {
+            window.location.href = '/pos/daily-report?date=' + dateStr;
+        },
+
+        formatDate(iso) {
+            if (!iso) return '';
+            const [y, m, d] = iso.split('-');
+            const days = ['Ned', 'Pon', 'Uto', 'Sre', 'Cet', 'Pet', 'Sub'];
+            const dt = new Date(iso);
+            return `${days[dt.getDay()]} ${d}.${m}.${y}`;
+        },
+
+        fp(val) {
+            if (val == null) return '0';
+            return Number(val).toLocaleString('sr-RS', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        },
+    };
+}
+</script>
+{% endblock %}

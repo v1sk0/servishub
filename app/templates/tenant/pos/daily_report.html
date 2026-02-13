@@ -11,7 +11,8 @@
             <p class="mt-1 text-sm text-gray-500">Pregled prometa po danu</p>
         </div>
         <div class="mt-4 flex gap-2 md:ml-4 md:mt-0">
-            <a href="/pos" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Nazad na kasu</a>
+            <a href="/pos/reports" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Svi izvestaji</a>
+            <a href="/pos" class="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500">Nazad na kasu</a>
         </div>
     </div>
 
@@ -170,7 +171,7 @@ function dailyReportPage() {
     return {
         report: null,
         loading: false,
-        selectedDate: new Date().toISOString().split('T')[0],
+        selectedDate: new URLSearchParams(window.location.search).get('date') || new Date().toISOString().split('T')[0],
 
         today() {
             return new Date().toISOString().split('T')[0];

@@ -200,6 +200,12 @@ def pos_receipts():
     return render_template('tenant/pos/receipts.html')
 
 
+@bp.route('/pos/reports')
+def pos_reports():
+    """Pregled dnevnih izvestaja POS prometa."""
+    return render_template('tenant/pos/reports.html')
+
+
 @bp.route('/pos/daily-report')
 def pos_daily_report():
     """Dnevni izvestaj POS prometa."""
