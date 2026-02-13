@@ -560,13 +560,12 @@ def daily_report():
         return check
 
     report_date = request.args.get('date', str(date.today()))
-    location_id = request.args.get('location_id') or getattr(g, 'current_location_id', None)
+    location_id = request.args.get('location_id', type=int)
 
-    report = DailyReport.query.filter_by(
-        tenant_id=g.tenant_id,
-        location_id=location_id,
-        date=report_date,
-    ).first()
+    q = DailyReport.query.filter_by(tenant_id=g.tenant_id, date=report_date)
+    if location_id:
+        q = q.filter_by(location_id=location_id)
+    report = q.first()
 
     if not report:
         return {'error': 'Izveštaj nije pronađen'}, 404
@@ -603,17 +602,19 @@ def range_report():
 
     date_from = request.args.get('from')
     date_to = request.args.get('to')
-    location_id = request.args.get('location_id') or getattr(g, 'current_location_id', None)
+    location_id = request.args.get('location_id', type=int)
 
     if not date_from or not date_to:
         return {'error': 'from i to su obavezni'}, 400
 
-    reports = DailyReport.query.filter(
+    q = DailyReport.query.filter(
         DailyReport.tenant_id == g.tenant_id,
-        DailyReport.location_id == location_id,
         DailyReport.date >= date_from,
         DailyReport.date <= date_to,
-    ).order_by(DailyReport.date).all()
+    )
+    if location_id:
+        q = q.filter(DailyReport.location_id == location_id)
+    reports = q.order_by(DailyReport.date).all()
 
     total_revenue = sum(float(r.total_revenue or 0) for r in reports)
     total_cost = sum(float(r.total_cost or 0) for r in reports)
