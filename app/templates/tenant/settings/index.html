@@ -1768,8 +1768,33 @@
                         <p class="text-sm text-blue-800">Pored automatske subdomena (<span x-text="tenantSlug"></span>.shub.rs), mozete povezati svoj domen (npr. mojservis.rs) da bi vasa javna stranica bila dostupna na njemu.</p>
                     </div>
 
+                    <!-- Domain DNS section glass overrides -->
+                    <style>
+                        .glass-theme .domain-section { background: var(--glass-card) !important; border-color: var(--glass-border) !important; }
+                        .glass-theme .domain-dns-body { background: rgba(15, 23, 42, 0.5) !important; }
+                        .glass-theme .dns-card { background: rgba(30, 41, 59, 0.6) !important; border-color: var(--glass-border) !important; backdrop-filter: blur(8px); }
+                        .glass-theme .dns-card-header-a { background: rgba(99, 102, 241, 0.15) !important; border-color: rgba(99, 102, 241, 0.2) !important; }
+                        .glass-theme .dns-card-header-b { background: rgba(16, 185, 129, 0.15) !important; border-color: rgba(16, 185, 129, 0.2) !important; }
+                        .glass-theme .dns-card-header-route { background: rgba(139, 92, 246, 0.15) !important; border-color: rgba(139, 92, 246, 0.2) !important; }
+                        .glass-theme .dns-code { background: rgba(15, 23, 42, 0.6) !important; color: #e2e8f0 !important; }
+                        .glass-theme .dns-label { color: #94a3b8 !important; }
+                        .glass-theme .dns-step-title { color: #f1f5f9 !important; }
+                        .glass-theme .dns-step-desc { color: #94a3b8 !important; }
+                        .glass-theme .dns-divider { border-color: var(--glass-border) !important; }
+                        .glass-theme .dns-divider-text { color: #64748b !important; }
+                        .glass-theme .dns-warning { background: rgba(245, 158, 11, 0.1) !important; border-color: rgba(245, 158, 11, 0.25) !important; }
+                        .glass-theme .dns-warning p { color: #fbbf24 !important; }
+                        .glass-theme .dns-card-header-a span.text-indigo-900 { color: #a5b4fc !important; }
+                        .glass-theme .dns-card-header-a span.text-indigo-400 { color: rgba(165, 180, 252, 0.6) !important; }
+                        .glass-theme .dns-card-header-b span.text-emerald-900 { color: #6ee7b7 !important; }
+                        .glass-theme .dns-card-header-route span.text-violet-900 { color: #c4b5fd !important; }
+                        .glass-theme .dns-card-header-route svg { color: #a78bfa !important; }
+                        .glass-theme .domain-verify-btn { background: rgba(255,255,255,0.15) !important; color: #f1f5f9 !important; border: 1px solid rgba(255,255,255,0.2) !important; }
+                        .glass-theme .domain-verify-btn:hover { background: rgba(255,255,255,0.25) !important; }
+                    </style>
+
                     <!-- Current Domain Status -->
-                    <div x-show="customDomain.domain" class="rounded-xl overflow-hidden shadow-sm border border-gray-200">
+                    <div x-show="customDomain.domain" class="domain-section rounded-xl overflow-hidden shadow-sm border border-gray-200">
                         <!-- Domain Header -->
                         <div class="bg-gradient-to-r from-slate-800 to-slate-900 px-5 py-4">
                             <div class="flex items-center justify-between">
@@ -1793,7 +1818,7 @@
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <button x-show="!customDomain.verified" @click="verifyDomain()" :disabled="verifyingDomain"
-                                            class="px-4 py-2 bg-white text-slate-800 text-sm font-semibold rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors shadow-sm">
+                                            class="domain-verify-btn px-4 py-2 bg-white text-slate-800 text-sm font-semibold rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors shadow-sm">
                                         <span x-show="!verifyingDomain" class="flex items-center gap-1.5">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                             Verifikuj
@@ -1811,57 +1836,57 @@
                         </div>
 
                         <!-- DNS Instructions -->
-                        <div x-show="!customDomain.verified && customDomain.verification_instructions" class="bg-slate-50">
+                        <div x-show="!customDomain.verified && customDomain.verification_instructions" class="domain-dns-body">
                             <!-- Step indicator -->
                             <div class="px-5 pt-5 pb-3">
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="flex items-center justify-center w-5 h-5 rounded-full bg-slate-800 text-[10px] font-bold text-white">1</span>
-                                    <h5 class="font-semibold text-slate-800 text-sm">Verifikacija vlasnistva</h5>
+                                    <h5 class="dns-step-title font-semibold text-slate-800 text-sm">Verifikacija vlasnistva</h5>
                                 </div>
-                                <p class="text-xs text-slate-500 ml-7">Dodajte jedan od sledecih DNS zapisa kod vaseg domen provajdera</p>
+                                <p class="dns-step-desc text-xs text-slate-500 ml-7">Dodajte jedan od sledecih DNS zapisa kod vaseg domen provajdera</p>
                             </div>
 
                             <div class="px-5 pb-4 space-y-2">
                                 <!-- Option A: CNAME -->
-                                <div class="bg-white rounded-lg border border-indigo-100 shadow-sm overflow-hidden">
-                                    <div class="px-4 py-2.5 bg-indigo-50 border-b border-indigo-100 flex items-center gap-2">
+                                <div class="dns-card bg-white rounded-lg border border-indigo-100 shadow-sm overflow-hidden">
+                                    <div class="dns-card-header-a px-4 py-2.5 bg-indigo-50 border-b border-indigo-100 flex items-center gap-2">
                                         <span class="px-1.5 py-0.5 bg-indigo-600 text-white text-[10px] font-bold rounded">A</span>
                                         <span class="text-xs font-semibold text-indigo-900">CNAME record</span>
                                         <span class="ml-auto text-[10px] text-indigo-400 font-medium">PREPORUCENO</span>
                                     </div>
                                     <div class="px-4 py-3 space-y-2 text-sm">
                                         <div class="flex items-baseline gap-2">
-                                            <span class="text-xs font-medium text-slate-400 uppercase w-16 shrink-0">Host</span>
-                                            <code class="text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs font-mono break-all" x-text="customDomain.verification_instructions?.host"></code>
+                                            <span class="dns-label text-xs font-medium text-slate-400 uppercase w-16 shrink-0">Host</span>
+                                            <code class="dns-code text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs font-mono break-all" x-text="customDomain.verification_instructions?.host"></code>
                                         </div>
                                         <div class="flex items-baseline gap-2">
-                                            <span class="text-xs font-medium text-slate-400 uppercase w-16 shrink-0">Vrednost</span>
-                                            <code class="text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs font-mono break-all" x-text="customDomain.verification_instructions?.value"></code>
+                                            <span class="dns-label text-xs font-medium text-slate-400 uppercase w-16 shrink-0">Vrednost</span>
+                                            <code class="dns-code text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs font-mono break-all" x-text="customDomain.verification_instructions?.value"></code>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Divider -->
                                 <div class="flex items-center gap-3 py-0.5">
-                                    <div class="flex-1 border-t border-slate-200"></div>
-                                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">ili</span>
-                                    <div class="flex-1 border-t border-slate-200"></div>
+                                    <div class="dns-divider flex-1 border-t border-slate-200"></div>
+                                    <span class="dns-divider-text text-[10px] font-semibold text-slate-400 uppercase tracking-wider">ili</span>
+                                    <div class="dns-divider flex-1 border-t border-slate-200"></div>
                                 </div>
 
                                 <!-- Option B: TXT -->
-                                <div class="bg-white rounded-lg border border-emerald-100 shadow-sm overflow-hidden">
-                                    <div class="px-4 py-2.5 bg-emerald-50 border-b border-emerald-100 flex items-center gap-2">
+                                <div class="dns-card bg-white rounded-lg border border-emerald-100 shadow-sm overflow-hidden">
+                                    <div class="dns-card-header-b px-4 py-2.5 bg-emerald-50 border-b border-emerald-100 flex items-center gap-2">
                                         <span class="px-1.5 py-0.5 bg-emerald-600 text-white text-[10px] font-bold rounded">B</span>
                                         <span class="text-xs font-semibold text-emerald-900">TXT record</span>
                                     </div>
                                     <div class="px-4 py-3 space-y-2 text-sm">
                                         <div class="flex items-baseline gap-2">
-                                            <span class="text-xs font-medium text-slate-400 uppercase w-16 shrink-0">Host</span>
-                                            <code class="text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs font-mono break-all" x-text="customDomain.verification_instructions?.alternative?.host"></code>
+                                            <span class="dns-label text-xs font-medium text-slate-400 uppercase w-16 shrink-0">Host</span>
+                                            <code class="dns-code text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs font-mono break-all" x-text="customDomain.verification_instructions?.alternative?.host"></code>
                                         </div>
                                         <div class="flex items-baseline gap-2">
-                                            <span class="text-xs font-medium text-slate-400 uppercase w-16 shrink-0">Vrednost</span>
-                                            <code class="text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs font-mono break-all" x-text="customDomain.verification_instructions?.alternative?.value"></code>
+                                            <span class="dns-label text-xs font-medium text-slate-400 uppercase w-16 shrink-0">Vrednost</span>
+                                            <code class="dns-code text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs font-mono break-all" x-text="customDomain.verification_instructions?.alternative?.value"></code>
                                         </div>
                                     </div>
                                 </div>
@@ -1871,25 +1896,25 @@
                             <div class="px-5 pb-3 pt-1">
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="flex items-center justify-center w-5 h-5 rounded-full bg-slate-800 text-[10px] font-bold text-white">2</span>
-                                    <h5 class="font-semibold text-slate-800 text-sm">Usmeravanje saobracaja</h5>
+                                    <h5 class="dns-step-title font-semibold text-slate-800 text-sm">Usmeravanje saobracaja</h5>
                                 </div>
-                                <p class="text-xs text-slate-500 ml-7">Usmerite vas domen ka ServisHub platformi</p>
+                                <p class="dns-step-desc text-xs text-slate-500 ml-7">Usmerite vas domen ka ServisHub platformi</p>
                             </div>
 
                             <div class="px-5 pb-5">
-                                <div class="bg-white rounded-lg border border-violet-100 shadow-sm overflow-hidden">
-                                    <div class="px-4 py-2.5 bg-violet-50 border-b border-violet-100 flex items-center gap-2">
+                                <div class="dns-card bg-white rounded-lg border border-violet-100 shadow-sm overflow-hidden">
+                                    <div class="dns-card-header-route px-4 py-2.5 bg-violet-50 border-b border-violet-100 flex items-center gap-2">
                                         <svg class="w-3.5 h-3.5 text-violet-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.207 2.232a.75.75 0 00.025 1.06l4.146 3.958H6.375a5.375 5.375 0 000 10.75H9.25a.75.75 0 000-1.5H6.375a3.875 3.875 0 010-7.75h10.003l-4.146 3.957a.75.75 0 001.036 1.085l5.5-5.25a.75.75 0 000-1.085l-5.5-5.25a.75.75 0 00-1.06.025z" clip-rule="evenodd"/></svg>
                                         <span class="text-xs font-semibold text-violet-900">CNAME record</span>
                                     </div>
                                     <div class="px-4 py-3 space-y-2 text-sm">
                                         <div class="flex items-baseline gap-2">
-                                            <span class="text-xs font-medium text-slate-400 uppercase w-16 shrink-0">Host</span>
-                                            <code class="text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs font-mono break-all" x-text="customDomain.verification_instructions?.routing?.host || customDomain.domain"></code>
+                                            <span class="dns-label text-xs font-medium text-slate-400 uppercase w-16 shrink-0">Host</span>
+                                            <code class="dns-code text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs font-mono break-all" x-text="customDomain.verification_instructions?.routing?.host || customDomain.domain"></code>
                                         </div>
                                         <div class="flex items-baseline gap-2">
-                                            <span class="text-xs font-medium text-slate-400 uppercase w-16 shrink-0">Vrednost</span>
-                                            <code class="text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs font-mono break-all" x-text="customDomain.verification_instructions?.routing?.value || 'proxy.shub.rs'"></code>
+                                            <span class="dns-label text-xs font-medium text-slate-400 uppercase w-16 shrink-0">Vrednost</span>
+                                            <code class="dns-code text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs font-mono break-all" x-text="customDomain.verification_instructions?.routing?.value || 'proxy.shub.rs'"></code>
                                         </div>
                                     </div>
                                 </div>
@@ -1897,7 +1922,7 @@
 
                             <!-- Footer note -->
                             <div class="px-5 pb-4">
-                                <div class="flex items-start gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+                                <div class="dns-warning flex items-start gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg">
                                     <svg class="w-4 h-4 text-amber-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
                                     <p class="text-xs text-amber-800 leading-relaxed">DNS promene mogu potrajati <strong>do 24 sata</strong> da se propagiraju. Nakon podesavanja, kliknite <strong>Verifikuj</strong>.</p>
                                 </div>
