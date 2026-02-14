@@ -1494,13 +1494,37 @@ def setup_custom_domain():
     profile.custom_domain_verification_token = verification_token
     profile.custom_domain_verified_at = None
     profile.custom_domain_ssl_status = 'pending'
+    profile.heroku_cname_target = None
     profile.updated_at = datetime.utcnow()
 
     db.session.commit()
 
+    # Registruj domen na Heroku platformi
+    from app.services.heroku_service import heroku_domain_service
+    heroku_result = heroku_domain_service.add_domain(domain)
+
+    if heroku_result.get('success'):
+        profile.heroku_cname_target = heroku_result.get('cname_target')
+        db.session.commit()
+    else:
+        # Heroku registracija neuspešna - vrati grešku i poništi
+        import logging
+        logging.getLogger(__name__).error(
+            f'Heroku domain add failed for {domain}: {heroku_result.get("error")}'
+        )
+        profile.custom_domain = None
+        profile.custom_domain_verification_token = None
+        profile.custom_domain_ssl_status = None
+        profile.updated_at = datetime.utcnow()
+        db.session.commit()
+        return {
+            'error': f'Greška pri registraciji domena na platformi: {heroku_result.get("error", "Unknown error")}',
+        }, 500
+
     return {
         'message': 'Custom domain configured. Please verify DNS records.',
         'domain': domain,
+        'heroku_cname_target': profile.heroku_cname_target,
         'verification_instructions': profile.get_domain_verification_instructions()
     }
 
@@ -1531,7 +1555,8 @@ def verify_custom_domain():
         from app.middleware.public_site import verify_custom_domain_dns
         result = verify_custom_domain_dns(
             profile.custom_domain,
-            profile.custom_domain_verification_token
+            profile.custom_domain_verification_token,
+            heroku_target=profile.heroku_cname_target
         )
     except ImportError:
         # Ako dns resolver nije instaliran, simuliraj
@@ -1583,11 +1608,23 @@ def remove_custom_domain():
     if not profile:
         return {'error': 'No public profile'}, 404
 
+    # Ukloni domen sa Heroku-a (ne blokiramo brisanje ako Heroku javi grešku)
+    old_domain = profile.custom_domain
+    if old_domain:
+        from app.services.heroku_service import heroku_domain_service
+        heroku_result = heroku_domain_service.remove_domain(old_domain)
+        if not heroku_result.get('success'):
+            import logging
+            logging.getLogger(__name__).warning(
+                f'Heroku domain remove failed for {old_domain}: {heroku_result.get("error")}'
+            )
+
     profile.custom_domain = None
     profile.custom_domain_verified = False
     profile.custom_domain_verification_token = None
     profile.custom_domain_verified_at = None
     profile.custom_domain_ssl_status = None
+    profile.heroku_cname_target = None
     profile.updated_at = datetime.utcnow()
 
     db.session.commit()

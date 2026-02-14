@@ -15,6 +15,7 @@ from app.services.billing_tasks import get_next_invoice_number
 from app.services.notification_service import notification_service
 from app.models.representative import ServiceRepresentative, RepresentativeStatus
 from app.models.admin_activity import AdminActivityLog, AdminActionType
+from app.models.tenant_public_profile import TenantPublicProfile
 from app.api.middleware.auth import platform_admin_required
 
 bp = Blueprint('admin_tenants', __name__, url_prefix='/tenants')
@@ -88,12 +89,15 @@ def list_tenants():
             ServiceTicket.created_at >= start_of_month
         ).count()
 
+        # Custom domen info
+        profile = TenantPublicProfile.query.filter_by(tenant_id=tenant.id).first()
+
         tenants_data.append({
             'id': tenant.id,
             'name': tenant.name,
             'slug': tenant.slug,
             'email': tenant.email,
-            'phone': tenant.telefon,  # Ispravka: telefon -> telefon
+            'phone': tenant.telefon,
             'status': tenant.status.value if tenant.status else None,
             'subscription_plan': 'Bazni',  # TODO: Dodati subscription_plan u model
             'demo_ends_at': tenant.demo_ends_at.isoformat() if tenant.demo_ends_at else None,
@@ -103,7 +107,9 @@ def list_tenants():
             'user_count': user_count,
             'tickets_this_month': tickets_this_month,
             'created_at': tenant.created_at.isoformat(),
-            'is_trial_expired': False  # TODO: Dodati logiku za proveru isteka
+            'is_trial_expired': False,  # TODO: Dodati logiku za proveru isteka
+            'custom_domain': profile.custom_domain if profile else None,
+            'custom_domain_verified': profile.custom_domain_verified if profile else False,
         })
 
     return jsonify({
@@ -144,6 +150,9 @@ def get_tenant(tenant_id):
     # Broj lokacija
     from app.models.tenant import ServiceLocation
     locations_count = ServiceLocation.query.filter_by(tenant_id=tenant.id, is_active=True).count()
+
+    # Javna stranica i domen
+    profile = TenantPublicProfile.query.filter_by(tenant_id=tenant.id).first()
 
     # Flat response - svi podaci na istom nivou za frontend
     return jsonify({
@@ -208,7 +217,16 @@ def get_tenant(tenant_id):
             'is_primary': r.is_primary,
             'status': r.status.value if r.status else None,
             'verified_at': r.verified_at.isoformat() if r.verified_at else None
-        } for r in representatives]
+        } for r in representatives],
+        'public_profile': {
+            'is_public': profile.is_public if profile else False,
+            'slug_url': f'https://{tenant.slug}.shub.rs',
+            'custom_domain': profile.custom_domain if profile else None,
+            'custom_domain_verified': profile.custom_domain_verified if profile else False,
+            'custom_domain_verified_at': profile.custom_domain_verified_at.isoformat() if profile and profile.custom_domain_verified_at else None,
+            'heroku_cname_target': profile.heroku_cname_target if profile else None,
+            'ssl_status': profile.custom_domain_ssl_status if profile else None,
+        } if profile else None,
     }), 200
 
 

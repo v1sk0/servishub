@@ -110,6 +110,8 @@ class TenantPublicProfile(db.Model):
 
     # SSL status za custom domen (Let's Encrypt)
     custom_domain_ssl_status = db.Column(db.String(20), default='pending')  # pending, active, failed
+    # Heroku CNAME target - dodeljen od Heroku API-a pri registraciji domena
+    heroku_cname_target = db.Column(db.String(255))  # npr. "xyz.herokudns.com"
 
     # ============================================
     # DODATNE SEKCIJE
@@ -245,6 +247,11 @@ class TenantPublicProfile(db.Model):
                 'type': 'TXT',
                 'host': f'_shub-verify.{self.custom_domain}',
                 'value': f'shub-verify={self.custom_domain_verification_token}'
+            },
+            'routing': {
+                'type': 'CNAME',
+                'host': self.custom_domain,
+                'value': self.heroku_cname_target or 'proxy.shub.rs'
             }
         }
 
@@ -356,6 +363,7 @@ class TenantPublicProfile(db.Model):
                 'verified': self.custom_domain_verified,
                 'verified_at': self.custom_domain_verified_at.isoformat() if self.custom_domain_verified_at else None,
                 'ssl_status': self.custom_domain_ssl_status,
+                'heroku_cname_target': self.heroku_cname_target,
                 'verification_instructions': self.get_domain_verification_instructions(),
             }
 

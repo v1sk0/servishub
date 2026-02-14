@@ -274,18 +274,19 @@ def setup_public_site_middleware(app):
 # DNS VERIFICATION
 # ============================================
 
-def verify_custom_domain_dns(domain: str, verification_token: str) -> dict:
+def verify_custom_domain_dns(domain: str, verification_token: str, heroku_target: str = None) -> dict:
     """
     Verifikuje DNS postavke za custom domen.
 
     Proverava:
     1. CNAME record: _shub-verify.{domain} -> {token}.verify.shub.rs
     2. TXT record: _shub-verify.{domain} -> shub-verify={token}
-    3. CNAME record: {domain} -> proxy.shub.rs (za routing)
+    3. CNAME record: {domain} -> heroku_target ili proxy.shub.rs (za routing)
 
     Args:
         domain: Custom domain to verify
         verification_token: Expected verification token
+        heroku_target: Heroku CNAME target (npr. "xyz.herokudns.com")
 
     Returns:
         Dict sa statusom verifikacije
@@ -326,20 +327,22 @@ def verify_custom_domain_dns(domain: str, verification_token: str) -> dict:
         except dns.exception.DNSException:
             pass
 
-    # Proveri routing CNAME (domain -> proxy.shub.rs)
+    # Proveri routing CNAME (domain -> heroku_target ili proxy.shub.rs)
+    valid_targets = {'proxy.shub.rs'}
+    if heroku_target:
+        valid_targets.add(heroku_target.rstrip('.').lower())
     try:
         answers = dns.resolver.resolve(domain, 'CNAME')
         for rdata in answers:
             target = str(rdata.target).rstrip('.').lower()
-            if target == 'proxy.shub.rs':
+            if target in valid_targets:
                 result['routing_record'] = True
                 break
     except dns.exception.DNSException:
-        # Možda je A record umesto CNAME
+        # Možda je A record umesto CNAME (Cloudflare proxy/flattening)
         try:
             answers = dns.resolver.resolve(domain, 'A')
-            # TODO: Proveriti da li A record pokazuje na naš proxy IP
-            # Za sada, ako ima A record, smatramo da je OK
+            # A record postoji - prihvatamo (Cloudflare CNAME flattening resolves to A)
             result['routing_record'] = True
         except dns.exception.DNSException:
             result['errors'].append('Ne mogu da pronađem DNS record za domen')

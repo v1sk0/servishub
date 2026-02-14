@@ -1815,8 +1815,8 @@
                                     </div>
                                     <div class="bg-white p-3 rounded border">
                                         <p class="text-xs text-gray-500 uppercase mb-1">Routing (CNAME)</p>
-                                        <p><strong>Host:</strong> <code class="bg-gray-100 px-1 rounded" x-text="customDomain.domain"></code></p>
-                                        <p><strong>Vrednost:</strong> <code class="bg-gray-100 px-1 rounded">proxy.shub.rs</code></p>
+                                        <p><strong>Host:</strong> <code class="bg-gray-100 px-1 rounded" x-text="customDomain.verification_instructions?.routing?.host || customDomain.domain"></code></p>
+                                        <p><strong>Vrednost:</strong> <code class="bg-gray-100 px-1 rounded" x-text="customDomain.verification_instructions?.routing?.value || 'proxy.shub.rs'"></code></p>
                                     </div>
                                 </div>
                                 <p class="text-xs text-yellow-700 mt-3">DNS promene mogu potrajati do 24 sata da se propagiraju.</p>
