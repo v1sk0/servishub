@@ -1798,9 +1798,20 @@
                                 <p class="text-sm text-yellow-800 mb-3">Dodajte sledece DNS zapise kod vaseg domen provajdera:</p>
                                 <div class="space-y-3 text-sm">
                                     <div class="bg-white p-3 rounded border">
-                                        <p class="text-xs text-gray-500 uppercase mb-1">Verifikacija (CNAME ili TXT)</p>
-                                        <p><strong>Host:</strong> <code class="bg-gray-100 px-1 rounded" x-text="customDomain.verification_instructions?.host"></code></p>
-                                        <p><strong>Vrednost:</strong> <code class="bg-gray-100 px-1 rounded text-xs break-all" x-text="customDomain.verification_instructions?.value"></code></p>
+                                        <p class="text-xs text-gray-500 uppercase mb-2 font-semibold">Verifikacija — izaberite jednu opciju:</p>
+                                        <div class="space-y-2">
+                                            <div class="p-2 bg-blue-50 rounded">
+                                                <p class="text-xs font-medium text-blue-700 mb-1">Opcija A: CNAME record</p>
+                                                <p><strong>Host:</strong> <code class="bg-gray-100 px-1 rounded" x-text="customDomain.verification_instructions?.host"></code></p>
+                                                <p><strong>Vrednost:</strong> <code class="bg-gray-100 px-1 rounded text-xs break-all" x-text="customDomain.verification_instructions?.value"></code></p>
+                                            </div>
+                                            <p class="text-center text-xs text-gray-400">ili</p>
+                                            <div class="p-2 bg-green-50 rounded">
+                                                <p class="text-xs font-medium text-green-700 mb-1">Opcija B: TXT record</p>
+                                                <p><strong>Host:</strong> <code class="bg-gray-100 px-1 rounded" x-text="customDomain.verification_instructions?.alternative?.host"></code></p>
+                                                <p><strong>Vrednost:</strong> <code class="bg-gray-100 px-1 rounded text-xs break-all" x-text="customDomain.verification_instructions?.alternative?.value"></code></p>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="bg-white p-3 rounded border">
                                         <p class="text-xs text-gray-500 uppercase mb-1">Routing (CNAME)</p>
