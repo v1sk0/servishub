@@ -55,7 +55,7 @@ class HerokuDomainService:
             resp = requests.post(
                 f'{HEROKU_API_URL}/apps/{self.app_name}/domains',
                 headers=self._get_headers(),
-                json={'hostname': hostname},
+                json={'hostname': hostname, 'sni_endpoint': None},
                 timeout=15,
             )
 
