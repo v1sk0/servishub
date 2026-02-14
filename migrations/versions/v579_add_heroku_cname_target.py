@@ -1,7 +1,7 @@
 """Add heroku_cname_target to tenant_public_profile
 
 Revision ID: v579_add_heroku_cname_target
-Revises: v578_add_receipt_currency
+Revises: v578_receipt_currency
 Create Date: 2026-02-11
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'v579_add_heroku_cname_target'
-down_revision = 'v578_add_receipt_currency'
+down_revision = 'v578_receipt_currency'
 branch_labels = None
 depends_on = None
 
